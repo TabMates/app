@@ -32,5 +32,16 @@ dependencyResolutionManagement {
 }
 
 includeBuild("build-logic")
-include(":composeApp")
 include(":androidApp")
+include(":composeApp")
+include(":core:data")
+include(":core:designsystem")
+include(":core:domain")
+include(":core:presentation")
+include(":features:authentication:data")
+include(":features:authentication:domain")
+include(":features:authentication:presentation")
+include(":features:tabgroup:data")
+include(":features:tabgroup:database")
+include(":features:tabgroup:domain")
+include(":features:tabgroup:presentation")

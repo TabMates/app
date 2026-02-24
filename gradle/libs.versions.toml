@@ -17,6 +17,9 @@ lifecycleRuntimeKtx = "2.10.0"
 composeBom = "2026.02.00"
 coil3 = "3.3.0"
 ktor = "3.4.0"
+kotlinStdlib = "2.3.10"
+runner = "1.5.2"
+core = "1.5.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -60,6 +63,9 @@ coil-networkKtor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref
 # Ktor.
 ktor-androidClient = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
 ktor-darwinClient = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlinStdlib" }
+androidx-runner = { group = "androidx.test", name = "runner", version.ref = "runner" }
+androidx-core = { group = "androidx.test", name = "core", version.ref = "core" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -73,3 +79,4 @@ kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 # convention plugins.
 tabmates-convention-kmp = { id = "tabmates.convention.kmp" }
 tabmates-convention-cmp = { id = "tabmates.convention.cmp" }
+android-lint = { id = "com.android.lint", version.ref = "agp" }
