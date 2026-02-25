@@ -1,6 +1,6 @@
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidKmpLibrary)
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.android.kmp.library)
 }
 
 kotlin {
@@ -61,9 +61,6 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.domain)
-
-                implementation(libs.kotlin.stdlib)
-                // Add KMP dependencies here
             }
         }
 
@@ -83,9 +80,6 @@ kotlin {
 
         getByName("androidDeviceTest") {
             dependencies {
-                implementation(libs.androidx.runner)
-                implementation(libs.androidx.core)
-                implementation(libs.androidx.testExt.junit)
             }
         }
 

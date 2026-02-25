@@ -15,14 +15,14 @@ class CmpConventionPlugin : Plugin<Project> {
             pluginManager.apply("tabmates.convention.kmp")
 
             // Then Compose side.
-            pluginManager.apply(libs.findPlugin("composeMultiplatform").get().get().pluginId)
-            pluginManager.apply(libs.findPlugin("composeCompiler").get().get().pluginId)
+            pluginManager.apply(libs.findPlugin("compose-multiplatform").get().get().pluginId)
+            pluginManager.apply(libs.findPlugin("compose-compiler").get().get().pluginId)
 
             extensions.configure<KotlinMultiplatformExtension> {
                 configureAndroidLibrary(
                     namespace = defaultNamespace(),
-                    compileSdk = libs.findVersion("android-compileSdk").get().requiredVersion.toInt(),
-                    minSdk = libs.findVersion("android-minSdk").get().requiredVersion.toInt(),
+                    compileSdk = libs.findVersion("android-sdk-compile").get().requiredVersion.toInt(),
+                    minSdk = libs.findVersion("android-sdk-min").get().requiredVersion.toInt(),
                     enableAndroidResources = true
                 )
 
@@ -48,26 +48,26 @@ class CmpConventionPlugin : Plugin<Project> {
                         implementation(libs.findLibrary("compose-components-resources").get())
 
                         // Enable KMP @Preview for @Compose functions.
-                        implementation(libs.findLibrary("compose-uiToolingPreview").get())
+                        implementation(libs.findLibrary("compose-ui-tooling-preview").get())
 
                         // Coil compose image.
                         implementation(libs.findLibrary("coil-core").get())
                         implementation(libs.findLibrary("coil-compose").get())
-                        implementation(libs.findLibrary("coil-composeCore").get())
-                        implementation(libs.findLibrary("coil-networkKtor").get())
+                        implementation(libs.findLibrary("coil-compose-core").get())
+                        implementation(libs.findLibrary("coil-network-ktor").get())
                     }
 
                     // Preview / tooling for only Android.
                     androidMain.dependencies {
-                        implementation(libs.findLibrary("compose-uiTooling").get())
+                        implementation(libs.findLibrary("compose-ui-tooling").get())
 
                         // Ktor is needed for Coil.
-                        implementation(libs.findLibrary("ktor-androidClient").get())
+                        implementation(libs.findLibrary("ktor-client-android").get())
                     }
 
                     iosMain.dependencies {
                         // Ktor is needed for Coil.
-                        implementation(libs.findLibrary("ktor-darwinClient").get())
+                        implementation(libs.findLibrary("ktor-client-darwin").get())
                     }
 
                     // Add your common test dependencies.

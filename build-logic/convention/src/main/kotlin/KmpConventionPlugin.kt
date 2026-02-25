@@ -10,15 +10,15 @@ class KmpConventionPlugin : Plugin<Project> {
 
     override fun apply(target: Project) = with(target) {
         // Core KMP plugins
-        pluginManager.apply(libs.findPlugin("kotlinMultiplatform").get().get().pluginId)
-        pluginManager.apply(libs.findPlugin("androidKmpLibrary").get().get().pluginId)
+        pluginManager.apply(libs.findPlugin("kotlin-multiplatform").get().get().pluginId)
+        pluginManager.apply(libs.findPlugin("android-kmp-library").get().get().pluginId)
 
         extensions.configure<KotlinMultiplatformExtension> {
             // Android KMP Library extension defaults
             configureAndroidLibrary(
                 namespace = defaultNamespace(),
-                compileSdk = libs.findVersion("android-compileSdk").get().requiredVersion.toInt(),
-                minSdk = libs.findVersion("android-minSdk").get().requiredVersion.toInt(),
+                compileSdk = libs.findVersion("android-sdk-compile").get().requiredVersion.toInt(),
+                minSdk = libs.findVersion("android-sdk-min").get().requiredVersion.toInt(),
 
                 // This can be `true` for only Compose related convention plugins.
                 enableAndroidResources = false
