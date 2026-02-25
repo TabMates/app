@@ -1,3 +1,3 @@
 plugins {
-    alias(libs.plugins.tabmates.convention.cmp)
+    alias(libs.plugins.tabmates.convention.kmp.library)
 }

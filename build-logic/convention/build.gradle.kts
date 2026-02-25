@@ -27,13 +27,29 @@ kotlin {
 
 gradlePlugin {
     plugins {
-        register("kotlinMultiplatform"){
-            id = "tabmates.convention.kmp"
-            implementationClass = "KmpConventionPlugin"
+        register("androidApplication") {
+            id = "de.tabmates.convention.android.application"
+            implementationClass = "AndroidApplicationConventionPlugin"
         }
-        register("composeMultiplatform"){
-            id = "tabmates.convention.cmp"
-            implementationClass = "CmpConventionPlugin"
+        register("androidComposeApplication") {
+            id = "de.tabmates.convention.android.application.compose"
+            implementationClass = "AndroidApplicationComposeConventionPlugin"
+        }
+        register("cmpApplication") {
+            id = "de.tabmates.convention.cmp.application"
+            implementationClass = "CmpApplicationConventionPlugin"
+        }
+        register("kmpLibrary") {
+            id = "de.tabmates.convention.kmp.library"
+            implementationClass = "KmpLibraryConventionPlugin"
+        }
+        register("cmpLibrary") {
+            id = "de.tabmates.convention.cmp.library"
+            implementationClass = "CmpLibraryConventionPlugin"
+        }
+        register("cmpFeature") {
+            id = "de.tabmates.convention.cmp.feature"
+            implementationClass = "CmpFeatureConventionPlugin"
         }
     }
 }
