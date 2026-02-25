@@ -1,4 +1,4 @@
-package de.tabmates.buildlogic.convention
+package de.tabmates.convention
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalog

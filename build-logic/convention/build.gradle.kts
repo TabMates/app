@@ -1,8 +1,10 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     `kotlin-dsl`
 }
 
-group = "de.tabmates.buildlogic.convention"
+group = "de.tabmates.convention.buildlogic"
 
 dependencies {
     compileOnly(libs.android.gradlePlugin)
@@ -14,6 +16,12 @@ tasks {
     validatePlugins {
         enableStricterValidation = true
         failOnWarning = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_21
     }
 }
 

@@ -1,6 +1,6 @@
-import de.tabmates.buildlogic.convention.configureAndroidLibrary
-import de.tabmates.buildlogic.convention.defaultNamespace
-import de.tabmates.buildlogic.convention.libs
+import de.tabmates.convention.configureAndroidLibrary
+import de.tabmates.convention.defaultNamespace
+import de.tabmates.convention.libs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure

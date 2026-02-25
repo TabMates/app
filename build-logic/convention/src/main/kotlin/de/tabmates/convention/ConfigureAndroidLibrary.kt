@@ -1,4 +1,4 @@
-package de.tabmates.buildlogic.convention
+package de.tabmates.convention
 
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension
 import org.gradle.api.plugins.ExtensionAware
