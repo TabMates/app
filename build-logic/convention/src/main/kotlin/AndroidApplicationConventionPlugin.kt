@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApplicationExtension
 import de.tabmates.convention.configureKotlinAndroid
+import de.tabmates.convention.configureKtlint
 import de.tabmates.convention.findPluginId
 import de.tabmates.convention.libs
 import org.gradle.api.Plugin
@@ -34,6 +35,7 @@ class AndroidApplicationConventionPlugin: Plugin<Project> {
                 }
 
                 configureKotlinAndroid(this)
+                configureKtlint()
             }
         }
     }

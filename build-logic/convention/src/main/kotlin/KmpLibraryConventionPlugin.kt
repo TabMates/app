@@ -1,4 +1,5 @@
 import de.tabmates.convention.configureKotlinMultiplatform
+import de.tabmates.convention.configureKtlint
 import de.tabmates.convention.findPluginId
 import de.tabmates.convention.libs
 import org.gradle.api.Plugin
@@ -16,6 +17,7 @@ class KmpLibraryConventionPlugin: Plugin<Project> {
             }
 
             configureKotlinMultiplatform()
+            configureKtlint()
 
             dependencies {
                 "commonMainImplementation"(libs.findLibrary("kotlinx-serialization-json").get())

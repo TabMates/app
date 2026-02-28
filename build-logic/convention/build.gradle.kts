@@ -2,14 +2,16 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     `kotlin-dsl`
+    alias(libs.plugins.ktlint)
 }
 
 group = "de.tabmates.convention.buildlogic"
 
 dependencies {
     compileOnly(libs.android.gradle.plugin)
-    compileOnly(libs.kotlin.gradle.plugin)
     compileOnly(libs.compose.gradle.plugin)
+    compileOnly(libs.kotlin.gradle.plugin)
+    compileOnly(libs.ktlint.gradle.plugin)
 }
 
 tasks {
@@ -22,6 +24,16 @@ tasks {
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_21
+    }
+}
+
+ktlint {
+    version.set(libs.versions.ktlint.version.get())
+    android.set(false)
+    ignoreFailures.set(false)
+    reporters {
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
     }
 }
 
