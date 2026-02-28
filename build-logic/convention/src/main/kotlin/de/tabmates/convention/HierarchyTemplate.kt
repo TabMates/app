@@ -23,6 +23,11 @@ private val hierarchyTemplate = KotlinHierarchyTemplate {
             }
         }
 
+        group("web") {
+            withJs()
+            withWasmJs()
+        }
+
         group("native") {
             withNative()
 
