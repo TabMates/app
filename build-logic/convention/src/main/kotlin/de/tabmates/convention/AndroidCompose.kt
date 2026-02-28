@@ -4,9 +4,7 @@ import com.android.build.api.dsl.ApplicationExtension
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
 
-internal fun Project.configureAndroidCompose(
-    extension: ApplicationExtension
-) {
+internal fun Project.configureAndroidCompose(extension: ApplicationExtension) {
     with(extension) {
         buildFeatures {
             compose = true

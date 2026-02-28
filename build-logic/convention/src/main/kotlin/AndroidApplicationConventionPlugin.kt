@@ -7,7 +7,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 
-class AndroidApplicationConventionPlugin: Plugin<Project> {
+class AndroidApplicationConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             with(pluginManager) {
@@ -15,7 +15,12 @@ class AndroidApplicationConventionPlugin: Plugin<Project> {
             }
 
             extensions.configure<ApplicationExtension> {
-                defaultConfig.targetSdk = libs.findVersion("android-sdk-target").get().toString().toInt()
+                defaultConfig.targetSdk =
+                    libs
+                        .findVersion("android-sdk-target")
+                        .get()
+                        .toString()
+                        .toInt()
 
                 packaging {
                     resources {
@@ -29,7 +34,7 @@ class AndroidApplicationConventionPlugin: Plugin<Project> {
                         isShrinkResources = true
                         proguardFiles(
                             getDefaultProguardFile("proguard-android-optimize.txt"),
-                            "proguard-rules.pro"
+                            "proguard-rules.pro",
                         )
                     }
                 }

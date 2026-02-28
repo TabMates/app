@@ -13,7 +13,7 @@ internal fun Project.configureKotlinMultiplatform() {
         listOf(
             iosX64(),
             iosArm64(),
-            iosSimulatorArm64()
+            iosSimulatorArm64(),
         ).forEach { iosTarget ->
             iosTarget.binaries.framework {
                 baseName = this@configureKotlinMultiplatform.pathToFrameworkName()
@@ -21,11 +21,28 @@ internal fun Project.configureKotlinMultiplatform() {
         }
 
         extensions.configure<KotlinMultiplatformAndroidLibraryExtension> {
-            minSdk = libs.findVersion("android-sdk-min").get().toString().toInt()
+            minSdk =
+                libs
+                    .findVersion("android-sdk-min")
+                    .get()
+                    .toString()
+                    .toInt()
             compileSdk {
-                version = release(libs.findVersion("android-sdk-compile-major").get().toString().toInt()) {
-                    minorApiLevel = libs.findVersion("android-sdk-compile-minor").get().toString().toInt()
-                }
+                version =
+                    release(
+                        libs
+                            .findVersion("android-sdk-compile-major")
+                            .get()
+                            .toString()
+                            .toInt(),
+                    ) {
+                        minorApiLevel =
+                            libs
+                                .findVersion("android-sdk-compile-minor")
+                                .get()
+                                .toString()
+                                .toInt()
+                    }
             }
             namespace = pathToPackageName()
 

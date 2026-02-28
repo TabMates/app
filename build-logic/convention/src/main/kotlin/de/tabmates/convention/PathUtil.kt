@@ -4,9 +4,10 @@ import org.gradle.api.Project
 import java.util.Locale
 
 fun Project.pathToPackageName(): String {
-    val relativePackageName = path
-        .replace(':', '.')
-        .lowercase()
+    val relativePackageName =
+        path
+            .replace(':', '.')
+            .lowercase()
 
     return "de.tabmates$relativePackageName"
 }

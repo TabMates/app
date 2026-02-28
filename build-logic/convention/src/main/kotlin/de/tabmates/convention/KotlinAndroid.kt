@@ -7,17 +7,32 @@ import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-internal fun Project.configureKotlinAndroid(
-    extension: ApplicationExtension
-) {
+internal fun Project.configureKotlinAndroid(extension: ApplicationExtension) {
     with(extension) {
         compileSdk {
-            version = release(libs.findVersion("android-sdk-compile-major").get().toString().toInt()) {
-                minorApiLevel = libs.findVersion("android-sdk-compile-minor").get().toString().toInt()
-            }
+            version =
+                release(
+                    libs
+                        .findVersion("android-sdk-compile-major")
+                        .get()
+                        .toString()
+                        .toInt(),
+                ) {
+                    minorApiLevel =
+                        libs
+                            .findVersion("android-sdk-compile-minor")
+                            .get()
+                            .toString()
+                            .toInt()
+                }
         }
 
-        defaultConfig.minSdk = libs.findVersion("android-sdk-min").get().toString().toInt()
+        defaultConfig.minSdk =
+            libs
+                .findVersion("android-sdk-min")
+                .get()
+                .toString()
+                .toInt()
 
         compileOptions {
             sourceCompatibility = JavaVersion.VERSION_21
@@ -34,7 +49,7 @@ internal fun Project.configureKotlin() {
             jvmTarget.set(JvmTarget.JVM_21)
 
             freeCompilerArgs.add(
-                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
+                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
             )
         }
     }
