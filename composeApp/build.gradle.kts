@@ -17,5 +17,9 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.jetbrains.compose.ui)
         }
+
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
     }
 }
