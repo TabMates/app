@@ -1,4 +1,5 @@
 import de.tabmates.convention.applyHierarchyTemplate
+import de.tabmates.convention.configureCommonCompose
 import de.tabmates.convention.configureDesktopTarget
 import de.tabmates.convention.configureIosTargets
 import de.tabmates.convention.findPluginId
@@ -22,6 +23,7 @@ class CmpApplicationConventionPlugin : Plugin<Project> {
 
             configureIosTargets()
             configureDesktopTarget()
+            configureCommonCompose()
 
             extensions.configure<KotlinMultiplatformExtension> {
                 applyHierarchyTemplate()
