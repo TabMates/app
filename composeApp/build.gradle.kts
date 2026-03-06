@@ -3,7 +3,7 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "de.tabmates.composeApp"
         minSdk = libs.versions.android.sdk.min.get().toInt()
         compileSdk {
