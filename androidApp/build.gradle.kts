@@ -10,6 +10,10 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+
+    lint {
+        sarifReport = true
+    }
 }
 
 dependencies {
