@@ -9,23 +9,86 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build & Lint
+  code_formatting:
+    name: Check Code Format
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      actions: read
+      contents: read
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v6
 
-      - name: Set up JDK 21
+      - name: Set up Java 21 (Temurin)
         uses: actions/setup-java@v5
         with:
-          java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+          java-version: '21'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      # Unified Gradle caching: handles ~/.gradle/caches, ~/.gradle/wrapper,
+      # the local build cache, and the configuration cache in one step.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
-      - name: Run ktlint + build
-        run: ./gradlew build ktlintCheck :build-logic:convention:ktlintCheck
+      - name: Check Code Format
+        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck --no-daemon --stacktrace
+
+  build_android:
+    name: Build Android app and Desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: code_formatting
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # Unified Gradle caching — reads the cache written by the formatting job
+      # on PRs; pushes an updated cache on main.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Run Build, Lint and Tests
+        run: |
+          set -o pipefail
+
+          EXPECTED_COUNT=12
+
+          ./gradlew build --no-daemon --stacktrace 2>&1 | tee build_log.txt
+
+          # Count the number of compile warnings (lines starting with "w:").
+          WARNING_COUNT=$(grep -c "w: " build_log.txt || true)
+
+          # Check if the count exceeds the threshold
+          echo "Found $WARNING_COUNT warnings. Expected exactly $EXPECTED_COUNT."
+          if [ $WARNING_COUNT -ne $EXPECTED_COUNT ]; then
+            echo "❌ Error: The number of warnings ($WARNING_COUNT) does not match the expected count of $EXPECTED_COUNT."
+            # Exit with a non-zero code to fail the workflow.
+            exit 1
+          else
+            echo "✅ The number of warnings is exactly as expected."
+          fi
+
+      - name: Upload Lint SARIF report
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: androidApp/build/reports/lint-results-debug.sarif
+          category: lint
