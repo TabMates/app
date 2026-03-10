@@ -12,6 +12,8 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.domain)
+
+                implementation(libs.bundles.ktor.common)
             }
         }
 
@@ -23,6 +25,7 @@ kotlin {
 
         androidMain {
             dependencies {
+                implementation(libs.ktor.client.okhttp)
             }
         }
 
@@ -31,8 +34,15 @@ kotlin {
             }
         }
 
-        iosMain {
+        nativeMain {
             dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
+        }
+
+        webMain {
+            dependencies {
+                implementation(libs.ktor.client.js)
             }
         }
     }
