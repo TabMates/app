@@ -13,9 +13,15 @@ internal fun Project.configureKtlint() {
         version.set(libs.findVersion("ktlint-version").get().toString())
         android.set(false)
         ignoreFailures.set(false)
+        enableExperimentalRules.set(true)
         reporters {
             reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
             reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
+        }
+        filter {
+            exclude { element ->
+                element.file.path.contains("/build/generated/")
+            }
         }
     }
 }
