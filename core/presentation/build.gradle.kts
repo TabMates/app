@@ -12,6 +12,9 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.domain)
+
+                implementation(libs.jetbrains.compose.components.resources)
+                implementation(libs.jetbrains.lifecycle.compose)
             }
         }
 
