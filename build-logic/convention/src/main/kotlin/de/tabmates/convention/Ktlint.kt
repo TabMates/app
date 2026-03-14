@@ -18,10 +18,5 @@ internal fun Project.configureKtlint() {
             reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
             reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
         }
-        filter {
-            exclude { element ->
-                element.file.path.contains("/build/generated/")
-            }
-        }
     }
 }

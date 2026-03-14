@@ -1,9 +1,11 @@
+import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension
+
 plugins {
     alias(libs.plugins.tabmates.convention.cmp.application)
 }
 
 kotlin {
-    android {
+    extensions.configure<KotlinMultiplatformAndroidLibraryExtension> {
         namespace = "de.tabmates.composeApp"
         minSdk = libs.versions.android.sdk.min.get().toInt()
         compileSdk {

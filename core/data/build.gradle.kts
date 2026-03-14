@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.tabmates.convention.kmp.library)
+    alias(libs.plugins.tabmates.convention.buildkonfig)
 }
 
 kotlin {
@@ -14,6 +15,7 @@ kotlin {
                 implementation(projects.core.domain)
 
                 implementation(libs.bundles.ktor.common)
+                implementation(libs.kermit)
             }
         }
 
