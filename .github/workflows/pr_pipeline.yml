@@ -32,8 +32,6 @@ jobs:
       # the local build cache, and the configuration cache in one step.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
-        with:
-          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Check Code Format
         run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck --no-daemon --stacktrace
