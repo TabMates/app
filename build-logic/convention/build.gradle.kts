@@ -12,6 +12,8 @@ dependencies {
     compileOnly(libs.compose.gradle.plugin)
     compileOnly(libs.kotlin.gradle.plugin)
     compileOnly(libs.ktlint.gradle.plugin)
+    compileOnly(libs.ksp.gradle.plugin)
+    compileOnly(libs.androidx.room3.gradle.plugin)
     implementation(libs.buildkonfig.gradle.plugin)
     implementation(libs.buildkonfig.compiler)
 }
@@ -68,6 +70,10 @@ gradlePlugin {
         register("buildKonfig") {
             id = "de.tabmates.convention.buildkonfig"
             implementationClass = "BuildKonfigConventionPlugin"
+        }
+        register("room") {
+            id = "de.tabmates.convention.room"
+            implementationClass = "RoomConventionPlugin"
         }
     }
 }

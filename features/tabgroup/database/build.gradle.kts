@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.tabmates.convention.kmp.library)
+    alias(libs.plugins.tabmates.convention.room)
 }
 
 kotlin {

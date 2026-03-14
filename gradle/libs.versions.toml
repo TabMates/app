@@ -15,12 +15,14 @@ compose-bom = "2026.03.00"
 compose-lifecycle = "2.9.6"
 compose-multiplatform = "1.10.2"
 jetbrains-core-bundle = "1.0.1"
+room3 = "3.0.0-alpha01"
 jetbrains-savedstate = "1.4.0"
 junit = "4.13.2"
 kermit = "2.1.0"
 koin = "4.1.1"
 kotlin = "2.3.10"
 kotlinx-serialization = "1.10.0"
+ksp = "2.3.6"
 ktlint = "14.2.0"
 ktlint-version = "1.8.0"
 ktor = "3.4.1"
@@ -65,10 +67,12 @@ ktlint-gradle-plugin = { module = "org.jlleitschuh.gradle.ktlint:org.jlleitschuh
 
 # Build logic gradle plugins.
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+androidx-room3-gradle-plugin = { module = "androidx.room3:androidx.room3.gradle.plugin", version.ref = "room3" }
 buildkonfig-compiler = { group = "com.codingfeline.buildkonfig", name = "buildkonfig-compiler", version.ref = "buildkonfig" }
 buildkonfig-gradle-plugin = { group = "com.codingfeline.buildkonfig", name = "buildkonfig-gradle-plugin", version.ref = "buildkonfig" }
 compose-gradle-plugin = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose-multiplatform" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+ksp-gradle-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 
 # Coil.
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3" }
@@ -96,6 +100,10 @@ koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", ver
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-core-viewmodel = { group = "io.insert-koin", name = "koin-core-viewmodel", version.ref = "koin" }
 
+# Room
+androidx-room3-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room3" }
+androidx-room3-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room3" }
+
 # Logging
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 
@@ -110,7 +118,9 @@ compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-m
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+room3 = { id = "androidx.room3", version.ref = "room3" }
 
 # convention plugins.
 tabmates-convention-android-application = { id = "de.tabmates.convention.android.application" }
@@ -120,6 +130,7 @@ tabmates-convention-cmp-application = { id = "de.tabmates.convention.cmp.applica
 tabmates-convention-cmp-feature = { id = "de.tabmates.convention.cmp.feature" }
 tabmates-convention-cmp-library = { id = "de.tabmates.convention.cmp.library" }
 tabmates-convention-kmp-library = { id = "de.tabmates.convention.kmp.library" }
+tabmates-convention-room = { id = "de.tabmates.convention.room" }
 
 [bundles]
 koin-common = [
