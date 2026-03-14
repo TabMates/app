@@ -33,6 +33,12 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                 packageName = target.pathToPackageName()
                 defaultConfigs {
                     buildConfigField(FieldSpec.Type.STRING, "API_KEY", requireProperty("API_KEY"))
+                    buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "false")
+                }
+                targetConfigs {
+                    create("debug") {
+                        buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "true")
+                    }
                 }
             }
         }
