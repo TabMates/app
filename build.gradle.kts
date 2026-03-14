@@ -11,4 +11,6 @@ plugins {
     alias(libs.plugins.android.kmp.library) apply false
     alias(libs.plugins.android.lint) apply false
     alias(libs.plugins.ktlint) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.room3) apply false
 }
