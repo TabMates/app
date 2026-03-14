@@ -12,6 +12,8 @@ dependencies {
     compileOnly(libs.compose.gradle.plugin)
     compileOnly(libs.kotlin.gradle.plugin)
     compileOnly(libs.ktlint.gradle.plugin)
+    implementation(libs.buildkonfig.gradle.plugin)
+    implementation(libs.buildkonfig.compiler)
 }
 
 tasks {
@@ -62,6 +64,10 @@ gradlePlugin {
         register("cmpFeature") {
             id = "de.tabmates.convention.cmp.feature"
             implementationClass = "CmpFeatureConventionPlugin"
+        }
+        register("buildKonfig") {
+            id = "de.tabmates.convention.buildkonfig"
+            implementationClass = "BuildKonfigConventionPlugin"
         }
     }
 }

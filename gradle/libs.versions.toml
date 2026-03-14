@@ -9,6 +9,7 @@ androidx-appcompat = "1.7.1"
 androidx-core = "1.18.0"
 androidx-espresso = "3.7.0"
 androidx-testExt = "1.3.0"
+buildkonfig = "0.17.1"
 coil3 = "3.4.0"
 compose-bom = "2026.03.00"
 compose-lifecycle = "2.9.6"
@@ -63,6 +64,8 @@ ktlint-gradle-plugin = { module = "org.jlleitschuh.gradle.ktlint:org.jlleitschuh
 
 # Build logic gradle plugins.
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+buildkonfig-compiler = { group = "com.codingfeline.buildkonfig", name = "buildkonfig-compiler", version.ref = "buildkonfig" }
+buildkonfig-gradle-plugin = { group = "com.codingfeline.buildkonfig", name = "buildkonfig-gradle-plugin", version.ref = "buildkonfig" }
 compose-gradle-plugin = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose-multiplatform" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 
@@ -97,6 +100,7 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 android-lint = { id = "com.android.lint", version.ref = "agp" }
+buildkonfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildkonfig" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
@@ -107,6 +111,7 @@ ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 # convention plugins.
 tabmates-convention-android-application = { id = "de.tabmates.convention.android.application" }
 tabmates-convention-android-application-compose = { id = "de.tabmates.convention.android.application.compose" }
+tabmates-convention-buildkonfig = { id = "de.tabmates.convention.buildkonfig" }
 tabmates-convention-cmp-application = { id = "de.tabmates.convention.cmp.application" }
 tabmates-convention-cmp-feature = { id = "de.tabmates.convention.cmp.feature" }
 tabmates-convention-cmp-library = { id = "de.tabmates.convention.cmp.library" }

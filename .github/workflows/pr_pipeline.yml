@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+env:
+  API_KEY: ${{ secrets.API_KEY || 'dev-api-key' }}
+
 jobs:
   code_formatting:
     name: Check Code Format
