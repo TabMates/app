@@ -52,11 +52,6 @@ internal fun Project.configureKotlinMultiplatform() {
             }
         }
 
-        js {
-            browser()
-            binaries.executable()
-        }
-
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
             browser()
