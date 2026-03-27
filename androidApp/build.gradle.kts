@@ -13,6 +13,14 @@ android {
 
     lint {
         sarifReport = true
+        if (System.getenv("CI") != null) {
+            disable +=
+                setOf(
+                    "GradleDependency",
+                    "GradlePluginVersion",
+                    "AndroidGradlePluginVersion",
+                )
+        }
     }
 }
 
