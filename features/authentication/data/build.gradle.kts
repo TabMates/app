@@ -14,6 +14,9 @@ kotlin {
                 implementation(projects.core.data)
                 implementation(projects.core.domain)
                 implementation(projects.features.authentication.domain)
+
+                implementation(libs.bundles.ktor.common)
+                implementation(libs.koin.core)
             }
         }
 
@@ -25,6 +28,7 @@ kotlin {
 
         androidMain {
             dependencies {
+                implementation(libs.ktor.client.okhttp)
             }
         }
 
@@ -33,8 +37,15 @@ kotlin {
             }
         }
 
-        iosMain {
+        nativeMain {
             dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
+        }
+
+        webMain {
+            dependencies {
+                implementation(libs.ktor.client.js)
             }
         }
     }
