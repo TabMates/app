@@ -1,4 +1,4 @@
-package de.tabmates.features.authentication.data.dto
+package de.tabmates.core.data.dto
 
 import kotlinx.serialization.Serializable
 
