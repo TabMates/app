@@ -1,4 +1,4 @@
-package de.tabmates.features.authentication.domain
+package de.tabmates.core.domain.auth
 
 enum class UserType {
     REGISTERED,

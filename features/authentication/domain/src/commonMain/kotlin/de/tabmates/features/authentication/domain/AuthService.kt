@@ -1,5 +1,6 @@
 package de.tabmates.features.authentication.domain
 
+import de.tabmates.core.domain.auth.AuthInfo
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result

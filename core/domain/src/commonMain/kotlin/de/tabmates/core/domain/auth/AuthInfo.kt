@@ -1,4 +1,4 @@
-package de.tabmates.features.authentication.domain
+package de.tabmates.core.domain.auth
 
 data class AuthInfo(
     val accessToken: String,
