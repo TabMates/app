@@ -16,6 +16,7 @@ kotlin {
 
                 implementation(libs.bundles.ktor.common)
                 implementation(libs.kermit)
+                implementation(libs.koin.core)
             }
         }
 
@@ -33,6 +34,12 @@ kotlin {
 
         getByName("androidDeviceTest") {
             dependencies {
+            }
+        }
+
+        desktopMain {
+            dependencies {
+                implementation(libs.ktor.client.apache5)
             }
         }
 
