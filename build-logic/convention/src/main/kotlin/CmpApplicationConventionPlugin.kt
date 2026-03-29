@@ -8,6 +8,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 class CmpApplicationConventionPlugin : Plugin<Project> {
@@ -26,6 +27,11 @@ class CmpApplicationConventionPlugin : Plugin<Project> {
             configureCommonCompose()
 
             extensions.configure<KotlinMultiplatformExtension> {
+                @OptIn(ExperimentalWasmDsl::class)
+                wasmJs {
+                    browser()
+                    binaries.executable()
+                }
                 applyHierarchyTemplate()
             }
 

@@ -20,6 +20,7 @@ internal fun Project.configureKotlinMultiplatform() {
         }
 
         extensions.configure<KotlinMultiplatformAndroidLibraryExtension> {
+            androidResources { enable = true }
             minSdk =
                 libs
                     .findVersion("android-sdk-min")
@@ -55,7 +56,6 @@ internal fun Project.configureKotlinMultiplatform() {
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
             browser()
-            binaries.executable()
         }
 
         applyHierarchyTemplate()
