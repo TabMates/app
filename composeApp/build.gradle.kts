@@ -17,7 +17,14 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(projects.core.presentation)
+            implementation(projects.core.designsystem)
+            implementation(projects.features.authentication.presentation)
+            implementation(libs.jetbrains.compose.components.resources)
             implementation(libs.jetbrains.compose.ui)
+        }
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
         }
 
         commonTest.dependencies {
