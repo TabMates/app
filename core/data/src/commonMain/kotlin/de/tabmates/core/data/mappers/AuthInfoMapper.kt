@@ -1,11 +1,11 @@
-package de.tabmates.features.authentication.data.mappers
+package de.tabmates.core.data.mappers
 
-import de.tabmates.features.authentication.data.dto.AuthInfoSerializable
-import de.tabmates.features.authentication.data.dto.UserSerializable
-import de.tabmates.features.authentication.data.dto.UserTypeSerializable
-import de.tabmates.features.authentication.domain.AuthInfo
-import de.tabmates.features.authentication.domain.User
-import de.tabmates.features.authentication.domain.UserType
+import de.tabmates.core.data.dto.AuthInfoSerializable
+import de.tabmates.core.data.dto.UserSerializable
+import de.tabmates.core.data.dto.UserTypeSerializable
+import de.tabmates.core.domain.auth.AuthInfo
+import de.tabmates.core.domain.auth.User
+import de.tabmates.core.domain.auth.UserType
 
 fun AuthInfoSerializable.toDomain(): AuthInfo {
     return AuthInfo(

@@ -17,6 +17,7 @@ kotlin {
                 implementation(libs.bundles.ktor.common)
                 implementation(libs.kermit)
                 implementation(libs.koin.core)
+                implementation(libs.ksafe)
             }
         }
 

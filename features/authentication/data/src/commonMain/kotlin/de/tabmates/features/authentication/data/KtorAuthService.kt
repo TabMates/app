@@ -1,19 +1,19 @@
 package de.tabmates.features.authentication.data
 
+import de.tabmates.core.data.dto.AuthInfoSerializable
+import de.tabmates.core.data.mappers.toDomain
 import de.tabmates.core.data.networking.get
 import de.tabmates.core.data.networking.post
+import de.tabmates.core.domain.auth.AuthInfo
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.core.domain.util.map
-import de.tabmates.features.authentication.data.dto.AuthInfoSerializable
 import de.tabmates.features.authentication.data.dto.requests.EmailRequest
 import de.tabmates.features.authentication.data.dto.requests.LoginAnonymousRequest
 import de.tabmates.features.authentication.data.dto.requests.LoginRequest
 import de.tabmates.features.authentication.data.dto.requests.RegisterAnonymousRequest
 import de.tabmates.features.authentication.data.dto.requests.RegisterRequest
-import de.tabmates.features.authentication.data.mappers.toDomain
-import de.tabmates.features.authentication.domain.AuthInfo
 import de.tabmates.features.authentication.domain.AuthService
 import io.ktor.client.HttpClient
 

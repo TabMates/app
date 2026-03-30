@@ -25,7 +25,6 @@ private val hierarchyTemplate =
             }
 
             group("web") {
-                withJs()
                 withWasmJs()
             }
 

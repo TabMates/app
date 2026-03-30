@@ -25,7 +25,6 @@ class RoomConventionPlugin : Plugin<Project> {
                 "kspIosArm64"(libs.findLibrary("androidx-room3-compiler").get())
                 "kspDesktop"(libs.findLibrary("androidx-room3-compiler").get())
                 "kspWasmJs"(libs.findLibrary("androidx-room3-compiler").get())
-                "kspJs"(libs.findLibrary("androidx-room3-compiler").get())
             }
         }
     }
