@@ -1,11 +1,70 @@
 package de.tabmates.core.designsystem.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 
-val lightColorScheme =
+private val LocalExtendedColors = staticCompositionLocalOf { LightExtendedColors }
+
+val ColorScheme.extended: ExtendedColors
+    @ReadOnlyComposable
+    @Composable
+    get() = LocalExtendedColors.current
+
+@Immutable
+data class ExtendedColors(
+    val positive: Color,
+    val positiveContainer: Color,
+    val onPositiveContainer: Color,
+    val negative: Color,
+    val negativeContainer: Color,
+    val onNegativeContainer: Color,
+    val settled: Color,
+    val settledContainer: Color,
+    val onSettledContainer: Color,
+    val deleted: Color,
+    val deletedContainer: Color,
+)
+
+private val LightExtendedColors =
+    ExtendedColors(
+        positive = extended_light_positive,
+        positiveContainer = extended_light_positiveContainer,
+        onPositiveContainer = extended_light_onPositiveContainer,
+        negative = extended_light_negative,
+        negativeContainer = extended_light_negativeContainer,
+        onNegativeContainer = extended_light_onNegativeContainer,
+        settled = extended_light_settled,
+        settledContainer = extended_light_settledContainer,
+        onSettledContainer = extended_light_onSettledContainer,
+        deleted = extended_light_deleted,
+        deletedContainer = extended_light_deletedContainer,
+    )
+
+private val DarkExtendedColors =
+    ExtendedColors(
+        positive = extended_dark_positive,
+        positiveContainer = extended_dark_positiveContainer,
+        onPositiveContainer = extended_dark_onPositiveContainer,
+        negative = extended_dark_negative,
+        negativeContainer = extended_dark_negativeContainer,
+        onNegativeContainer = extended_dark_onNegativeContainer,
+        settled = extended_dark_settled,
+        settledContainer = extended_dark_settledContainer,
+        onSettledContainer = extended_dark_onSettledContainer,
+        deleted = extended_dark_deleted,
+        deletedContainer = extended_dark_deletedContainer,
+    )
+
+private val lightColorScheme =
     lightColorScheme(
         primary = md_theme_light_primary,
         onPrimary = md_theme_light_onPrimary,
@@ -38,7 +97,7 @@ val lightColorScheme =
         scrim = md_theme_light_scrim,
     )
 
-val darkColorScheme =
+private val darkColorScheme =
     darkColorScheme(
         primary = md_theme_dark_primary,
         onPrimary = md_theme_dark_onPrimary,
@@ -72,8 +131,19 @@ val darkColorScheme =
     )
 
 @Composable
-expect fun TabMatesTheme(
+fun TabMatesTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit,
-)
+) {
+    val colorScheme = if (darkTheme) darkColorScheme else lightColorScheme
+    val extendedScheme = if (darkTheme) DarkExtendedColors else LightExtendedColors
+
+    CompositionLocalProvider(LocalExtendedColors provides extendedScheme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            shapes = Shapes,
+            content = content,
+        )
+    }
+}
