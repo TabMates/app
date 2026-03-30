@@ -16,6 +16,6 @@ val coreDataModule =
 
         singleOf(::KermitLogger) bind TabMatesLogger::class
         single {
-            HttpClientFactory(get()).create(get())
+            HttpClientFactory(get(), get()).create(get())
         }
     }
