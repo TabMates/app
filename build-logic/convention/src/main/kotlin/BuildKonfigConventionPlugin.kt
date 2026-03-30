@@ -33,6 +33,7 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                 packageName = target.pathToPackageName()
                 defaultConfigs {
                     buildConfigField(FieldSpec.Type.STRING, "API_KEY", requireProperty("API_KEY"))
+                    buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", requireProperty("BASE_URL_HTTP"))
                     buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "false")
                 }
                 targetConfigs {

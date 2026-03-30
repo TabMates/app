@@ -1,5 +1,6 @@
 package de.tabmates.core.data.networking
 
+import de.tabmates.core.data.BuildKonfig
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.Result
 import io.ktor.client.HttpClient
@@ -152,8 +153,8 @@ suspend inline fun <reified T> responseToResult(response: HttpResponse): Result<
 
 fun constructRoute(route: String): String {
     return when {
-        route.contains(UrlConstants.BASE_URL_HTTP) -> route
-        route.startsWith("/") -> "${UrlConstants.BASE_URL_HTTP}$route"
-        else -> "${UrlConstants.BASE_URL_HTTP}/$route"
+        route.contains(BuildKonfig.BASE_URL_HTTP) -> route
+        route.startsWith("/") -> "${BuildKonfig.BASE_URL_HTTP}$route"
+        else -> "${BuildKonfig.BASE_URL_HTTP}/$route"
     }
 }
