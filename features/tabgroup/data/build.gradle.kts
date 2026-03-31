@@ -15,6 +15,9 @@ kotlin {
                 implementation(projects.core.domain)
                 implementation(projects.features.tabgroup.database)
                 implementation(projects.features.tabgroup.domain)
+
+                implementation(libs.bundles.ktor.common)
+                implementation(libs.koin.core)
             }
         }
 
