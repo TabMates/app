@@ -17,9 +17,18 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.core.presentation)
+            implementation(projects.core.data)
             implementation(projects.core.designsystem)
+            implementation(projects.core.domain)
+            implementation(projects.core.presentation)
+            implementation(projects.features.authentication.data)
+            implementation(projects.features.authentication.domain)
             implementation(projects.features.authentication.presentation)
+            implementation(projects.features.tabgroup.data)
+            implementation(projects.features.tabgroup.database)
+            implementation(projects.features.tabgroup.domain)
+            implementation(projects.features.tabgroup.presentation)
+
             implementation(libs.jetbrains.compose.components.resources)
             implementation(libs.jetbrains.compose.ui)
         }
