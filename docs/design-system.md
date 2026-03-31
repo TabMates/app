@@ -3,8 +3,8 @@
 > **Purpose:** Complete design token specification for TabMates.
 > Derived from the [Mockup Requirements](./mockup-requirements.md).
 >
-> **Last updated:** 2026-03-25
-> **Status:** Draft — Awaiting review
+> **Last updated:** 2026-03-31
+> **Status:** Draft — Reviewed (accessibility fixes applied)
 
 ---
 
@@ -78,6 +78,13 @@ These are the three source hues from which the full tonal palettes are derived:
 | `onSurfaceVariant` | `#53433D` | 83, 67, 61 | Secondary text on surface variant |
 | `outline` | `#85736C` | 133, 115, 108 | Borders, dividers |
 | `outlineVariant` | `#D8C2BA` | 216, 194, 186 | Subtle dividers |
+| `surfaceDim` | `#E3D7D3` | 227, 215, 211 | Dimmed surface (e.g., scrim-adjacent) |
+| `surfaceBright` | `#FFFBFF` | 255, 251, 255 | Brightest surface level |
+| `surfaceContainerLowest` | `#FFFFFF` | 255, 255, 255 | Lowest-emphasis container |
+| `surfaceContainerLow` | `#F9EDE9` | 249, 237, 233 | Low-emphasis container |
+| `surfaceContainer` | `#F3E7E3` | 243, 231, 227 | Default container (nav bar, bottom sheets) |
+| `surfaceContainerHigh` | `#EDE1DD` | 237, 225, 221 | High-emphasis container (search bar, dialogs) |
+| `surfaceContainerHighest` | `#E7DBD7` | 231, 219, 215 | Highest-emphasis container (text fields) |
 | `inverseSurface` | `#362F2C` | 54, 47, 44 | Snackbar background |
 | `inverseOnSurface` | `#FBEEEA` | 251, 238, 234 | Snackbar text |
 | `inversePrimary` | `#FFB59C` | 255, 181, 156 | Primary in inverse context |
@@ -112,6 +119,13 @@ These are the three source hues from which the full tonal palettes are derived:
 | `onSurfaceVariant` | `#D8C2BA` | 216, 194, 186 | Secondary text |
 | `outline` | `#A08D85` | 160, 141, 133 | Borders, dividers |
 | `outlineVariant` | `#53433D` | 83, 67, 61 | Subtle dividers |
+| `surfaceDim` | `#201A17` | 32, 26, 23 | Dimmed surface |
+| `surfaceBright` | `#483F3B` | 72, 63, 59 | Brightest surface level |
+| `surfaceContainerLowest` | `#1B1512` | 27, 21, 18 | Lowest-emphasis container |
+| `surfaceContainerLow` | `#292320` | 41, 35, 32 | Low-emphasis container |
+| `surfaceContainer` | `#2D2724` | 45, 39, 36 | Default container (nav bar, bottom sheets) |
+| `surfaceContainerHigh` | `#38322F` | 56, 50, 47 | High-emphasis container (search bar, dialogs) |
+| `surfaceContainerHighest` | `#433D39` | 67, 61, 57 | Highest-emphasis container (text fields) |
 | `inverseSurface` | `#ECE0DC` | 236, 224, 220 | Snackbar background |
 | `inverseOnSurface` | `#362F2C` | 54, 47, 44 | Snackbar text |
 | `inversePrimary` | `#B05530` | 176, 85, 48 | Primary in inverse context |
@@ -120,7 +134,7 @@ These are the three source hues from which the full tonal palettes are derived:
 
 ### 2.3 Semantic / Contextual Colors
 
-These are **app-specific** tokens layered on top of M3 for expense-related UI:
+These are **app-specific** tokens layered on top of M3 for expense-related UI and text hierarchy:
 
 #### Light Mode
 
@@ -132,11 +146,16 @@ These are **app-specific** tokens layered on top of M3 for expense-related UI:
 | `negative` | `#C62828` | 198, 40, 40 | "You owe" text, negative balance |
 | `negativeContainer` | `#FFCDD2` | 255, 205, 210 | "You owe" card/chip fill |
 | `onNegativeContainer` | `#B71C1C` | 183, 28, 28 | Text on negative container |
-| `settled` | `#78909C` | 120, 144, 156 | Settled debts, neutral state |
-| `settledContainer` | `#E0E7EA` | 224, 231, 234 | Settled card/chip fill |
-| `onSettledContainer` | `#455A64` | 69, 90, 100 | Text on settled container |
-| `deleted` | `#9E9E9E` | 158, 158, 158 | Deleted entries (text at 60% opacity) |
-| `deletedContainer` | `#F5F5F5` | 245, 245, 245 | Deleted entry background |
+| `settled` | `#78685F` | 120, 104, 95 | Settled debts, neutral state (warm taupe) |
+| `settledContainer` | `#EDE4E0` | 237, 228, 224 | Settled card/chip fill |
+| `onSettledContainer` | `#5C4F48` | 92, 79, 72 | Text on settled container |
+| `deleted` | `#6B6B6B` | 107, 107, 107 | Deleted entries (base color; rendered at 60% opacity with strikethrough) |
+| `deletedContainer` | `#F5F0EE` | 245, 240, 238 | Deleted entry background (warm-tinted) |
+| `textSecondary` | `#53433D` | 83, 67, 61 | Subtitles, descriptions, secondary body copy (≈ 9.4:1) |
+| `textTertiary` | `#85736C` | 133, 115, 108 | Timestamps, captions, metadata (≈ 4.6:1) |
+| `textPlaceholder` | `#A08D85` | 160, 141, 133 | Placeholder / hint text in inputs (≈ 3.1:1, non-essential) |
+| `textDisabled` | `#C4B5AD` | 196, 181, 173 | Disabled text (≈ 2.0:1, WCAG exempt for inactive UI) |
+| `secondaryFill` | `#F0E0D9` | 240, 224, 217 | Secondary card fill, grouped section background |
 
 #### Dark Mode
 
@@ -148,11 +167,22 @@ These are **app-specific** tokens layered on top of M3 for expense-related UI:
 | `negative` | `#EF9A9A` | 239, 154, 154 | "You owe" text |
 | `negativeContainer` | `#B71C1C` | 183, 28, 28 | "You owe" card/chip fill |
 | `onNegativeContainer` | `#FFCDD2` | 255, 205, 210 | Text on negative container |
-| `settled` | `#B0BEC5` | 176, 190, 197 | Settled debts |
-| `settledContainer` | `#37474F` | 55, 71, 79 | Settled card/chip fill |
-| `onSettledContainer` | `#CFD8DC` | 207, 216, 220 | Text on settled container |
-| `deleted` | `#757575` | 117, 117, 117 | Deleted entries |
-| `deletedContainer` | `#303030` | 48, 48, 48 | Deleted entry background |
+| `settled` | `#C4B5AD` | 196, 181, 173 | Settled debts (warm silver) |
+| `settledContainer` | `#4A3F39` | 74, 63, 57 | Settled card/chip fill |
+| `onSettledContainer` | `#E3D8D2` | 227, 216, 210 | Text on settled container |
+| `deleted` | `#9E9E9E` | 158, 158, 158 | Deleted entries (base color; rendered at 60% opacity with strikethrough) |
+| `deletedContainer` | `#3A3330` | 58, 51, 48 | Deleted entry background (warm-tinted) |
+| `textSecondary` | `#D8C2BA` | 216, 194, 186 | Subtitles, descriptions, secondary body copy (≈ 9.0:1) |
+| `textTertiary` | `#A08D85` | 160, 141, 133 | Timestamps, captions, metadata (≈ 4.8:1) |
+| `textPlaceholder` | `#85736C` | 133, 115, 108 | Placeholder / hint text in inputs (≈ 3.4:1, non-essential) |
+| `textDisabled` | `#5C4F48` | 92, 79, 72 | Disabled text (≈ 1.9:1, WCAG exempt for inactive UI) |
+| `secondaryFill` | `#352D29` | 53, 45, 41 | Secondary card fill, grouped section background |
+
+> **Text hierarchy (light):** `onSurface` 15.8:1 → `textSecondary` 9.4:1 → `textTertiary` 4.6:1 → `textPlaceholder` 3.1:1 → `textDisabled` 2.0:1
+>
+> **Text hierarchy (dark):** `onSurface` 12.4:1 → `textSecondary` 9.0:1 → `textTertiary` 4.8:1 → `textPlaceholder` 3.4:1 → `textDisabled` 1.9:1
+>
+> `textPlaceholder` deliberately falls below 4.5:1 — placeholder text is instructional and non-essential per WCAG. `textDisabled` is exempt as it represents inactive UI controls.
 
 ### 2.4 Color Usage Guidelines
 
@@ -166,6 +196,29 @@ These are **app-specific** tokens layered on top of M3 for expense-related UI:
 | **Group card** | `surface` bg, `onSurface` title, `onSurfaceVariant` subtitle | Same tokens, dark values |
 | **Active nav item** | `primaryContainer` indicator + `onPrimaryContainer` icon | Same tokens, dark values |
 | **Guest banner** | `tertiaryContainer` bg + `onTertiaryContainer` text | Same tokens, dark values |
+
+### 2.5 Accessibility Notes
+
+| Pair | Light Contrast | Dark Contrast | Verdict |
+|---|---|---|---|
+| `onPrimary` on `primary` | ≈ 5.0:1 | ≈ 5.3:1 | ✅ AA |
+| `onPrimaryContainer` on `primaryContainer` | ≈ 17.5:1 | ≈ 7.1:1 | ✅ AA |
+| `onSecondaryContainer` on `secondaryContainer` | ≈ 14.8:1 | ≈ 8.6:1 | ✅ AA |
+| `onTertiaryContainer` on `tertiaryContainer` | ≈ 11.9:1 | ≈ 6.5:1 | ✅ AA |
+| `onSurface` on `surface` | ≈ 15.8:1 | ≈ 12.4:1 | ✅ AA |
+| `onSurfaceVariant` on `surfaceVariant` | ≈ 5.6:1 | ≈ 5.6:1 | ✅ AA |
+| `positive` on `background` | ≈ 5.3:1 | ≈ 8.3:1 | ✅ AA |
+| `negative` on `background` | ≈ 5.7:1 | ≈ 7.2:1 | ✅ AA |
+| `onNegativeContainer` on `negativeContainer` | ≈ 4.7:1 | ≈ 4.7:1 | ✅ AA (borderline) |
+| `settled` on `background` | ≈ 5.4:1 | ≈ 8.0:1 | ✅ AA |
+| `onSettledContainer` on `settledContainer` | ≈ 6.4:1 | ≈ 6.8:1 | ✅ AA |
+| `deleted` (base, full opacity) on `background` | ≈ 5.3:1 | ≈ 5.2:1 | ✅ AA at full opacity |
+| `textSecondary` on `surface` | ≈ 9.4:1 | ≈ 9.0:1 | ✅ AA |
+| `textTertiary` on `surface` | ≈ 4.6:1 | ≈ 4.8:1 | ✅ AA |
+| `textPlaceholder` on `surface` | ≈ 3.1:1 | ≈ 3.4:1 | ⚠️ Non-essential hint text |
+| `textDisabled` on `surface` | ≈ 2.0:1 | ≈ 1.9:1 | ℹ️ WCAG exempt (inactive UI) |
+
+> **Note on `deleted` at 60% opacity:** The 60% opacity treatment is intentionally de-emphasized per design (WCAG exempts "incidental" or decorative text). The strikethrough styling and "Deleted" label/badge provide redundant non-color cues. The base color passes AA at full opacity for assistive technology and high-contrast modes.
 
 ---
 
@@ -435,7 +488,7 @@ OUTLINE           ██████  #85736C   Warm Gray
 
 POSITIVE          ██████  #2E7D32   Money Green
 NEGATIVE          ██████  #C62828   Owe Red
-SETTLED           ██████  #78909C   Cool Gray
+SETTLED           ██████  #78685F   Warm Taupe
 ```
 
 ### Dark Mode Swatches
@@ -463,7 +516,7 @@ OUTLINE           ██████  #A08D85   Taupe
 
 POSITIVE          ██████  #81C784   Soft Green
 NEGATIVE          ██████  #EF9A9A   Soft Red
-SETTLED           ██████  #B0BEC5   Silver
+SETTLED           ██████  #C4B5AD   Warm Silver
 ```
 
 ---
