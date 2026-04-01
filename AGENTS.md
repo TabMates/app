@@ -43,31 +43,6 @@ common
 ```
 **Ktor engines by source set:** `okhttp` (androidMain), `darwin` (nativeMain), `js` (webMain), `apache5` (desktopMain).
 
-## Key Patterns
-
-### Error Handling (custom Result type — NOT kotlin.Result)
-All data operations return `Result<T, E>` from `core/domain/util/Result.kt`:
-```kotlin
-sealed interface Result<out D, out E : Error> {
-    data class Success<out D>(val data: D) : Result<D, Nothing>
-    data class Failure<out E : Error>(val error: E) : Result<Nothing, E>
-}
-```
-Use `DataError.Remote` / `DataError.Local` enums. Use extension functions: `.map {}`, `.onSuccess {}`, `.onFailure {}`, `.asEmptyResult()`.
-
-### Networking
-Use typed extension functions from `HttpClientExt.kt` — do NOT call `httpClient.get()` directly:
-```kotlin
-val result: Result<MyResponse, DataError.Remote> = httpClient.get<MyResponse>(route = "/my-endpoint")
-```
-`HttpClientFactory` auto-configures JSON, logging, timeout, API key header.
-
-### Dependency Injection (Koin)
-```kotlin
-val myModule = module { singleOf(::MyRepositoryImpl) bind MyRepository::class }
-```
-Feature modules' Koin modules are aggregated in `composeApp`. `CmpFeatureConventionPlugin` adds Koin BOM automatically.
-
 ### Navigation
 Use **Navigation 3 (nav3)** (`org.jetbrains.androidx.navigation3:navigation3-ui`) for screen navigation across all platforms.
 Each feature module defines its own routes and does **not** reference routes from other feature modules directly. Cross-feature navigation is wired at the `composeApp` level.
@@ -91,9 +66,3 @@ Use **version catalog bundles** where available: `libs.bundles.ktor.common`, `li
 - **Mocking:**
     - **Common Code (`commonMain`):** Use **Mokkery**.
     - **Platform Specific (`androidMain`, `jvm`):** Use **Mockk**.
-
-## ⚠️ Current State
-
-- Feature modules (`authentication`, `tabgroup`) have code in `androidMain` only. When adding logic, **prefer `commonMain`** — check if it exists; if not, create it and move pure Kotlin there.
-- `composeApp` must depend on feature `:presentation` modules to include them in the app.
-- `UrlConstants.BASE_URL_HTTP` is currently empty (TODO) — will need BuildKonfig integration.
