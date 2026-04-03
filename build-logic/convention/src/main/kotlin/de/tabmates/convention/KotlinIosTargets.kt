@@ -11,7 +11,7 @@ internal fun Project.configureIosTargets() {
             iosSimulatorArm64(),
         ).forEach { iosTarget ->
             iosTarget.binaries.framework {
-                baseName = "TabMatesApp"
+                baseName = "ComposeApp"
                 isStatic = true
             }
         }
