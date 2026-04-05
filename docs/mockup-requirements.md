@@ -45,9 +45,25 @@ TabMates helps groups of people track shared expenses and settle debts. Users cr
 ### What TabMates Does NOT Do (MVP)
 
 - No receipt scanning / OCR
+- No receipt photo attachments
+- No recurring expense templates
+- No group archiving (delete only)
 - No payment provider integration (PayPal, Venmo, etc.)
 - No premium/paid features
 - No RTL language support (but layouts must be RTL-ready)
+
+### Offline-First Architecture
+
+TabMates is **offline-first for all users** — authenticated and guest alike. All core functionality (browsing groups, logging expenses, viewing balances) works without a network connection. Changes are queued locally and synced when connectivity is restored.
+
+The distinction between **guest** and **authenticated** is not offline capability — it is **identity and cross-device sync**:
+
+| Mode | Offline works? | Data syncs to account? | Works on multiple devices? |
+|---|---|---|---|
+| **Guest** | ✅ Yes | ❌ No | ❌ No — data is local to this device |
+| **Authenticated** | ✅ Yes | ✅ Yes (when online) | ✅ Yes |
+
+Design must **never** block core actions with a "No connection" error screen. Use optimistic UI — show the result immediately and sync in the background. Connectivity loss may be surfaced as a subtle sync status indicator (e.g., a small icon or banner), but must not prevent use of the app.
 
 ---
 
@@ -494,7 +510,8 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 
 - No separate screen — user taps "Continue without account" and goes directly to Home
 - A **persistent but non-intrusive banner** on the Home screen reminds guest users: "Create an account to sync your data across devices"
-- Guest users have full functionality locally; data is device-only
+- Guest users have **full offline-first functionality** — identical to authenticated users in terms of what they can do. The only difference is that guest data is stored locally on the device and cannot be synced to other devices or recovered after the app data is cleared.
+- The banner should be dismissible per session but reappear on next launch until the user converts to a full account.
 
 **States for all auth screens:**
 - Default (empty form)
@@ -522,8 +539,9 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 **States:**
 - Empty (no groups)
 - Populated (groups with balances)
-- Loading (skeleton placeholders)
-- Error (network error, retry button)
+- Loading (skeleton placeholders — only on very first load when no local data is cached yet)
+- Offline / syncing (subtle sync indicator when connectivity is unavailable; cached content remains fully usable)
+- Error (data corruption or unrecoverable failure — rare; show retry button)
 - Guest mode (with account creation banner)
 
 ---
@@ -554,6 +572,7 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 | **Placeholder members** | Ability to add a name as a "placeholder" for someone not yet registered — this reserves a spot that a real user can claim later via invite link |
 | **Primary CTA** | "Create Group" |
 | **After creation** | Navigate to the new Group Detail screen |
+| **Notification permission** | Immediately after navigating to the new Group Detail, show a push notification permission rationale screen: "Get notified when members add expenses or settle up." On **iOS**: show a custom pre-permission screen first (explaining the value), then trigger the OS permission dialog. On **Android 13+**: trigger the OS permission dialog directly. This is the **first and only point** where permission is requested — never on first app launch. |
 
 #### 6.4.3 Group Detail
 
@@ -574,6 +593,7 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 | **Expense list** | Chronological list (newest first). Each item: title, amount, payer name, date, split summary icon/text, category icon (if categories are used) |
 | **Deleted entries** | Shown with strikethrough styling, muted opacity, and a "deleted" badge/label. Still visible in the list for audit trail. |
 | **Edited entries** | Show a small "edited" indicator (e.g., pencil icon or "edited" text near timestamp) |
+| **Edit & delete** | **Any group member can edit or delete any expense** — there is no ownership restriction. Edit and Delete actions are always visible to all members in the Expense Detail screen and via swipe actions on list items. |
 | **Filters** | By date range, by member, by category (if categories exist) |
 | **Search** | Search expenses by title or description |
 | **Empty state** | "No expenses yet — add one!" + CTA |
@@ -586,6 +606,7 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 | **Balance list** | Simplified debts within the group. Each row: "Alice owes Bob €15.00". Show directional arrows or icons. |
 | **User's balance** | Highlighted at top: "You owe €X" or "You are owed €X" |
 | **Settle up CTA** | Button per debt row: "Settle" → opens settlement confirmation |
+| **Removed member debts** | When a member is removed from the group, their outstanding debts are **preserved** and attributed to a `[Removed Member]` placeholder. The placeholder row is visually distinct (greyed-out avatar with a dashed border, name in italic). No "Settle" action is available on removed-member debt rows — they serve as an informational audit record only. |
 | **Multi-currency note** | If expenses exist in multiple currencies, show individual currency balances AND a converted total in the group's default currency |
 | **Empty state** | "All settled up! 🎉" |
 
@@ -596,7 +617,17 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 | **Member list** | Name, avatar/initials, role (if any), individual balance |
 | **Placeholder members** | Visually distinct (e.g., dashed border avatar, "Pending" badge) to indicate they haven't linked a real account yet |
 | **Invite action** | "Invite Members" button → share invite link or enter email |
-| **Manage** | Remove member option (with confirmation) |
+| **Manage** | Remove member option (with confirmation dialog). If the member has outstanding debts, the confirmation warns: "This member has unsettled balances. Their debts will remain visible in the Balances tab attributed to '[Removed Member]'." Removal is permanent and cannot be undone. |
+
+**Group Settings (accessed via gear icon in group header):**
+
+| Element | Specification |
+|---|---|
+| **Group name** | Editable text field, required |
+| **Group description** | Editable text field, optional |
+| **Default currency** | Currency picker |
+| **Leave group** | "Leave Group" button — available to all members. Confirmation dialog warns if the user has unsettled balances in the group. After leaving, the user loses access to the group. |
+| **Delete group** | "Delete Group" destructive button — available to all members (there is no admin role). This action is **irreversible**. The confirmation dialog must prominently: (1) state that all expenses and history will be permanently deleted, (2) warn if there are unsettled debts among members, (3) require a second confirmation tap ("Delete" on a second dialog or button) before proceeding. Design this as a two-step confirmation to prevent accidental deletion. |
 
 #### 6.4.4 Join Group (via Invite Link)
 
@@ -608,6 +639,7 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 | **Step 2 — Account check** | If not logged in: prompt to Sign Up, Sign In, or Continue as Guest |
 | **Step 3 — Identity selection** | "Join as new member" (default) **OR** "I'm already in this group" → shows list of placeholder members to claim. User picks their placeholder name → confirmation dialog: "Join as [Name]?" |
 | **Step 4** | Success: navigate to Group Detail |
+| **Step 5 — Notification permission** | Immediately after joining, show the push notification permission prompt (same flow as Create Group: [Section 6.4.2](#642-create-group)). Only shown if permission has not already been granted. |
 
 **States:**
 - Valid link (shows group preview)
@@ -663,11 +695,11 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 |---|---|
 | **Header** | Title, amount (large), currency, date |
 | **Paid by** | Payer name(s) with avatar |
-| **Split breakdown** | List of all members involved, with individual amounts |
+| **Split breakdown** | List of all members involved, with individual amounts. If a member has since been removed from the group, their row shows `[Removed Member]` in italic with their amount preserved for the audit record. |
 | **Category** | Category icon + label (if used) |
 | **Notes** | Description text (if provided) |
 | **Edit history** | Collapsible section: "History" — shows all changes (created, edited, deleted) with timestamps and actor names |
-| **Actions** | Edit button, Delete button (with confirmation dialog) |
+| **Actions** | Edit button, Delete button (with confirmation dialog). **Both actions are available to all group members** regardless of who created the expense — there is no ownership restriction. The delete confirmation dialog shows the expense title and amount and requires an explicit confirmation tap before proceeding. |
 | **Deleted state** | If the expense is deleted: show all info with muted/strikethrough styling + "This expense was deleted by [Name] on [Date]" banner |
 
 ---
@@ -795,6 +827,20 @@ This is not a separate top-level screen — it's accessed from the **Balances ta
 - **Add Expense:** Full-screen
 - **Dialogs:** Bottom sheets preferred over centered dialogs
 - **FAB:** Floating Action Button for "Add Expense" (bottom-right, above nav bar)
+
+#### Landscape Orientation (Mobile)
+
+Mobile landscape orientation is supported. Key adaptations:
+
+| Screen | Landscape Adaptation |
+|---|---|
+| **Add / Edit Expense** | Two-column layout: left column holds Amount, Title, Date, Payer, and Currency; right column holds Split Method selector and Split Detail area. The soft keyboard must not obscure the split detail area. |
+| **Home / Groups / Activity** | Content expands horizontally; bottom nav bar remains visible (not hidden in landscape). Cards reflow to a two-column grid where available space allows. |
+| **Group Detail** | Tab bar remains visible at top; expense list and balances expand to fill the wider viewport. |
+| **Dialogs / Bottom sheets** | Bottom sheets cap at ~60% screen height in landscape to avoid covering too much of the content. |
+| **Onboarding / Auth screens** | Single-column scrollable layout; illustration is reduced in height or hidden to conserve vertical space on small-screen phones. |
+
+> **Mockup requirement:** Add/Edit Expense and Home require landscape-orientation Figma frames in the designer deliverables (see [Appendix A](#appendix-a-deliverable-checklist-for-designers)).
 
 ### 7.2 Tablet (600–1200 dp)
 
@@ -1050,6 +1096,79 @@ This avoids a 5th bottom nav item and reduces confusion.
 
 ---
 
+### 12.5 Partial Settlement UX
+
+**Question:** When a user records a partial settlement (paying only part of a debt), how is this reflected in the Balances tab?
+
+**Options to consider:**
+- **Option A — In-place update:** The debt row updates to show the remaining amount, with a small "partial payment recorded" label or icon. Simple and low-friction.
+- **Option B — Expandable history row:** The debt row is expandable to reveal a payment history sub-list (all partial payments between the two members). Moderate complexity.
+- **Option C — Settlement history screen:** Tapping the debt row opens a dedicated screen showing the full payment history between those two members. Most transparent, but adds a screen.
+
+**Decision needed:** Choose one approach. The recommendation is **Option A** for MVP simplicity, with **Option B** as a stretch goal.
+
+### 12.6 Global Cross-Group Search
+
+**Question:** Should the app support a global search across all groups, expenses, and members — in addition to the per-screen search already specced?
+
+**Options to consider:**
+- A search icon in the Home screen top app bar opens a global search overlay covering expenses, groups, and members.
+- Search remains per-screen only (Group List searches groups; Expense List searches within a group). No global search.
+
+**Recommendation:** Defer global search to a post-MVP release. Per-screen search is sufficient for the launch feature set. If deferred, this must be explicitly stated so designers don't inadvertently spec it.
+
+**Decision needed:** In scope for MVP or explicitly deferred?
+
+### 12.7 Session Expiry / Re-authentication
+
+**Question:** What happens when an authenticated user's session token expires while they are actively using the app?
+
+**Options to consider:**
+- **Transparent refresh (preferred):** Token is silently refreshed in the background; the user never sees an interruption.
+- **Re-auth overlay (fallback):** If the silent refresh fails, a bottom sheet slides over the current screen prompting re-authentication (email/password or biometric). The user's in-progress state (e.g., a half-filled expense form) is preserved.
+- **Redirect to Sign In (avoid):** Navigates away from the current screen — disruptive and risks data loss.
+
+**Decision needed:** Confirm the re-auth fallback UX. The designer needs to mock the re-auth overlay state, as it can appear over any authenticated screen.
+
+### 12.8 Foldable Devices
+
+**Question:** How should the app behave on foldable devices (e.g., Samsung Galaxy Z Fold in the unfolded state)?
+
+**Context:** When unfolded, a Z Fold is approximately 600–730 dp wide, which falls within the "Tablet" breakpoint and would trigger the navigation rail + two-panel layout. However, the tall-and-narrow inner screen aspect ratio may make the standard tablet two-panel layout feel cramped.
+
+**Options to consider:**
+- Use the existing tablet layout as-is (nav rail + two panels). Simple, no extra breakpoint.
+- Define a dedicated foldable breakpoint (e.g., 600–840 dp) with a hybrid layout: single content panel (no list/detail split) alongside the nav rail.
+
+**Decision needed:** Use tablet layout as-is, or define a foldable-specific breakpoint?
+
+### 12.9 Time Zone Handling
+
+**Question:** For groups where members are in different time zones, which time zone governs expense dates and activity feed timestamps?
+
+**Options to consider:**
+- **User's local device time zone** (recommended): Dates are shown in the viewer's local time. Natural and familiar to each user, but two members logging an expense at the same moment may see slightly different displayed dates.
+- **UTC:** Globally consistent, but unfamiliar to most users.
+- **Group creator's time zone:** Consistent within a group context, but opaque to members and difficult to communicate in the UI.
+
+**Recommendation:** Store all timestamps in UTC internally; display in the **user's local device time zone**. The designer should note this means a timestamp label may say "Yesterday" for one member and "Today" for another — this is acceptable and matches the behavior of apps like Slack and WhatsApp.
+
+**Decision needed:** Confirm the display strategy, then update the localization section accordingly.
+
+### 12.10 Invite Link Lifetime & Regeneration
+
+**Question:** How long is a group invite link valid, and who can generate or revoke one?
+
+**Decisions needed:**
+1. **Link lifetime:** How long before a link expires? (e.g., 7 days, 30 days, single-use, or never expires.)
+2. **Generation:** Since there is no admin role, any group member can generate a new invite link. The existing link should be revoked (invalidated) when a new one is generated.
+3. **UI placement:** Where does "Copy / Share invite link" live for an existing group? **Recommendation:** In the Members tab alongside the "Invite Members" button, and also reachable from Group Settings.
+4. **Expired link UX:** When a user opens an expired link, the Join Group error screen already handles this ([Section 6.4.4](#644-join-group-via-invite-link)). No proactive notification to the group is needed for MVP.
+
+**Recommendation:** Links expire after **7 days**, any member can regenerate (revoking the previous link), and the share entry point lives in the Members tab.
+
+---
+
 ## Appendix A: Deliverable Checklist for Designers
 
 | # | Deliverable | Format |
@@ -1060,6 +1179,7 @@ This avoids a 5th bottom nav item and reduces confusion.
 | 4 | Icon set selection (Material Symbols Rounded) | Confirmed style + any custom icons |
 | 5 | Illustration style guide + empty state illustrations | SVG / vector |
 | 6 | Mobile mockups — all screens listed in Section 6 (light + dark) | Figma frames (360–412 dp width) |
+| 6a | Mobile landscape mockups — Add/Edit Expense and Home screens (light + dark) | Figma frames (667–915 dp width, landscape orientation) |
 | 7 | Tablet mockups — key screens with two-panel layout | Figma frames (800–1000 dp width) |
 | 8 | Desktop mockups — key screens with three-panel layout | Figma frames (1280–1440 dp width) |
 | 9 | Component states documentation (Section 8) | Annotated Figma components |
@@ -1081,7 +1201,7 @@ These are implementation details that affect design decisions:
 | **Dynamic color (Android 12+)** | The designed color scheme is a fallback. On Android 12+, the system may override colors based on the user's wallpaper. Design should look good even with shifted hues. Fixed color tokens (`primaryFixed` etc.) are NOT affected by dynamic color. |
 | **iOS: SF Pro + native nav**    | On iOS, typography uses SF Pro and navigation uses native transitions. The rest of the design (colors, shapes, illustrations) is shared.                                                            |
 | **No image CDN yet**            | User avatars (if photo upload is supported) will be stored server-side. Keep image dimensions reasonable.                                                                                           |
-| **Offline-first for guests**    | Guest mode works fully offline. Design must not assume network availability for core flows.                                                                                                         |
+| **Offline-first for all users** | The entire app is offline-first — both guest and authenticated users can use all core features without a network connection. Changes are queued locally and synced in the background when connectivity is restored. Design must use optimistic UI (show results immediately) and must never block core actions with a connectivity error screen. A subtle sync status indicator (e.g., a small icon in the top bar or a dismissible banner) is acceptable for surfacing connectivity state, but must not prevent use of the app. |
 | **Material 3 Icons**            | Do not use any emojis but Material 3 Icons instead.                                                                                                                                                 |
 
 ---
