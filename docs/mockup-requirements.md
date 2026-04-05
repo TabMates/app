@@ -3,7 +3,7 @@
 > **Purpose:** Self-contained design brief for producing high-fidelity mockups.
 > Designers should be able to work from this document alone.
 >
-> **Last updated:** 2026-03-25
+> **Last updated:** 2026-04-05
 > **Status:** Ready for design
 
 ---
@@ -98,23 +98,41 @@ There is **no existing logo, wordmark, or brand identity**. The designer must cr
 - **Favicon** for web
 - **Splash screen** graphic (if applicable)
 
+### Reference Design Direction
+
+TabMates should feel and behave like the **latest generation of Google's own first-party apps** — specifically:
+
+| Reference App | What to borrow |
+|---|---|
+| **Google app (Search)** | Profile avatar in top-right, search bar as a prominent hero element, rounded card surfaces |
+| **Google Photos** | Spring-physics transitions, shared-element hero animations, vibrant use of all three palette roles across different UI zones |
+| **Google Contacts** | Large initials/avatar heroes, generous use of container colors to differentiate card types, FAB morphing |
+| **Android 16 system apps** | Floating pill-style bottom nav bar, bold expressive headlines, high-chroma palette approach, springy page transitions |
+
+The overarching standard is **Material 3 Expressive** as shipped in Android 16 and the 2025–2026 Google app refreshes. This is not standard M3 — it is the evolution that features bolder type, higher color saturation, spring physics, and more dramatic use of shape.
+
 ### Personality & Tone
 
 | Attribute | Direction |
 |---|---|
 | **Overall feel** | Warm & social — friend-group vibes |
-| **Visual style** | Colorful, playful, approachable |
-| **Design language** | Material 3 Expressive (rounded shapes, vibrant palette, expressive motion) |
-| **NOT** | Corporate, sterile, cold, overly minimal |
+| **Visual style** | Colorful, vibrant, playful, approachable |
+| **Design language** | Material 3 Expressive — bold type, high-chroma palette, spring motion, generous shapes |
+| **Reference** | Google Photos, Google Contacts, Android 16 system apps |
+| **NOT** | Corporate, sterile, cold, flat/minimal, standard M3 without expressive enhancements |
 
 The app should feel like a friendly tool that makes an awkward topic (money between friends) feel casual and stress-free.
 
 ### Color Direction
 
-**The full palette is open for redesign.** The designer has creative freedom to propose a new palette that matches the warm & social personality. Consider:
+**The full palette is open for redesign.** The designer has creative freedom to propose a new palette that matches the warm & social personality.
 
-- A primary color that feels friendly and energetic
-- Rich secondary/tertiary colors for visual interest
+**Key M3 Expressive requirements for the palette:**
+
+- **High chroma / high saturation** — M3 Expressive deliberately raises chroma above standard M3 defaults. Colors should feel rich and energetic, not pastel or muted.
+- **All three palette roles must be used actively** — primary, secondary, and tertiary should each appear prominently across different UI zones (e.g., primary on navigation and key CTAs; secondary on chips, tags, and surface containers; tertiary on balance indicators and highlights).
+- **Container colors drive visual structure** — use `primaryContainer`, `secondaryContainer`, `tertiaryContainer` on cards, chips, and section headers, not just as subtle accents.
+- **Fixed colors for persistent brand moments** — `primaryFixed` and its variants are used for elements that must maintain color regardless of light/dark mode (e.g., category pill backgrounds in illustrations, onboarding highlight spots).
 - Both light and dark mode variants
 - Android 12+ dynamic color support (the theme must work as a fallback when dynamic color is unavailable)
 
@@ -124,52 +142,99 @@ The app should feel like a friendly tool that makes an awkward topic (money betw
 
 ### 4.1 Color Palette
 
-Deliver a complete Material 3 color scheme:
+Deliver a **complete Material 3 Expressive color scheme** covering all token groups. M3 Expressive extends the baseline M3 palette with Fixed colors, a 5-tier Surface Container hierarchy, and surfaceBright/Dim variants. All tokens below must be defined for both light and dark mode.
 
-| Token | Light Mode | Dark Mode |
+#### Core Role Tokens
+
+| Token | Light Mode | Dark Mode | Primary Usage |
+|---|---|---|---|
+| `primary` | TBD | TBD | Key CTAs, active nav indicator, FAB |
+| `onPrimary` | TBD | TBD | Text/icons on primary |
+| `primaryContainer` | TBD | TBD | Chips, selected cards, prominent surface zones |
+| `onPrimaryContainer` | TBD | TBD | Text/icons on primaryContainer |
+| `secondary` | TBD | TBD | Tags, category indicators, secondary actions |
+| `onSecondary` | TBD | TBD | Text/icons on secondary |
+| `secondaryContainer` | TBD | TBD | Filter chips, balance indicator backgrounds |
+| `onSecondaryContainer` | TBD | TBD | Text/icons on secondaryContainer |
+| `tertiary` | TBD | TBD | Accent highlights, settlement badges, special moments |
+| `onTertiary` | TBD | TBD | Text/icons on tertiary |
+| `tertiaryContainer` | TBD | TBD | Stat callout cards, decorative highlights |
+| `onTertiaryContainer` | TBD | TBD | Text/icons on tertiaryContainer |
+| `error` | TBD | TBD | Validation errors, delete actions |
+| `onError` | TBD | TBD | Text/icons on error |
+| `errorContainer` | TBD | TBD | Error banner backgrounds |
+| `onErrorContainer` | TBD | TBD | Text/icons on errorContainer |
+
+#### Fixed Color Tokens (light/dark-independent)
+
+Fixed colors maintain the same value in both light and dark themes. Use them for elements where consistent brand color matters regardless of mode (e.g., illustration accents, onboarding spots, category pill backgrounds).
+
+| Token | Value | Usage |
 |---|---|---|
-| `primary` | TBD | TBD |
-| `onPrimary` | TBD | TBD |
-| `primaryContainer` | TBD | TBD |
-| `onPrimaryContainer` | TBD | TBD |
-| `secondary` | TBD | TBD |
-| `onSecondary` | TBD | TBD |
-| `secondaryContainer` | TBD | TBD |
-| `onSecondaryContainer` | TBD | TBD |
-| `tertiary` | TBD | TBD |
-| `onTertiary` | TBD | TBD |
-| `tertiaryContainer` | TBD | TBD |
-| `onTertiaryContainer` | TBD | TBD |
-| `error` | TBD | TBD |
-| `errorContainer` | TBD | TBD |
-| `onError` | TBD | TBD |
-| `onErrorContainer` | TBD | TBD |
-| `background` | TBD | TBD |
-| `onBackground` | TBD | TBD |
-| `surface` | TBD | TBD |
-| `onSurface` | TBD | TBD |
-| `surfaceVariant` | TBD | TBD |
-| `onSurfaceVariant` | TBD | TBD |
-| `outline` | TBD | TBD |
-| `outlineVariant` | TBD | TBD |
-| `inverseSurface` | TBD | TBD |
-| `inverseOnSurface` | TBD | TBD |
-| `inversePrimary` | TBD | TBD |
-| `surfaceTint` | TBD | TBD |
-| `scrim` | TBD | TBD |
+| `primaryFixed` | TBD | Persistent primary-toned surface |
+| `primaryFixedDim` | TBD | Slightly dimmer fixed primary (for hover/pressed states on fixed) |
+| `onPrimaryFixed` | TBD | Text/icons on primaryFixed |
+| `onPrimaryFixedVariant` | TBD | Secondary text/icons on primaryFixed (lower emphasis) |
+| `secondaryFixed` | TBD | Persistent secondary-toned surface |
+| `secondaryFixedDim` | TBD | Dimmer fixed secondary |
+| `onSecondaryFixed` | TBD | Text/icons on secondaryFixed |
+| `onSecondaryFixedVariant` | TBD | Secondary text/icons on secondaryFixed |
+| `tertiaryFixed` | TBD | Persistent tertiary-toned surface |
+| `tertiaryFixedDim` | TBD | Dimmer fixed tertiary |
+| `onTertiaryFixed` | TBD | Text/icons on tertiaryFixed |
+| `onTertiaryFixedVariant` | TBD | Secondary text/icons on tertiaryFixed |
 
-Additionally, define **semantic colors** for expense-specific contexts:
+#### Surface & Background Tokens
 
-| Semantic Token | Usage |
-|---|---|
-| `positive` / `youAreOwed` | When the user is owed money (green direction) |
-| `negative` / `youOwe` | When the user owes money (red direction) |
-| `settled` | When a debt is fully settled (neutral/muted) |
-| `deleted` | Visual treatment for deleted entries in the activity feed |
+M3 Expressive replaces the single `surfaceVariant` with a **5-tier Surface Container hierarchy** to create visual depth without relying on elevation shadows. Use the tiers to layer cards, sheets, and list items.
+
+| Token | Light Mode | Dark Mode | Usage |
+|---|---|---|---|
+| `background` | TBD | TBD | App background (behind all content) |
+| `onBackground` | TBD | TBD | Text/icons on background |
+| `surface` | TBD | TBD | Base surface (same as background in M3) |
+| `onSurface` | TBD | TBD | Primary text/icons on surface |
+| `surfaceVariant` | TBD | TBD | Kept for backward compatibility; prefer container tiers below |
+| `onSurfaceVariant` | TBD | TBD | Secondary text/icons, subtitle text |
+| `surfaceContainerLowest` | TBD | TBD | Lowest-emphasis container (e.g., page background inset) |
+| `surfaceContainerLow` | TBD | TBD | List item backgrounds, subtle grouping |
+| `surfaceContainer` | TBD | TBD | Standard card background |
+| `surfaceContainerHigh` | TBD | TBD | Elevated cards, selected list items |
+| `surfaceContainerHighest` | TBD | TBD | Top-level modal surfaces, dialogs |
+| `surfaceBright` | TBD | TBD | Highlighted surface areas (status bar zone, hero sections) |
+| `surfaceDim` | TBD | TBD | Dimmed surface (scrim behind modal overlays) |
+| `inverseSurface` | TBD | TBD | Snackbar background |
+| `inverseOnSurface` | TBD | TBD | Snackbar text |
+| `inversePrimary` | TBD | TBD | FAB icon on dark surface |
+| `surfaceTint` | TBD | TBD | Tonal elevation overlay color (= primary) |
+
+#### Utility Tokens
+
+| Token | Light Mode | Dark Mode | Usage |
+|---|---|---|---|
+| `outline` | TBD | TBD | Borders, dividers, text field outlines |
+| `outlineVariant` | TBD | TBD | Subtle dividers, chip outlines |
+| `scrim` | TBD | TBD | Modal overlay scrim (typically black at ~32% opacity) |
+| `shadow` | TBD | TBD | Drop shadow color (typically black) |
+
+#### Semantic / App-Specific Colors
+
+Define **custom semantic tokens** that map onto M3 palette colors for expense-specific contexts. These are not new hues — they are aliases into the palette that carry domain meaning.
+
+| Semantic Token | Maps to | Usage |
+|---|---|---|
+| `positive` / `youAreOwed` | `tertiary` or custom green tone | User is owed money — always paired with an icon/label, never color alone |
+| `positiveContainer` | `tertiaryContainer` | Background for "owed" balance cards |
+| `negative` / `youOwe` | `error` or custom red tone | User owes money — always paired with an icon/label |
+| `negativeContainer` | `errorContainer` | Background for "owes" balance cards |
+| `settled` | `surfaceContainerHigh` / `onSurfaceVariant` | Debt fully settled — muted/neutral treatment |
+| `deleted` | `onSurfaceVariant` at reduced opacity | Muted strikethrough treatment for deleted entries |
+
+> **Designer note:** All three palette roles (primary, secondary, tertiary) must appear visibly and distinctly across the app. Do not default to using only primary everywhere. Reference how Google Photos uses tertiary for highlight moments and secondary for chip states.
 
 ### 4.2 Typography Scale
 
-Follow the **M3 type scale**. The app uses the platform default font on each platform:
+Follow the **M3 Expressive type scale**. The app uses the platform default font on each platform:
 
 | Platform | Font |
 |---|---|
@@ -181,15 +246,15 @@ Define sizes for:
 
 | Style | Size | Weight | Line Height | Usage |
 |---|---|---|---|---|
-| Display Large | 57sp | 400 | 64sp | — |
-| Display Medium | 45sp | 400 | 52sp | — |
-| Display Small | 36sp | 400 | 44sp | — |
-| Headline Large | 32sp | 400 | 40sp | Screen titles |
-| Headline Medium | 28sp | 400 | 36sp | Section headers |
-| Headline Small | 24sp | 400 | 32sp | Card titles |
-| Title Large | 22sp | 400 | 28sp | Top app bar |
+| Display Large | 57sp | **700** | 64sp | ★ Expressive hero moment only (e.g., onboarding splash) |
+| Display Medium | 45sp | **600** | 52sp | ★ Large balance hero on Home screen |
+| Display Small | 36sp | **600** | 44sp | ★ Settlement total, group balance callout |
+| Headline Large | 32sp | **700** | 40sp | Screen titles, key section headers |
+| Headline Medium | 28sp | **600** | 36sp | Section headers, Group Detail header |
+| Headline Small | 24sp | **600** | 32sp | Card titles, dialog headers |
+| Title Large | 22sp | 500 | 28sp | Top app bar |
 | Title Medium | 16sp | 500 | 24sp | List item titles |
-| Title Small | 14sp | 500 | 20sp | — |
+| Title Small | 14sp | 500 | 20sp | Sub-section labels |
 | Body Large | 16sp | 400 | 24sp | Primary body text |
 | Body Medium | 14sp | 400 | 20sp | Secondary text |
 | Body Small | 12sp | 400 | 16sp | Captions, timestamps |
@@ -197,7 +262,7 @@ Define sizes for:
 | Label Medium | 12sp | 500 | 16sp | Chips, badges |
 | Label Small | 11sp | 500 | 16sp | Overlines |
 
-**Note:** For the "M3 Expressive" direction, feel free to explore bolder headline weights or slightly oversized display styles for key moments (e.g., balance amounts, settlement summaries).
+> **★ Expressive moments:** Display styles are reserved for hero numbers and key emotional beats. In M3 Expressive, these are intentionally bold and large — they should feel impactful. The balance amount on the Home screen hero card is the primary candidate for Display Medium. Avoid using Display styles in lists or dense UI. The heavier weights (600–700) are a deliberate departure from standard M3's all-400 display scale.
 
 ### 4.3 Spacing & Grid
 
@@ -235,16 +300,18 @@ Follow M3 elevation levels:
 
 ### 4.5 Shape Tokens
 
-M3 Expressive favors **generous corner radii**:
+M3 Expressive favors **generous corner radii** that are noticeably more rounded than standard M3. As a reference, Google Contacts and Android 16 system apps use shapes that feel "soft" throughout, with hero cards using Extra Large or Full radii.
 
 | Token | Radius | Usage |
 |---|---|---|
-| Extra Small | 4 dp | Badges, small chips |
-| Small | 8 dp | Chips, text fields |
-| Medium | 12 dp | Cards, list items |
-| Large | 16 dp | FAB, dialogs |
-| Extra Large | 28 dp | Bottom sheets, large cards |
-| Full | 50% | Avatar circles, toggle tracks |
+| Extra Small | 4 dp | Badges, notification dots |
+| Small | 8 dp | Small chips, text field corners |
+| Medium | **16 dp** | Cards, list item containers |
+| Large | **24 dp** | FAB, prominent buttons, dialogs |
+| Extra Large | 28 dp | Bottom sheets, hero cards, large modal surfaces |
+| Full | 50% | Avatar circles, toggle tracks, pill chips |
+
+**Asymmetric corners (M3 Expressive option):** For hero cards and feature highlight panels, consider using asymmetric corner radii (e.g., top-left 28 dp, top-right 28 dp, bottom-left 8 dp, bottom-right 28 dp) to create a unique, recognizable shape language. This is an expressive pattern used in Android 16 overview cards and Google Contacts detail headers. Propose a specific usage pattern if desired — do not apply randomly.
 
 ### 4.6 Iconography
 
@@ -279,7 +346,7 @@ TabMates App
 │   ├── Sign Up (email/password)
 │   ├── Forgot Password
 │   ├── Confirmed Email (after clicking link)
-│   └── Guest Mode (skip auth, device only data, no way of signing in on the same account on another device, and data is lost after clearing app data)
+│   └── Guest Mode (skip auth,  no way of signing in on the same account on another device, and data is lost after clearing app data)
 │
 ├── ★ Home / Dashboard (default landing)
 │   ├── Balance summary (total owed / total owing)
@@ -313,7 +380,7 @@ TabMates App
 │   │   └── Group created events
 │   └── Push notification history
 │
-├── ★ Profile
+├── ◎ Profile (accessed via avatar in top app bar — not a bottom nav item)
 │   ├── User info (name, email)
 │   ├── Account settings
 │   │   ├── Change password
@@ -334,15 +401,33 @@ TabMates App
     └── Settlement history
 ```
 
-> **★** = Top-level bottom navigation destination (mobile) / sidebar item (tablet/desktop)
+> **★** = Top-level navigation destination (mobile bottom bar / tablet rail / desktop sidebar)
+> **◎** = Accessed globally via the **profile avatar button in the top app bar**, present on all main screens. Tapping the avatar opens a quick-action menu (View Profile, Settings, Sign Out) from which the full Profile screen is reached. This follows the same pattern as the Google app, Gmail, and Google Photos.
 
 ### 5.2 Navigation Patterns by Breakpoint
 
-| Breakpoint | Navigation | Detail Behavior |
-|---|---|---|
-| **Mobile** (< 600 dp) | Bottom navigation bar (4 items: Home, Groups, Activity, Profile) | Full-screen push navigation |
-| **Tablet** (600–1200 dp) | Navigation rail (left side) | Two-panel: list + detail side by side |
-| **Desktop** (> 1200 dp) | Persistent sidebar navigation | Three-panel: sidebar + list + detail |
+| Breakpoint | Navigation | Profile Access | Detail Behavior |
+|---|---|---|---|
+| **Mobile** (< 600 dp) | Bottom navigation bar — **3 items: Home, Groups, Activity** | Profile avatar in top app bar (top-right) → bottom sheet quick menu | Full-screen push navigation |
+| **Tablet** (600–1200 dp) | Navigation rail (left side) — **3 items: Home, Groups, Activity** | Profile avatar in top app bar (top-right) → popover quick menu | Two-panel: list + detail side by side |
+| **Desktop** (> 1200 dp) | Persistent sidebar — **3 items: Home, Groups, Activity** + avatar at bottom of sidebar | Profile avatar at bottom of sidebar AND in top bar → dropdown quick menu | Three-panel: sidebar + list + detail |
+
+**Profile avatar quick menu** (appears on avatar tap across all breakpoints):
+
+```
+┌─────────────────────────┐
+│ [Avatar]  Name          │
+│           email@...     │
+├─────────────────────────┤
+│ ○  View Profile         │
+│ ⚙  Settings             │
+├─────────────────────────┤
+│ ⎋  Sign Out             │
+└─────────────────────────┘
+```
+
+- On **mobile**: rendered as a bottom sheet (spring slide-up)
+- On **tablet/desktop**: rendered as a dropdown popover anchored to the avatar
 
 ### 5.3 iOS-Specific Navigation
 
@@ -426,8 +511,8 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 
 | Element | Specification |
 |---|---|
-| **Top app bar** | "TabMates" wordmark or logo, notification bell icon |
-| **Balance summary card** | Large, prominent card showing: net balance ("You are owed €45.20" or "You owe €12.00"), color-coded (positive = green, negative = red, settled = neutral) |
+| **Top app bar** | "TabMates" wordmark or logo (start/left), notification bell icon, **profile avatar circle** (end/right). Tapping the avatar opens the profile quick-action menu. Balance summary card uses Display Medium (bold) for the amount — this is a key expressive hero moment. |
+| **Balance summary card** | Large, prominent hero card using `primaryContainer` or `positiveContainer`/`negativeContainer` background. Shows: net balance ("You are owed €45.20" or "You owe €12.00") in Display Medium weight, color-coded (positive = `tertiary` tones, negative = `error` tones, settled = `surfaceContainerHigh`). |
 | **Group list preview** | Horizontal scrollable row or vertical list of 2–3 most active groups with name, member count, and user's balance in that group |
 | **"See all groups" link** | Navigates to Groups tab |
 | **Recent activity feed** | Last 5–10 events across all groups (expense added, settled, member joined) with timestamp, group name, and brief description |
@@ -451,7 +536,7 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 
 | Element | Specification |
 |---|---|
-| **Top app bar** | Title: "Groups", search icon |
+| **Top app bar** | Title: "Groups" (Headline Large, bold), search icon, **profile avatar circle** (end/right) |
 | **Group cards** | Each card shows: group name, member avatars (stacked circles, max 4 visible + "+N"), user's balance in that group (color-coded), last activity timestamp |
 | **Sorting** | Default: most recently active first |
 | **Create group CTA** | FAB or prominent button: "New Group" |
@@ -613,6 +698,7 @@ This is not a separate top-level screen — it's accessed from the **Balances ta
 
 | Element | Specification |
 |---|---|
+| **Top app bar** | Title: "Activity" (Headline Large, bold), filter icon, **profile avatar circle** (end/right) |
 | **Feed items** | Each item: icon (type-specific), description text, group name (in global feed), timestamp, actor avatar |
 | **Event types** | Expense created, Expense edited, Expense deleted, Member joined, Member left, Group created, Settlement recorded, Reminder sent |
 | **Grouping** | Group by date ("Today", "Yesterday", "March 22", etc.) |
@@ -634,6 +720,8 @@ This is not a separate top-level screen — it's accessed from the **Balances ta
 ### 6.9 Profile & Settings
 
 **Purpose:** User account management and app preferences.
+
+**Entry point:** Accessed via the **profile avatar button** in the top app bar, which is present on all main screens (Home, Groups, Activity). Tapping the avatar opens the quick-action menu (bottom sheet on mobile, popover on tablet/desktop). "View Profile" from that menu opens the full Profile screen as a pushed navigation destination.
 
 #### Profile Screen
 
@@ -686,22 +774,22 @@ This is not a separate top-level screen — it's accessed from the **Balances ta
 ### 7.1 Mobile (< 600 dp)
 
 ```
-┌─────────────────────┐
-│    Top App Bar      │
-├─────────────────────┤
-│                     │
-│                     │
-│   Content Area      │
-│   (single column)   │
-│                     │
-│                     │
-│              [FAB]  │
-├─────────────────────┤
-│ Home│Groups│Act│Prof│  ← Bottom Navigation Bar
-└─────────────────────┘
+┌──────────────────────────┐
+│ [Logo]      [🔔] [👤]   │  ← Top App Bar (notification bell + profile avatar)
+├──────────────────────────┤
+│                          │
+│                          │
+│   Content Area           │
+│   (single column)        │
+│                          │
+│                    [FAB] │
+├──────────────────────────┤
+│    Home │ Groups │ Act   │  ← Bottom Navigation Bar (3 items, floating pill style)
+└──────────────────────────┘
 ```
 
-- **Navigation:** Bottom navigation bar (4 destinations)
+- **Navigation:** Bottom navigation bar — **3 destinations: Home, Groups, Activity** (floating pill style per M3 Expressive / Android 16)
+- **Profile:** Avatar in top app bar (top-right) — tapping opens a bottom sheet quick menu
 - **Content:** Full-screen, single-column layout
 - **Detail screens:** Push onto navigation stack (full screen)
 - **Add Expense:** Full-screen
@@ -711,20 +799,26 @@ This is not a separate top-level screen — it's accessed from the **Balances ta
 ### 7.2 Tablet (600–1200 dp)
 
 ```
-┌───┬──────────────────────────────┐
-│   │       Top App Bar            │
-│ N │                              │
-│ a ├────────────┬─────────────────┤
-│ v │            │                 │
-│   │  List      │    Detail       │
-│ R │  Panel     │    Panel        │
-│ a │            │                 │
-│ i │            │                 │
-│ l │            │                 │
-└───┴────────────┴─────────────────┘
+┌───┬──────────────────────────────────┐
+│   │  [Logo]            [🔔] [👤]    │  ← Top App Bar
+│ N │                                  │
+│ a ├─────────────┬────────────────────┤
+│ v │             │                    │
+│   │  List       │    Detail          │
+│ R │  Panel      │    Panel           │
+│ a │             │                    │
+│ i │             │                    │
+│ l │             │                    │
+└───┴─────────────┴────────────────────┘
+  ↑
+  Home
+  Groups
+  Activity
+  (3 items)
 ```
 
-- **Navigation:** Navigation rail (left side, icons + labels)
+- **Navigation:** Navigation rail (left side) — **3 items: Home, Groups, Activity**
+- **Profile:** Avatar in top app bar (top-right) — tapping opens a popover quick menu
 - **Content:** Two-panel layout (list/master + detail)
   - Groups: Group list (left) + Group detail (right)
   - Home: Dashboard content (left) + Selected item detail (right)
@@ -736,21 +830,21 @@ This is not a separate top-level screen — it's accessed from the **Balances ta
 
 ```
 ┌────────┬────────────┬────────────────────┐
-│        │            │                    │
-│ Side   │  List      │    Detail          │
-│ bar    │  Panel     │    Panel           │
-│ Nav    │            │                    │
-│        │            │                    │
-│ Home   │            │                    │
-│ Groups │            │                    │
+│[Logo]  │            │ [Logo] [🔔] [👤]  │  ← Top App Bar (detail panel)
+│        │  List      │                    │
+│ Home   │  Panel     │    Detail          │
+│ Groups │            │    Panel           │
 │ Activity│           │                    │
-│ Profile│            │                    │
 │        │            │                    │
 │        │            │                    │
+│        │            │                    │
+│        │            │                    │
+│ [👤]  │            │                    │  ← Avatar at bottom of sidebar
 └────────┴────────────┴────────────────────┘
 ```
 
-- **Navigation:** Persistent sidebar (expanded labels)
+- **Navigation:** Persistent sidebar (expanded labels) — **3 destinations: Home, Groups, Activity**
+- **Profile:** Avatar at **bottom of sidebar** (following Google Drive / Google Maps pattern) AND optionally in top bar — tapping opens a dropdown quick menu
 - **Content:** Three-panel layout (nav + list + detail)
 - **Add Expense:** Modal dialog or inline panel
 - **Hover states:** All interactive elements must have hover states
@@ -852,26 +946,43 @@ Every screen that loads data must support:
 
 ### Principles
 
-Following M3 Expressive motion:
+Following M3 Expressive motion — the same motion language used in Google Photos, Google Contacts, and Android 16 system apps:
 
 | Principle | Description |
 |---|---|
 | **Meaningful** | Motion communicates relationships (e.g., expanding a card shows it contains detail) |
 | **Focused** | Draw attention to important changes (balance update, new expense) |
-| **Expressive** | Spring-based curves, slight overshoot for playful feel |
+| **Expressive** | Spring-based curves with slight overshoot for a playful, physical feel — not linear or ease-in-out |
+| **Springy** | Use spring physics (low stiffness, moderate damping) for sheet reveals, FAB morphs, and card expansions. Matches Google Photos and Android 16 style. |
+| **Continuous** | Avoid abrupt cuts. Chain animations so transitions feel fluid end-to-end (e.g., FAB morphs into a bottom sheet rather than disappearing and reappearing). |
+
+### Spring Physics Reference
+
+M3 Expressive standardizes on spring-based motion. Use these values as the baseline — the designer should annotate deviations:
+
+| Parameter | Value | Notes |
+|---|---|---|
+| **Stiffness** | 380 | Standard spring stiffness for most transitions |
+| **Damping ratio** | 0.8 | Slightly underdamped — allows a very brief overshoot |
+| **Duration cap** | 500 ms | Springs are duration-less by physics; cap at 500 ms for usability |
+| **Enter duration** | ~350 ms | Screens/sheets entering (spring feel) |
+| **Exit duration** | ~200 ms | Screens/sheets exiting (faster, less spring) |
 
 ### Key Animations
 
 | Animation | Specification |
 |---|---|
-| **Screen transitions** | Shared element transitions where possible (e.g., group card → group detail) |
-| **List item entry** | Staggered fade-in when loading |
-| **FAB** | Scale animation on appear, morph to expanded state if used |
-| **Balance changes** | Animated counter (number rolls to new value) |
+| **Screen transitions** | Shared element transitions where possible (e.g., group card → group detail). Use predictive back gesture (Android 14+). |
+| **Navigation tab switch** | Spring scale + crossfade on the active indicator pill — matches Android 16 nav bar behavior |
+| **List item entry** | Staggered fade-in + slight upward slide when loading (spring, stagger 30 ms per item) |
+| **FAB** | Scale animation on appear; **morphs** into bottom sheet on tap (continuous spring transition) — not a separate open animation |
+| **Profile avatar tap** | Subtle scale pop (1.0 → 1.1 → 1.0 spring) then bottom sheet / popover slides in |
+| **Balance changes** | Animated counter — number rolls to new value using a spring ticker |
 | **Pull-to-refresh** | M3 standard refresh indicator |
-| **Swipe to delete** | Slide + fade with undo snackbar |
-| **Bottom sheet** | Spring-based slide up with scrim |
-| **Skeleton loading** | Shimmer effect (left-to-right gradient sweep) |
+| **Swipe to delete** | Slide + fade with undo snackbar (snackbar itself springs in from the bottom) |
+| **Bottom sheet** | Spring-based slide up with scrim fade; slight overshoot allowed on open |
+| **Skeleton loading** | Shimmer effect (left-to-right gradient sweep, 1200 ms loop) |
+| **Shared element hero** | Group card avatar / name morphs into Group Detail header (shared element transition, spring-driven) |
 
 ---
 
@@ -965,8 +1076,9 @@ These are implementation details that affect design decisions:
 | Constraint                      | Impact                                                                                                                                                                                              |
 |---------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Compose Multiplatform**       | All UI is built with Compose. Custom native widgets are not available (except iOS navigation). Design within M3 component capabilities.                                                             |
-| **M3 component set**            | Stick to the Material 3 component library (buttons, cards, chips, lists, dialogs, bottom sheets, FAB, navigation bar/rail/drawer, top app bar, etc.). Custom components are possible but expensive. |
-| **Dynamic color (Android 12+)** | The designed color scheme is a fallback. On Android 12+, the system may override colors based on the user's wallpaper. Design should look good even with shifted hues.                              |
+| **M3 Expressive component set** | Use Material 3 Expressive components: NavigationBar (3-item floating pill variant), NavigationRail, NavigationDrawer, TopAppBar, LargeTopAppBar (collapsing), ExtendedFAB, BottomSheet, Chips, Cards. Custom components are possible but expensive. |
+| **Spring motion (Compose)**     | Compose `spring()` animationSpec is used for all transitions. Shared element transitions are available via `SharedTransitionLayout` in Compose. Design motion with these constraints in mind.        |
+| **Dynamic color (Android 12+)** | The designed color scheme is a fallback. On Android 12+, the system may override colors based on the user's wallpaper. Design should look good even with shifted hues. Fixed color tokens (`primaryFixed` etc.) are NOT affected by dynamic color. |
 | **iOS: SF Pro + native nav**    | On iOS, typography uses SF Pro and navigation uses native transitions. The rest of the design (colors, shapes, illustrations) is shared.                                                            |
 | **No image CDN yet**            | User avatars (if photo upload is supported) will be stored server-side. Keep image dimensions reasonable.                                                                                           |
 | **Offline-first for guests**    | Guest mode works fully offline. Design must not assume network availability for core flows.                                                                                                         |
