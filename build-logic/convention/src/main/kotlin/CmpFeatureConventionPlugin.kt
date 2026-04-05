@@ -30,6 +30,8 @@ class CmpFeatureConventionPlugin : Plugin<Project> {
                 "commonMainImplementation"(libs.findLibrary("jetbrains-savedstate").get())
                 "commonMainImplementation"(libs.findLibrary("jetbrains-bundle").get())
 
+                "commonMainImplementation"(libs.findLibrary("jetbrains-navigation3-ui").get())
+
                 "androidMainImplementation"(libs.findLibrary("koin-android").get())
                 "androidMainImplementation"(libs.findLibrary("koin-androidx-compose").get())
                 "androidMainImplementation"(libs.findLibrary("koin-androidx-navigation").get())

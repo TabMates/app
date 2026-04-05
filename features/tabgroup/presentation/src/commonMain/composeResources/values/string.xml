@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="home_label">Home</string>
+    <string name="activity_label">Activity</string>
+    <string name="group_label">Group</string>
+    <string name="profile_label">Profile</string>
+
+</resources>
