@@ -9,6 +9,22 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
+
+val mainSerializersModule =
+    SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(Home::class)
+            subclass(Activity::class)
+            subclass(Group::class)
+            subclass(Profile::class)
+            subclass(Settings::class)
+            subclass(AddExpense::class)
+            subclass(CreateGroup::class)
+        }
+    }
 
 fun EntryProviderScope<NavKey>.mainGraph(backStack: NavBackStack<NavKey>) {
     entry<Home> {

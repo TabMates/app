@@ -25,9 +25,11 @@ import de.tabmates.features.tabgroup.presentation.navigation.Group
 import de.tabmates.features.tabgroup.presentation.navigation.Home
 import de.tabmates.features.tabgroup.presentation.navigation.Profile
 import de.tabmates.features.tabgroup.presentation.navigation.mainGraph
+import de.tabmates.features.tabgroup.presentation.navigation.mainSerializersModule
+import kotlinx.serialization.modules.plus
 
 private val savedStateConfiguration = SavedStateConfiguration {
-    serializersModule = authSerializersModule
+    serializersModule = authSerializersModule + mainSerializersModule
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

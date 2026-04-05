@@ -16,7 +16,7 @@ kotlin {
                 implementation(projects.core.presentation)
                 implementation(projects.features.authentication.domain)
                 implementation(libs.jetbrains.compose.components.resources)
-                implementation(libs.jetbrains.material3.adpative)
+                implementation(libs.jetbrains.material3.adaptive)
             }
         }
 

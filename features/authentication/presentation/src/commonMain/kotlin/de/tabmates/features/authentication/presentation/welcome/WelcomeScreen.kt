@@ -97,11 +97,11 @@ fun TwoPane(
         horizontalArrangement = Arrangement.Center,
         modifier = modifier.fillMaxSize(),
     ) {
-        PlaceHolder()
+        Placeholder()
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
         ) {
             Text(
                 text = stringResource(Res.string.welcome_title),
@@ -146,7 +146,7 @@ private fun SinglePane(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxSize().scrollable(rememberScrollState(), Orientation.Vertical),
     ) {
-        PlaceHolder()
+        Placeholder()
         VerticalSpacer(16.dp)
         Text(
             text = stringResource(Res.string.welcome_title),
@@ -179,7 +179,7 @@ private fun SinglePane(
 }
 
 @Composable
-private fun PlaceHolder(modifier: Modifier = Modifier) {
+private fun Placeholder(modifier: Modifier = Modifier) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier.sizeIn(maxWidth = 300.dp, maxHeight = 300.dp),

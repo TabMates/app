@@ -28,6 +28,7 @@ ktlint = "14.2.0"
 ktlint-version = "1.8.0"
 ktor = "3.4.2"
 lifecycle-runtime = "2.10.0"
+material = "1.13.0"
 material-icons = "1.7.3"
 material3 = "1.10.0-alpha05"
 material3-adaptive-navigation-suite = "1.11.0-alpha05"
@@ -56,6 +57,7 @@ jetbrains-compose-foundation = { module = "org.jetbrains.compose.foundation:foun
 jetbrains-compose-material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "material-icons"}
 jetbrains-compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
 jetbrains-compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref="compose-multiplatform" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
 material3-adaptive-navigation-suite = { module = "org.jetbrains.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3-adaptive-navigation-suite" }
 jetbrains-compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
 jetbrains-compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "compose-multiplatform" }
@@ -65,7 +67,7 @@ jetbrains-lifecycle-compose = { group = "org.jetbrains.androidx.lifecycle", name
 jetbrains-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "compose-lifecycle" }
 jetbrains-lifecycle-viewmodel-savedstate = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "compose-lifecycle" }
 jetbrains-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
-jetbrains-material3-adpative = { module = "org.jetbrains.compose.material3.adaptive:adaptive", version.ref = "adaptive"}
+jetbrains-material3-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adaptive", version.ref = "adaptive"}
 jetbrains-savedstate = { module = "org.jetbrains.androidx.savedstate:savedstate", version.ref = "jetbrains-savedstate" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }

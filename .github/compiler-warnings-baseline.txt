@@ -23,5 +23,7 @@ KLIB resolver: The same 'unique_name=savedstate_commonMain'
 KLIB resolver: The same 'unique_name=domain_commonMain'
 KLIB resolver: The same 'unique_name=presentation_commonMain'
 KLIB resolver: The same 'unique_name=data_commonMain'
+KLIB resolver: The same 'unique_name=lifecycle-viewmodel-compose_commonMain'
+KLIB resolver: The same 'unique_name=window-core_commonMain'
 
 Deprecated Gradle Property 'kotlin.mpp.import.enableKgpDependencyResolution' Used
