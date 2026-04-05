@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
+    <!-- Welcome Screen -->
     <string name="welcome_title">Welcome to TabMates</string>
     <string name="welcome_button_register">Register</string>
     <string name="welcome_button_login">Login</string>
     <string name="welcome_button_guest">Continue as Guest</string>
+
+    <!-- Register Screen -->
+    <string name="register_title">Create an Account</string>
+    <string name="register_username_hint">Username</string>
+    <string name="register_email_hint">Email</string>
+    <string name="register_password_hint">Password</string>
+    <string name="register_confirm_password_hint">Confirm Password</string>
+    <string name="register_button">Create Account</string>
+    <string name="register_already_have_account_prefix">Already have an account? </string>
+    <string name="register_login_action">Login</string>
+    <string name="register_email_invalid">Please enter a valid email address.</string>
+    <string name="register_password_mismatch">Passwords do not match.</string>
+    <string name="register_password_requirements">Password must be at least 8 characters long and contain at least one number, one uppercase letter and one special Character</string>
+    <string name="error_account_exists">An account with that email already exists</string>
+    <string name="error_username_invalid">Username must be between 3 and 20 characters.</string>
 </resources>
