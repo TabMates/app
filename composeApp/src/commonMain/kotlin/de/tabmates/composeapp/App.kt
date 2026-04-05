@@ -4,22 +4,35 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavEntryDecorator
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
+import org.jetbrains.compose.resources.vectorResource
+import tabmatesapp.composeapp.generated.resources.Res
+import tabmatesapp.composeapp.generated.resources.ic_arrow_back
+import de.tabmates.core.data.di.coreDataModule
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.navigation.LoggedIn
 import de.tabmates.core.presentation.navigation.TopLevelTab
+import de.tabmates.features.authentication.data.di.authenticationDataModule
+import de.tabmates.features.authentication.presentation.di.authPresentationModule
 import de.tabmates.features.authentication.presentation.navigation.authGraph
 import de.tabmates.features.authentication.presentation.navigation.Welcome
 import de.tabmates.features.authentication.presentation.navigation.authSerializersModule
+import de.tabmates.features.tabgroup.data.di.tabgroupDataModule
 import de.tabmates.features.tabgroup.presentation.navigation.Activity
 import de.tabmates.features.tabgroup.presentation.navigation.Group
 import de.tabmates.features.tabgroup.presentation.navigation.Home
@@ -27,6 +40,8 @@ import de.tabmates.features.tabgroup.presentation.navigation.Profile
 import de.tabmates.features.tabgroup.presentation.navigation.mainGraph
 import de.tabmates.features.tabgroup.presentation.navigation.mainSerializersModule
 import kotlinx.serialization.modules.plus
+import org.koin.compose.KoinApplication
+import org.koin.dsl.koinConfiguration
 
 private val savedStateConfiguration = SavedStateConfiguration {
     serializersModule = authSerializersModule + mainSerializersModule
@@ -35,58 +50,90 @@ private val savedStateConfiguration = SavedStateConfiguration {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
-    TabMatesTheme {
-        val backStack = rememberNavBackStack(configuration = savedStateConfiguration, Welcome)
-        val currentKey = backStack.lastOrNull()
+    KoinApplication(
+        configuration = koinConfiguration {
+            modules(
+                authenticationDataModule,
+                coreDataModule,
+                tabgroupDataModule,
+                authPresentationModule
+            )
+        }
+    ) {
+        TabMatesTheme {
+            val backStack = rememberNavBackStack(configuration = savedStateConfiguration, Welcome)
+            val currentKey = backStack.lastOrNull()
 
-        val topLevelTabs = remember { listOf(Home, Activity, Group, Profile) }
-
-        if (currentKey is LoggedIn) {
-            NavigationSuiteScaffold(
-                navigationSuiteItems = {
-                    topLevelTabs.forEach { tab ->
-                        val selected = currentKey == tab
-                        item(
-                            selected = selected,
-                            onClick = {
-                                backStack.removeAll { it is TopLevelTab }
-                                backStack.add(tab)
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = if (selected) tab.selectedIcon else tab.icon,
-                                    contentDescription = tab.label.asString(),
-                                )
-                            },
-                            label = { Text(tab.label.asString()) },
-                        )
-                    }
-                },
-            ) {
-                NavDisplay(
-                    backStack = backStack,
-                    onBack = { backStack.removeLastOrNull() },
-                    entryProvider = entryProvider {
-                        mainGraph(backStack)
+            val topLevelTabs = remember { listOf(Home, Activity, Group, Profile) }
+            val entryDecorators = listOf<NavEntryDecorator<NavKey>>(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator(),
+            )
+            if (currentKey is LoggedIn) {
+                NavigationSuiteScaffold(
+                    navigationSuiteItems = {
+                        topLevelTabs.forEach { tab ->
+                            val selected = currentKey == tab
+                            item(
+                                selected = selected,
+                                onClick = {
+                                    backStack.removeAll { it is TopLevelTab }
+                                    backStack.add(tab)
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = if (selected) tab.selectedIcon else tab.icon,
+                                        contentDescription = tab.label.asString(),
+                                    )
+                                },
+                                label = { Text(tab.label.asString()) },
+                            )
+                        }
                     },
-                )
-            }
-        } else {
-            Scaffold {
-                NavDisplay(
-                    modifier = Modifier.fillMaxSize().padding(it),
-                    backStack = backStack,
-                    onBack = { backStack.removeLastOrNull() },
-                    entryProvider = entryProvider {
-                        authGraph(
-                            backStack = backStack,
-                            onGuestClick = {
-                                backStack.clear()
-                                backStack.add(Home)
-                            },
-                        )
-                    }
-                )
+                ) {
+                    NavDisplay(
+                        backStack = backStack,
+                        onBack = { backStack.removeLastOrNull() },
+                        entryDecorators = entryDecorators,
+                        entryProvider = entryProvider {
+                            mainGraph(backStack)
+                        },
+                    )
+                }
+            } else {
+                Scaffold(
+                    topBar = {
+                        if (currentKey != Welcome) {
+                            TopAppBar(
+                                title = { },
+                                navigationIcon = {
+                                    IconButton(onClick = { backStack.removeLastOrNull() }) {
+                                        Icon(
+                                            imageVector = vectorResource(Res.drawable.ic_arrow_back),
+                                            contentDescription = "Back",
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                    },
+                ) {
+                    NavDisplay(
+                        modifier = Modifier.fillMaxSize().padding(it),
+                        backStack = backStack,
+                        entryDecorators = entryDecorators,
+                        onBack = { backStack.removeLastOrNull() },
+                        entryProvider = entryProvider {
+                            authGraph(
+                                backStack = backStack,
+                                onGuestClick = {
+                                    backStack.clear()
+                                    backStack.add(Home)
+                                },
+                            )
+                        }
+                    )
+                }
             }
         }
     }

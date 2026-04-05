@@ -6,6 +6,7 @@ plugins {
 
 kotlin {
     extensions.configure<KotlinMultiplatformAndroidLibraryExtension> {
+        androidResources { enable = true }
         namespace = "de.tabmates.composeApp"
         minSdk = libs.versions.android.sdk.min.get().toInt()
         compileSdk {
@@ -33,9 +34,12 @@ kotlin {
             implementation(libs.jetbrains.compose.ui)
             implementation(libs.jetbrains.navigation3.ui)
             implementation(libs.material3.adaptive.navigation.suite)
+            implementation(libs.bundles.koin.common)
+            implementation(libs.jetbrains.lifecycle.viewmodelNavigation3)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.swing)
         }
 
         commonTest.dependencies {

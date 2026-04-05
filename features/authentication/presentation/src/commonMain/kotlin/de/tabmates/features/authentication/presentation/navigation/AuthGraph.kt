@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import de.tabmates.features.authentication.presentation.register.RegisterRoot
 import de.tabmates.features.authentication.presentation.welcome.WelcomeScreenRoot
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -43,9 +44,10 @@ fun EntryProviderScope<NavKey>.authGraph(
     }
 
     entry<Register> {
-        PlaceholderScreen("Register") {
-            backStack.add(EmailVerification)
-        }
+        RegisterRoot(
+            backStack = backStack,
+            onGuestClick = onGuestClick,
+        )
     }
 
     entry<EmailVerification> {
