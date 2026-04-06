@@ -220,4 +220,3 @@ class RegisterViewModelTest {
         return viewModel
     }
 }
-

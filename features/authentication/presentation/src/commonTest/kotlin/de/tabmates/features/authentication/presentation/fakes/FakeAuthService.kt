@@ -43,4 +43,3 @@ internal class FakeAuthService(
 
     override suspend fun forgotPassword(email: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
 }
-
