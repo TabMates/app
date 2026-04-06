@@ -17,7 +17,7 @@
     <string name="register_login_action">Login</string>
     <string name="register_email_invalid">Please enter a valid email address.</string>
     <string name="register_password_mismatch">Passwords do not match.</string>
-    <string name="register_password_requirements">Password must be at least 8 characters long.</string>
+    <string name="register_password_requirements">Password must be at least 8 characters long contain at least one number and one upper character.</string>
     <string name="error_account_exists">An account with that email already exists</string>
     <string name="error_username_invalid">Username must be between 3 and 20 characters and can only contain letters, numbers, and underscores</string>
 </resources>

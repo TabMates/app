@@ -3,6 +3,7 @@ package de.tabmates.features.authentication.presentation.navigation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,6 +30,7 @@ val authSerializersModule =
 fun EntryProviderScope<NavKey>.authGraph(
     backStack: NavBackStack<NavKey>,
     onGuestClick: () -> Unit,
+    snackbarHostState: SnackbarHostState,
 ) {
     entry<Welcome> {
         WelcomeScreenRoot(
@@ -47,6 +49,7 @@ fun EntryProviderScope<NavKey>.authGraph(
         RegisterRoot(
             backStack = backStack,
             onGuestClick = onGuestClick,
+            snackbarHostState = snackbarHostState,
         )
     }
 

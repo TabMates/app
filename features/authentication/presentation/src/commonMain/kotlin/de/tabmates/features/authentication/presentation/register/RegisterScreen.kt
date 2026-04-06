@@ -9,10 +9,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -34,6 +36,7 @@ import de.tabmates.features.authentication.presentation.di.authPresentationModul
 import de.tabmates.features.authentication.presentation.navigation.EmailVerification
 import de.tabmates.features.authentication.presentation.navigation.Login
 import de.tabmates.features.authentication.presentation.navigation.Register
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplicationPreview
 import org.koin.compose.viewmodel.koinViewModel
@@ -42,6 +45,7 @@ import tabmatesapp.features.authentication.presentation.generated.resources.regi
 import tabmatesapp.features.authentication.presentation.generated.resources.register_email_hint
 import tabmatesapp.features.authentication.presentation.generated.resources.register_login_action
 import tabmatesapp.features.authentication.presentation.generated.resources.register_password_hint
+import tabmatesapp.features.authentication.presentation.generated.resources.register_password_requirements
 import tabmatesapp.features.authentication.presentation.generated.resources.register_title
 import tabmatesapp.features.authentication.presentation.generated.resources.register_username_hint
 import tabmatesapp.features.authentication.presentation.generated.resources.welcome_button_guest
@@ -50,16 +54,24 @@ import tabmatesapp.features.authentication.presentation.generated.resources.welc
 fun RegisterRoot(
     backStack: NavBackStack<NavKey>,
     onGuestClick: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     registerViewModel: RegisterViewModel = koinViewModel(),
 ) {
     val state by registerViewModel.state.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
 
     ObserveAsEvents(registerViewModel.events) { event ->
         when (event) {
             is RegisterEvent.Success -> {
                 backStack.add(EmailVerification(event.email))
                 backStack.remove(Register)
+            }
+
+            is RegisterEvent.RegistrationError -> {
+                scope.launch {
+                    snackbarHostState.showSnackbar(event.message.asStringAsync())
+                }
             }
         }
     }
@@ -71,10 +83,11 @@ fun RegisterRoot(
             backStack.remove(Register)
         },
         onGuestClick = onGuestClick,
-        onCreateAccountClick = {
-            registerViewModel.register()
-        },
+        onCreateAccountClick = { registerViewModel.register() },
         togglePasswordVisibility = registerViewModel::togglePasswordVisibility,
+        onUsernameFocusChanged = { hasFocus -> if (!hasFocus) registerViewModel.validateUsernameOnBlur() },
+        onEmailFocusChanged = { hasFocus -> if (!hasFocus) registerViewModel.validateEmailOnBlur() },
+        onPasswordFocusChanged = { hasFocus -> if (!hasFocus) registerViewModel.validatePasswordOnBlur() },
         modifier = modifier,
     )
 }
@@ -86,6 +99,9 @@ private fun RegisterScreen(
     onGuestClick: () -> Unit,
     onCreateAccountClick: () -> Unit,
     togglePasswordVisibility: () -> Unit,
+    onUsernameFocusChanged: (Boolean) -> Unit,
+    onEmailFocusChanged: (Boolean) -> Unit,
+    onPasswordFocusChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -105,8 +121,11 @@ private fun RegisterScreen(
             supportingText = state.usernameError?.asString().orEmpty(),
             isError = state.usernameError != null,
             singleLine = true,
-            onFocusChanged = {},
+            onFocusChanged = onUsernameFocusChanged,
         )
+        state.usernameError?.let {
+            VerticalSpacer(16.dp)
+        }
         TabMatesTextField(
             modifier = Modifier.widthIn(max = 300.dp),
             state = state.emailTextState,
@@ -115,17 +134,23 @@ private fun RegisterScreen(
             isError = state.emailError != null,
             singleLine = true,
             keyboardType = KeyboardType.Email,
-            onFocusChanged = {},
+            onFocusChanged = onEmailFocusChanged,
         )
+        state.emailError?.let {
+            VerticalSpacer(16.dp)
+        }
         TabMatesPasswordTextField(
             modifier = Modifier.widthIn(max = 300.dp),
             state = state.passwordTextState,
             placeholder = stringResource(Res.string.register_password_hint),
-            supportingText = state.passwordError?.asString().orEmpty(),
+            supportingText =
+                state.passwordError?.asString() ?: stringResource(Res.string.register_password_requirements),
             isError = state.passwordError != null,
             onToggleVisibilityClick = togglePasswordVisibility,
             isPasswordVisible = state.isPasswordVisible,
+            onFocusChanged = onPasswordFocusChanged,
         )
+        VerticalSpacer(16.dp)
         TabMatesButton(
             modifier =
                 Modifier
@@ -133,7 +158,7 @@ private fun RegisterScreen(
                     .fillMaxWidth(),
             onClick = onCreateAccountClick,
             text = stringResource(Res.string.register_title),
-            enabled = state.canRegister,
+            enabled = !state.isRegistering,
             isLoading = state.isRegistering,
         )
         VerticalSpacer(16.dp)
@@ -175,6 +200,9 @@ private fun RegisterScreenPreview() {
                     onGuestClick = {},
                     togglePasswordVisibility = {},
                     onCreateAccountClick = {},
+                    onUsernameFocusChanged = {},
+                    onEmailFocusChanged = {},
+                    onPasswordFocusChanged = {},
                 )
             }
         }
