@@ -5,11 +5,17 @@ import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.authentication.domain.AuthService
+import kotlinx.coroutines.delay
 
 internal class FakeAuthService(
     var registerResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var resendVerificationEmailResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var resendVerificationEmailDelayMillis: Long = 0L,
 ) : AuthService {
     var registerCalls: Int = 0
+        private set
+
+    var resendVerificationEmailCalls: Int = 0
         private set
 
     override suspend fun register(
@@ -36,8 +42,13 @@ internal class FakeAuthService(
         password: String,
     ): Result<AuthInfo, DataError.Remote> = Result.Failure(DataError.Remote.UNKNOWN)
 
-    override suspend fun resendVerificationEmail(email: String): EmptyResult<DataError.Remote> =
-        Result.Success(Unit)
+    override suspend fun resendVerificationEmail(email: String): EmptyResult<DataError.Remote> {
+        resendVerificationEmailCalls += 1
+        if (resendVerificationEmailDelayMillis > 0L) {
+            delay(resendVerificationEmailDelayMillis)
+        }
+        return resendVerificationEmailResult
+    }
 
     override suspend fun verifyEmail(token: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
 

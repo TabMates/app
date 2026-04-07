@@ -14,7 +14,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -33,10 +32,9 @@ import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.designsystem.theme.headlineLargeBold
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.authentication.presentation.di.authPresentationModule
-import de.tabmates.features.authentication.presentation.navigation.EmailVerification
 import de.tabmates.features.authentication.presentation.navigation.Login
 import de.tabmates.features.authentication.presentation.navigation.Register
-import kotlinx.coroutines.launch
+import de.tabmates.features.authentication.presentation.navigation.RegisterSuccess
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplicationPreview
 import org.koin.compose.viewmodel.koinViewModel
@@ -59,19 +57,16 @@ fun RegisterRoot(
     registerViewModel: RegisterViewModel = koinViewModel(),
 ) {
     val state by registerViewModel.state.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
 
     ObserveAsEvents(registerViewModel.events) { event ->
         when (event) {
             is RegisterEvent.Success -> {
-                backStack.add(EmailVerification(event.email))
+                backStack.add(RegisterSuccess(event.email))
                 backStack.remove(Register)
             }
 
             is RegisterEvent.RegistrationError -> {
-                scope.launch {
-                    snackbarHostState.showSnackbar(event.message.asStringAsync())
-                }
+                snackbarHostState.showSnackbar(event.message.asStringAsync())
             }
         }
     }

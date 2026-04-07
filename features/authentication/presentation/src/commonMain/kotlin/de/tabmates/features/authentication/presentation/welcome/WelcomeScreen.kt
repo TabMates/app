@@ -34,8 +34,8 @@ import de.tabmates.features.authentication.presentation.navigation.Login
 import de.tabmates.features.authentication.presentation.navigation.Register
 import org.jetbrains.compose.resources.stringResource
 import tabmatesapp.features.authentication.presentation.generated.resources.Res
+import tabmatesapp.features.authentication.presentation.generated.resources.login
 import tabmatesapp.features.authentication.presentation.generated.resources.welcome_button_guest
-import tabmatesapp.features.authentication.presentation.generated.resources.welcome_button_login
 import tabmatesapp.features.authentication.presentation.generated.resources.welcome_button_register
 import tabmatesapp.features.authentication.presentation.generated.resources.welcome_title
 
@@ -117,7 +117,7 @@ fun TwoPane(
             TabMatesButton(
                 onClick = onLoginClick,
                 style = TabMatesButtonStyle.Secondary,
-                text = stringResource(Res.string.welcome_button_login),
+                text = stringResource(Res.string.login),
                 modifier = Modifier.widthIn(max = 300.dp).fillMaxWidth(),
             )
             VerticalSpacer(16.dp)
@@ -162,7 +162,7 @@ private fun SinglePane(
         TabMatesButton(
             onClick = onLoginClick,
             style = TabMatesButtonStyle.Secondary,
-            text = stringResource(Res.string.welcome_button_login),
+            text = stringResource(Res.string.login),
             modifier = Modifier.widthIn(max = 300.dp).fillMaxWidth(),
         )
         VerticalSpacer(16.dp)
