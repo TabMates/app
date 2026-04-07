@@ -31,6 +31,8 @@ kotlin {
 
             implementation(libs.jetbrains.compose.components.resources)
             implementation(libs.jetbrains.compose.ui)
+            implementation(libs.jetbrains.navigation3.ui)
+            implementation(libs.material3.adaptive.navigation.suite)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
