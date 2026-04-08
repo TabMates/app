@@ -1,8 +1,8 @@
 # TabMates Design System
 
 > **Source of truth:** Derived exclusively from [`mockup-requirements.md`](./mockup-requirements.md).
-> **Last updated:** 2026-04-05
-> **Status:** Token values TBD — awaiting designer palette generation via [Material Theme Builder](https://material-foundation.github.io/material-theme-builder/).
+> **Last updated:** 2026-04-08
+> **Status:** Token values defined — palette generated from seed `#E05929` (Warm Coral) using M3 Expressive high-chroma guidelines.
 
 ---
 
@@ -78,28 +78,40 @@ The app should make an awkward topic (money between friends) feel casual and str
 
 > **Generation tool:** Use [Material Theme Builder](https://material-foundation.github.io/material-theme-builder/) to generate all tokens from a chosen seed color.
 
+### Seed Color
+
+| Property | Value |
+|---|---|
+| **Seed** | `#E05929` (Warm Coral) |
+| **Primary hue** | ~22° — warm coral-orange (energetic, friendly) |
+| **Secondary hue** | ~350° — warm berry-rose (rich, distinct from primary) |
+| **Tertiary hue** | ~160° — teal-green (fresh; maps naturally to "positive" / money owed to you) |
+| **Error hue** | Standard M3 red (~25°, high chroma) |
+
+The seed was chosen to match the brand personality: **warm & social, vibrant, playful**. The three roles are visually distinct across all UI zones — coral CTAs, rose-plum chips/tags, teal-green balance highlights.
+
 ---
 
 ### 3.1 Core Role Tokens
 
 | Token | Light Mode | Dark Mode | Primary Usage |
 |---|---|---|---|
-| `primary` | TBD | TBD | Key CTAs, active nav indicator, FAB |
-| `onPrimary` | TBD | TBD | Text/icons on `primary` |
-| `primaryContainer` | TBD | TBD | Chips, selected cards, prominent surface zones |
-| `onPrimaryContainer` | TBD | TBD | Text/icons on `primaryContainer` |
-| `secondary` | TBD | TBD | Tags, category indicators, secondary actions |
-| `onSecondary` | TBD | TBD | Text/icons on `secondary` |
-| `secondaryContainer` | TBD | TBD | Filter chips, balance indicator backgrounds |
-| `onSecondaryContainer` | TBD | TBD | Text/icons on `secondaryContainer` |
-| `tertiary` | TBD | TBD | Accent highlights, settlement badges, special moments |
-| `onTertiary` | TBD | TBD | Text/icons on `tertiary` |
-| `tertiaryContainer` | TBD | TBD | Stat callout cards, decorative highlights |
-| `onTertiaryContainer` | TBD | TBD | Text/icons on `tertiaryContainer` |
-| `error` | TBD | TBD | Validation errors, delete actions |
-| `onError` | TBD | TBD | Text/icons on `error` |
-| `errorContainer` | TBD | TBD | Error banner backgrounds |
-| `onErrorContainer` | TBD | TBD | Text/icons on `errorContainer` |
+| `primary` | `#BE4424` | `#FFB4A0` | Key CTAs, active nav indicator, FAB |
+| `onPrimary` | `#FFFFFF` | `#631100` | Text/icons on `primary` |
+| `primaryContainer` | `#FFDBD1` | `#8D2A0D` | Chips, selected cards, prominent surface zones |
+| `onPrimaryContainer` | `#3E0700` | `#FFDBD1` | Text/icons on `primaryContainer` |
+| `secondary` | `#924B62` | `#FFB0C8` | Tags, category indicators, secondary actions |
+| `onSecondary` | `#FFFFFF` | `#5A1134` | Text/icons on `secondary` |
+| `secondaryContainer` | `#FFD9E6` | `#75304A` | Filter chips, balance indicator backgrounds |
+| `onSecondaryContainer` | `#3B0B1F` | `#FFD9E6` | Text/icons on `secondaryContainer` |
+| `tertiary` | `#006B56` | `#60DBB9` | Accent highlights, settlement badges, special moments |
+| `onTertiary` | `#FFFFFF` | `#00382B` | Text/icons on `tertiary` |
+| `tertiaryContainer` | `#7FF8D5` | `#005140` | Stat callout cards, decorative highlights |
+| `onTertiaryContainer` | `#002019` | `#7FF8D5` | Text/icons on `tertiaryContainer` |
+| `error` | `#BA1A1A` | `#FFB4AB` | Validation errors, delete actions |
+| `onError` | `#FFFFFF` | `#690005` | Text/icons on `error` |
+| `errorContainer` | `#FFDAD6` | `#93000A` | Error banner backgrounds |
+| `onErrorContainer` | `#410002` | `#FFDAD6` | Text/icons on `errorContainer` |
 
 ---
 
@@ -109,18 +121,18 @@ Fixed colors maintain the **same value in both light and dark** themes. Use them
 
 | Token | Value | Usage |
 |---|---|---|
-| `primaryFixed` | TBD | Persistent primary-toned surface |
-| `primaryFixedDim` | TBD | Slightly dimmer fixed primary (hover/pressed on fixed surfaces) |
-| `onPrimaryFixed` | TBD | Text/icons on `primaryFixed` |
-| `onPrimaryFixedVariant` | TBD | Secondary text/icons on `primaryFixed` (lower emphasis) |
-| `secondaryFixed` | TBD | Persistent secondary-toned surface |
-| `secondaryFixedDim` | TBD | Dimmer fixed secondary |
-| `onSecondaryFixed` | TBD | Text/icons on `secondaryFixed` |
-| `onSecondaryFixedVariant` | TBD | Secondary text/icons on `secondaryFixed` |
-| `tertiaryFixed` | TBD | Persistent tertiary-toned surface |
-| `tertiaryFixedDim` | TBD | Dimmer fixed tertiary |
-| `onTertiaryFixed` | TBD | Text/icons on `tertiaryFixed` |
-| `onTertiaryFixedVariant` | TBD | Secondary text/icons on `tertiaryFixed` |
+| `primaryFixed` | `#FFDBD1` | Persistent primary-toned surface |
+| `primaryFixedDim` | `#FFB4A0` | Slightly dimmer fixed primary (hover/pressed on fixed surfaces) |
+| `onPrimaryFixed` | `#3E0700` | Text/icons on `primaryFixed` |
+| `onPrimaryFixedVariant` | `#8D2A0D` | Secondary text/icons on `primaryFixed` (lower emphasis) |
+| `secondaryFixed` | `#FFD9E6` | Persistent secondary-toned surface |
+| `secondaryFixedDim` | `#FFB0C8` | Dimmer fixed secondary |
+| `onSecondaryFixed` | `#3B0B1F` | Text/icons on `secondaryFixed` |
+| `onSecondaryFixedVariant` | `#75304A` | Secondary text/icons on `secondaryFixed` |
+| `tertiaryFixed` | `#7FF8D5` | Persistent tertiary-toned surface |
+| `tertiaryFixedDim` | `#60DBB9` | Dimmer fixed tertiary |
+| `onTertiaryFixed` | `#002019` | Text/icons on `tertiaryFixed` |
+| `onTertiaryFixedVariant` | `#005140` | Secondary text/icons on `tertiaryFixed` |
 
 > **Note:** Fixed tokens are derived from the same tonal palette as their non-fixed counterparts (e.g., `primaryFixed` sits at T90 of the primary tonal palette). Material Theme Builder generates these automatically.
 
@@ -132,23 +144,23 @@ M3 Expressive uses a **5-tier Surface Container hierarchy** to layer cards, shee
 
 | Token | Light Mode | Dark Mode | Usage |
 |---|---|---|---|
-| `background` | TBD | TBD | App background (behind all content) |
-| `onBackground` | TBD | TBD | Text/icons on `background` |
-| `surface` | TBD | TBD | Base surface (equals `background` in M3) |
-| `onSurface` | TBD | TBD | Primary text/icons on `surface` |
-| `surfaceVariant` | TBD | TBD | Kept for backward compatibility; prefer container tiers below |
-| `onSurfaceVariant` | TBD | TBD | Secondary text/icons, subtitle text |
-| `surfaceContainerLowest` | TBD | TBD | Lowest-emphasis container (page background inset) |
-| `surfaceContainerLow` | TBD | TBD | List item backgrounds, subtle grouping |
-| `surfaceContainer` | TBD | TBD | Standard card background |
-| `surfaceContainerHigh` | TBD | TBD | Elevated cards, selected list items |
-| `surfaceContainerHighest` | TBD | TBD | Top-level modal surfaces, dialogs |
-| `surfaceBright` | TBD | TBD | Highlighted surface areas (status bar zone, hero sections) |
-| `surfaceDim` | TBD | TBD | Dimmed surface (scrim behind modal overlays) |
-| `inverseSurface` | TBD | TBD | Snackbar background |
-| `inverseOnSurface` | TBD | TBD | Snackbar text |
-| `inversePrimary` | TBD | TBD | FAB icon on dark surface |
-| `surfaceTint` | TBD | TBD | Tonal elevation overlay color (= `primary`) |
+| `background` | `#FFFBFF` | `#1A1110` | App background (behind all content) |
+| `onBackground` | `#201A18` | `#EDDFDA` | Text/icons on `background` |
+| `surface` | `#FFFBFF` | `#1A1110` | Base surface (equals `background` in M3) |
+| `onSurface` | `#201A18` | `#EDDFDA` | Primary text/icons on `surface` |
+| `surfaceVariant` | `#F5DED6` | `#53433E` | Kept for backward compatibility; prefer container tiers below |
+| `onSurfaceVariant` | `#53433E` | `#D8C2BB` | Secondary text/icons, subtitle text |
+| `surfaceContainerLowest` | `#FFFFFF` | `#140C0A` | Lowest-emphasis container (page background inset) |
+| `surfaceContainerLow` | `#FEF1EC` | `#231917` | List item backgrounds, subtle grouping |
+| `surfaceContainer` | `#F9EBE6` | `#271D1B` | Standard card background |
+| `surfaceContainerHigh` | `#F3E5E0` | `#322825` | Elevated cards, selected list items |
+| `surfaceContainerHighest` | `#EDDFDA` | `#3D3230` | Top-level modal surfaces, dialogs |
+| `surfaceBright` | `#FFFBFF` | `#413735` | Highlighted surface areas (status bar zone, hero sections) |
+| `surfaceDim` | `#E4D7D2` | `#1A1110` | Dimmed surface (scrim behind modal overlays) |
+| `inverseSurface` | `#362F2C` | `#EDDFDA` | Snackbar background |
+| `inverseOnSurface` | `#FBEEEA` | `#362F2C` | Snackbar text |
+| `inversePrimary` | `#FFB4A0` | `#BE4424` | FAB icon on dark surface |
+| `surfaceTint` | `#BE4424` | `#FFB4A0` | Tonal elevation overlay color (= `primary`) |
 
 ---
 
@@ -156,10 +168,10 @@ M3 Expressive uses a **5-tier Surface Container hierarchy** to layer cards, shee
 
 | Token | Light Mode | Dark Mode | Usage |
 |---|---|---|---|
-| `outline` | TBD | TBD | Borders, dividers, text field outlines |
-| `outlineVariant` | TBD | TBD | Subtle dividers, chip outlines |
-| `scrim` | TBD | TBD | Modal overlay scrim (typically black at ~32% opacity) |
-| `shadow` | TBD | TBD | Drop shadow color (typically black) |
+| `outline` | `#85736D` | `#A08D86` | Borders, dividers, text field outlines |
+| `outlineVariant` | `#D8C2BB` | `#53433E` | Subtle dividers, chip outlines |
+| `scrim` | `#000000` | `#000000` | Modal overlay scrim (typically black at ~32% opacity) |
+| `shadow` | `#000000` | `#000000` | Drop shadow color (typically black) |
 
 ---
 
@@ -167,14 +179,14 @@ M3 Expressive uses a **5-tier Surface Container hierarchy** to layer cards, shee
 
 Custom semantic tokens that **alias** M3 palette colors for expense-specific contexts. These are not new hues — they carry domain meaning.
 
-| Semantic Token | Maps to | Usage |
-|---|---|---|
-| `positive` | `tertiary` or custom green tone | User is owed money — **always paired with an icon/label, never color alone** |
-| `positiveContainer` | `tertiaryContainer` | Background for "owed" balance cards |
-| `negative` | `error` or custom red tone | User owes money — **always paired with an icon/label** |
-| `negativeContainer` | `errorContainer` | Background for "owes" balance cards |
-| `settled` | `surfaceContainerHigh` / `onSurfaceVariant` | Debt fully settled — muted/neutral treatment |
-| `deleted` | `onSurfaceVariant` at reduced opacity | Muted strikethrough treatment for deleted entries |
+| Semantic Token | Maps to | Light Value | Dark Value | Usage |
+|---|---|---|---|---|
+| `positive` | `tertiary` | `#006B56` | `#60DBB9` | User is owed money — **always paired with an icon/label, never color alone** |
+| `positiveContainer` | `tertiaryContainer` | `#7FF8D5` | `#005140` | Background for "owed" balance cards |
+| `negative` | `error` | `#BA1A1A` | `#FFB4AB` | User owes money — **always paired with an icon/label** |
+| `negativeContainer` | `errorContainer` | `#FFDAD6` | `#93000A` | Background for "owes" balance cards |
+| `settled` | `surfaceContainerHigh` / `onSurfaceVariant` | `#F3E5E0` bg, `#53433E` text | `#322825` bg, `#D8C2BB` text | Debt fully settled — muted/neutral treatment |
+| `deleted` | `onSurfaceVariant` @ 60% α | `#53433E` @ 60% | `#D8C2BB` @ 60% | Muted strikethrough treatment for deleted entries |
 
 > **Note on naming:** Canonical names are `positive` and `negative`. The aliases `youAreOwed` and `youOwe` are acceptable as code-level synonyms in implementation but are not the design token names.
 
