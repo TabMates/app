@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TabMates — Color Palette Preview v4</title>
+<style>
+  :root {
+    --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font);
+    background: #f5f5f5;
+    color: #1a1a1a;
+    padding: 32px;
+    line-height: 1.5;
+  }
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+  .seed-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .seed-swatch {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    flex-shrink: 0;
+  }
+  .seed-info h2 { font-size: 18px; font-weight: 600; }
+  .seed-info p { font-size: 13px; color: #666; }
+
+  .mode-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    position: sticky;
+    top: 16px;
+    z-index: 10;
+  }
+  .mode-toggle button {
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 24px;
+    border-radius: 100px;
+    border: 2px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-toggle button.active {
+    background: #A83200;
+    color: #fff;
+    border-color: #A83200;
+  }
+  .mode-toggle button:hover:not(.active) {
+    border-color: #A83200;
+    color: #A83200;
+  }
+
+  section {
+    margin-bottom: 48px;
+  }
+  section > h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  section > p {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 16px;
+  }
+
+  .palette-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .swatch {
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: transform 0.15s;
+  }
+  .swatch:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+  .swatch-color {
+    height: 80px;
+    display: flex;
+    align-items: flex-end;
+    padding: 8px 12px;
+    position: relative;
+  }
+  .swatch-color .on-label {
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.15s;
+    position: absolute;
+    top: 8px;
+    right: 10px;
+  }
+  .swatch:hover .on-label { opacity: 1; }
+  .swatch-info {
+    padding: 10px 12px;
+  }
+  .swatch-info .token {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    color: #333;
+    word-break: break-all;
+  }
+  .swatch-info .hex {
+    font-size: 11px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    color: #999;
+    margin-top: 2px;
+  }
+  .swatch-info .usage {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+
+  /* Pair display: container + on-color side by side */
+  .pair-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .pair {
+    display: flex;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    background: #fff;
+    transition: transform 0.15s;
+  }
+  .pair:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+  .pair-main {
+    flex: 2;
+    padding: 16px;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .pair-main .pair-label {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .pair-main .pair-hex {
+    font-size: 11px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    opacity: 0.8;
+    margin-top: 4px;
+  }
+  .pair-on {
+    flex: 1;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 80px;
+  }
+  .pair-on .pair-hex {
+    font-size: 10px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+
+  /* Surface tiers */
+  .surface-strip {
+    display: flex;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 12px;
+  }
+  .surface-strip-item {
+    flex: 1;
+    padding: 16px 12px;
+    text-align: center;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 2px;
+  }
+  .surface-strip-item .strip-label {
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .surface-strip-item .strip-hex {
+    font-size: 9px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    opacity: 0.6;
+  }
+
+  /* Semantic tokens preview */
+  .semantic-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .semantic-card {
+    border-radius: 20px;
+    padding: 20px;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    transition: transform 0.15s;
+  }
+  .semantic-card:hover {
+    transform: translateY(-2px);
+  }
+  .semantic-card .sc-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  .semantic-card .sc-label {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .semantic-card .sc-amount {
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .semantic-card .sc-sub {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 4px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  /* App mockup preview */
+  .app-preview {
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+    max-width: 390px;
+    overflow: hidden;
+    margin: 0 auto;
+  }
+  .app-topbar {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .app-topbar .logo {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .app-topbar .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .app-hero {
+    margin: 8px 16px;
+    border-radius: 24px;
+    padding: 24px 20px;
+  }
+  .app-hero .hero-label {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.8;
+  }
+  .app-hero .hero-amount {
+    font-size: 36px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .app-cards {
+    padding: 12px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .app-card-item {
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .app-card-item .aci-name { font-size: 14px; font-weight: 500; }
+  .app-card-item .aci-sub { font-size: 11px; opacity: 0.6; }
+  .app-card-item .aci-amount { font-size: 14px; font-weight: 600; }
+  .app-fab {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #fff;
+    margin: 0 16px 12px auto;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  }
+  .app-navbar {
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 24px 14px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+  .app-nav-item {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.5;
+    padding: 4px 16px;
+    border-radius: 100px;
+  }
+  .app-nav-item.active {
+    opacity: 1;
+  }
+  .app-nav-pill {
+    font-size: 18px;
+    margin-bottom: 2px;
+  }
+
+  .dark-app .app-preview { background: #1C100D; }
+  .dark-app .app-topbar .logo { color: #F6DDD6; }
+  .dark-app .app-card-item .aci-name { color: #F6DDD6; }
+  .dark-app .app-card-item .aci-sub { color: #E1BFB5; }
+  .dark-app .app-nav-item { color: #E1BFB5; }
+
+  [data-mode="dark"] { display: none; }
+  body.dark-mode [data-mode="dark"] { display: initial; }
+  body.dark-mode [data-mode="light"] { display: none; }
+  body.dark-mode {
+    background: #111;
+    color: #eee;
+  }
+  body.dark-mode .seed-banner,
+  body.dark-mode .swatch {
+    background: #222;
+  }
+  body.dark-mode .swatch-info .token { color: #ddd; }
+  body.dark-mode .swatch-info .hex { color: #888; }
+  body.dark-mode section > p { color: #777; }
+  body.dark-mode .mode-toggle button {
+    background: #222;
+    border-color: #444;
+    color: #ccc;
+  }
+  body.dark-mode .mode-toggle button.active {
+    background: #FFB59D;
+    color: #5D1800;
+    border-color: #FFB59D;
+  }
+  body.dark-mode .mode-toggle button:hover:not(.active) {
+    border-color: #FFB59D;
+    color: #FFB59D;
+  }
+  body.dark-mode .pair { background: #222; }
+</style>
+</head>
+<body>
+
+<h1>TabMates Color Palette</h1>
+<p class="subtitle">M3 Expressive · Seed <code>#A83200</code> · Generated 2026-04-08</p>
+
+<div class="seed-banner">
+  <div class="seed-swatch" style="background:#CB4A1A;"></div>
+  <div class="seed-info">
+    <h2>Seed: #A83200 — Deep Burnt Orange</h2>
+    <p>Primary ~18° deep red-orange · Secondary ~14° terracotta · Tertiary ~48° golden-amber · Error standard M3 red</p>
+  </div>
+</div>
+
+<div class="mode-toggle">
+  <button class="active" onclick="setMode('light')">☀️ Light Mode</button>
+  <button onclick="setMode('dark')">🌙 Dark Mode</button>
+</div>
+
+<!-- ─── PRIMARY ──────────────────────────────────────────── -->
+<section>
+  <h2>Primary</h2>
+  <p>Key CTAs, active nav indicator, FAB, prominent surface zones</p>
+  <div class="pair-row">
+    <div class="pair">
+      <div class="pair-main" data-mode="light" style="background:#A83200;color:#FFFFFF;">
+        <div><div class="pair-label">primary</div><div class="pair-hex">#A83200</div></div>
+      </div>
+      <div class="pair-on" data-mode="light" style="background:#FFFFFF;color:#A83200;">
+        <div>onPrimary<div class="pair-hex">#FFFFFF</div></div>
+      </div>
+      <div class="pair-main" data-mode="dark" style="background:#FFB59D;color:#5D1800;">
+        <div><div class="pair-label">primary</div><div class="pair-hex">#FFB59D</div></div>
+      </div>
+      <div class="pair-on" data-mode="dark" style="background:#5D1800;color:#FFB59D;">
+        <div>onPrimary<div class="pair-hex">#5D1800</div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="pair-main" data-mode="light" style="background:#CB4A1A;color:#FFFBFF;">
+        <div><div class="pair-label">primaryContainer</div><div class="pair-hex">#CB4A1A</div></div>
+      </div>
+      <div class="pair-on" data-mode="light" style="background:#FFFBFF;color:#CB4A1A;">
+        <div>onPrimaryContainer<div class="pair-hex">#FFFBFF</div></div>
+      </div>
+      <div class="pair-main" data-mode="dark" style="background:#F06534;color:#3B0C00;">
+        <div><div class="pair-label">primaryContainer</div><div class="pair-hex">#F06534</div></div>
+      </div>
+      <div class="pair-on" data-mode="dark" style="background:#3B0C00;color:#F06534;">
+        <div>onPrimaryContainer<div class="pair-hex">#3B0C00</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SECONDARY ────────────────────────────────────────── -->
+<section>
+  <h2>Secondary</h2>
+  <p>Tags, category indicators, filter chips, secondary actions</p>
+  <div class="pair-row">
+    <div class="pair">
+      <div class="pair-main" data-mode="light" style="background:#904B34;color:#FFFFFF;">
+        <div><div class="pair-label">secondary</div><div class="pair-hex">#904B34</div></div>
+      </div>
+      <div class="pair-on" data-mode="light" style="background:#FFFFFF;color:#904B34;">
+        <div>onSecondary<div class="pair-hex">#FFFFFF</div></div>
+      </div>
+      <div class="pair-main" data-mode="dark" style="background:#FFB59D;color:#561F0B;">
+        <div><div class="pair-label">secondary</div><div class="pair-hex">#FFB59D</div></div>
+      </div>
+      <div class="pair-on" data-mode="dark" style="background:#561F0B;color:#FFB59D;">
+        <div>onSecondary<div class="pair-hex">#561F0B</div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="pair-main" data-mode="light" style="background:#FEA588;color:#783923;">
+        <div><div class="pair-label">secondaryContainer</div><div class="pair-hex">#FEA588</div></div>
+      </div>
+      <div class="pair-on" data-mode="light" style="background:#783923;color:#FEA588;">
+        <div>onSecondaryContainer<div class="pair-hex">#783923</div></div>
+      </div>
+      <div class="pair-main" data-mode="dark" style="background:#73341F;color:#F79F83;">
+        <div><div class="pair-label">secondaryContainer</div><div class="pair-hex">#73341F</div></div>
+      </div>
+      <div class="pair-on" data-mode="dark" style="background:#F79F83;color:#73341F;">
+        <div>onSecondaryContainer<div class="pair-hex">#F79F83</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TERTIARY ──────────────────────────────────────────── -->
+<section>
+  <h2>Tertiary</h2>
+  <p>Accent highlights, settlement badges, "positive" balance (you are owed) — golden-amber tones</p>
+  <div class="pair-row">
+    <div class="pair">
+      <div class="pair-main" data-mode="light" style="background:#715C00;color:#FFFFFF;">
+        <div><div class="pair-label">tertiary</div><div class="pair-hex">#715C00</div></div>
+      </div>
+      <div class="pair-on" data-mode="light" style="background:#FFFFFF;color:#715C00;">
+        <div>onTertiary<div class="pair-hex">#FFFFFF</div></div>
+      </div>
+      <div class="pair-main" data-mode="dark" style="background:#E5C44B;color:#3B2F00;">
+        <div><div class="pair-label">tertiary</div><div class="pair-hex">#E5C44B</div></div>
+      </div>
+      <div class="pair-on" data-mode="dark" style="background:#3B2F00;color:#E5C44B;">
+        <div>onTertiary<div class="pair-hex">#3B2F00</div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="pair-main" data-mode="light" style="background:#C8A932;color:#4D3E00;">
+        <div><div class="pair-label">tertiaryContainer</div><div class="pair-hex">#C8A932</div></div>
+      </div>
+      <div class="pair-on" data-mode="light" style="background:#4D3E00;color:#C8A932;">
+        <div>onTertiaryContainer<div class="pair-hex">#4D3E00</div></div>
+      </div>
+      <div class="pair-main" data-mode="dark" style="background:#C8A932;color:#4D3E00;">
+        <div><div class="pair-label">tertiaryContainer</div><div class="pair-hex">#C8A932</div></div>
+      </div>
+      <div class="pair-on" data-mode="dark" style="background:#4D3E00;color:#C8A932;">
+        <div>onTertiaryContainer<div class="pair-hex">#4D3E00</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── ERROR ─────────────────────────────────────────────── -->
+<section>
+  <h2>Error</h2>
+  <p>Validation errors, delete actions, "negative" balance (you owe)</p>
+  <div class="pair-row">
+    <div class="pair">
+      <div class="pair-main" data-mode="light" style="background:#BA1A1A;color:#FFFFFF;">
+        <div><div class="pair-label">error</div><div class="pair-hex">#BA1A1A</div></div>
+      </div>
+      <div class="pair-on" data-mode="light" style="background:#FFFFFF;color:#BA1A1A;">
+        <div>onError<div class="pair-hex">#FFFFFF</div></div>
+      </div>
+      <div class="pair-main" data-mode="dark" style="background:#FFB4AB;color:#690005;">
+        <div><div class="pair-label">error</div><div class="pair-hex">#FFB4AB</div></div>
+      </div>
+      <div class="pair-on" data-mode="dark" style="background:#690005;color:#FFB4AB;">
+        <div>onError<div class="pair-hex">#690005</div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="pair-main" data-mode="light" style="background:#FFDAD6;color:#93000A;">
+        <div><div class="pair-label">errorContainer</div><div class="pair-hex">#FFDAD6</div></div>
+      </div>
+      <div class="pair-on" data-mode="light" style="background:#93000A;color:#FFDAD6;">
+        <div>onErrorContainer<div class="pair-hex">#93000A</div></div>
+      </div>
+      <div class="pair-main" data-mode="dark" style="background:#93000A;color:#FFDAD6;">
+        <div><div class="pair-label">errorContainer</div><div class="pair-hex">#93000A</div></div>
+      </div>
+      <div class="pair-on" data-mode="dark" style="background:#FFDAD6;color:#93000A;">
+        <div>onErrorContainer<div class="pair-hex">#FFDAD6</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FIXED COLORS ──────────────────────────────────────── -->
+<section>
+  <h2>Fixed Colors</h2>
+  <p>Same value in both light &amp; dark — persistent brand moments, illustration accents, onboarding</p>
+  <div class="pair-row">
+    <div class="pair">
+      <div class="pair-main" style="background:#CB4A1A;color:#FFFBFF;">
+        <div><div class="pair-label">primaryFixed</div><div class="pair-hex">#CB4A1A</div></div>
+      </div>
+      <div class="pair-on" style="background:#FFB59D;color:#5D1800;">
+        <div>Dim<div class="pair-hex">#FFB59D</div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="pair-main" style="background:#FEA588;color:#783923;">
+        <div><div class="pair-label">secondaryFixed</div><div class="pair-hex">#FEA588</div></div>
+      </div>
+      <div class="pair-on" style="background:#FFB59D;color:#561F0B;">
+        <div>Dim<div class="pair-hex">#FFB59D</div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="pair-main" style="background:#C8A932;color:#4D3E00;">
+        <div><div class="pair-label">tertiaryFixed</div><div class="pair-hex">#C8A932</div></div>
+      </div>
+      <div class="pair-on" style="background:#E5C44B;color:#3B2F00;">
+        <div>Dim<div class="pair-hex">#E5C44B</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SURFACE CONTAINER HIERARCHY ──────────────────────── -->
+<section>
+  <h2>Surface Container Hierarchy</h2>
+  <p>5-tier depth system — replaces elevation shadows for visual layering</p>
+
+  <div data-mode="light">
+    <p style="font-size:11px;font-weight:600;margin-bottom:8px;color:#888;">LIGHT MODE</p>
+    <div class="surface-strip">
+      <div class="surface-strip-item" style="background:#FFFFFF;color:#251914;">
+        <div class="strip-label">Lowest</div>
+        <div class="strip-hex">#FFFFFF</div>
+      </div>
+      <div class="surface-strip-item" style="background:#FFF1ED;color:#251914;">
+        <div class="strip-label">Low</div>
+        <div class="strip-hex">#FFF1ED</div>
+      </div>
+      <div class="surface-strip-item" style="background:#FFE9E3;color:#251914;">
+        <div class="strip-label">Container</div>
+        <div class="strip-hex">#FFE9E3</div>
+      </div>
+      <div class="surface-strip-item" style="background:#FCE3DC;color:#251914;">
+        <div class="strip-label">High</div>
+        <div class="strip-hex">#FCE3DC</div>
+      </div>
+      <div class="surface-strip-item" style="background:#F6DDD6;color:#251914;">
+        <div class="strip-label">Highest</div>
+        <div class="strip-hex">#F6DDD6</div>
+      </div>
+    </div>
+    <div class="surface-strip" style="margin-top:8px;">
+      <div class="surface-strip-item" style="background:#FFF8F6;color:#251914;">
+        <div class="strip-label">surface / bg</div>
+        <div class="strip-hex">#FFF8F6</div>
+      </div>
+      <div class="surface-strip-item" style="background:#FFF8F6;color:#251914;">
+        <div class="strip-label">surfaceBright</div>
+        <div class="strip-hex">#FFF8F6</div>
+      </div>
+      <div class="surface-strip-item" style="background:#EDD5CE;color:#251914;">
+        <div class="strip-label">surfaceDim</div>
+        <div class="strip-hex">#EDD5CE</div>
+      </div>
+      <div class="surface-strip-item" style="background:#FEDBD1;color:#59413A;">
+        <div class="strip-label">surfaceVariant</div>
+        <div class="strip-hex">#FEDBD1</div>
+      </div>
+      <div class="surface-strip-item" style="background:#3C2D28;color:#FFEDE8;">
+        <div class="strip-label">inverseSurface</div>
+        <div class="strip-hex">#3C2D28</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-mode="dark">
+    <p style="font-size:11px;font-weight:600;margin-bottom:8px;color:#777;">DARK MODE</p>
+    <div class="surface-strip">
+      <div class="surface-strip-item" style="background:#170B08;color:#F6DDD6;">
+        <div class="strip-label">Lowest</div>
+        <div class="strip-hex">#170B08</div>
+      </div>
+      <div class="surface-strip-item" style="background:#251914;color:#F6DDD6;">
+        <div class="strip-label">Low</div>
+        <div class="strip-hex">#251914</div>
+      </div>
+      <div class="surface-strip-item" style="background:#2A1C18;color:#F6DDD6;">
+        <div class="strip-label">Container</div>
+        <div class="strip-hex">#2A1C18</div>
+      </div>
+      <div class="surface-strip-item" style="background:#352722;color:#F6DDD6;">
+        <div class="strip-label">High</div>
+        <div class="strip-hex">#352722</div>
+      </div>
+      <div class="surface-strip-item" style="background:#40312D;color:#F6DDD6;">
+        <div class="strip-label">Highest</div>
+        <div class="strip-hex">#40312D</div>
+      </div>
+    </div>
+    <div class="surface-strip" style="margin-top:8px;">
+      <div class="surface-strip-item" style="background:#1C100D;color:#F6DDD6;">
+        <div class="strip-label">surface / bg</div>
+        <div class="strip-hex">#1C100D</div>
+      </div>
+      <div class="surface-strip-item" style="background:#453631;color:#F6DDD6;">
+        <div class="strip-label">surfaceBright</div>
+        <div class="strip-hex">#453631</div>
+      </div>
+      <div class="surface-strip-item" style="background:#1C100D;color:#F6DDD6;">
+        <div class="strip-label">surfaceDim</div>
+        <div class="strip-hex">#1C100D</div>
+      </div>
+      <div class="surface-strip-item" style="background:#59413A;color:#E1BFB5;">
+        <div class="strip-label">surfaceVariant</div>
+        <div class="strip-hex">#59413A</div>
+      </div>
+      <div class="surface-strip-item" style="background:#F6DDD6;color:#3C2D28;">
+        <div class="strip-label">inverseSurface</div>
+        <div class="strip-hex">#F6DDD6</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── UTILITY ────────────────────────────────────────────── -->
+<section>
+  <h2>Utility</h2>
+  <p>Borders, dividers, scrims, shadows</p>
+  <div class="palette-row">
+    <div class="swatch" data-mode="light">
+      <div class="swatch-color" style="background:#8D7168;">
+        <span class="on-label" style="color:#fff;">Aa</span>
+      </div>
+      <div class="swatch-info"><div class="token">outline</div><div class="hex">#8D7168</div></div>
+    </div>
+    <div class="swatch" data-mode="light">
+      <div class="swatch-color" style="background:#E1BFB5;">
+        <span class="on-label" style="color:#333;">Aa</span>
+      </div>
+      <div class="swatch-info"><div class="token">outlineVariant</div><div class="hex">#E1BFB5</div></div>
+    </div>
+    <div class="swatch" data-mode="dark">
+      <div class="swatch-color" style="background:#A88A81;">
+        <span class="on-label" style="color:#fff;">Aa</span>
+      </div>
+      <div class="swatch-info"><div class="token">outline</div><div class="hex">#A88A81</div></div>
+    </div>
+    <div class="swatch" data-mode="dark">
+      <div class="swatch-color" style="background:#59413A;">
+        <span class="on-label" style="color:#E1BFB5;">Aa</span>
+      </div>
+      <div class="swatch-info"><div class="token">outlineVariant</div><div class="hex">#59413A</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SEMANTIC / APP-SPECIFIC ────────────────────────────── -->
+<section>
+  <h2>Semantic Tokens — In Context</h2>
+  <p>All four palette roles mapped to expense states: positive (gold tertiary) · pending (terracotta secondary) · negative (error) · settled (neutral surface). <code>positiveContainer</code> #C8A932 is theme-invariant — same hex in light &amp; dark.</p>
+
+  <div data-mode="light">
+    <div class="semantic-cards">
+      <div class="semantic-card" style="background:#C8A932;color:#4D3E00;border-radius:24px;">
+        <div>
+          <div class="sc-icon">↑</div>
+          <div class="sc-label">You are owed</div>
+          <div class="sc-amount" style="color:#715C00;">€45.20</div>
+        </div>
+        <div class="sc-sub">positive → tertiary #715C00<br>positiveContainer → #C8A932 ★</div>
+      </div>
+      <div class="semantic-card" style="background:#FFDAD6;color:#93000A;border-radius:24px;">
+        <div>
+          <div class="sc-icon">↓</div>
+          <div class="sc-label">You owe</div>
+          <div class="sc-amount" style="color:#BA1A1A;">€12.00</div>
+        </div>
+        <div class="sc-sub">negative → error #BA1A1A<br>negativeContainer → #FFDAD6</div>
+      </div>
+      <div class="semantic-card" style="background:#FEA588;color:#783923;border-radius:24px;">
+        <div>
+          <div class="sc-icon">⏳</div>
+          <div class="sc-label">Awaiting response</div>
+          <div class="sc-amount" style="color:#904B34;">€8.50</div>
+        </div>
+        <div class="sc-sub">pending → secondary #904B34<br>pendingContainer → #FEA588</div>
+      </div>
+      <div class="semantic-card" style="background:#FCE3DC;color:#59413A;border-radius:24px;">
+        <div>
+          <div class="sc-icon">✓</div>
+          <div class="sc-label">All settled</div>
+          <div class="sc-amount">€0.00</div>
+        </div>
+        <div class="sc-sub">settled → surfaceContainerHigh<br>#FCE3DC / #59413A</div>
+      </div>
+    </div>
+  </div>
+
+  <div data-mode="dark">
+    <div class="semantic-cards">
+      <div class="semantic-card" style="background:#C8A932;color:#4D3E00;border-radius:24px;">
+        <div>
+          <div class="sc-icon">↑</div>
+          <div class="sc-label">You are owed</div>
+          <div class="sc-amount" style="color:#E5C44B;">€45.20</div>
+        </div>
+        <div class="sc-sub">positive → tertiary #E5C44B<br>positiveContainer → #C8A932 ★</div>
+      </div>
+      <div class="semantic-card" style="background:#93000A;color:#FFDAD6;border-radius:24px;">
+        <div>
+          <div class="sc-icon">↓</div>
+          <div class="sc-label">You owe</div>
+          <div class="sc-amount" style="color:#FFB4AB;">€12.00</div>
+        </div>
+        <div class="sc-sub">negative → error #FFB4AB<br>negativeContainer → #93000A</div>
+      </div>
+      <div class="semantic-card" style="background:#73341F;color:#F79F83;border-radius:24px;">
+        <div>
+          <div class="sc-icon">⏳</div>
+          <div class="sc-label">Awaiting response</div>
+          <div class="sc-amount" style="color:#FFB59D;">€8.50</div>
+        </div>
+        <div class="sc-sub">pending → secondary #FFB59D<br>pendingContainer → #73341F</div>
+      </div>
+      <div class="semantic-card" style="background:#352722;color:#E1BFB5;border-radius:24px;">
+        <div>
+          <div class="sc-icon">✓</div>
+          <div class="sc-label">All settled</div>
+          <div class="sc-amount">€0.00</div>
+        </div>
+        <div class="sc-sub">settled → surfaceContainerHigh<br>#352722 / #E1BFB5</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── APP MOCKUP ─────────────────────────────────────────── -->
+<section>
+  <h2>Mini Mockup Preview</h2>
+  <p>Rough approximation of how the palette works together on a Home screen</p>
+
+  <div data-mode="light">
+    <div class="app-preview">
+      <div class="app-topbar" style="background:#FFF8F6;">
+        <div class="logo" style="color:#A83200;">TabMates</div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <span style="font-size:20px;color:#59413A;">🔔</span>
+          <div class="avatar" style="background:#904B34;">JD</div>
+        </div>
+      </div>
+      <div class="app-hero" style="background:#C8A932;color:#4D3E00;">
+        <div class="hero-label">Your net balance</div>
+        <div class="hero-amount" style="color:#715C00;">+€45.20</div>
+      </div>
+      <div class="app-cards">
+        <div class="app-card-item" style="background:#FFE9E3;color:#251914;">
+          <div>
+            <div class="aci-name">🏖️ Mallorca Trip</div>
+            <div class="aci-sub" style="color:#59413A;">5 members · 2h ago</div>
+          </div>
+          <div class="aci-amount" style="color:#715C00;">↑ €23.50</div>
+        </div>
+        <div class="app-card-item" style="background:#FFE9E3;color:#251914;">
+          <div>
+            <div class="aci-name">🏠 Flatmates</div>
+            <div class="aci-sub" style="color:#59413A;">3 members · yesterday</div>
+          </div>
+          <div class="aci-amount" style="color:#BA1A1A;">↓ €12.00</div>
+        </div>
+        <div class="app-card-item" style="background:#FFE9E3;color:#251914;">
+          <div>
+            <div class="aci-name">🍕 Pizza Night</div>
+            <div class="aci-sub" style="color:#783923;">⏳ Awaiting 2 members</div>
+          </div>
+          <div class="aci-amount" style="color:#904B34;">€8.50</div>
+        </div>
+      </div>
+      <div class="app-fab" style="background:#A83200;">+</div>
+      <div class="app-navbar" style="background:#FFF8F6;">
+        <div class="app-nav-item active" style="color:#A83200;">
+          <div class="app-nav-pill" style="background:#CB4A1A;padding:4px 16px;border-radius:100px;color:#FFFBFF;">🏠</div>Home
+        </div>
+        <div class="app-nav-item" style="color:#59413A;">
+          <div class="app-nav-pill">👥</div>Groups
+        </div>
+        <div class="app-nav-item" style="color:#59413A;">
+          <div class="app-nav-pill">📋</div>Activity
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-mode="dark" class="dark-app">
+    <div class="app-preview">
+      <div class="app-topbar" style="background:#1C100D;">
+        <div class="logo" style="color:#FFB59D;">TabMates</div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <span style="font-size:20px;color:#E1BFB5;">🔔</span>
+          <div class="avatar" style="background:#73341F;color:#F79F83;">JD</div>
+        </div>
+      </div>
+      <div class="app-hero" style="background:#C8A932;color:#4D3E00;">
+        <div class="hero-label">Your net balance</div>
+        <div class="hero-amount" style="color:#E5C44B;">+€45.20</div>
+      </div>
+      <div class="app-cards">
+        <div class="app-card-item" style="background:#2A1C18;color:#F6DDD6;">
+          <div>
+            <div class="aci-name" style="color:#F6DDD6;">🏖️ Mallorca Trip</div>
+            <div class="aci-sub" style="color:#E1BFB5;">5 members · 2h ago</div>
+          </div>
+          <div class="aci-amount" style="color:#E5C44B;">↑ €23.50</div>
+        </div>
+        <div class="app-card-item" style="background:#2A1C18;color:#F6DDD6;">
+          <div>
+            <div class="aci-name" style="color:#F6DDD6;">🏠 Flatmates</div>
+            <div class="aci-sub" style="color:#E1BFB5;">3 members · yesterday</div>
+          </div>
+          <div class="aci-amount" style="color:#FFB4AB;">↓ €12.00</div>
+        </div>
+        <div class="app-card-item" style="background:#2A1C18;color:#F6DDD6;">
+          <div>
+            <div class="aci-name" style="color:#F6DDD6;">🍕 Pizza Night</div>
+            <div class="aci-sub" style="color:#F79F83;">⏳ Awaiting 2 members</div>
+          </div>
+          <div class="aci-amount" style="color:#FFB59D;">€8.50</div>
+        </div>
+      </div>
+      <div class="app-fab" style="background:#FFB59D;color:#5D1800;">+</div>
+      <div class="app-navbar" style="background:#1C100D;">
+        <div class="app-nav-item active" style="color:#FFB59D;">
+          <div class="app-nav-pill" style="background:#F06534;padding:4px 16px;border-radius:100px;color:#3B0C00;">🏠</div>Home
+        </div>
+        <div class="app-nav-item" style="color:#E1BFB5;">
+          <div class="app-nav-pill">👥</div>Groups
+        </div>
+        <div class="app-nav-item" style="color:#E1BFB5;">
+          <div class="app-nav-pill">📋</div>Activity
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+function setMode(mode) {
+  document.body.classList.toggle('dark-mode', mode === 'dark');
+  document.querySelectorAll('.mode-toggle button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>
+
