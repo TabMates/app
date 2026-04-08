@@ -731,42 +731,45 @@
 
 <!-- ─── SEMANTIC / APP-SPECIFIC ────────────────────────────── -->
 <section>
-  <h2>Semantic Tokens — In Context</h2>
-  <p>All four palette roles mapped to expense states: positive (gold tertiary) · pending (terracotta secondary) · negative (error) · settled (neutral surface). <code>positiveContainer</code> #C8A932 is theme-invariant — same hex in light &amp; dark.</p>
+   <h2>Semantic Tokens — In Context</h2>  <p>M3 roles used directly for most states — only <code>pending</code>, <code>settled</code>, <code>deleted</code> need custom tokens. <code>tertiaryContainer</code> #C8A932 is theme-invariant ★.</p>
 
   <div data-mode="light">
     <div class="semantic-cards">
+      <!-- positive = tertiary family directly, no custom alias needed -->
       <div class="semantic-card" style="background:#C8A932;color:#4D3E00;border-radius:24px;">
         <div>
           <div class="sc-icon">↑</div>
           <div class="sc-label">You are owed</div>
-          <div class="sc-amount" style="color:#715C00;">€45.20</div>
+          <div class="sc-amount">€45.20</div>
         </div>
-        <div class="sc-sub">positive → tertiary #715C00<br>positiveContainer → #C8A932 ★</div>
+        <div class="sc-sub">tertiaryContainer → #C8A932 ★<br>onTertiaryContainer → #4D3E00</div>
       </div>
+      <!-- negative = error family directly, no custom alias needed -->
       <div class="semantic-card" style="background:#FFDAD6;color:#93000A;border-radius:24px;">
         <div>
           <div class="sc-icon">↓</div>
           <div class="sc-label">You owe</div>
           <div class="sc-amount" style="color:#BA1A1A;">€12.00</div>
         </div>
-        <div class="sc-sub">negative → error #BA1A1A<br>negativeContainer → #FFDAD6</div>
+        <div class="sc-sub">errorContainer → #FFDAD6<br>onErrorContainer (amount) → #BA1A1A</div>
       </div>
+      <!-- pending = custom token (secondary role doesn't imply "pending") -->
       <div class="semantic-card" style="background:#FEA588;color:#783923;border-radius:24px;">
         <div>
           <div class="sc-icon">⏳</div>
           <div class="sc-label">Awaiting response</div>
-          <div class="sc-amount" style="color:#904B34;">€8.50</div>
+          <div class="sc-amount">€8.50</div>
         </div>
-        <div class="sc-sub">pending → secondary #904B34<br>pendingContainer → #FEA588</div>
+        <div class="sc-sub">pendingContainer (custom) → #FEA588<br>onPendingContainer → #783923</div>
       </div>
+      <!-- settled = custom composite token (two M3 tokens combined) -->
       <div class="semantic-card" style="background:#FCE3DC;color:#59413A;border-radius:24px;">
         <div>
           <div class="sc-icon">✓</div>
           <div class="sc-label">All settled</div>
           <div class="sc-amount">€0.00</div>
         </div>
-        <div class="sc-sub">settled → surfaceContainerHigh<br>#FCE3DC / #59413A</div>
+        <div class="sc-sub">settled (custom) → surfaceContainerHigh<br>#FCE3DC + onSurfaceVariant #59413A</div>
       </div>
     </div>
   </div>
@@ -777,9 +780,9 @@
         <div>
           <div class="sc-icon">↑</div>
           <div class="sc-label">You are owed</div>
-          <div class="sc-amount" style="color:#E5C44B;">€45.20</div>
+          <div class="sc-amount">€45.20</div>
         </div>
-        <div class="sc-sub">positive → tertiary #E5C44B<br>positiveContainer → #C8A932 ★</div>
+        <div class="sc-sub">tertiaryContainer → #C8A932 ★<br>onTertiaryContainer → #4D3E00</div>
       </div>
       <div class="semantic-card" style="background:#93000A;color:#FFDAD6;border-radius:24px;">
         <div>
@@ -787,15 +790,15 @@
           <div class="sc-label">You owe</div>
           <div class="sc-amount" style="color:#FFB4AB;">€12.00</div>
         </div>
-        <div class="sc-sub">negative → error #FFB4AB<br>negativeContainer → #93000A</div>
+        <div class="sc-sub">errorContainer → #93000A<br>error (amount) → #FFB4AB</div>
       </div>
       <div class="semantic-card" style="background:#73341F;color:#F79F83;border-radius:24px;">
         <div>
           <div class="sc-icon">⏳</div>
           <div class="sc-label">Awaiting response</div>
-          <div class="sc-amount" style="color:#FFB59D;">€8.50</div>
+          <div class="sc-amount">€8.50</div>
         </div>
-        <div class="sc-sub">pending → secondary #FFB59D<br>pendingContainer → #73341F</div>
+        <div class="sc-sub">pendingContainer (custom) → #73341F<br>onPendingContainer → #F79F83</div>
       </div>
       <div class="semantic-card" style="background:#352722;color:#E1BFB5;border-radius:24px;">
         <div>
@@ -803,7 +806,7 @@
           <div class="sc-label">All settled</div>
           <div class="sc-amount">€0.00</div>
         </div>
-        <div class="sc-sub">settled → surfaceContainerHigh<br>#352722 / #E1BFB5</div>
+        <div class="sc-sub">settled (custom) → surfaceContainerHigh<br>#352722 + onSurfaceVariant #E1BFB5</div>
       </div>
     </div>
   </div>
@@ -825,7 +828,7 @@
       </div>
       <div class="app-hero" style="background:#C8A932;color:#4D3E00;">
         <div class="hero-label">Your net balance</div>
-        <div class="hero-amount" style="color:#715C00;">+€45.20</div>
+        <div class="hero-amount">+€45.20</div>
       </div>
       <div class="app-cards">
         <div class="app-card-item" style="background:#FFE9E3;color:#251914;">
@@ -845,7 +848,7 @@
         <div class="app-card-item" style="background:#FFE9E3;color:#251914;">
           <div>
             <div class="aci-name">🍕 Pizza Night</div>
-            <div class="aci-sub" style="color:#783923;">⏳ Awaiting 2 members</div>
+            <div class="aci-sub" style="color:#904B34;">⏳ Awaiting 2 members</div>
           </div>
           <div class="aci-amount" style="color:#904B34;">€8.50</div>
         </div>
@@ -876,7 +879,7 @@
       </div>
       <div class="app-hero" style="background:#C8A932;color:#4D3E00;">
         <div class="hero-label">Your net balance</div>
-        <div class="hero-amount" style="color:#E5C44B;">+€45.20</div>
+        <div class="hero-amount">+€45.20</div>
       </div>
       <div class="app-cards">
         <div class="app-card-item" style="background:#2A1C18;color:#F6DDD6;">
@@ -896,7 +899,7 @@
         <div class="app-card-item" style="background:#2A1C18;color:#F6DDD6;">
           <div>
             <div class="aci-name" style="color:#F6DDD6;">🍕 Pizza Night</div>
-            <div class="aci-sub" style="color:#F79F83;">⏳ Awaiting 2 members</div>
+            <div class="aci-sub" style="color:#FFB59D;">⏳ Awaiting 2 members</div>
           </div>
           <div class="aci-amount" style="color:#FFB59D;">€8.50</div>
         </div>

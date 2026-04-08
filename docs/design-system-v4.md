@@ -102,13 +102,13 @@ The seed was chosen to maintain the brand personality: **warm & social, vibrant,
 | `onPrimary` | `#FFFFFF` | `#5D1800` | Text/icons on `primary` |
 | `primaryContainer` | `#CB4A1A` | `#F06534` | Chips, selected cards, prominent surface zones |
 | `onPrimaryContainer` | `#FFFBFF` | `#3B0C00` | Text/icons on `primaryContainer` |
-| `secondary` | `#904B34` | `#FFB59D` | Tags, category chips, `pending` state (→ §3.5) |
+| `secondary` | `#904B34` | `#FFB59D` | Tags, category chips, filter states; also carries `pending` semantic (→ §3.5) |
 | `onSecondary` | `#FFFFFF` | `#561F0B` | Text/icons on `secondary` |
-| `secondaryContainer` | `#FEA588` | `#73341F` | `pendingContainer` — filter chips, unacknowledged-expense backgrounds |
+| `secondaryContainer` | `#FEA588` | `#73341F` | Filter chip backgrounds; `pendingContainer` for unacknowledged expenses (→ §3.5) |
 | `onSecondaryContainer` | `#783923` | `#F79F83` | Text/icons on `secondaryContainer` |
-| `tertiary` | `#715C00` | `#E5C44B` | Accent highlights, `positive` balance state (→ §3.5), special financial moments |
+| `tertiary` | `#715C00` | `#E5C44B` | Accent highlights, positive balance display (→ §3.5), special financial moments |
 | `onTertiary` | `#FFFFFF` | `#3B2F00` | Text/icons on `tertiary` |
-| `tertiaryContainer` | `#C8A932` | `#C8A932` | `positiveContainer` — golden background, **same hex in both themes** |
+| `tertiaryContainer` | `#C8A932` | `#C8A932` | Positive-balance card bg — **same hex in both themes** (→ §3.5) |
 | `onTertiaryContainer` | `#4D3E00` | `#4D3E00` | Text/icons on `tertiaryContainer` — **same in both themes** |
 | `error` | `#BA1A1A` | `#FFB4AB` | Validation errors, delete actions |
 | `onError` | `#FFFFFF` | `#690005` | Text/icons on `error` |
@@ -179,38 +179,48 @@ M3 Expressive uses a **5-tier Surface Container hierarchy** to layer cards, shee
 
 ### 3.5 Semantic / App-Specific Tokens
 
-Custom semantic tokens that **alias** M3 palette colors for expense-specific contexts. These are not new hues — they carry domain meaning.
+**Short answer: most aliases can be dropped.** M3 Expressive's role system already carries the domain semantics. Three genuinely new concepts need custom tokens; everything else is a direct reference to `MaterialTheme.colorScheme`.
 
-All **four** M3 palette roles are mapped to expense-specific states, creating a complete semantic spectrum:
+---
 
-> **Semantic spectrum (visual progression):**
-> `settled` (neutral warm cream) → `pending` (terracotta/in-motion) → `positive` (financial gold) ↔ `negative` (alert red)
+#### Part A — M3 roles used directly (no custom token needed)
 
-#### Balance / Debt State Tokens
+The `tertiary` and `error` roles map naturally to expense-app states. Reference `colorScheme` directly in code; use the semantic name only as a comment or documentation label.
 
-| Semantic Token | Maps to | Light Value | Dark Value | Usage |
+> **Visual progression:** `settled` (neutral cream) → `pending` (terracotta) → `positive/tertiary` (gold) ↔ `negative/error` (red)
+
+| App concept | Use in code | Surface text token | Container bg token | On-container text token |
 |---|---|---|---|---|
-| `positive` | `tertiary` | `#715C00` | `#E5C44B` | User is owed money — gold tones convey financial value; **always paired with an icon/label** |
-| `positiveContainer` | `tertiaryContainer` | `#C8A932` ★ | `#C8A932` ★ | Background for "owed" balance cards |
-| `onPositiveContainer` | `onTertiaryContainer` | `#4D3E00` | `#4D3E00` | Text/icons rendered on `positiveContainer` |
-| `negative` | `error` | `#BA1A1A` | `#FFB4AB` | User owes money — **always paired with an icon/label** |
-| `negativeContainer` | `errorContainer` | `#FFDAD6` | `#93000A` | Background for "owes" balance cards |
-| `onNegativeContainer` | `onErrorContainer` | `#93000A` | `#FFDAD6` | Text/icons rendered on `negativeContainer` |
-| `pending` | `secondary` | `#904B34` | `#FFB59D` | Expense not yet acknowledged, settlement unconfirmed, invite awaiting acceptance |
-| `pendingContainer` | `secondaryContainer` | `#FEA588` | `#73341F` | Background for pending-state cards and banners |
-| `onPendingContainer` | `onSecondaryContainer` | `#783923` | `#F79F83` | Text/icons rendered on `pendingContainer` |
-| `settled` | `surfaceContainerHigh` / `onSurfaceVariant` | `#FCE3DC` bg, `#59413A` text | `#352722` bg, `#E1BFB5` text | Debt fully settled — deliberately muted, low visual weight |
-| `deleted` | `onSurfaceVariant` @ 60% α | `#59413A` @ 60% | `#E1BFB5` @ 60% | Muted strikethrough treatment for deleted entries |
+| **Positive balance** (owed to you) | `tertiary` family | `colorScheme.tertiary` | `colorScheme.tertiaryContainer` ★ | `colorScheme.onTertiaryContainer` |
+| **Negative balance** (you owe) | `error` family | `colorScheme.error` | `colorScheme.errorContainer` | `colorScheme.onErrorContainer` |
 
-> **★ `positiveContainer` is theme-invariant:** `#C8A932` (golden amber) is the **same hex value in both light and dark** modes. This is a unique property of this palette — the "financial gold" background is a consistent visual anchor regardless of the user's theme. Leverage this: the positive balance card always reads as "gold."
+> ★ **`tertiaryContainer` (`#C8A932`) is theme-invariant** — same hex in both light and dark. The golden BalanceCard is always golden regardless of theme.
 
-> **Why golden-amber for `positive`?** In financial product design (banking apps, Bloomberg, investment dashboards), gold/amber signals wealth, value, and positive return — not warning. The warning/caution meaning of amber is a traffic-light convention that does not carry over to financial UIs when properly paired with directional iconography and text labels. **Do NOT use `tertiary`/`positive` tokens for generic UI warnings or caution states** — those belong to a future `warning` token or `error` at reduced prominence.
+> ⚠️ **Critical contrast rule:** Never use `tertiary` (`#715C00` / `#E5C44B`) as text **on** `tertiaryContainer` (`#C8A932`) — same golden family, contrast **1.34:1** in dark mode (invisible). On a container background always use the `on*Container` token. `onTertiaryContainer` (`#4D3E00`) on `tertiaryContainer` achieves **4.58:1** ✓. Same applies to `secondary` on `secondaryContainer`.
 
-> **Why terracotta for `pending`?** The `secondary` role (terracotta/warm salmon `#FEA588`) occupies the middle ground between neutral (settled) and gold (positive). It reads as "in motion / not yet resolved" — warm and noticeable without being alarming. Every expense that has been added but not yet acknowledged by all participants should surface in this state.
+> **Why `tertiary` = positive (not a warning)?** In financial product design (banking, investment dashboards), gold/amber signals wealth and positive return. The "amber = caution" convention is traffic-light-specific and doesn't carry over here — especially when always paired with a directional icon (↑) and a text label.
 
-> **Note on naming:** Canonical names are `positive`, `negative`, `pending`. The aliases `youAreOwed` / `youOwe` are acceptable as code-level synonyms but are not design token names.
+> **Why `error` = debt?** M3's `error` role covers all "bad/alert" states. Debt owed is the primary "bad" state in this app. There is no color difference — `error` is used for both debt display and UI validation errors. Distinguish them in code with a comment, not a separate token.
 
-> ⚠️ **Accessibility:** Color alone must never convey financial state. Always pair every state color with a directional icon (↑ ↓ ✓ ⏳) **and** a text label. This is especially critical for `positive` (amber) vs `pending` (terracotta) which are both warm and may be difficult to distinguish for some users with color vision deficiency.
+---
+
+#### Part B — Genuinely new semantic tokens (no M3 equivalent)
+
+These three concepts are NOT directly represented by any single M3 role, so they warrant explicit custom tokens:
+
+| Semantic Token | Maps to | Light | Dark | Usage |
+|---|---|---|---|---|
+| `pending` | `colorScheme.secondary` | `#904B34` | `#FFB59D` | Amount/status text **on surfaces** — expense not yet acknowledged, invite awaiting acceptance |
+| `pendingContainer` | `colorScheme.secondaryContainer` | `#FEA588` | `#73341F` | Pending-state card/banner background |
+| `onPendingContainer` | `colorScheme.onSecondaryContainer` | `#783923` | `#F79F83` | All text/icons on `pendingContainer` |
+| `settled` | `colorScheme.surfaceContainerHigh` + `colorScheme.onSurfaceVariant` | `#FCE3DC` bg · `#59413A` text | `#352722` bg · `#E1BFB5` text | Zero debt — deliberately muted, neutral treatment |
+| `deleted` | `colorScheme.onSurfaceVariant` @ 60% α | `#59413A` @ 60% | `#E1BFB5` @ 60% | Strikethrough treatment for deleted expense entries |
+
+> **Why `pending` needs a custom name:** The `secondary` role says nothing about "pending" — it is used for chips, tags, and filters elsewhere in the app. The semantic alias `pending` clarifies intent in code and prevents the wrong role being used for an unrelated secondary-color component.
+
+> **Why `settled` needs a custom token:** It is a composite of two M3 tokens (background + text) and represents a specific app state — not a single color role. Encapsulating it prevents drift.
+
+> ⚠️ **Accessibility:** Never rely on color alone for financial state. Always pair with a directional icon (↑ ↓ ✓ ⏳) **and** a text label. `tertiary/positive` (amber) and `pending` (terracotta) are both warm-toned — icon + label are the primary differentiator for users with color vision deficiency.
 
 ---
 
@@ -441,16 +451,18 @@ Every data-loading screen must support all of the following:
 
 #### BalanceCard
 
-| State | Background | Amount Color | Icon | Label |
-|---|---|---|---|---|
-| **Positive** (user is owed) | `positiveContainer` — `#C8A932` both modes ★ | `positive` — `#715C00` / `#E5C44B` | ↑ arrow (filled) | "You are owed" |
-| **Negative** (user owes) | `negativeContainer` — `#FFDAD6` / `#93000A` | `negative` — `#BA1A1A` / `#FFB4AB` | ↓ arrow (filled) | "You owe" |
-| **Pending** (awaiting acknowledgement) | `pendingContainer` — `#FEA588` / `#73341F` | `pending` — `#904B34` / `#FFB59D` | ⏳ hourglass | "Awaiting response" |
-| **Settled / zero** | `surfaceContainerHigh` — `#FCE3DC` / `#352722` | `onSurfaceVariant` — `#59413A` / `#E1BFB5` | ✓ checkmark | "All settled" |
+| State | Card bg | Text on card | Amount in list rows |
+|---|---|---|---|
+| **Positive** (owed) | `tertiaryContainer` `#C8A932` ★ | `onTertiaryContainer` `#4D3E00` | `tertiary` `#715C00` / `#E5C44B` |
+| **Negative** (owes) | `errorContainer` `#FFDAD6` / `#93000A` | `onErrorContainer` `#93000A` / `#FFDAD6` | `error` `#BA1A1A` / `#FFB4AB` |
+| **Pending** (awaiting) | `pendingContainer` `#FEA588` / `#73341F` | `onPendingContainer` `#783923` / `#F79F83` | `pending` `#904B34` / `#FFB59D` |
+| **Settled** | `surfaceContainerHigh` `#FCE3DC` / `#352722` | `onSurfaceVariant` `#59413A` / `#E1BFB5` | same |
 
-> ★ `positiveContainer` (`#C8A932`) is identical in light and dark — the golden card is always "golden."
+> ★ `tertiaryContainer` (`#C8A932`) is identical in both themes — the golden card is always golden.
 >
-> Color is **always** paired with the icon AND text label. Never rely on color alone — `positive` (amber) and `pending` (warm salmon) are both warm-toned and must be distinguishable via shape, icon, and label.
+> **"Text on card"** = color for the label, icon, and large amount rendered on the hero card background. **Never** substitute `tertiary` or `pending` here — same-hue-family contrast failure.
+>
+> **"Amount in list rows"** = color applied to the amount text in ExpenseListItem / GroupCard rows, where the background is a surface (`surfaceContainer`), not a role container. Icon (↑ ↓ ✓ ⏳) **and** a text label must always accompany the color.
 
 #### GroupCard
 
