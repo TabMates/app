@@ -25,5 +25,6 @@ KLIB resolver: The same 'unique_name=presentation_commonMain'
 KLIB resolver: The same 'unique_name=data_commonMain'
 KLIB resolver: The same 'unique_name=lifecycle-viewmodel-compose_commonMain'
 KLIB resolver: The same 'unique_name=window-core_commonMain'
+KLIB resolver: The same 'unique_name=lifecycle-viewmodel-navigation3_commonMain'
 
 Deprecated Gradle Property 'kotlin.mpp.import.enableKgpDependencyResolution' Used

@@ -17,12 +17,15 @@ kotlin {
                 implementation(projects.features.authentication.domain)
                 implementation(libs.jetbrains.compose.components.resources)
                 implementation(libs.jetbrains.material3.adaptive)
+                implementation(libs.jetbrains.lifecycle.viewmodel.navigation3)
             }
         }
 
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.turbine)
             }
         }
 

@@ -22,4 +22,9 @@ sealed interface DataError : Error {
         NOT_FOUND,
         UNKNOWN,
     }
+
+    enum class Connection : DataError {
+        NOT_CONNECTED,
+        CREATE_EXPENSE_FAILED,
+    }
 }
