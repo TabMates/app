@@ -12,6 +12,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import de.tabmates.features.authentication.presentation.register.RegisterRoot
+import de.tabmates.features.authentication.presentation.registersuccess.RegisterSuccessRoot
 import de.tabmates.features.authentication.presentation.welcome.WelcomeScreenRoot
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -23,6 +24,7 @@ val authSerializersModule =
             subclass(Welcome::class)
             subclass(Login::class)
             subclass(Register::class)
+            subclass(RegisterSuccess::class)
             subclass(EmailVerification::class)
         }
     }
@@ -49,6 +51,14 @@ fun EntryProviderScope<NavKey>.authGraph(
         RegisterRoot(
             backStack = backStack,
             onGuestClick = onGuestClick,
+            snackbarHostState = snackbarHostState,
+        )
+    }
+
+    entry<RegisterSuccess> {
+        RegisterSuccessRoot(
+            backStack = backStack,
+            email = it.email,
             snackbarHostState = snackbarHostState,
         )
     }
