@@ -26,6 +26,8 @@ val authSerializersModule =
             subclass(Register::class)
             subclass(RegisterSuccess::class)
             subclass(EmailVerification::class)
+            subclass(VerifyAccount::class)
+            subclass(ResetPassword::class)
         }
     }
 
@@ -65,6 +67,14 @@ fun EntryProviderScope<NavKey>.authGraph(
 
     entry<EmailVerification> {
         PlaceholderScreen("Email Verification")
+    }
+
+    entry<VerifyAccount> {
+        PlaceholderScreen("Verify Account – token: ${it.token}")
+    }
+
+    entry<ResetPassword> {
+        PlaceholderScreen("Reset Password – token: ${it.token}")
     }
 }
 

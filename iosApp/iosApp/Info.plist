@@ -4,5 +4,16 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>de.tabmates.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tabmates</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
