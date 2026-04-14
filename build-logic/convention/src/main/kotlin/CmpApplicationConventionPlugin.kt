@@ -33,6 +33,12 @@ class CmpApplicationConventionPlugin : Plugin<Project> {
                     binaries.executable()
                 }
                 applyHierarchyTemplate()
+
+                compilerOptions {
+                    freeCompilerArgs.addAll(
+                        "-Xexpect-actual-classes",
+                    )
+                }
             }
 
             dependencies {

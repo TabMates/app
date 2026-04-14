@@ -2,6 +2,7 @@ import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension
 
 plugins {
     alias(libs.plugins.tabmates.convention.cmp.application)
+    alias(libs.plugins.tabmates.convention.buildkonfig)
 }
 
 kotlin {
@@ -36,6 +37,7 @@ kotlin {
             implementation(libs.material3.adaptive.navigation.suite)
             implementation(libs.bundles.koin.common)
             implementation(libs.jetbrains.lifecycle.viewmodel.navigation3)
+            implementation(libs.kotlinx.serialization.json)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
