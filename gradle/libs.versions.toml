@@ -20,6 +20,7 @@ junit = "4.13.2"
 kermit = "2.1.0"
 koin = "4.2.1"
 kotlin = "2.3.20"
+kotlinx-browser = "0.5.0"
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.11.0"
 turbine = "1.2.1"
@@ -80,6 +81,7 @@ kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinx-browser" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 ksafe = { module = "eu.anifantakis:ksafe", version.ref = "ksafe" }

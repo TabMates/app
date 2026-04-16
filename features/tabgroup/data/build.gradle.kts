@@ -39,6 +39,14 @@ kotlin {
             }
         }
 
+        wasmJsMain {
+            dependencies {
+                implementation(projects.features.tabgroup.sqliteWasmWorker)
+
+                implementation(libs.androidx.sqlite.web)
+            }
+        }
+
         nativeMain {
             dependencies {
                 implementation(libs.androidx.sqlite.bundled)
