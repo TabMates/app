@@ -16,6 +16,7 @@ kotlin {
                 implementation(projects.features.tabgroup.database)
                 implementation(projects.features.tabgroup.domain)
 
+                implementation(libs.androidx.room3.runtime)
                 implementation(libs.bundles.ktor.common)
                 implementation(libs.koin.core)
             }
@@ -29,6 +30,7 @@ kotlin {
 
         androidMain {
             dependencies {
+                implementation(libs.koin.android)
             }
         }
 
@@ -37,8 +39,14 @@ kotlin {
             }
         }
 
-        iosMain {
+        nativeMain {
             dependencies {
+                implementation(libs.androidx.sqlite.bundled)
+            }
+        }
+        desktopMain {
+            dependencies {
+                implementation(libs.androidx.sqlite.bundled)
             }
         }
     }

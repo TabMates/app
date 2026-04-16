@@ -19,7 +19,8 @@ class RoomConventionPlugin : Plugin<Project> {
             }
 
             dependencies {
-                "commonMainApi"(libs.findLibrary("androidx-room3-runtime").get())
+                "commonMainImplementation"(libs.findLibrary("androidx-room3-runtime").get())
+
                 "kspAndroid"(libs.findLibrary("androidx-room3-compiler").get())
                 "kspIosSimulatorArm64"(libs.findLibrary("androidx-room3-compiler").get())
                 "kspIosArm64"(libs.findLibrary("androidx-room3-compiler").get())
