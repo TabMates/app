@@ -75,5 +75,9 @@ gradlePlugin {
             id = "de.tabmates.convention.room"
             implementationClass = "RoomConventionPlugin"
         }
+        register("ktlint") {
+            id = "de.tabmates.convention.ktlint"
+            implementationClass = "KtlintConventionPlugin"
+        }
     }
 }

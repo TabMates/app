@@ -153,6 +153,7 @@ tabmates-convention-cmp-application = { id = "de.tabmates.convention.cmp.applica
 tabmates-convention-cmp-feature = { id = "de.tabmates.convention.cmp.feature" }
 tabmates-convention-cmp-library = { id = "de.tabmates.convention.cmp.library" }
 tabmates-convention-kmp-library = { id = "de.tabmates.convention.kmp.library" }
+tabmates-convention-ktlint = { id = "de.tabmates.convention.ktlint" }
 tabmates-convention-room = { id = "de.tabmates.convention.room" }
 
 [bundles]
