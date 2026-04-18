@@ -35,9 +35,9 @@ import de.tabmates.core.presentation.navigation.LoggedIn
 import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.features.authentication.data.di.authenticationDataModule
 import de.tabmates.features.authentication.presentation.di.authPresentationModule
+import de.tabmates.features.authentication.presentation.navigation.EmailVerification
 import de.tabmates.features.authentication.presentation.navigation.authGraph
 import de.tabmates.features.authentication.presentation.navigation.ResetPassword
-import de.tabmates.features.authentication.presentation.navigation.VerifyAccount
 import de.tabmates.features.authentication.presentation.navigation.Welcome
 import de.tabmates.features.authentication.presentation.navigation.authSerializersModule
 import de.tabmates.features.tabgroup.data.di.tabgroupDataModule
@@ -60,7 +60,7 @@ private val savedStateConfiguration = SavedStateConfiguration {
 // Deep-link definitions — mirrors the upcoming Nav3 navDeepLink<T>(basePath) API.
 // TODO: Replace import with `androidx.navigation3.navDeepLink` when available.
 private val deepLinks = listOf(
-    navDeepLink<VerifyAccount>(basePath = "${BuildKonfig.BASE_URL_HTTP}/api/auth/verify"),
+    navDeepLink<EmailVerification>(basePath = "${BuildKonfig.BASE_URL_HTTP}/api/auth/verify"),
     navDeepLink<ResetPassword>(basePath = "${BuildKonfig.BASE_URL_HTTP}/api/auth/reset-password"),
 )
 
