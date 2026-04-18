@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import de.tabmates.features.authentication.presentation.emailverification.EmailVerificationRoot
 import de.tabmates.features.authentication.presentation.register.RegisterRoot
 import de.tabmates.features.authentication.presentation.registersuccess.RegisterSuccessRoot
 import de.tabmates.features.authentication.presentation.welcome.WelcomeScreenRoot
@@ -26,7 +27,6 @@ val authSerializersModule =
             subclass(Register::class)
             subclass(RegisterSuccess::class)
             subclass(EmailVerification::class)
-            subclass(VerifyAccount::class)
             subclass(ResetPassword::class)
         }
     }
@@ -66,11 +66,10 @@ fun EntryProviderScope<NavKey>.authGraph(
     }
 
     entry<EmailVerification> {
-        PlaceholderScreen("Email Verification")
-    }
-
-    entry<VerifyAccount> {
-        PlaceholderScreen("Verify Account – token: ${it.token}")
+        EmailVerificationRoot(
+            token = it.token,
+            backStack = backStack,
+        )
     }
 
     entry<ResetPassword> {

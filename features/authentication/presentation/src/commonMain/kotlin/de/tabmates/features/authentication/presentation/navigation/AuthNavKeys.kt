@@ -16,10 +16,7 @@ data object Register : LoggableNavKey()
 data class RegisterSuccess(val email: String) : LoggableNavKey()
 
 @Serializable
-data class EmailVerification(val email: String) : LoggableNavKey()
-
-@Serializable
-data class VerifyAccount(val token: String) : LoggableNavKey()
+data class EmailVerification(val token: String) : LoggableNavKey()
 
 @Serializable
 data class ResetPassword(val token: String) : LoggableNavKey()
