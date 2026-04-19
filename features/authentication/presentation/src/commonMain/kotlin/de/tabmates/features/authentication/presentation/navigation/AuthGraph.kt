@@ -12,6 +12,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import de.tabmates.features.authentication.presentation.emailverification.EmailVerificationRoot
+import de.tabmates.features.authentication.presentation.login.LoginRoot
 import de.tabmates.features.authentication.presentation.register.RegisterRoot
 import de.tabmates.features.authentication.presentation.registersuccess.RegisterSuccessRoot
 import de.tabmates.features.authentication.presentation.welcome.WelcomeScreenRoot
@@ -28,12 +29,14 @@ val authSerializersModule =
             subclass(RegisterSuccess::class)
             subclass(EmailVerification::class)
             subclass(ResetPassword::class)
+            subclass(ForgotPassword::class)
         }
     }
 
 fun EntryProviderScope<NavKey>.authGraph(
     backStack: NavBackStack<NavKey>,
     onGuestClick: () -> Unit,
+    onLoginSuccess: () -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     entry<Welcome> {
@@ -44,9 +47,12 @@ fun EntryProviderScope<NavKey>.authGraph(
     }
 
     entry<Login> {
-        PlaceholderScreen("Login") {
-            backStack.add(Register)
-        }
+        LoginRoot(
+            backStack = backStack,
+            snackbarHostState = snackbarHostState,
+            onContinueAsGuestClick = onGuestClick,
+            onLoginSuccess = onLoginSuccess,
+        )
     }
 
     entry<Register> {
@@ -74,6 +80,10 @@ fun EntryProviderScope<NavKey>.authGraph(
 
     entry<ResetPassword> {
         PlaceholderScreen("Reset Password – token: ${it.token}")
+    }
+
+    entry<ForgotPassword> {
+        PlaceholderScreen("Forgot Password")
     }
 }
 

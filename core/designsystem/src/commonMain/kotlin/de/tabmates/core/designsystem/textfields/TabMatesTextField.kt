@@ -15,8 +15,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tabmates.core.designsystem.preview.PreviewThemes
@@ -37,6 +40,7 @@ import de.tabmates.core.designsystem.theme.TabMatesTheme
  * @param singleLine When `true`, the field is restricted to a single line of input.
  * @param enabled When `false`, the field is non-editable and visually dimmed.
  * @param keyboardType The [KeyboardType] to use for the software keyboard.
+ * @param contentType The [ContentType] for autofill support.
  * @param onFocusChanged Callback invoked when the field's focus state changes.
  */
 @Composable
@@ -50,6 +54,7 @@ fun TabMatesTextField(
     singleLine: Boolean = false,
     enabled: Boolean = true,
     keyboardType: KeyboardType = KeyboardType.Text,
+    contentType: ContentType? = null,
     onFocusChanged: (Boolean) -> Unit = {},
 ) {
     TabMatesTextFieldLayout(
@@ -84,7 +89,14 @@ fun TabMatesTextField(
                 ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurface),
             interactionSource = interactionSource,
-            modifier = styleModifier,
+            modifier =
+                styleModifier.then(
+                    if (contentType != null) {
+                        Modifier.semantics { this.contentType = contentType }
+                    } else {
+                        Modifier
+                    },
+                ),
             decorator = { innerBox ->
                 Box(
                     modifier =

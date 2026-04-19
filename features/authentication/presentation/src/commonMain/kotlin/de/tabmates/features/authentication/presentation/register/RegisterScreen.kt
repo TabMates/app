@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -124,6 +125,7 @@ private fun RegisterScreen(
             isError = state.usernameError != null,
             singleLine = true,
             onFocusChanged = onUsernameFocusChanged,
+            contentType = ContentType.Username,
         )
         state.usernameError?.let {
             VerticalSpacer(16.dp)
@@ -137,6 +139,7 @@ private fun RegisterScreen(
             singleLine = true,
             keyboardType = KeyboardType.Email,
             onFocusChanged = onEmailFocusChanged,
+            contentType = ContentType.EmailAddress,
         )
         state.emailError?.let {
             VerticalSpacer(16.dp)
