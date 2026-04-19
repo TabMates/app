@@ -1,4 +1,4 @@
-package de.tabmates.features.authentication.presentation.fakes
+package de.tabmates.features.authentication.testing
 
 import de.tabmates.core.domain.auth.AuthInfo
 import de.tabmates.core.domain.util.DataError
@@ -7,7 +7,7 @@ import de.tabmates.core.domain.util.Result
 import de.tabmates.features.authentication.domain.AuthService
 import kotlinx.coroutines.delay
 
-internal open class FakeAuthService(
+open class FakeAuthService(
     var registerResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var loginResult: Result<AuthInfo, DataError.Remote> = Result.Failure(DataError.Remote.UNKNOWN),
     var loginDelayMillis: Long = 0L,
@@ -71,4 +71,6 @@ internal open class FakeAuthService(
     }
 
     override suspend fun forgotPassword(email: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
+
+    override suspend fun logout(refreshToken: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
 }

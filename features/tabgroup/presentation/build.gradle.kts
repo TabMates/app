@@ -14,6 +14,7 @@ kotlin {
                 implementation(projects.core.designsystem)
                 implementation(projects.core.domain)
                 implementation(projects.core.presentation)
+                implementation(projects.features.authentication.domain)
                 implementation(projects.features.tabgroup.domain)
                 implementation(libs.jetbrains.compose.components.resources)
             }

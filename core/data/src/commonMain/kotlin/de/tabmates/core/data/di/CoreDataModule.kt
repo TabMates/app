@@ -1,7 +1,9 @@
 package de.tabmates.core.data.di
 
+import de.tabmates.core.data.auth.KSafeSessionStorage
 import de.tabmates.core.data.logging.KermitLogger
 import de.tabmates.core.data.networking.HttpClientFactory
+import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.logging.TabMatesLogger
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
@@ -17,6 +19,11 @@ val coreDataModule =
 
         singleOf(::KermitLogger) bind TabMatesLogger::class
         single {
-            HttpClientFactory(get(), get(qualifier("vault"))).create(get())
+            KSafeSessionStorage(
+                vault = get(qualifier("vault")),
+            )
+        } bind SessionStorage::class
+        single {
+            HttpClientFactory(get(), get<SessionStorage>()).create(get())
         }
     }

@@ -13,8 +13,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
@@ -29,6 +32,7 @@ import tabmatesapp.composeapp.generated.resources.Res
 import tabmatesapp.composeapp.generated.resources.ic_arrow_back
 import de.tabmates.composeapp.deeplink.navDeepLink
 import de.tabmates.composeapp.deeplink.resolveDeepLink
+import de.tabmates.composeapp.di.appModule
 import de.tabmates.core.data.di.coreDataModule
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.navigation.LoggedIn
@@ -45,11 +49,13 @@ import de.tabmates.features.tabgroup.presentation.navigation.Activity
 import de.tabmates.features.tabgroup.presentation.navigation.Group
 import de.tabmates.features.tabgroup.presentation.navigation.Home
 import de.tabmates.features.tabgroup.presentation.navigation.Profile
+import de.tabmates.features.tabgroup.presentation.navigation.di.tabgroupPresentationModule
 import de.tabmates.features.tabgroup.presentation.navigation.mainGraph
 import de.tabmates.features.tabgroup.presentation.navigation.mainSerializersModule
 import kotlinx.serialization.modules.plus
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplication
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
 import tabmatesapp.composeapp.generated.resources.back
 
@@ -70,16 +76,30 @@ fun App() {
     KoinApplication(
         configuration = koinConfiguration {
             modules(
+                appModule,
                 authenticationDataModule,
                 coreDataModule,
                 tabgroupDataModule,
-                authPresentationModule
+                authPresentationModule,
+                tabgroupPresentationModule,
             )
         }
     ) {
         TabMatesTheme {
-            val backStack = rememberNavBackStack(configuration = savedStateConfiguration, Welcome)
+            val mainViewModel = koinViewModel<MainViewModel>()
+            val isLoggedIn by mainViewModel.isLoggedIn.collectAsStateWithLifecycle()
+
+            val startDestination = if (isLoggedIn) Home else Welcome
+            val backStack = rememberNavBackStack(configuration = savedStateConfiguration, startDestination)
             val currentKey = backStack.lastOrNull()
+
+            // Navigate to Welcome when session is invalidated (e.g. token refresh failed).
+            LaunchedEffect(isLoggedIn) {
+                if (!isLoggedIn && currentKey is LoggedIn) {
+                    backStack.clear()
+                    backStack.add(Welcome)
+                }
+            }
 
             DisposableEffect(Unit) {
                 DeepLinkHandler.listener = listener@{ uri ->
