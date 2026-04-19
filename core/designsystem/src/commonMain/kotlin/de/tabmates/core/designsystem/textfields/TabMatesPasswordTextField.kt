@@ -22,8 +22,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tabmates.core.designsystem.preview.PreviewThemes
@@ -52,6 +55,7 @@ import tabmatesapp.core.designsystem.generated.resources.show_password
  * @param supportingText Optional helper or error message displayed below the text field.
  * @param isError When `true`, the field is styled to indicate a validation error.
  * @param enabled When `false`, the field is non-editable and visually dimmed.
+ * @param contentType The content type for the text field, used for autofill purposes.
  * @param onFocusChanged Callback invoked when the field's focus state changes.
  */
 @Composable
@@ -65,6 +69,7 @@ fun TabMatesPasswordTextField(
     supportingText: String? = null,
     isError: Boolean = false,
     enabled: Boolean = true,
+    contentType: ContentType? = ContentType.Password,
     onFocusChanged: (Boolean) -> Unit = {},
 ) {
     TabMatesTextFieldLayout(
@@ -77,7 +82,14 @@ fun TabMatesPasswordTextField(
     ) { styleModifier, interactionSource ->
         BasicSecureTextField(
             state = state,
-            modifier = styleModifier,
+            modifier =
+                styleModifier.then(
+                    if (contentType != null) {
+                        Modifier.semantics { this.contentType = contentType }
+                    } else {
+                        Modifier
+                    },
+                ),
             enabled = enabled,
             textObfuscationMode =
                 if (isPasswordVisible) {

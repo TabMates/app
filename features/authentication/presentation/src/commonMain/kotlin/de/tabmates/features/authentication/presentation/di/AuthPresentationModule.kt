@@ -1,6 +1,7 @@
 package de.tabmates.features.authentication.presentation.di
 
 import de.tabmates.features.authentication.presentation.emailverification.EmailVerificationViewModel
+import de.tabmates.features.authentication.presentation.login.LoginViewModel
 import de.tabmates.features.authentication.presentation.register.RegisterViewModel
 import de.tabmates.features.authentication.presentation.registersuccess.RegisterSuccessViewModel
 import org.koin.core.module.dsl.viewModel
@@ -16,4 +17,5 @@ val authPresentationModule =
         viewModel<EmailVerificationViewModel> { (token: String) ->
             EmailVerificationViewModel(get(), token)
         }
+        viewModelOf(::LoginViewModel)
     }

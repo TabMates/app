@@ -19,4 +19,7 @@ data class RegisterSuccess(val email: String) : LoggableNavKey()
 data class EmailVerification(val token: String) : LoggableNavKey()
 
 @Serializable
+data object ForgotPassword : LoggableNavKey()
+
+@Serializable
 data class ResetPassword(val token: String) : LoggableNavKey()

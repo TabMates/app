@@ -9,11 +9,16 @@ import kotlinx.coroutines.delay
 
 internal open class FakeAuthService(
     var registerResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var loginResult: Result<AuthInfo, DataError.Remote> = Result.Failure(DataError.Remote.UNKNOWN),
+    var loginDelayMillis: Long = 0L,
     var resendVerificationEmailResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var resendVerificationEmailDelayMillis: Long = 0L,
     var verifyEmailResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
 ) : AuthService {
     var registerCalls: Int = 0
+        private set
+
+    var loginCalls: Int = 0
         private set
 
     var resendVerificationEmailCalls: Int = 0
@@ -39,7 +44,13 @@ internal open class FakeAuthService(
     override suspend fun login(
         email: String,
         password: String,
-    ): Result<AuthInfo, DataError.Remote> = Result.Failure(DataError.Remote.UNKNOWN)
+    ): Result<AuthInfo, DataError.Remote> {
+        loginCalls += 1
+        if (loginDelayMillis > 0L) {
+            delay(loginDelayMillis)
+        }
+        return loginResult
+    }
 
     override suspend fun loginAnonymous(
         userId: String,

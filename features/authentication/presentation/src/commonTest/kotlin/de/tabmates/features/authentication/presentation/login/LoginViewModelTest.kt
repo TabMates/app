@@ -1,0 +1,256 @@
+package de.tabmates.features.authentication.presentation.login
+
+import androidx.compose.runtime.snapshots.Snapshot
+import app.cash.turbine.test
+import de.tabmates.core.domain.auth.AuthInfo
+import de.tabmates.core.domain.auth.User
+import de.tabmates.core.domain.auth.UserType
+import de.tabmates.core.domain.util.DataError
+import de.tabmates.core.domain.util.Result
+import de.tabmates.core.presentation.util.UiText
+import de.tabmates.features.authentication.presentation.fakes.FakeAuthService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import tabmatesapp.features.authentication.presentation.generated.resources.Res
+import tabmatesapp.features.authentication.presentation.generated.resources.error_email_not_verified
+import tabmatesapp.features.authentication.presentation.generated.resources.error_invalid_credentials
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class LoginViewModelTest {
+    private val testDispatcher = UnconfinedTestDispatcher()
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun initialStateHasCanLoginFalse() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+
+            viewModel.state.test {
+                val state = awaitItem()
+                assertFalse(state.canLogin)
+                assertFalse(state.isLoggingIn)
+                assertFalse(state.isPasswordVisible)
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun canLoginIsTrueWhenEmailAndPasswordAreValid() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            fillValidCredentials(viewModel)
+
+            viewModel.state.test {
+                assertTrue(expectMostRecentItem().canLogin)
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun canLoginIsFalseWhenEmailIsInvalid() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+
+            viewModel.state.value.emailTextFieldState.edit {
+                replace(0, length, "invalid-email")
+            }
+            viewModel.state.value.passwordTextFieldState.edit {
+                replace(0, length, "password123")
+            }
+            Snapshot.sendApplyNotifications()
+            advanceUntilIdle()
+
+            viewModel.state.test {
+                assertFalse(expectMostRecentItem().canLogin)
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun canLoginIsFalseWhenPasswordIsBlank() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+
+            viewModel.state.value.emailTextFieldState.edit {
+                replace(0, length, "test@example.com")
+            }
+            Snapshot.sendApplyNotifications()
+            advanceUntilIdle()
+
+            viewModel.state.test {
+                assertFalse(expectMostRecentItem().canLogin)
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun togglePasswordVisibilityFlipsState() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+
+            viewModel.state.test {
+                val initial = awaitItem()
+                assertFalse(initial.isPasswordVisible)
+
+                viewModel.onTogglePasswordVisibility()
+                assertTrue(expectMostRecentItem().isPasswordVisible)
+
+                viewModel.onTogglePasswordVisibility()
+                assertFalse(expectMostRecentItem().isPasswordVisible)
+
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun loginSuccessSendsSuccessEvent() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            fillValidCredentials(viewModel)
+
+            viewModel.events.test {
+                viewModel.onLogin()
+                assertIs<LoginEvent.LoginSuccess>(awaitItem())
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun loginFailureWithUnauthorizedSendsFailureEvent() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService(loginResult = Result.Failure(DataError.Remote.UNAUTHORIZED))
+            val viewModel = createViewModel(authService = authService)
+            fillValidCredentials(viewModel)
+
+            viewModel.events.test {
+                viewModel.onLogin()
+                val event = awaitItem()
+                assertIs<LoginEvent.LoginFailure>(event)
+                val resource = assertIs<UiText.Resource>(event.error)
+                assertEquals(Res.string.error_invalid_credentials, resource.id)
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun loginFailureWithForbiddenSendsFailureEvent() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService(loginResult = Result.Failure(DataError.Remote.FORBIDDEN))
+            val viewModel = createViewModel(authService = authService)
+            fillValidCredentials(viewModel)
+
+            viewModel.events.test {
+                viewModel.onLogin()
+                val event = awaitItem()
+                assertIs<LoginEvent.LoginFailure>(event)
+                val resource = assertIs<UiText.Resource>(event.error)
+                assertEquals(Res.string.error_email_not_verified, resource.id)
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun loginDoesNothingWhenCanLoginIsFalse() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+
+            viewModel.events.test {
+                viewModel.onLogin()
+                expectNoEvents()
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun isLoggingInIsFalseAfterSuccessfulLogin() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService(loginResult = Result.Success(FAKE_AUTH_INFO))
+            val viewModel = createViewModel(authService = authService)
+            fillValidCredentials(viewModel)
+
+            viewModel.onLogin()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.state.value.isLoggingIn)
+            assertEquals(1, authService.loginCalls)
+        }
+
+    @Test
+    fun isLoggingInIsFalseAfterFailedLogin() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService(loginResult = Result.Failure(DataError.Remote.UNKNOWN))
+            val viewModel = createViewModel(authService = authService)
+            fillValidCredentials(viewModel)
+
+            viewModel.onLogin()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.state.value.isLoggingIn)
+            assertEquals(1, authService.loginCalls)
+        }
+
+    private fun TestScope.activateState(viewModel: LoginViewModel) {
+        backgroundScope.launch {
+            viewModel.state.collect { }
+        }
+        advanceUntilIdle()
+    }
+
+    private fun TestScope.createViewModel(
+        authService: FakeAuthService = FakeAuthService(loginResult = Result.Success(FAKE_AUTH_INFO)),
+    ): LoginViewModel {
+        val viewModel = LoginViewModel(authService = authService)
+        activateState(viewModel)
+        return viewModel
+    }
+
+    private fun TestScope.fillValidCredentials(viewModel: LoginViewModel) {
+        viewModel.state.value.emailTextFieldState.edit {
+            replace(0, length, "test@example.com")
+        }
+        viewModel.state.value.passwordTextFieldState.edit {
+            replace(0, length, "password123")
+        }
+        Snapshot.sendApplyNotifications()
+        advanceUntilIdle()
+    }
+
+    private companion object {
+        private val FAKE_AUTH_INFO =
+            AuthInfo(
+                accessToken = "token",
+                refreshToken = "refresh",
+                user =
+                    User(
+                        id = "1",
+                        email = "test@test.com",
+                        username = "test",
+                        hasVerifiedEmail = true,
+                        userType = UserType.REGISTERED,
+                    ),
+            )
+    }
+}

@@ -159,6 +159,10 @@ fun App() {
                                     backStack.clear()
                                     backStack.add(Home)
                                 },
+                                onLoginSuccess = {
+                                    backStack.clear()
+                                    backStack.add(Home)
+                                },
                                 snackbarHostState = snackbarHostState,
                             )
                         }
