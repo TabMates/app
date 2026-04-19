@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
@@ -28,7 +29,7 @@ val mainSerializersModule =
 
 fun EntryProviderScope<NavKey>.mainGraph(backStack: NavBackStack<NavKey>) {
     entry<Home> {
-        PlaceholderScreen("Home")
+        HomeRoot()
     }
 
     entry<Activity> {

@@ -8,7 +8,7 @@ import de.tabmates.core.domain.auth.UserType
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.Result
 import de.tabmates.core.presentation.util.UiText
-import de.tabmates.features.authentication.presentation.fakes.FakeAuthService
+import de.tabmates.features.authentication.testing.FakeAuthService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch

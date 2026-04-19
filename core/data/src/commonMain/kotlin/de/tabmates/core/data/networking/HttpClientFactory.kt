@@ -4,12 +4,11 @@ import de.tabmates.core.data.BuildKonfig
 import de.tabmates.core.data.dto.AuthInfoSerializable
 import de.tabmates.core.data.dto.requests.RefreshRequest
 import de.tabmates.core.data.mappers.toDomain
-import de.tabmates.core.domain.auth.AuthInfo
+import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.logging.TabMatesLogger
+import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
-import eu.anifantakis.lib.ksafe.KSafe
-import eu.anifantakis.lib.ksafe.invoke
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.HttpTimeout
@@ -33,10 +32,8 @@ private const val TAG = "HttpClientFactory"
 
 class HttpClientFactory(
     private val tabMatesLogger: TabMatesLogger,
-    vault: KSafe,
+    private val sessionStorage: SessionStorage,
 ) {
-    private var authInfo by vault<AuthInfo?>(null)
-
     fun create(engine: HttpClientEngine): HttpClient {
         return HttpClient(engine) {
             install(ContentNegotiation) {
@@ -71,7 +68,7 @@ class HttpClientFactory(
             install(Auth) {
                 bearer {
                     loadTokens {
-                        authInfo?.let {
+                        sessionStorage.get()?.let {
                             BearerTokens(
                                 accessToken = it.accessToken,
                                 refreshToken = it.refreshToken,
@@ -84,12 +81,11 @@ class HttpClientFactory(
                         ) {
                             return@refreshTokens null
                         }
-
-                        if (authInfo?.refreshToken.isNullOrBlank()) {
+                        val localAuthInfo = sessionStorage.get()
+                        if (localAuthInfo?.refreshToken.isNullOrBlank()) {
                             return@refreshTokens null
                         }
 
-                        val localAuthInfo = authInfo ?: return@refreshTokens null
                         var bearerTokens: BearerTokens? = null
                         client
                             .post<RefreshRequest, AuthInfoSerializable>(
@@ -102,14 +98,16 @@ class HttpClientFactory(
                                     markAsRefreshTokenRequest()
                                 },
                             ).onSuccess { newAuthInfo ->
-                                authInfo = newAuthInfo.toDomain()
+                                sessionStorage.set(newAuthInfo.toDomain())
                                 bearerTokens =
                                     BearerTokens(
                                         accessToken = newAuthInfo.accessToken,
                                         refreshToken = newAuthInfo.refreshToken,
                                     )
                             }.onFailure {
-                                authInfo = null
+                                if (it.isAuthRejection()) {
+                                    sessionStorage.set(null)
+                                }
                             }
 
                         bearerTokens
@@ -118,4 +116,8 @@ class HttpClientFactory(
             }
         }
     }
+
+    private fun DataError.Remote.isAuthRejection(): Boolean =
+        this == DataError.Remote.UNAUTHORIZED ||
+            this == DataError.Remote.FORBIDDEN
 }
