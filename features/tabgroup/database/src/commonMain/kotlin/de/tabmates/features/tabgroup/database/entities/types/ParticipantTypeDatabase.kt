@@ -1,6 +1,6 @@
 package de.tabmates.features.tabgroup.database.entities.types
 
-enum class UserTypeDatabase {
+enum class ParticipantTypeDatabase {
     REGISTERED,
     ANONYMOUS,
     PLACEHOLDER,

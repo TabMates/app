@@ -3,7 +3,7 @@ package de.tabmates.features.tabgroup.data.mappers
 import de.tabmates.features.tabgroup.data.dto.GroupParticipantDto
 import de.tabmates.features.tabgroup.data.dto.ParticipantTypeDto
 import de.tabmates.features.tabgroup.database.entities.GroupParticipantEntity
-import de.tabmates.features.tabgroup.database.entities.types.UserTypeDatabase
+import de.tabmates.features.tabgroup.database.entities.types.ParticipantTypeDatabase
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.ParticipantType
 
@@ -11,7 +11,7 @@ fun GroupParticipantDto.toDomain(): GroupParticipant {
     return GroupParticipant(
         userId = userId,
         username = username,
-        userType = participantType.toDomain(),
+        participantType = participantType.toDomain(),
     )
 }
 
@@ -27,14 +27,14 @@ fun GroupParticipantEntity.toDomain(): GroupParticipant {
     return GroupParticipant(
         userId = userId,
         username = username,
-        userType = userType.toDomain(),
+        participantType = participantType.toDomain(),
     )
 }
 
-fun UserTypeDatabase.toDomain(): ParticipantType {
+fun ParticipantTypeDatabase.toDomain(): ParticipantType {
     return when (this) {
-        UserTypeDatabase.REGISTERED -> ParticipantType.REGISTERED
-        UserTypeDatabase.ANONYMOUS -> ParticipantType.ANONYMOUS
-        UserTypeDatabase.PLACEHOLDER -> ParticipantType.PLACEHOLDER
+        ParticipantTypeDatabase.REGISTERED -> ParticipantType.REGISTERED
+        ParticipantTypeDatabase.ANONYMOUS -> ParticipantType.ANONYMOUS
+        ParticipantTypeDatabase.PLACEHOLDER -> ParticipantType.PLACEHOLDER
     }
 }

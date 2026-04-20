@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6abbc10a57f954ddbc122ed5edd85af5",
+    "identityHash": "7daddee387d95b3ce5543bd6ac8ad0fc",
     "entities": [
       {
         "tableName": "GroupEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`groupId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `defaultCurrencyCode` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `lastModifiedAt` INTEGER NOT NULL, `creator_userId` TEXT NOT NULL, `creator_username` TEXT NOT NULL, `creator_userType` TEXT NOT NULL, PRIMARY KEY(`groupId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`groupId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `defaultCurrencyCode` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `lastModifiedAt` INTEGER NOT NULL, `creator_userId` TEXT NOT NULL, `creator_username` TEXT NOT NULL, `creator_participantType` TEXT NOT NULL, PRIMARY KEY(`groupId`))",
         "fields": [
           {
             "fieldPath": "groupId",
@@ -56,8 +56,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "creator.userType",
-            "columnName": "creator_userType",
+            "fieldPath": "creator.participantType",
+            "columnName": "creator_participantType",
             "affinity": "TEXT",
             "notNull": true
           }
@@ -146,7 +146,7 @@
       },
       {
         "tableName": "GroupParticipantEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` TEXT NOT NULL, `username` TEXT NOT NULL, `userType` TEXT NOT NULL, PRIMARY KEY(`userId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` TEXT NOT NULL, `username` TEXT NOT NULL, `participantType` TEXT NOT NULL, PRIMARY KEY(`userId`))",
         "fields": [
           {
             "fieldPath": "userId",
@@ -161,8 +161,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "userType",
-            "columnName": "userType",
+            "fieldPath": "participantType",
+            "columnName": "participantType",
             "affinity": "TEXT",
             "notNull": true
           }
@@ -399,7 +399,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6abbc10a57f954ddbc122ed5edd85af5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7daddee387d95b3ce5543bd6ac8ad0fc')"
     ]
   }
 }
