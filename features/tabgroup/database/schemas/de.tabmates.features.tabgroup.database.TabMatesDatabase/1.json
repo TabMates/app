@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "25e77cda0472d6f31e893903102923b1",
+    "identityHash": "6abbc10a57f954ddbc122ed5edd85af5",
     "entities": [
       {
         "tableName": "GroupEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`groupId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `defaultCurrencyCode` TEXT NOT NULL, `creatorId` TEXT NOT NULL, `lastModifiedAt` INTEGER NOT NULL, PRIMARY KEY(`groupId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`groupId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `defaultCurrencyCode` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `lastModifiedAt` INTEGER NOT NULL, `creator_userId` TEXT NOT NULL, `creator_username` TEXT NOT NULL, `creator_userType` TEXT NOT NULL, PRIMARY KEY(`groupId`))",
         "fields": [
           {
             "fieldPath": "groupId",
@@ -23,8 +23,7 @@
           {
             "fieldPath": "description",
             "columnName": "description",
-            "affinity": "TEXT",
-            "notNull": true
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "defaultCurrencyCode",
@@ -33,15 +32,33 @@
             "notNull": true
           },
           {
-            "fieldPath": "creatorId",
-            "columnName": "creatorId",
-            "affinity": "TEXT",
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
             "fieldPath": "lastModifiedAt",
             "columnName": "lastModifiedAt",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creator.userId",
+            "columnName": "creator_userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creator.username",
+            "columnName": "creator_username",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creator.userType",
+            "columnName": "creator_userType",
+            "affinity": "TEXT",
             "notNull": true
           }
         ],
@@ -382,7 +399,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '25e77cda0472d6f31e893903102923b1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6abbc10a57f954ddbc122ed5edd85af5')"
     ]
   }
 }

@@ -9,7 +9,7 @@ enum class ParticipantType {
 data class GroupParticipant(
     val userId: String,
     val username: String,
-    val participantType: ParticipantType,
+    val userType: ParticipantType,
 ) {
     val initials: String
         get() = username.take(2).uppercase()
