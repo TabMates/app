@@ -4,6 +4,9 @@ import kotlin.time.Instant
 
 data class Group(
     val id: String,
+    val title: String,
+    val description: String?,
+    val defaultCurrencyCode: String,
     val participants: Set<GroupParticipant>,
     val creator: GroupParticipant,
     val lastActivityAt: Instant,

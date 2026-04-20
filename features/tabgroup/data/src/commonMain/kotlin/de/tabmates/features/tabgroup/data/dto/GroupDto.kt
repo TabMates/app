@@ -6,6 +6,9 @@ import kotlin.time.Instant
 @Serializable
 data class GroupDto(
     val id: String,
+    val title: String,
+    val description: String?,
+    val defaultCurrencyCode: String,
     val participants: Set<GroupParticipantDto>,
     val creator: GroupParticipantDto,
     val lastActivityAt: Instant,
