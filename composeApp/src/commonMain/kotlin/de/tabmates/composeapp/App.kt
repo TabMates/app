@@ -27,9 +27,6 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import de.tabmates.composeapp.deeplink.DeepLinkHandler
-import org.jetbrains.compose.resources.vectorResource
-import tabmatesapp.composeapp.generated.resources.Res
-import tabmatesapp.composeapp.generated.resources.ic_arrow_back
 import de.tabmates.composeapp.deeplink.navDeepLink
 import de.tabmates.composeapp.deeplink.resolveDeepLink
 import de.tabmates.composeapp.di.appModule
@@ -40,9 +37,9 @@ import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.features.authentication.data.di.authenticationDataModule
 import de.tabmates.features.authentication.presentation.di.authPresentationModule
 import de.tabmates.features.authentication.presentation.navigation.EmailVerification
-import de.tabmates.features.authentication.presentation.navigation.authGraph
 import de.tabmates.features.authentication.presentation.navigation.ResetPassword
 import de.tabmates.features.authentication.presentation.navigation.Welcome
+import de.tabmates.features.authentication.presentation.navigation.authGraph
 import de.tabmates.features.authentication.presentation.navigation.authSerializersModule
 import de.tabmates.features.tabgroup.data.di.tabgroupDataModule
 import de.tabmates.features.tabgroup.presentation.navigation.Activity
@@ -54,10 +51,13 @@ import de.tabmates.features.tabgroup.presentation.navigation.mainGraph
 import de.tabmates.features.tabgroup.presentation.navigation.mainSerializersModule
 import kotlinx.serialization.modules.plus
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
+import tabmatesapp.composeapp.generated.resources.Res
 import tabmatesapp.composeapp.generated.resources.back
+import tabmatesapp.composeapp.generated.resources.ic_arrow_back
 
 private val savedStateConfiguration = SavedStateConfiguration {
     serializersModule = authSerializersModule + mainSerializersModule

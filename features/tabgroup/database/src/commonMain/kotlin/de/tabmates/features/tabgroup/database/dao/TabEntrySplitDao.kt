@@ -1,0 +1,28 @@
+package de.tabmates.features.tabgroup.database.dao
+
+import androidx.room3.Dao
+import androidx.room3.Query
+import androidx.room3.Upsert
+import de.tabmates.features.tabgroup.database.entities.TabEntrySplitEntity
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface TabEntrySplitDao {
+    @Upsert
+    suspend fun upsertSplit(split: TabEntrySplitEntity)
+
+    @Upsert
+    suspend fun upsertSplits(splits: List<TabEntrySplitEntity>)
+
+    @Query("DELETE FROM TabEntrySplitEntity WHERE splitId = :splitId")
+    suspend fun deleteSplitById(splitId: String)
+
+    @Query("DELETE FROM TabEntrySplitEntity WHERE tabEntryId = :tabEntryId")
+    suspend fun deleteSplitsByTabEntryId(tabEntryId: String)
+
+    @Query("SELECT * FROM TabEntrySplitEntity WHERE tabEntryId = :tabEntryId")
+    fun getSplitsByTabEntryId(tabEntryId: String): Flow<List<TabEntrySplitEntity>>
+
+    @Query("SELECT * FROM TabEntrySplitEntity WHERE tabEntryId = :tabEntryId")
+    suspend fun getSplitsByTabEntryIdOnce(tabEntryId: String): List<TabEntrySplitEntity>
+}
