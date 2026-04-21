@@ -13,7 +13,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -34,6 +33,7 @@ import de.tabmates.core.data.di.coreDataModule
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.navigation.LoggedIn
 import de.tabmates.core.presentation.navigation.TopLevelTab
+import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.authentication.data.di.authenticationDataModule
 import de.tabmates.features.authentication.presentation.di.authPresentationModule
 import de.tabmates.features.authentication.presentation.navigation.EmailVerification
@@ -94,8 +94,8 @@ fun App() {
             val currentKey = backStack.lastOrNull()
 
             // Navigate to Welcome when session is invalidated (e.g. token refresh failed).
-            LaunchedEffect(isLoggedIn) {
-                if (!isLoggedIn && currentKey is LoggedIn) {
+            ObserveAsEvents(mainViewModel.isLoggedIn) {
+                if (!it && currentKey is LoggedIn) {
                     backStack.clear()
                     backStack.add(Welcome)
                 }
