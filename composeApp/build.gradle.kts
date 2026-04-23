@@ -15,6 +15,7 @@ kotlin {
                 minorApiLevel = libs.versions.android.sdk.compile.minor.get().toInt()
             }
         }
+        withHostTest { }
     }
 
     sourceSets {

@@ -14,7 +14,7 @@ import org.robolectric.Robolectric
 import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
-@Config(application = Application::class)
+@Config(application = Application::class, maxSdk = 36)
 class MainActivityDeepLinkTest {
     @After
     fun tearDown() {
