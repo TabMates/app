@@ -51,6 +51,7 @@ internal fun Project.configureKotlinMultiplatform() {
             }.configure {
                 instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
             }
+            withHostTest { }
         }
 
         @OptIn(ExperimentalWasmDsl::class)
