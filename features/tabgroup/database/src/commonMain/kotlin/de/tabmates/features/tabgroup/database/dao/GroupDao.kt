@@ -22,20 +22,19 @@ interface GroupDao {
     suspend fun deleteGroupById(groupId: String)
 
     @Transaction
-    @Query("SELECT * FROM groupentity ORDER BY lastModifiedAt DESC")
-    fun getGroupsWithParticipants(): Flow<List<GroupWithParticipants>>
-
-    @Transaction
     @Query(
         """
-        SELECT DISTINCT g.*
+        SELECT g.*
         FROM groupentity g
-        JOIN groupparticipantcrossref gpcr ON g.groupId = gpcr.groupId
-        WHERE gpcr.isActive = 1
-        ORDER BY lastModifiedAt DESC
+        LEFT JOIN (
+            SELECT groupId, MAX(createdAt) as lastModifiedAt
+            FROM tabentryentity
+            GROUP BY groupId
+        ) lm ON g.groupId = lm.groupId
+        ORDER BY COALESCE(lm.lastModifiedAt, g.lastModifiedAt) DESC
     """,
     )
-    fun getGroupsWithActiveParticipants(): Flow<List<GroupWithParticipants>>
+    fun getGroupsWithParticipants(): Flow<List<GroupWithParticipants>>
 
     @Transaction
     @Query("SELECT * FROM groupentity WHERE groupId = :groupId")
