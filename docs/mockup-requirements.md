@@ -158,93 +158,7 @@ The app should feel like a friendly tool that makes an awkward topic (money betw
 
 ### 4.1 Color Palette
 
-Deliver a **complete Material 3 Expressive color scheme** covering all token groups. M3 Expressive extends the baseline M3 palette with Fixed colors, a 5-tier Surface Container hierarchy, and surfaceBright/Dim variants. All tokens below must be defined for both light and dark mode.
-
-#### Core Role Tokens
-
-| Token | Light Mode | Dark Mode | Primary Usage |
-|---|---|---|---|
-| `primary` | TBD | TBD | Key CTAs, active nav indicator, FAB |
-| `onPrimary` | TBD | TBD | Text/icons on primary |
-| `primaryContainer` | TBD | TBD | Chips, selected cards, prominent surface zones |
-| `onPrimaryContainer` | TBD | TBD | Text/icons on primaryContainer |
-| `secondary` | TBD | TBD | Tags, category indicators, secondary actions |
-| `onSecondary` | TBD | TBD | Text/icons on secondary |
-| `secondaryContainer` | TBD | TBD | Filter chips, balance indicator backgrounds |
-| `onSecondaryContainer` | TBD | TBD | Text/icons on secondaryContainer |
-| `tertiary` | TBD | TBD | Accent highlights, settlement badges, special moments |
-| `onTertiary` | TBD | TBD | Text/icons on tertiary |
-| `tertiaryContainer` | TBD | TBD | Stat callout cards, decorative highlights |
-| `onTertiaryContainer` | TBD | TBD | Text/icons on tertiaryContainer |
-| `error` | TBD | TBD | Validation errors, delete actions |
-| `onError` | TBD | TBD | Text/icons on error |
-| `errorContainer` | TBD | TBD | Error banner backgrounds |
-| `onErrorContainer` | TBD | TBD | Text/icons on errorContainer |
-
-#### Fixed Color Tokens (light/dark-independent)
-
-Fixed colors maintain the same value in both light and dark themes. Use them for elements where consistent brand color matters regardless of mode (e.g., illustration accents, onboarding spots, category pill backgrounds).
-
-| Token | Value | Usage |
-|---|---|---|
-| `primaryFixed` | TBD | Persistent primary-toned surface |
-| `primaryFixedDim` | TBD | Slightly dimmer fixed primary (for hover/pressed states on fixed) |
-| `onPrimaryFixed` | TBD | Text/icons on primaryFixed |
-| `onPrimaryFixedVariant` | TBD | Secondary text/icons on primaryFixed (lower emphasis) |
-| `secondaryFixed` | TBD | Persistent secondary-toned surface |
-| `secondaryFixedDim` | TBD | Dimmer fixed secondary |
-| `onSecondaryFixed` | TBD | Text/icons on secondaryFixed |
-| `onSecondaryFixedVariant` | TBD | Secondary text/icons on secondaryFixed |
-| `tertiaryFixed` | TBD | Persistent tertiary-toned surface |
-| `tertiaryFixedDim` | TBD | Dimmer fixed tertiary |
-| `onTertiaryFixed` | TBD | Text/icons on tertiaryFixed |
-| `onTertiaryFixedVariant` | TBD | Secondary text/icons on tertiaryFixed |
-
-#### Surface & Background Tokens
-
-M3 Expressive replaces the single `surfaceVariant` with a **5-tier Surface Container hierarchy** to create visual depth without relying on elevation shadows. Use the tiers to layer cards, sheets, and list items.
-
-| Token | Light Mode | Dark Mode | Usage |
-|---|---|---|---|
-| `background` | TBD | TBD | App background (behind all content) |
-| `onBackground` | TBD | TBD | Text/icons on background |
-| `surface` | TBD | TBD | Base surface (same as background in M3) |
-| `onSurface` | TBD | TBD | Primary text/icons on surface |
-| `surfaceVariant` | TBD | TBD | Kept for backward compatibility; prefer container tiers below |
-| `onSurfaceVariant` | TBD | TBD | Secondary text/icons, subtitle text |
-| `surfaceContainerLowest` | TBD | TBD | Lowest-emphasis container (e.g., page background inset) |
-| `surfaceContainerLow` | TBD | TBD | List item backgrounds, subtle grouping |
-| `surfaceContainer` | TBD | TBD | Standard card background |
-| `surfaceContainerHigh` | TBD | TBD | Elevated cards, selected list items |
-| `surfaceContainerHighest` | TBD | TBD | Top-level modal surfaces, dialogs |
-| `surfaceBright` | TBD | TBD | Highlighted surface areas (status bar zone, hero sections) |
-| `surfaceDim` | TBD | TBD | Dimmed surface (scrim behind modal overlays) |
-| `inverseSurface` | TBD | TBD | Snackbar background |
-| `inverseOnSurface` | TBD | TBD | Snackbar text |
-| `inversePrimary` | TBD | TBD | FAB icon on dark surface |
-| `surfaceTint` | TBD | TBD | Tonal elevation overlay color (= primary) |
-
-#### Utility Tokens
-
-| Token | Light Mode | Dark Mode | Usage |
-|---|---|---|---|
-| `outline` | TBD | TBD | Borders, dividers, text field outlines |
-| `outlineVariant` | TBD | TBD | Subtle dividers, chip outlines |
-| `scrim` | TBD | TBD | Modal overlay scrim (typically black at ~32% opacity) |
-| `shadow` | TBD | TBD | Drop shadow color (typically black) |
-
-#### Semantic / App-Specific Colors
-
-Define **custom semantic tokens** that map onto M3 palette colors for expense-specific contexts. These are not new hues — they are aliases into the palette that carry domain meaning.
-
-| Semantic Token | Maps to | Usage |
-|---|---|---|
-| `positive` / `youAreOwed` | `tertiary` or custom green tone | User is owed money — always paired with an icon/label, never color alone |
-| `positiveContainer` | `tertiaryContainer` | Background for "owed" balance cards |
-| `negative` / `youOwe` | `error` or custom red tone | User owes money — always paired with an icon/label |
-| `negativeContainer` | `errorContainer` | Background for "owes" balance cards |
-| `settled` | `surfaceContainerHigh` / `onSurfaceVariant` | Debt fully settled — muted/neutral treatment |
-| `deleted` | `onSurfaceVariant` at reduced opacity | Muted strikethrough treatment for deleted entries |
+Deliver a **complete Material 3 Expressive color scheme** covering all token groups. M3 Expressive extends the baseline M3 palette with Fixed colors, a 5-tier Surface Container hierarchy, and surfaceBright/Dim variants.
 
 > **Designer note:** All three palette roles (primary, secondary, tertiary) must appear visibly and distinctly across the app. Do not default to using only primary everywhere. Reference how Google Photos uses tertiary for highlight moments and secondary for chip states.
 
@@ -362,7 +276,7 @@ TabMates App
 │   ├── Sign Up (email/password)
 │   ├── Forgot Password
 │   ├── Confirmed Email (after clicking link)
-│   └── Guest Mode (skip auth,  no way of signing in on the same account on another device, and data is lost after clearing app data)
+│   └── Guest Mode which can be just clicked from sign up screen only requiring to setup a username and continue (no way of signing in on the same account on another device, and data is lost after clearing app data)
 │
 ├── ★ Home / Dashboard (default landing)
 │   ├── Balance summary (total owed / total owing)
@@ -481,7 +395,7 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 
 | Element | Specification |
 |---|---|
-| **Fields** | Name, Email, Password, Confirm Password |
+| **Fields** | Username, Email, Password, Confirm Password |
 | **Validation** | Inline field-level errors (email format, password strength, match) |
 | **Primary CTA** | "Create Account" |
 | **Secondary** | "Already have an account? Sign In" |
@@ -508,10 +422,7 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 
 #### 6.2.4 Guest Mode
 
-- No separate screen — user taps "Continue without account" and goes directly to Home
-- A **persistent but non-intrusive banner** on the Home screen reminds guest users: "Create an account to sync your data across devices"
-- Guest users have **full offline-first functionality** — identical to authenticated users in terms of what they can do. The only difference is that guest data is stored locally on the device and cannot be synced to other devices or recovered after the app data is cleared.
-- The banner should be dismissible per session but reappear on next launch until the user converts to a full account.
+- Similar to the register screen but the user only need to need to specify a username instead
 
 **States for all auth screens:**
 - Default (empty form)
@@ -542,7 +453,6 @@ On iOS, use **native navigation components** (UINavigationController-style trans
 - Loading (skeleton placeholders — only on very first load when no local data is cached yet)
 - Offline / syncing (subtle sync indicator when connectivity is unavailable; cached content remains fully usable)
 - Error (data corruption or unrecoverable failure — rare; show retry button)
-- Guest mode (with account creation banner)
 
 ---
 
