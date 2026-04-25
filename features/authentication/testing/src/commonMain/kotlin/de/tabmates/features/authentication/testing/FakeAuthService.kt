@@ -14,6 +14,8 @@ open class FakeAuthService(
     var resendVerificationEmailResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var resendVerificationEmailDelayMillis: Long = 0L,
     var verifyEmailResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var forgotPasswordResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var resetPasswordResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
 ) : AuthService {
     var registerCalls: Int = 0
         private set
@@ -25,6 +27,12 @@ open class FakeAuthService(
         private set
 
     var verifyEmailCalls: Int = 0
+        private set
+
+    var forgotPasswordCalls: Int = 0
+        private set
+
+    var resetPasswordCalls: Int = 0
         private set
 
     override suspend fun register(
@@ -70,7 +78,18 @@ open class FakeAuthService(
         return verifyEmailResult
     }
 
-    override suspend fun forgotPassword(email: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
+    override suspend fun forgotPassword(email: String): EmptyResult<DataError.Remote> {
+        forgotPasswordCalls += 1
+        return forgotPasswordResult
+    }
 
     override suspend fun logout(refreshToken: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
+
+    override suspend fun resetPassword(
+        newPassword: String,
+        token: String,
+    ): EmptyResult<DataError.Remote> {
+        resetPasswordCalls += 1
+        return resetPasswordResult
+    }
 }
