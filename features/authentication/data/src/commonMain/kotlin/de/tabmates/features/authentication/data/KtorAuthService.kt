@@ -17,6 +17,7 @@ import de.tabmates.features.authentication.data.dto.requests.LoginAnonymousReque
 import de.tabmates.features.authentication.data.dto.requests.LoginRequest
 import de.tabmates.features.authentication.data.dto.requests.RegisterAnonymousRequest
 import de.tabmates.features.authentication.data.dto.requests.RegisterRequest
+import de.tabmates.features.authentication.data.dto.requests.ResetPasswordRequest
 import de.tabmates.features.authentication.domain.AuthService
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.auth.clearAuthTokens
@@ -122,5 +123,19 @@ class KtorAuthService(
             ).onSuccess {
                 httpClient.clearAuthTokens()
             }
+    }
+
+    override suspend fun resetPassword(
+        newPassword: String,
+        token: String,
+    ): EmptyResult<DataError.Remote> {
+        return httpClient.post(
+            route = "/api/auth/reset-password",
+            body =
+                ResetPasswordRequest(
+                    newPassword = newPassword,
+                    token = token,
+                ),
+        )
     }
 }
