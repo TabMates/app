@@ -54,6 +54,7 @@ class LoginViewModel(
         snapshotFlow {
             _state.value.emailTextFieldState.text
                 .toString()
+                .trim()
         }.map { email -> EmailValidator.validate(email) }
             .distinctUntilChanged()
 
@@ -98,6 +99,7 @@ class LoginViewModel(
             val email =
                 state.value.emailTextFieldState.text
                     .toString()
+                    .trim()
             val password =
                 state.value.passwordTextFieldState.text
                     .toString()

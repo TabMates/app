@@ -3,7 +3,7 @@ package de.tabmates.features.tabgroup.database.entities
 import androidx.room3.Embedded
 import androidx.room3.Junction
 import androidx.room3.Relation
-import de.tabmates.features.tabgroup.database.view.LastAddedTabEntryView
+import de.tabmates.features.tabgroup.database.view.LastTabEntryView
 
 data class GroupWithParticipants(
     @Embedded
@@ -17,9 +17,9 @@ data class GroupWithParticipants(
     @Relation(
         parentColumn = "groupId",
         entityColumn = "groupId",
-        entity = LastAddedTabEntryView::class,
+        entity = LastTabEntryView::class,
     )
-    val lastTabEntry: LastAddedTabEntryView?,
+    val lastTabEntry: LastTabEntryView?,
 )
 
 data class GroupInfoEntity(

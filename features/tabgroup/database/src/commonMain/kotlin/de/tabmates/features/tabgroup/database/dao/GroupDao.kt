@@ -8,6 +8,7 @@ import de.tabmates.features.tabgroup.database.entities.GroupEntity
 import de.tabmates.features.tabgroup.database.entities.GroupParticipantCrossRef
 import de.tabmates.features.tabgroup.database.entities.GroupParticipantEntity
 import de.tabmates.features.tabgroup.database.entities.GroupWithParticipants
+import de.tabmates.features.tabgroup.database.entities.TabEntryEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -94,12 +95,37 @@ interface GroupDao {
         groups: List<GroupWithParticipants>,
         participantDao: GroupParticipantDao,
         crossRefDao: GroupParticipantCrossRefDao,
+        tabEntryDao: TabEntryDao,
     ) {
         upsertGroups(groups.map { it.group })
 
         val localGroupIds = getAllGroupIds()
         val serverGroupIds = groups.map { it.group.groupId }
         val staleGroupIds = localGroupIds.filterNot { serverGroupIds.contains(it) }
+
+        groups.forEach { group ->
+            group.lastTabEntry?.run {
+                tabEntryDao.upsertTabEntry(
+                    TabEntryEntity(
+                        tabEntryId = tabEntryId,
+                        title = title,
+                        description = description,
+                        amount = amount,
+                        currencyCode = currencyCode,
+                        entryType = entryType,
+                        groupId = groupId,
+                        creatorId = creatorId,
+                        paidByUserId = paidByUserId,
+                        receivedByUserId = receivedByUserId,
+                        createdAt = createdAt,
+                        lastModifiedAt = lastModifiedAt,
+                        lastModifiedByUserId = lastModifiedByUserId,
+                        deletedAt = deletedAt,
+                        deletedByUserId = deletedByUserId,
+                    ),
+                )
+            }
+        }
 
         val allParticipants = groups.flatMap { it.participants }
         participantDao.upsertParticipants(allParticipants)

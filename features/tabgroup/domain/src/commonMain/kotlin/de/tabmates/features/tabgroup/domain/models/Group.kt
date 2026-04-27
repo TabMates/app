@@ -10,5 +10,6 @@ data class Group(
     val participants: Set<GroupParticipant>,
     val creator: GroupParticipant,
     val lastActivityAt: Instant,
+    val lastTabEntry: TabEntry?,
     val createdAt: Instant,
 )

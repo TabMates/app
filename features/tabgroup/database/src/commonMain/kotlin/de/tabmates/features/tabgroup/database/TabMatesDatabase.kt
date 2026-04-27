@@ -13,7 +13,7 @@ import de.tabmates.features.tabgroup.database.entities.GroupParticipantCrossRef
 import de.tabmates.features.tabgroup.database.entities.GroupParticipantEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntryEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntrySplitEntity
-import de.tabmates.features.tabgroup.database.view.LastAddedTabEntryView
+import de.tabmates.features.tabgroup.database.view.LastTabEntryView
 
 @Database(
     entities = [
@@ -24,7 +24,7 @@ import de.tabmates.features.tabgroup.database.view.LastAddedTabEntryView
         TabEntrySplitEntity::class,
     ],
     views = [
-        LastAddedTabEntryView::class,
+        LastTabEntryView::class,
     ],
     version = 1,
 )
