@@ -11,7 +11,7 @@ fun GroupParticipantDto.toDomain(): GroupParticipant {
     return GroupParticipant(
         userId = userId,
         username = username,
-        participantType = participantType.toDomain(),
+        participantType = userType.toDomain(),
     )
 }
 
@@ -31,10 +31,26 @@ fun GroupParticipantEntity.toDomain(): GroupParticipant {
     )
 }
 
+fun GroupParticipant.toEntity(): GroupParticipantEntity {
+    return GroupParticipantEntity(
+        userId = userId,
+        username = username,
+        participantType = participantType.toDatabase(),
+    )
+}
+
 fun ParticipantTypeDatabase.toDomain(): ParticipantType {
     return when (this) {
         ParticipantTypeDatabase.REGISTERED -> ParticipantType.REGISTERED
         ParticipantTypeDatabase.ANONYMOUS -> ParticipantType.ANONYMOUS
         ParticipantTypeDatabase.PLACEHOLDER -> ParticipantType.PLACEHOLDER
+    }
+}
+
+fun ParticipantType.toDatabase(): ParticipantTypeDatabase {
+    return when (this) {
+        ParticipantType.REGISTERED -> ParticipantTypeDatabase.REGISTERED
+        ParticipantType.ANONYMOUS -> ParticipantTypeDatabase.ANONYMOUS
+        ParticipantType.PLACEHOLDER -> ParticipantTypeDatabase.PLACEHOLDER
     }
 }

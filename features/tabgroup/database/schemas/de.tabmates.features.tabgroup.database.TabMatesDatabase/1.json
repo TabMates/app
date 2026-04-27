@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "7daddee387d95b3ce5543bd6ac8ad0fc",
+    "identityHash": "33f7a002c67d57ac028853a170defd00",
     "entities": [
       {
         "tableName": "GroupEntity",
@@ -176,7 +176,7 @@
       },
       {
         "tableName": "TabEntryEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tabEntryId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `amount` REAL NOT NULL, `currencyCode` TEXT NOT NULL, `entryType` TEXT NOT NULL, `groupId` TEXT NOT NULL, `creatorId` TEXT NOT NULL, `paidByUserId` TEXT NOT NULL, `receivedByUserId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `lastModifiedAt` INTEGER NOT NULL, `lastModifiedByUserId` TEXT NOT NULL, `deletedAt` INTEGER, `deletedByUserId` TEXT, PRIMARY KEY(`tabEntryId`), FOREIGN KEY(`groupId`) REFERENCES `GroupEntity`(`groupId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tabEntryId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `amount` REAL NOT NULL, `currencyCode` TEXT NOT NULL, `entryType` TEXT NOT NULL, `groupId` TEXT NOT NULL, `creatorId` TEXT NOT NULL, `paidByUserId` TEXT NOT NULL, `receivedByUserId` TEXT, `createdAt` INTEGER NOT NULL, `lastModifiedAt` INTEGER NOT NULL, `lastModifiedByUserId` TEXT NOT NULL, `deletedAt` INTEGER, `deletedByUserId` TEXT, PRIMARY KEY(`tabEntryId`), FOREIGN KEY(`groupId`) REFERENCES `GroupEntity`(`groupId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "tabEntryId",
@@ -235,8 +235,7 @@
           {
             "fieldPath": "receivedByUserId",
             "columnName": "receivedByUserId",
-            "affinity": "TEXT",
-            "notNull": true
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "createdAt",
@@ -394,12 +393,12 @@
     "views": [
       {
         "viewName": "last_tab_entry_per_group",
-        "createSql": "CREATE VIEW `${VIEW_NAME}` AS SELECT te1.*\n        FROM tabentryentity te1\n        JOIN (\n            SELECT groupId, MAX(createdAt) AS max_created_at\n            FROM tabentryentity\n            GROUP BY groupId\n        ) te2 ON te1.groupId = te2.groupId AND te1.createdAt = te2.max_created_at"
+        "createSql": "CREATE VIEW `${VIEW_NAME}` AS SELECT te1.*\n        FROM tabentryentity te1\n        JOIN (\n            SELECT groupId, MAX(createdAt) AS max_created_at\n            FROM tabentryentity\n            WHERE deletedAt IS NULL\n            GROUP BY groupId\n        ) te2 ON te1.groupId = te2.groupId AND te1.createdAt = te2.max_created_at\n        WHERE te1.deletedAt IS NULL"
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7daddee387d95b3ce5543bd6ac8ad0fc')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '33f7a002c67d57ac028853a170defd00')"
     ]
   }
 }

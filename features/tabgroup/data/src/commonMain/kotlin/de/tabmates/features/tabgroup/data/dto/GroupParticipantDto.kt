@@ -13,5 +13,5 @@ data class GroupParticipantDto(
     val userId: String,
     val username: String,
     val email: String?,
-    val participantType: ParticipantTypeDto,
+    val userType: ParticipantTypeDto,
 )
