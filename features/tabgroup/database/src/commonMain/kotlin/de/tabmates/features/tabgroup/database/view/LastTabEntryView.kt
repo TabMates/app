@@ -31,6 +31,7 @@ data class LastTabEntryView(
     val createdAt: Long,
     val lastModifiedAt: Long,
     val lastModifiedByUserId: String,
+    val version: Int,
     val deletedAt: Long?,
     val deletedByUserId: String?,
 )

@@ -10,6 +10,7 @@ actual val platformTabgroupDataModule =
         single {
             get<DatabaseFactory>()
                 .create()
+                .fallbackToDestructiveMigration(dropAllTables = true)
                 .build()
         }
     }

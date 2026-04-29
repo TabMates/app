@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "33f7a002c67d57ac028853a170defd00",
+    "identityHash": "c8eeb192c42ceceda16bcd1639d09411",
     "entities": [
       {
         "tableName": "GroupEntity",
@@ -176,7 +176,7 @@
       },
       {
         "tableName": "TabEntryEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tabEntryId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `amount` REAL NOT NULL, `currencyCode` TEXT NOT NULL, `entryType` TEXT NOT NULL, `groupId` TEXT NOT NULL, `creatorId` TEXT NOT NULL, `paidByUserId` TEXT NOT NULL, `receivedByUserId` TEXT, `createdAt` INTEGER NOT NULL, `lastModifiedAt` INTEGER NOT NULL, `lastModifiedByUserId` TEXT NOT NULL, `deletedAt` INTEGER, `deletedByUserId` TEXT, PRIMARY KEY(`tabEntryId`), FOREIGN KEY(`groupId`) REFERENCES `GroupEntity`(`groupId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tabEntryId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `amount` REAL NOT NULL, `currencyCode` TEXT NOT NULL, `entryType` TEXT NOT NULL, `groupId` TEXT NOT NULL, `creatorId` TEXT NOT NULL, `paidByUserId` TEXT NOT NULL, `receivedByUserId` TEXT, `createdAt` INTEGER NOT NULL, `lastModifiedAt` INTEGER NOT NULL, `lastModifiedByUserId` TEXT NOT NULL, `version` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedByUserId` TEXT, PRIMARY KEY(`tabEntryId`), FOREIGN KEY(`groupId`) REFERENCES `GroupEntity`(`groupId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "tabEntryId",
@@ -253,6 +253,12 @@
             "fieldPath": "lastModifiedByUserId",
             "columnName": "lastModifiedByUserId",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "version",
+            "columnName": "version",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -398,7 +404,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '33f7a002c67d57ac028853a170defd00')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c8eeb192c42ceceda16bcd1639d09411')"
     ]
   }
 }

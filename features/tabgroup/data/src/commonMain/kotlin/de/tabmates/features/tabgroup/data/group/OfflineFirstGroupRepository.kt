@@ -5,7 +5,6 @@ import de.tabmates.core.domain.util.Result
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.data.mappers.toEntity
-import de.tabmates.features.tabgroup.data.mappers.toLastTabEntryView
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import de.tabmates.features.tabgroup.database.entities.GroupParticipantEntity
 import de.tabmates.features.tabgroup.database.entities.GroupWithParticipants
@@ -54,7 +53,7 @@ class OfflineFirstGroupRepository(
                         GroupWithParticipants(
                             group = group.toEntity(),
                             participants = group.participants.map { it.toEntity() },
-                            lastTabEntry = group.lastTabEntry?.toLastTabEntryView(),
+                            lastTabEntry = null,
                         )
                     }
 
@@ -62,7 +61,6 @@ class OfflineFirstGroupRepository(
                     groups = groupsWithParticipants,
                     participantDao = database.groupParticipantDao,
                     crossRefDao = database.groupParticipantCrossRefDao,
-                    tabEntryDao = database.tabEntryDao,
                 )
             }
     }

@@ -1,110 +1,231 @@
 package de.tabmates.features.tabgroup.data.mappers
 
 import de.tabmates.features.tabgroup.data.dto.TabEntryDto
+import de.tabmates.features.tabgroup.database.entities.LastTabEntryWithSplits
 import de.tabmates.features.tabgroup.database.entities.TabEntryEntity
+import de.tabmates.features.tabgroup.database.entities.TabEntryWithSplits
 import de.tabmates.features.tabgroup.database.entities.types.TabEntryTypeDatabase
-import de.tabmates.features.tabgroup.database.view.LastTabEntryView
 import de.tabmates.features.tabgroup.domain.models.TabEntry
-import de.tabmates.features.tabgroup.domain.models.TabEntryType
 import kotlin.time.Instant
 
-fun LastTabEntryView.toDomain(): TabEntry {
-    return TabEntry(
-        tabEntryId = tabEntryId,
-        title = title,
-        description = description,
-        amount = amount,
-        currencyCode = currencyCode,
-        entryType = entryType.toDomain(),
-        groupId = groupId,
-        creatorId = creatorId,
-        paidByUserId = paidByUserId,
-        receivedByUserId = receivedByUserId,
-        createdAt = Instant.fromEpochMilliseconds(createdAt),
-        lastModifiedAt = Instant.fromEpochMilliseconds(lastModifiedAt),
-        lastModifiedByUserId = lastModifiedByUserId,
-        deletedAt = deletedAt?.let { Instant.fromEpochMilliseconds(it) },
-        deletedByUserId = deletedByUserId,
-    )
-}
+fun TabEntryDto.toDomain(): TabEntry =
+    when (this) {
+        is TabEntryDto.Expense -> {
+            TabEntry.Expense(
+                tabEntryId = id,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currency,
+                creatorId = creator.userId,
+                paidByUserId = paidBy.userId,
+                createdAt = createdAt,
+                lastModifiedAt = lastModifiedAt,
+                lastModifiedByUserId = lastModifiedBy.userId,
+                version = version,
+                deletedAt = deletedAt,
+                deletedByUserId = deletedBy?.userId,
+                splits = splits.map { it.toDomain(tabEntryId = id) },
+            )
+        }
 
-fun TabEntry.toLastTabEntryView(): LastTabEntryView {
-    return LastTabEntryView(
+        is TabEntryDto.Income -> {
+            TabEntry.Income(
+                tabEntryId = id,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currency,
+                creatorId = creator.userId,
+                paidByUserId = paidBy.userId,
+                createdAt = createdAt,
+                lastModifiedAt = lastModifiedAt,
+                lastModifiedByUserId = lastModifiedBy.userId,
+                version = version,
+                deletedAt = deletedAt,
+                deletedByUserId = deletedBy?.userId,
+                splits = splits.map { it.toDomain(tabEntryId = id) },
+            )
+        }
+
+        is TabEntryDto.Settlement -> {
+            TabEntry.Settlement(
+                tabEntryId = id,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currency,
+                creatorId = creator.userId,
+                paidByUserId = paidBy.userId,
+                createdAt = createdAt,
+                lastModifiedAt = lastModifiedAt,
+                lastModifiedByUserId = lastModifiedBy.userId,
+                version = version,
+                deletedAt = deletedAt,
+                deletedByUserId = deletedBy?.userId,
+                receivedByUserId = receivedBy.userId,
+            )
+        }
+    }
+
+fun TabEntry.toEntity(): TabEntryEntity =
+    TabEntryEntity(
         tabEntryId = tabEntryId,
         title = title,
         description = description,
         amount = amount,
         currencyCode = currencyCode,
-        entryType = entryType.toDatabase(),
+        entryType = toDatabaseType(),
         groupId = groupId,
         creatorId = creatorId,
         paidByUserId = paidByUserId,
-        receivedByUserId = receivedByUserId,
+        receivedByUserId = (this as? TabEntry.Settlement)?.receivedByUserId,
         createdAt = createdAt.toEpochMilliseconds(),
         lastModifiedAt = lastModifiedAt.toEpochMilliseconds(),
         lastModifiedByUserId = lastModifiedByUserId,
+        version = version,
         deletedAt = deletedAt?.toEpochMilliseconds(),
         deletedByUserId = deletedByUserId,
     )
-}
 
-fun TabEntryDto.toDomain(): TabEntry {
-    return TabEntry(
-        tabEntryId = id,
-        title = title,
-        description = description,
-        amount = amount,
-        currencyCode = currency,
-        entryType =
-            when (this) {
-                is TabEntryDto.Expense -> TabEntryType.EXPENSE
-                is TabEntryDto.Income -> TabEntryType.INCOME
-                is TabEntryDto.Settlement -> TabEntryType.SETTLEMENT
-            },
-        groupId = groupId,
-        creatorId = creator.userId,
-        paidByUserId = paidBy.userId,
-        receivedByUserId = if (this is TabEntryDto.Settlement) receivedBy.userId else null,
-        createdAt = createdAt,
-        lastModifiedAt = lastModifiedAt,
-        lastModifiedByUserId = lastModifiedBy.userId,
-        deletedAt = deletedAt,
-        deletedByUserId = deletedBy?.userId,
-    )
-}
+fun TabEntryWithSplits.toDomain(): TabEntry =
+    when (tabEntry.entryType) {
+        TabEntryTypeDatabase.EXPENSE -> {
+            TabEntry.Expense(
+                tabEntryId = tabEntry.tabEntryId,
+                groupId = tabEntry.groupId,
+                title = tabEntry.title,
+                description = tabEntry.description,
+                amount = tabEntry.amount,
+                currencyCode = tabEntry.currencyCode,
+                creatorId = tabEntry.creatorId,
+                paidByUserId = tabEntry.paidByUserId,
+                createdAt = Instant.fromEpochMilliseconds(tabEntry.createdAt),
+                lastModifiedAt = Instant.fromEpochMilliseconds(tabEntry.lastModifiedAt),
+                lastModifiedByUserId = tabEntry.lastModifiedByUserId,
+                version = tabEntry.version,
+                deletedAt = tabEntry.deletedAt?.let { Instant.fromEpochMilliseconds(it) },
+                deletedByUserId = tabEntry.deletedByUserId,
+                splits = splits.map { it.toDomain() },
+            )
+        }
 
-fun TabEntry.toEntity(): TabEntryEntity {
-    return TabEntryEntity(
-        tabEntryId = tabEntryId,
-        title = title,
-        description = description,
-        amount = amount,
-        currencyCode = currencyCode,
-        entryType = entryType.toDatabase(),
-        groupId = groupId,
-        creatorId = creatorId,
-        paidByUserId = paidByUserId,
-        receivedByUserId = receivedByUserId,
-        createdAt = createdAt.toEpochMilliseconds(),
-        lastModifiedAt = lastModifiedAt.toEpochMilliseconds(),
-        lastModifiedByUserId = lastModifiedByUserId,
-        deletedAt = deletedAt?.toEpochMilliseconds(),
-        deletedByUserId = deletedByUserId,
-    )
-}
+        TabEntryTypeDatabase.INCOME -> {
+            TabEntry.Income(
+                tabEntryId = tabEntry.tabEntryId,
+                groupId = tabEntry.groupId,
+                title = tabEntry.title,
+                description = tabEntry.description,
+                amount = tabEntry.amount,
+                currencyCode = tabEntry.currencyCode,
+                creatorId = tabEntry.creatorId,
+                paidByUserId = tabEntry.paidByUserId,
+                createdAt = Instant.fromEpochMilliseconds(tabEntry.createdAt),
+                lastModifiedAt = Instant.fromEpochMilliseconds(tabEntry.lastModifiedAt),
+                lastModifiedByUserId = tabEntry.lastModifiedByUserId,
+                version = tabEntry.version,
+                deletedAt = tabEntry.deletedAt?.let { Instant.fromEpochMilliseconds(it) },
+                deletedByUserId = tabEntry.deletedByUserId,
+                splits = splits.map { it.toDomain() },
+            )
+        }
 
-fun TabEntryType.toDatabase(): TabEntryTypeDatabase {
-    return when (this) {
-        TabEntryType.EXPENSE -> TabEntryTypeDatabase.EXPENSE
-        TabEntryType.INCOME -> TabEntryTypeDatabase.INCOME
-        TabEntryType.SETTLEMENT -> TabEntryTypeDatabase.SETTLEMENT
+        TabEntryTypeDatabase.SETTLEMENT -> {
+            TabEntry.Settlement(
+                tabEntryId = tabEntry.tabEntryId,
+                groupId = tabEntry.groupId,
+                title = tabEntry.title,
+                description = tabEntry.description,
+                amount = tabEntry.amount,
+                currencyCode = tabEntry.currencyCode,
+                creatorId = tabEntry.creatorId,
+                paidByUserId = tabEntry.paidByUserId,
+                createdAt = Instant.fromEpochMilliseconds(tabEntry.createdAt),
+                lastModifiedAt = Instant.fromEpochMilliseconds(tabEntry.lastModifiedAt),
+                lastModifiedByUserId = tabEntry.lastModifiedByUserId,
+                version = tabEntry.version,
+                deletedAt = tabEntry.deletedAt?.let { Instant.fromEpochMilliseconds(it) },
+                deletedByUserId = tabEntry.deletedByUserId,
+                receivedByUserId =
+                    requireNotNull(tabEntry.receivedByUserId) {
+                        "Settlement TabEntry ${tabEntry.tabEntryId} has null receivedByUserId"
+                    },
+            )
+        }
     }
-}
 
-fun TabEntryTypeDatabase.toDomain(): TabEntryType {
-    return when (this) {
-        TabEntryTypeDatabase.EXPENSE -> TabEntryType.EXPENSE
-        TabEntryTypeDatabase.INCOME -> TabEntryType.INCOME
-        TabEntryTypeDatabase.SETTLEMENT -> TabEntryType.SETTLEMENT
+fun LastTabEntryWithSplits.toDomain(): TabEntry =
+    when (lastTabEntry.entryType) {
+        TabEntryTypeDatabase.EXPENSE -> {
+            TabEntry.Expense(
+                tabEntryId = lastTabEntry.tabEntryId,
+                groupId = lastTabEntry.groupId,
+                title = lastTabEntry.title,
+                description = lastTabEntry.description,
+                amount = lastTabEntry.amount,
+                currencyCode = lastTabEntry.currencyCode,
+                creatorId = lastTabEntry.creatorId,
+                paidByUserId = lastTabEntry.paidByUserId,
+                createdAt = Instant.fromEpochMilliseconds(lastTabEntry.createdAt),
+                lastModifiedAt = Instant.fromEpochMilliseconds(lastTabEntry.lastModifiedAt),
+                lastModifiedByUserId = lastTabEntry.lastModifiedByUserId,
+                version = lastTabEntry.version,
+                deletedAt = lastTabEntry.deletedAt?.let { Instant.fromEpochMilliseconds(it) },
+                deletedByUserId = lastTabEntry.deletedByUserId,
+                splits = splits.map { it.toDomain() },
+            )
+        }
+
+        TabEntryTypeDatabase.INCOME -> {
+            TabEntry.Income(
+                tabEntryId = lastTabEntry.tabEntryId,
+                groupId = lastTabEntry.groupId,
+                title = lastTabEntry.title,
+                description = lastTabEntry.description,
+                amount = lastTabEntry.amount,
+                currencyCode = lastTabEntry.currencyCode,
+                creatorId = lastTabEntry.creatorId,
+                paidByUserId = lastTabEntry.paidByUserId,
+                createdAt = Instant.fromEpochMilliseconds(lastTabEntry.createdAt),
+                lastModifiedAt = Instant.fromEpochMilliseconds(lastTabEntry.lastModifiedAt),
+                lastModifiedByUserId = lastTabEntry.lastModifiedByUserId,
+                version = lastTabEntry.version,
+                deletedAt = lastTabEntry.deletedAt?.let { Instant.fromEpochMilliseconds(it) },
+                deletedByUserId = lastTabEntry.deletedByUserId,
+                splits = splits.map { it.toDomain() },
+            )
+        }
+
+        TabEntryTypeDatabase.SETTLEMENT -> {
+            TabEntry.Settlement(
+                tabEntryId = lastTabEntry.tabEntryId,
+                groupId = lastTabEntry.groupId,
+                title = lastTabEntry.title,
+                description = lastTabEntry.description,
+                amount = lastTabEntry.amount,
+                currencyCode = lastTabEntry.currencyCode,
+                creatorId = lastTabEntry.creatorId,
+                paidByUserId = lastTabEntry.paidByUserId,
+                createdAt = Instant.fromEpochMilliseconds(lastTabEntry.createdAt),
+                lastModifiedAt = Instant.fromEpochMilliseconds(lastTabEntry.lastModifiedAt),
+                lastModifiedByUserId = lastTabEntry.lastModifiedByUserId,
+                version = lastTabEntry.version,
+                deletedAt = lastTabEntry.deletedAt?.let { Instant.fromEpochMilliseconds(it) },
+                deletedByUserId = lastTabEntry.deletedByUserId,
+                receivedByUserId =
+                    requireNotNull(lastTabEntry.receivedByUserId) {
+                        "Settlement TabEntry ${lastTabEntry.tabEntryId} has null receivedByUserId"
+                    },
+            )
+        }
     }
-}
+
+private fun TabEntry.toDatabaseType(): TabEntryTypeDatabase =
+    when (this) {
+        is TabEntry.Expense -> TabEntryTypeDatabase.EXPENSE
+        is TabEntry.Income -> TabEntryTypeDatabase.INCOME
+        is TabEntry.Settlement -> TabEntryTypeDatabase.SETTLEMENT
+    }

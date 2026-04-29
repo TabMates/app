@@ -17,8 +17,8 @@ interface TabEntrySplitDao {
     @Query("DELETE FROM TabEntrySplitEntity WHERE splitId = :splitId")
     suspend fun deleteSplitById(splitId: String)
 
-    @Query("DELETE FROM TabEntrySplitEntity WHERE tabEntryId = :tabEntryId")
-    suspend fun deleteSplitsByTabEntryId(tabEntryId: String)
+    @Query("DELETE FROM TabEntrySplitEntity WHERE tabEntryId IN (:tabEntryIds)")
+    suspend fun deleteSplitsByTabEntryIds(tabEntryIds: List<String>)
 
     @Query("SELECT * FROM TabEntrySplitEntity WHERE tabEntryId = :tabEntryId")
     fun getSplitsByTabEntryId(tabEntryId: String): Flow<List<TabEntrySplitEntity>>
