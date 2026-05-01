@@ -19,7 +19,7 @@ data class GroupWithParticipants(
         entityColumn = "groupId",
         entity = LastTabEntryView::class,
     )
-    val lastTabEntry: LastTabEntryView?,
+    val lastTabEntry: LastTabEntryWithSplits?,
 )
 
 data class GroupInfoEntity(

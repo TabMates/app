@@ -12,6 +12,5 @@ enum class ParticipantTypeDto {
 data class GroupParticipantDto(
     val userId: String,
     val username: String,
-    val email: String?,
     val userType: ParticipantTypeDto,
 )

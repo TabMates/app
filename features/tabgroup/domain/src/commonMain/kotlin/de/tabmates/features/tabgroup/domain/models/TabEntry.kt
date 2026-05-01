@@ -2,20 +2,76 @@ package de.tabmates.features.tabgroup.domain.models
 
 import kotlin.time.Instant
 
-data class TabEntry(
-    val tabEntryId: String,
-    val title: String,
-    val description: String,
-    val amount: Double,
-    val currencyCode: String,
-    val entryType: TabEntryType,
-    val groupId: String,
-    val creatorId: String,
-    val paidByUserId: String,
-    val receivedByUserId: String?,
-    val createdAt: Instant,
-    val lastModifiedAt: Instant,
-    val lastModifiedByUserId: String,
-    val deletedAt: Instant?,
-    val deletedByUserId: String?,
-)
+sealed class TabEntry {
+    abstract val tabEntryId: String
+    abstract val groupId: String
+    abstract val title: String
+    abstract val description: String
+    abstract val amount: Double
+    abstract val currencyCode: String
+    abstract val creatorId: String
+    abstract val paidByUserId: String
+    abstract val createdAt: Instant
+    abstract val lastModifiedAt: Instant
+    abstract val lastModifiedByUserId: String
+    abstract val version: Int
+    abstract val deletedAt: Instant?
+    abstract val deletedByUserId: String?
+
+    val isDeleted: Boolean
+        get() = deletedAt != null
+
+    data class Expense(
+        override val tabEntryId: String,
+        override val groupId: String,
+        override val title: String,
+        override val description: String,
+        override val amount: Double,
+        override val currencyCode: String,
+        override val creatorId: String,
+        override val paidByUserId: String,
+        override val createdAt: Instant,
+        override val lastModifiedAt: Instant,
+        override val lastModifiedByUserId: String,
+        override val version: Int,
+        override val deletedAt: Instant?,
+        override val deletedByUserId: String?,
+        val splits: List<TabEntrySplit>,
+    ) : TabEntry()
+
+    data class Income(
+        override val tabEntryId: String,
+        override val groupId: String,
+        override val title: String,
+        override val description: String,
+        override val amount: Double,
+        override val currencyCode: String,
+        override val creatorId: String,
+        override val paidByUserId: String,
+        override val createdAt: Instant,
+        override val lastModifiedAt: Instant,
+        override val lastModifiedByUserId: String,
+        override val version: Int,
+        override val deletedAt: Instant?,
+        override val deletedByUserId: String?,
+        val splits: List<TabEntrySplit>,
+    ) : TabEntry()
+
+    data class Settlement(
+        override val tabEntryId: String,
+        override val groupId: String,
+        override val title: String,
+        override val description: String,
+        override val amount: Double,
+        override val currencyCode: String,
+        override val creatorId: String,
+        override val paidByUserId: String,
+        override val createdAt: Instant,
+        override val lastModifiedAt: Instant,
+        override val lastModifiedByUserId: String,
+        override val version: Int,
+        override val deletedAt: Instant?,
+        override val deletedByUserId: String?,
+        val receivedByUserId: String,
+    ) : TabEntry()
+}

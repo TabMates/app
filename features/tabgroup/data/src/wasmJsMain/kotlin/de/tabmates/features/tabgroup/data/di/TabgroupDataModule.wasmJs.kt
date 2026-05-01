@@ -12,6 +12,7 @@ actual val platformTabgroupDataModule =
             get<DatabaseFactory>()
                 .create()
                 .setDriver(createSQLiteWasmWorker())
+                .fallbackToDestructiveMigration(dropAllTables = true)
                 .build()
         }
     }

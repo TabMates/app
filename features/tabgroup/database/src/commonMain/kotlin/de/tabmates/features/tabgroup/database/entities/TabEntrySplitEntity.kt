@@ -32,6 +32,6 @@ data class TabEntrySplitEntity(
     val tabEntryId: String,
     val participantId: String,
     val splitType: SplitTypeDatabase,
-    val value: Float,
-    val resolvedAmount: Float,
+    val value: Double,
+    val resolvedAmount: Double,
 )
