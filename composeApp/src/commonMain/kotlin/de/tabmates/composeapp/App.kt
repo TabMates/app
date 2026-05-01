@@ -3,20 +3,28 @@ package de.tabmates.composeapp
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntryDecorator
@@ -44,6 +52,8 @@ import de.tabmates.features.authentication.presentation.navigation.authGraph
 import de.tabmates.features.authentication.presentation.navigation.authSerializersModule
 import de.tabmates.features.tabgroup.data.di.tabgroupDataModule
 import de.tabmates.features.tabgroup.presentation.navigation.Activity
+import de.tabmates.features.tabgroup.presentation.navigation.AddExpense
+import de.tabmates.features.tabgroup.presentation.navigation.CreateGroup
 import de.tabmates.features.tabgroup.presentation.navigation.Group
 import de.tabmates.features.tabgroup.presentation.navigation.Home
 import de.tabmates.features.tabgroup.presentation.navigation.Profile
@@ -58,6 +68,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
 import tabmatesapp.composeapp.generated.resources.Res
 import tabmatesapp.composeapp.generated.resources.back
+import tabmatesapp.composeapp.generated.resources.create_group
+import tabmatesapp.composeapp.generated.resources.ic_add
 import tabmatesapp.composeapp.generated.resources.ic_arrow_back
 
 private val savedStateConfiguration = SavedStateConfiguration {
@@ -123,10 +135,11 @@ fun App() {
 
             if (currentKey is LoggedIn) {
                 NavigationSuiteScaffold(
-                    navigationSuiteItems = {
+                    navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfoV2()),
+                    navigationItems = {
                         topLevelTabs.forEach { tab ->
                             val selected = currentKey == tab
-                            item(
+                            NavigationSuiteItem(
                                 selected = selected,
                                 onClick = {
                                     backStack.removeAll { it is TopLevelTab }
@@ -139,6 +152,20 @@ fun App() {
                                     )
                                 },
                                 label = { Text(tab.label.asString()) },
+                            )
+                        }
+                    },
+                    primaryActionContent = {
+                        FloatingActionButton(
+                            modifier = Modifier.padding(start = 16.dp),
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            onClick = {
+                                backStack.add(CreateGroup)
+                            },
+                        ) {
+                            Icon(
+                                imageVector = vectorResource(Res.drawable.ic_add),
+                                contentDescription = stringResource(Res.string.create_group),
                             )
                         }
                     },
