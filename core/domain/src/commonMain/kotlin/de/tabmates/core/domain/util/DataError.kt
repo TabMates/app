@@ -26,5 +26,6 @@ sealed interface DataError : Error {
     enum class Connection : DataError {
         NOT_CONNECTED,
         CREATE_EXPENSE_FAILED,
+        MESSAGE_SEND_FAILED,
     }
 }
