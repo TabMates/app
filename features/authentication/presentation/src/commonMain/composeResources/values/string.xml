@@ -57,4 +57,7 @@
     <string name="error_reset_password_token_invalid">It seems like the reset password link is not valid or has expired. Please request a new email.</string>
     <string name="reset_password_successfully">Your password has successfully been changed. You can now log in with your new password.</string>
     <string name="error_same_password">The new password can't be equal to the old one</string>
+
+    <!-- Guest Register -->
+    <string name="register_guest_desc">Continue as Guest has some limitations. When you log out or switch your device you will lose access to your groups. But you can always create an account later.</string>
 </resources>

@@ -13,6 +13,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -70,6 +71,13 @@ private val deepLinks = listOf(
     navDeepLink<ResetPassword>(basePath = "${BuildKonfig.BASE_URL_HTTP}/api/auth/reset-password"),
 )
 
+@get:Composable
+private val entryDecorators
+    get() = listOf<NavEntryDecorator<NavKey>>(
+    rememberSaveableStateHolderNavEntryDecorator(),
+    rememberViewModelStoreNavEntryDecorator(),
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
@@ -112,10 +120,7 @@ fun App() {
             }
 
             val topLevelTabs = remember { listOf(Home, Activity, Group, Profile) }
-            val entryDecorators = listOf<NavEntryDecorator<NavKey>>(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            )
+
             if (currentKey is LoggedIn) {
                 NavigationSuiteScaffold(
                     navigationSuiteItems = {

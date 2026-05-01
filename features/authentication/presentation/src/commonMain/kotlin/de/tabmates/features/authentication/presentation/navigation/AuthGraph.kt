@@ -8,6 +8,7 @@ import de.tabmates.features.authentication.presentation.emailverification.EmailV
 import de.tabmates.features.authentication.presentation.forgotpassword.ForgotPasswordScreenRoot
 import de.tabmates.features.authentication.presentation.login.LoginRoot
 import de.tabmates.features.authentication.presentation.register.RegisterRoot
+import de.tabmates.features.authentication.presentation.registerguest.RegisterGuestRoot
 import de.tabmates.features.authentication.presentation.registersuccess.RegisterSuccessRoot
 import de.tabmates.features.authentication.presentation.resetpassword.ResetPasswordScreenRoot
 import de.tabmates.features.authentication.presentation.welcome.WelcomeScreenRoot
@@ -25,6 +26,7 @@ val authSerializersModule =
             subclass(EmailVerification::class)
             subclass(ResetPassword::class)
             subclass(ForgotPassword::class)
+            subclass(RegisterGuest::class)
         }
     }
 
@@ -37,7 +39,6 @@ fun EntryProviderScope<NavKey>.authGraph(
     entry<Welcome> {
         WelcomeScreenRoot(
             backStack = backStack,
-            onGuestClick = onGuestClick,
         )
     }
 
@@ -45,7 +46,6 @@ fun EntryProviderScope<NavKey>.authGraph(
         LoginRoot(
             backStack = backStack,
             snackbarHostState = snackbarHostState,
-            onContinueAsGuestClick = onGuestClick,
             onLoginSuccess = onLoginSuccess,
         )
     }
@@ -53,7 +53,6 @@ fun EntryProviderScope<NavKey>.authGraph(
     entry<Register> {
         RegisterRoot(
             backStack = backStack,
-            onGuestClick = onGuestClick,
             snackbarHostState = snackbarHostState,
         )
     }
@@ -79,5 +78,12 @@ fun EntryProviderScope<NavKey>.authGraph(
 
     entry<ForgotPassword> {
         ForgotPasswordScreenRoot()
+    }
+
+    entry<RegisterGuest> {
+        RegisterGuestRoot(
+            snackbarHostState = snackbarHostState,
+            onRegisterSuccess = onGuestClick,
+        )
     }
 }

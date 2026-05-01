@@ -13,6 +13,9 @@ data object Login : LoggableNavKey()
 data object Register : LoggableNavKey()
 
 @Serializable
+data object RegisterGuest : LoggableNavKey()
+
+@Serializable
 data class RegisterSuccess(val email: String) : LoggableNavKey()
 
 @Serializable

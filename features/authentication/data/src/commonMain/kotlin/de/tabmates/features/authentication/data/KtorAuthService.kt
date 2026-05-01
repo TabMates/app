@@ -21,6 +21,7 @@ import de.tabmates.features.authentication.data.dto.requests.ResetPasswordReques
 import de.tabmates.features.authentication.domain.AuthService
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.auth.clearAuthTokens
+import io.ktor.client.request.post
 
 class KtorAuthService(
     private val httpClient: HttpClient,
@@ -42,18 +43,19 @@ class KtorAuthService(
         )
     }
 
-    override suspend fun registerAnonymous(
-        username: String,
-        password: String,
-    ): EmptyResult<DataError.Remote> {
-        return httpClient.post(
-            route = "/api/auth/register-anonymous",
-            body =
-                RegisterAnonymousRequest(
-                    username = username,
-                    password = password,
-                ),
-        )
+    override suspend fun registerAnonymous(username: String): Result<AuthInfo, DataError.Remote> {
+        return httpClient
+            .post<RegisterAnonymousRequest, AuthInfoSerializable>(
+                route = "/api/auth/register-anonymous",
+                body =
+                    RegisterAnonymousRequest(
+                        username = username,
+                    ),
+            ).map { authInfoSerializable ->
+                authInfoSerializable.toDomain()
+            }.onSuccess { authInfo ->
+                sessionStorage.set(authInfo)
+            }
     }
 
     override suspend fun login(

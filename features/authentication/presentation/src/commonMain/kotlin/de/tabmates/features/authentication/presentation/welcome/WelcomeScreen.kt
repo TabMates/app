@@ -32,6 +32,7 @@ import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.features.authentication.presentation.navigation.Login
 import de.tabmates.features.authentication.presentation.navigation.Register
+import de.tabmates.features.authentication.presentation.navigation.RegisterGuest
 import org.jetbrains.compose.resources.stringResource
 import tabmatesapp.features.authentication.presentation.generated.resources.Res
 import tabmatesapp.features.authentication.presentation.generated.resources.login
@@ -42,7 +43,6 @@ import tabmatesapp.features.authentication.presentation.generated.resources.welc
 @Composable
 fun WelcomeScreenRoot(
     backStack: NavBackStack<NavKey>,
-    onGuestClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     WelcomeScreen(
@@ -52,7 +52,9 @@ fun WelcomeScreenRoot(
         onLoginClick = {
             backStack.add(Login)
         },
-        onGuestClick = onGuestClick,
+        onGuestClick = {
+            backStack.add(RegisterGuest)
+        },
         modifier = modifier,
     )
 }
