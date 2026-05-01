@@ -22,6 +22,7 @@ ktlint_standard_multiple-expession-wrapping = disabled
 ktlint_standard_string-template-indent = disabled
 ktlint_standard_class-signature = disabled
 ktlint_standard_function-expression-body = disabled
+ktlint_standard_no-unused-imports = enabled
 
 [**/build/**]
 ktlint = disabled

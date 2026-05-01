@@ -5,5 +5,4 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RegisterAnonymousRequest(
     val username: String,
-    val password: String,
 )

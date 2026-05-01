@@ -36,6 +36,7 @@ import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.authentication.presentation.navigation.ForgotPassword
 import de.tabmates.features.authentication.presentation.navigation.Register
+import de.tabmates.features.authentication.presentation.navigation.RegisterGuest
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import tabmatesapp.features.authentication.presentation.generated.resources.Res
@@ -53,7 +54,6 @@ import tabmatesapp.features.authentication.presentation.generated.resources.welc
 fun LoginRoot(
     backStack: NavBackStack<NavKey>,
     snackbarHostState: SnackbarHostState,
-    onContinueAsGuestClick: () -> Unit,
     onLoginSuccess: () -> Unit,
     loginViewModel: LoginViewModel = koinViewModel(),
 ) {
@@ -87,7 +87,9 @@ fun LoginRoot(
         onCreateAccountClick = {
             backStack.add(Register)
         },
-        onContinueAsGuestClick = onContinueAsGuestClick,
+        onContinueAsGuestClick = {
+            backStack.add(RegisterGuest)
+        },
     )
 }
 

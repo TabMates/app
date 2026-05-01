@@ -16,8 +16,13 @@ open class FakeAuthService(
     var verifyEmailResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var forgotPasswordResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var resetPasswordResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var registerAnonymousResult: Result<AuthInfo, DataError.Remote> =
+        Result.Failure(DataError.Remote.UNKNOWN),
 ) : AuthService {
     var registerCalls: Int = 0
+        private set
+
+    var registerAnonymousCalls: Int = 0
         private set
 
     var loginCalls: Int = 0
@@ -44,10 +49,10 @@ open class FakeAuthService(
         return registerResult
     }
 
-    override suspend fun registerAnonymous(
-        username: String,
-        password: String,
-    ): EmptyResult<DataError.Remote> = Result.Success(Unit)
+    override suspend fun registerAnonymous(username: String): Result<AuthInfo, DataError.Remote> {
+        registerAnonymousCalls += 1
+        return registerAnonymousResult
+    }
 
     override suspend fun login(
         email: String,

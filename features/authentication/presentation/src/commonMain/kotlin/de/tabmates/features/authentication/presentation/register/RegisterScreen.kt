@@ -35,6 +35,7 @@ import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.authentication.presentation.di.authPresentationModule
 import de.tabmates.features.authentication.presentation.navigation.Login
 import de.tabmates.features.authentication.presentation.navigation.Register
+import de.tabmates.features.authentication.presentation.navigation.RegisterGuest
 import de.tabmates.features.authentication.presentation.navigation.RegisterSuccess
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplicationPreview
@@ -53,7 +54,6 @@ import tabmatesapp.features.authentication.presentation.generated.resources.welc
 @Composable
 fun RegisterRoot(
     backStack: NavBackStack<NavKey>,
-    onGuestClick: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     registerViewModel: RegisterViewModel = koinViewModel(),
@@ -79,7 +79,10 @@ fun RegisterRoot(
             backStack.add(Login)
             backStack.remove(Register)
         },
-        onGuestClick = onGuestClick,
+        onGuestClick = {
+            backStack.add(RegisterGuest)
+            backStack.remove(Register)
+        },
         onCreateAccountClick = { registerViewModel.register() },
         togglePasswordVisibility = registerViewModel::togglePasswordVisibility,
         toggleConfirmPasswordVisibility = registerViewModel::toggleConfirmPasswordVisibility,

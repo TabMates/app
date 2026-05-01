@@ -12,10 +12,7 @@ interface AuthService {
         password: String,
     ): EmptyResult<DataError.Remote>
 
-    suspend fun registerAnonymous(
-        username: String,
-        password: String,
-    ): EmptyResult<DataError.Remote>
+    suspend fun registerAnonymous(username: String): Result<AuthInfo, DataError.Remote>
 
     suspend fun login(
         email: String,
