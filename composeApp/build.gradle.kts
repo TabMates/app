@@ -3,6 +3,7 @@ import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension
 plugins {
     alias(libs.plugins.tabmates.convention.cmp.application)
     alias(libs.plugins.tabmates.convention.buildkonfig)
+    alias(libs.plugins.tabmates.convention.koin)
 }
 
 kotlin {

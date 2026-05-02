@@ -1,11 +1,14 @@
 package de.tabmates.composeapp.di
 
-import de.tabmates.composeapp.MainViewModel
-import org.koin.core.module.dsl.viewModelOf
-import org.koin.dsl.module
+import org.koin.core.annotation.ComponentScan
+import org.koin.core.annotation.Configuration
+import org.koin.core.annotation.KoinApplication
+import org.koin.core.annotation.Module
 
-val appModule =
-    module {
-        viewModelOf(::MainViewModel)
-    }
+@Module
+@Configuration
+@ComponentScan("de.tabmates.composeapp")
+class AppModule
 
+@KoinApplication
+class TabMatesKoinApp

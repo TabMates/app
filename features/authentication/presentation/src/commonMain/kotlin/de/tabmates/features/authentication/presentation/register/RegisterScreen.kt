@@ -32,7 +32,7 @@ import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.designsystem.theme.headlineLargeBold
 import de.tabmates.core.presentation.util.ObserveAsEvents
-import de.tabmates.features.authentication.presentation.di.authPresentationModule
+import de.tabmates.features.authentication.presentation.di.AuthPresentationModule
 import de.tabmates.features.authentication.presentation.navigation.Login
 import de.tabmates.features.authentication.presentation.navigation.Register
 import de.tabmates.features.authentication.presentation.navigation.RegisterGuest
@@ -40,6 +40,7 @@ import de.tabmates.features.authentication.presentation.navigation.RegisterSucce
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplicationPreview
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.plugin.module.dsl.modules
 import tabmatesapp.features.authentication.presentation.generated.resources.Res
 import tabmatesapp.features.authentication.presentation.generated.resources.register_already_have_account_prefix
 import tabmatesapp.features.authentication.presentation.generated.resources.register_confirm_password_hint
@@ -206,7 +207,7 @@ private fun RegisterScreen(
 private fun RegisterScreenPreview() {
     KoinApplicationPreview(
         application = {
-            modules(authPresentationModule)
+            modules(AuthPresentationModule::class)
         },
     ) {
         TabMatesTheme {

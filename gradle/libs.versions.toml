@@ -19,6 +19,7 @@ jetbrains-savedstate = "1.4.0"
 junit = "4.13.2"
 kermit = "2.1.0"
 koin = "4.2.1"
+koin-compiler-plugin = "1.0.0-RC2"
 kotlin = "2.3.21"
 kotlinx-browser = "0.5.0"
 kotlinx-coroutines = "1.10.2"
@@ -95,6 +96,7 @@ buildkonfig-gradle-plugin = { group = "com.codingfeline.buildkonfig", name = "bu
 compose-gradle-plugin = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose-multiplatform" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 ksp-gradle-plugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+koin-compiler-gradle-plugin = { module = "io.insert-koin:koin-compiler-gradle-plugin", version.ref = "koin-compiler-plugin" }
 
 # Coil.
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3" }
@@ -122,6 +124,7 @@ koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-core-viewmodel = { group = "io.insert-koin", name = "koin-core-viewmodel", version.ref = "koin" }
+koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "koin" }
 
 # Room
 androidx-room3-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room3" }
@@ -147,6 +150,7 @@ compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-m
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-compiler-plugin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 room3 = { id = "androidx.room3", version.ref = "room3" }
@@ -159,6 +163,7 @@ tabmates-convention-cmp-application = { id = "de.tabmates.convention.cmp.applica
 tabmates-convention-cmp-feature = { id = "de.tabmates.convention.cmp.feature" }
 tabmates-convention-cmp-library = { id = "de.tabmates.convention.cmp.library" }
 tabmates-convention-kmp-library = { id = "de.tabmates.convention.kmp.library" }
+tabmates-convention-koin = { id = "de.tabmates.convention.koin" }
 tabmates-convention-ktlint = { id = "de.tabmates.convention.ktlint" }
 tabmates-convention-room = { id = "de.tabmates.convention.room" }
 

@@ -2,7 +2,9 @@ package de.tabmates.core.data.logging
 
 import co.touchlab.kermit.Logger
 import de.tabmates.core.domain.logging.TabMatesLogger
+import org.koin.core.annotation.Single
 
+@Single(binds = [TabMatesLogger::class])
 class KermitLogger : TabMatesLogger {
     override fun debug(
         tag: String,

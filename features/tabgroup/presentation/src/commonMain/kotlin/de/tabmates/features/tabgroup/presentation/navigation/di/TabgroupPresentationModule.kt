@@ -1,10 +1,10 @@
 package de.tabmates.features.tabgroup.presentation.navigation.di
 
-import de.tabmates.features.tabgroup.presentation.navigation.home.HomeViewModel
-import org.koin.core.module.dsl.viewModelOf
-import org.koin.dsl.module
+import org.koin.core.annotation.ComponentScan
+import org.koin.core.annotation.Configuration
+import org.koin.core.annotation.Module
 
-val tabgroupPresentationModule =
-    module {
-        viewModelOf(::HomeViewModel)
-    }
+@Module
+@Configuration
+@ComponentScan("de.tabmates.features.tabgroup.presentation")
+class TabgroupPresentationModule

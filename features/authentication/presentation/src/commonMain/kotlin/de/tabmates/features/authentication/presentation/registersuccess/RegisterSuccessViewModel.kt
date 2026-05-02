@@ -14,10 +14,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
+@KoinViewModel
 class RegisterSuccessViewModel(
     private val authService: AuthService,
-    private val email: String,
+    @InjectedParam private val email: String,
 ) : ViewModel() {
     private var hasLoadedInitialData = false
 

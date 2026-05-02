@@ -15,7 +15,9 @@ import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.domain.group.GroupService
 import de.tabmates.features.tabgroup.domain.models.Group
 import io.ktor.client.HttpClient
+import org.koin.core.annotation.Single
 
+@Single(binds = [GroupService::class])
 class KtorGroupService(
     private val httpClient: HttpClient,
 ) : GroupService {

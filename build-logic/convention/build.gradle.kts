@@ -14,6 +14,7 @@ dependencies {
     compileOnly(libs.ktlint.gradle.plugin)
     compileOnly(libs.ksp.gradle.plugin)
     compileOnly(libs.androidx.room3.gradle.plugin)
+    compileOnly(libs.koin.compiler.gradle.plugin)
     implementation(libs.buildkonfig.gradle.plugin)
     implementation(libs.buildkonfig.compiler)
 }
@@ -78,6 +79,10 @@ gradlePlugin {
         register("ktlint") {
             id = "de.tabmates.convention.ktlint"
             implementationClass = "KtlintConventionPlugin"
+        }
+        register("koin") {
+            id = "de.tabmates.convention.koin"
+            implementationClass = "KoinConventionPlugin"
         }
     }
 }

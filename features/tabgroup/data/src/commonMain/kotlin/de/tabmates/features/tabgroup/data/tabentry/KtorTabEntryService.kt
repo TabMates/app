@@ -8,8 +8,10 @@ import de.tabmates.features.tabgroup.data.dto.TabEntryDto
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import io.ktor.client.HttpClient
+import org.koin.core.annotation.Single
 import kotlin.time.Instant
 
+@Single(binds = [TabEntryService::class])
 class KtorTabEntryService(
     private val httpClient: HttpClient,
 ) : TabEntryService {

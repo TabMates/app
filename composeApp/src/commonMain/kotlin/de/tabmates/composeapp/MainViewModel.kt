@@ -7,7 +7,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import androidx.lifecycle.viewModelScope
+import org.koin.core.annotation.KoinViewModel
 
+@KoinViewModel
 class MainViewModel(
     sessionStorage: SessionStorage,
 ) : ViewModel() {

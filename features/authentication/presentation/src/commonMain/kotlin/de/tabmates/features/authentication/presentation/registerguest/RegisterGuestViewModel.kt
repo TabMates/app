@@ -17,11 +17,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.KoinViewModel
 import tabmatesapp.features.authentication.presentation.generated.resources.Res
 import tabmatesapp.features.authentication.presentation.generated.resources.error_account_exists
 import tabmatesapp.features.authentication.presentation.generated.resources.error_username_invalid
 import kotlin.time.Duration.Companion.seconds
 
+@KoinViewModel
 class RegisterGuestViewModel(
     private val authService: AuthService,
 ) : ViewModel() {
