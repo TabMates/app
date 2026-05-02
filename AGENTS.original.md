@@ -1,6 +1,6 @@
 # TabMates AI Agent Guide
 
-Doc: TabMates architecture, patterns, guidelines for AI agents.
+This document provides a comprehensive overview of the TabMates project architecture, patterns, and guidelines to help AI agents understand and contribute to the codebase without exhaustive file analysis.
 
 ## 1. Project Overview
 - **Tech Stack:** Kotlin Multiplatform (KMP), Compose Multiplatform (CMP).
@@ -16,24 +16,24 @@ Doc: TabMates architecture, patterns, guidelines for AI agents.
 
 ## 2. Module Structure & Hierarchy
 
-Project modularized by feature and layer. Use **typesafe project accessors** (e.g., `projects.core.domain`).
+The project is modularized by feature and layer. Use **typesafe project accessors** (e.g., `projects.core.domain`).
 
 ### Core Modules (`:core:*`)
-- **`:core:domain`**: Pure Kotlin. Business models, standard `Result<D, E>` type, `Error` interfaces, global loggers.
-- **`:core:data`**: Shared networking setup (`HttpClientFactory`), standard Ktor configs, common data sources.
+- **`:core:domain`**: Pure Kotlin. Business models, standard `Result<D, E>` type, `Error` interfaces, and global loggers.
+- **`:core:data`**: Shared networking setup (`HttpClientFactory`), standard Ktor configurations, and common data sources.
 - **`:core:presentation`**: Shared UI logic, `UiText` for localized strings, `ObserveAsEvents` for one-time events.
-- **`:core:designsystem`**: Shared Compose tokens (Color, Type, Shape), reusable atomic components (Buttons, TextFields, etc.).
+- **`:core:designsystem`**: Shared Compose tokens (Color, Type, Shape) and reusable atomic components (Buttons, TextFields, etc.).
 
 ### Feature Modules (`:features:*:*`)
-Each feature split into:
-- **`:domain`**: Interfaces (`Service`, `Repository`), business models, validators.
-- **`:data`**: Domain interface impls, DTOs, mappers, API services.
-- **`:presentation`**: Compose UI (Screens, Components), ViewModels, navigation routes.
+Each feature is split into:
+- **`:domain`**: Interfaces (`Service`, `Repository`), Business models, and Validators.
+- **`:data`**: Implementations of domain interfaces, DTOs, Mappers, and API services.
+- **`:presentation`**: Compose UI (Screens, Components), ViewModels, and Navigation Routes.
 - **`:database`** (Optional): Room entity definitions and DAOs.
 
 ### Application Modules
-- **`:composeApp`**: Main entry point for shared UI. Aggregates all features, wires Navigation/DI.
-- **`:androidApp`**: Android-specific config, depends only on `:composeApp`.
+- **`:composeApp`**: The main entry point for shared UI. Aggregates all features and wires Navigation/DI.
+- **`:androidApp`**: Android-specific configuration, depends only on `:composeApp`.
 
 ---
 
@@ -42,12 +42,12 @@ Each feature split into:
 ### Domain Layer (Pure Kotlin)
 - Define `interface AuthService` or `interface GroupRepository`.
 - Use `de.tabmates.core.domain.util.Result<D, E>` for all operation outcomes.
-- Models: data classes, ideally immutable.
+- Models should be data classes, ideally immutable.
 
 ### Data Layer
 - Implement domain interfaces.
 - Use `Ktor` for networking.
-- Use `Mappers` to convert DTOs to domain models.
+- Use `Mappers` to convert DTOs (Data Transfer Objects) to Domain Models.
 - **Convention:** DTOs suffix with `Request` or `Response`.
 
 ### Presentation Layer (Compose Multiplatform)
@@ -57,24 +57,24 @@ Each feature split into:
     - Inherit from `androidx.lifecycle.ViewModel`.
 - **UI Components:**
     - `Root` composables (e.g., `LoginRoot`) handle ViewModel interaction and event observation.
-    - Screen composables (e.g., `LoginScreen`) stateless, take data/callbacks.
+    - Screen composables (e.g., `LoginScreen`) are stateless and take data/callbacks.
     - Use `ObserveAsEvents` to handle ViewModel events (Snackbars, Navigation).
 
 ---
 
 ## 4. Navigation (Navigation 3)
 
-- **Routes:** `@Serializable` data classes/objects in feature's `presentation` module (e.g., `data object Home : NavKey`).
-- **Graphs:** Features define `EntryProviderScope<NavKey>.featureGraph` extension.
-- **Wiring:** All feature graphs aggregated in `composeApp/App.kt` via `NavDisplay`.
+- **Routes:** Defined as `@Serializable` data classes/objects in the feature's `presentation` module (e.g., `data object Home : NavKey`).
+- **Graphs:** Features define an `EntryProviderScope<NavKey>.featureGraph` extension.
+- **Wiring:** All feature graphs are aggregated in `composeApp/App.kt` using `NavDisplay`.
 - **Top-level Tabs:** Implement `TopLevelTab` and `LoggedIn` interfaces for consistent bottom bar behavior.
 
 ---
 
 ## 5. Dependency Injection (Koin)
 
-- Each module defines `val moduleName = module { ... }`.
-- Feature modules aggregated in `composeApp/src/commonMain/kotlin/de/tabmates/composeapp/App.kt`.
+- Each module defines a `val moduleName = module { ... }`.
+- Feature modules are aggregated in `composeApp/src/commonMain/kotlin/de/tabmates/composeapp/App.kt`.
 - Use `koinViewModel()` in Composables.
 
 ---
@@ -82,7 +82,7 @@ Each feature split into:
 ## 6. Design System & Theming
 
 - **Theme:** `TabMatesTheme` (built on Material3).
-- **Tokens:** In `:core:designsystem`. Use `MaterialTheme.colorScheme` or custom `TabMatesTheme` properties.
+- **Tokens:** Found in `:core:designsystem`. Use `MaterialTheme.colorScheme` or custom `TabMatesTheme` properties.
 - **Resources:** Use `Res.string.key` or `Res.drawable.key` via Compose Resources.
 - **Localization:** Managed in `composeResources/values/strings.xml` within each module.
 
@@ -90,16 +90,16 @@ Each feature split into:
 
 ## 7. Compose Previews
 
-Use multi-preview annotations from `:core:designsystem` for consistent testing across themes and devices.
+Use multi-preview annotations from `:core:designsystem` to ensure consistent testing across themes and devices.
 
 ### Multi-preview Annotations
-- **`@PreviewThemes`**: Light and Dark mode previews. **Preferred for most components.**
-- **`@PreviewPhones`**: Portrait and Landscape previews for phones.
-- **`@PreviewScreenSizes`**: Phone, Foldable, Tablet, Desktop, Web previews.
-- **`@PreviewAll`**: Every theme+screen combination (14 previews). Use sparingly.
+- **`@PreviewThemes`**: Generates Light and Dark mode previews. **Preferred for most components.**
+- **`@PreviewPhones`**: Generates Portrait and Landscape previews for phones.
+- **`@PreviewScreenSizes`**: Generates previews for Phone, Foldable, Tablet, Desktop, and Web.
+- **`@PreviewAll`**: Generates every combination of theme and screen size (14 previews). Use sparingly.
 
 ### Pattern
-Wrap previewed component in `TabMatesTheme` and `Surface` (if needed for background).
+Always wrap the previewed component in `TabMatesTheme` and a `Surface` (if needed for background).
 ```kotlin
 @PreviewThemes
 @Composable
@@ -116,12 +116,12 @@ private fun MyComponentPreview() {
 
 ## 8. Convention Plugins (build-logic)
 
-**NEVER** configure KMP manually. Use:
+**NEVER** configure KMP manually. Use the following plugins:
 - `tabmates.convention.kmp.library`: Standard KMP library.
 - `tabmates.convention.cmp.library`: CMP library with Compose dependencies.
 - `tabmates.convention.cmp.feature`: Feature presentation module (includes VM, Lifecycle, Core Presentation).
 - `tabmates.convention.room`: Enables Room with KSP.
-- `tabmates.convention.buildkonfig`: BuildConfig-like constants.
+- `tabmates.convention.buildkonfig`: For BuildConfig-like constants.
 
 ---
 
@@ -137,7 +137,7 @@ common
 └── desktop (jvm)
 ```
 - **Ktor engines:** `okhttp` (android), `darwin` (native), `js` (web), `apache5` (desktop).
-- **Expect/Actual:** Use sparingly. Prefer interfaces in `commonMain`, platform-specific impls via DI.
+- **Expect/Actual:** Use sparingly. Prefer defining interfaces in `commonMain` and providing platform-specific implementations via DI.
 
 ## 10. Coding Guidelines
 
@@ -147,14 +147,14 @@ common
 - **DI Modules:** `featureDataModule`, `featurePresentationModule`.
 
 ### Patterns
-- **Error Handling:** Always use `Result` type. Convert `DataError` to `UiText` via `asUiText()`.
-- **Async Work:** `viewModelScope.launch` in ViewModels. `Dispatchers.IO` for heavy/blocking calls (Ktor/Room non-blocking).
+- **Error Handling:** Always use the `Result` type. Convert `DataError` to `UiText` using `asUiText()` extension.
+- **Asynchronous Work:** Use `viewModelScope.launch` in ViewModels. Use `Dispatchers.IO` for heavy computations or blocking calls (though Ktor/Room are non-blocking).
 - **Immutability:** Prefer `val` and `data class` with `copy()`.
 
 ### Testing
 - **commonMain:** Use **Mokkery** for mocking interfaces.
 - **androidMain / jvmMain:** Use **Mockk**.
-- Target unit tests for domain logic and ViewModels.
+- Target unit tests for Domain logic and ViewModels.
 
 ---
 
