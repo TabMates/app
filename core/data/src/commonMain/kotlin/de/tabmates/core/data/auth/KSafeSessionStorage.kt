@@ -7,8 +7,13 @@ import eu.anifantakis.lib.ksafe.invoke
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.koin.core.annotation.Named
+import org.koin.core.annotation.Single
 
-class KSafeSessionStorage(vault: KSafe) : SessionStorage {
+@Single(binds = [SessionStorage::class])
+class KSafeSessionStorage(
+    @Named("vault") vault: KSafe,
+) : SessionStorage {
     private var authInfo by vault<AuthInfo?>(null, key = "authInfo")
     private val _authState = MutableStateFlow(authInfo)
 

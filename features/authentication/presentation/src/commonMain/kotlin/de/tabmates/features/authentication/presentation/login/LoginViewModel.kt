@@ -23,11 +23,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.KoinViewModel
 import tabmatesapp.features.authentication.presentation.generated.resources.Res
 import tabmatesapp.features.authentication.presentation.generated.resources.error_email_not_verified
 import tabmatesapp.features.authentication.presentation.generated.resources.error_invalid_credentials
 import kotlin.time.Duration.Companion.seconds
 
+@KoinViewModel
 class LoginViewModel(
     private val authService: AuthService,
 ) : ViewModel() {

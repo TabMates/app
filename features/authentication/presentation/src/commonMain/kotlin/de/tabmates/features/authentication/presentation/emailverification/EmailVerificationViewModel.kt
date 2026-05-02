@@ -12,11 +12,14 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 import kotlin.time.Duration.Companion.seconds
 
+@KoinViewModel
 class EmailVerificationViewModel(
     private val authService: AuthService,
-    private val token: String,
+    @InjectedParam private val token: String,
 ) : ViewModel() {
     private var hasLoadedInitialData = false
 

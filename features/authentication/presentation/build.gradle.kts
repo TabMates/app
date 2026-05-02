@@ -11,9 +11,11 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation(projects.core.data)
                 implementation(projects.core.designsystem)
                 implementation(projects.core.domain)
                 implementation(projects.core.presentation)
+                implementation(projects.features.authentication.data)
                 implementation(projects.features.authentication.domain)
                 implementation(libs.jetbrains.compose.components.resources)
                 implementation(libs.jetbrains.material3.adaptive)

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.tabmates.convention.kmp.library)
     alias(libs.plugins.tabmates.convention.buildkonfig)
+    alias(libs.plugins.tabmates.convention.koin)
 }
 
 kotlin {

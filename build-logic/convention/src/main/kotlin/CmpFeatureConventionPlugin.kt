@@ -9,6 +9,7 @@ class CmpFeatureConventionPlugin : Plugin<Project> {
         with(target) {
             with(pluginManager) {
                 apply(libs.findPluginId("tabmates-convention-cmp-library"))
+                apply(libs.findPluginId("tabmates-convention-koin"))
             }
 
             dependencies {

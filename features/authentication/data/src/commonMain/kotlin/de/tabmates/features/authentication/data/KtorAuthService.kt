@@ -21,8 +21,9 @@ import de.tabmates.features.authentication.data.dto.requests.ResetPasswordReques
 import de.tabmates.features.authentication.domain.AuthService
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.auth.clearAuthTokens
-import io.ktor.client.request.post
+import org.koin.core.annotation.Single
 
+@Single(binds = [AuthService::class])
 class KtorAuthService(
     private val httpClient: HttpClient,
     private val sessionStorage: SessionStorage,

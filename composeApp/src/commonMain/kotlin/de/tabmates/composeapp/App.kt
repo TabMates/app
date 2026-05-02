@@ -18,12 +18,9 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -37,27 +34,21 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import de.tabmates.composeapp.deeplink.DeepLinkHandler
 import de.tabmates.composeapp.deeplink.navDeepLink
 import de.tabmates.composeapp.deeplink.resolveDeepLink
-import de.tabmates.composeapp.di.appModule
-import de.tabmates.core.data.di.coreDataModule
+import de.tabmates.composeapp.di.TabMatesKoinApp
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.navigation.LoggedIn
 import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.core.presentation.util.ObserveAsEvents
-import de.tabmates.features.authentication.data.di.authenticationDataModule
-import de.tabmates.features.authentication.presentation.di.authPresentationModule
 import de.tabmates.features.authentication.presentation.navigation.EmailVerification
 import de.tabmates.features.authentication.presentation.navigation.ResetPassword
 import de.tabmates.features.authentication.presentation.navigation.Welcome
 import de.tabmates.features.authentication.presentation.navigation.authGraph
 import de.tabmates.features.authentication.presentation.navigation.authSerializersModule
-import de.tabmates.features.tabgroup.data.di.tabgroupDataModule
 import de.tabmates.features.tabgroup.presentation.navigation.Activity
-import de.tabmates.features.tabgroup.presentation.navigation.AddExpense
 import de.tabmates.features.tabgroup.presentation.navigation.CreateGroup
 import de.tabmates.features.tabgroup.presentation.navigation.Group
 import de.tabmates.features.tabgroup.presentation.navigation.Home
 import de.tabmates.features.tabgroup.presentation.navigation.Profile
-import de.tabmates.features.tabgroup.presentation.navigation.di.tabgroupPresentationModule
 import de.tabmates.features.tabgroup.presentation.navigation.mainGraph
 import de.tabmates.features.tabgroup.presentation.navigation.mainSerializersModule
 import kotlinx.serialization.modules.plus
@@ -65,7 +56,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.dsl.koinConfiguration
+import org.koin.plugin.module.dsl.koinConfiguration
 import tabmatesapp.composeapp.generated.resources.Res
 import tabmatesapp.composeapp.generated.resources.back
 import tabmatesapp.composeapp.generated.resources.create_group
@@ -94,16 +85,7 @@ private val entryDecorators
 @Composable
 fun App() {
     KoinApplication(
-        configuration = koinConfiguration {
-            modules(
-                appModule,
-                authenticationDataModule,
-                coreDataModule,
-                tabgroupDataModule,
-                authPresentationModule,
-                tabgroupPresentationModule,
-            )
-        }
+        configuration = koinConfiguration<TabMatesKoinApp>(),
     ) {
         TabMatesTheme {
             val mainViewModel = koinViewModel<MainViewModel>()

@@ -10,8 +10,10 @@ import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import org.koin.core.annotation.Single
 import kotlin.time.Instant
 
+@Single(binds = [TabEntryRepository::class])
 class OfflineFirstTabEntryRepository(
     private val service: TabEntryService,
     private val database: TabMatesDatabase,

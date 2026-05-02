@@ -17,7 +17,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
+import org.koin.core.annotation.Single
 
+@Single(binds = [GroupRepository::class])
 class OfflineFirstGroupRepository(
     private val groupService: GroupService,
     private val database: TabMatesDatabase,

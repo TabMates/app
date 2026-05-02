@@ -20,13 +20,16 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 import tabmatesapp.features.authentication.presentation.generated.resources.Res
 import tabmatesapp.features.authentication.presentation.generated.resources.error_reset_password_token_invalid
 import tabmatesapp.features.authentication.presentation.generated.resources.error_same_password
 
+@KoinViewModel
 class ResetPasswordViewModel(
     private val authService: AuthService,
-    private val token: String,
+    @InjectedParam private val token: String,
 ) : ViewModel() {
     private var hasLoadedInitialData = false
 
