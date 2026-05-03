@@ -10,7 +10,12 @@ interface GroupService {
 
     suspend fun getGroupById(groupId: String): Result<Group, DataError.Remote>
 
-    suspend fun createGroup(otherUserIds: Set<String>): Result<Group, DataError.Remote>
+    suspend fun createGroup(
+        title: String,
+        description: String?,
+        defaultCurrencyCode: String,
+        otherUserIds: Set<String>,
+    ): Result<Group, DataError.Remote>
 
     suspend fun addParticipantsToGroup(
         groupId: String,

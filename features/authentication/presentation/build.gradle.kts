@@ -17,7 +17,6 @@ kotlin {
                 implementation(projects.core.presentation)
                 implementation(projects.features.authentication.data)
                 implementation(projects.features.authentication.domain)
-                implementation(libs.jetbrains.compose.components.resources)
                 implementation(libs.jetbrains.material3.adaptive)
                 implementation(libs.jetbrains.lifecycle.viewmodel.navigation3)
             }

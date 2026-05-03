@@ -22,7 +22,6 @@ class CmpFeatureConventionPlugin : Plugin<Project> {
                 "commonMainImplementation"(libs.findLibrary("koin-compose").get())
                 "commonMainImplementation"(libs.findLibrary("koin-compose-viewmodel").get())
 
-                "commonMainImplementation"(libs.findLibrary("jetbrains-compose-runtime").get())
                 "commonMainImplementation"(libs.findLibrary("jetbrains-compose-viewmodel").get())
                 "commonMainImplementation"(libs.findLibrary("jetbrains-lifecycle-viewmodel").get())
                 "commonMainImplementation"(libs.findLibrary("jetbrains-lifecycle-compose").get())

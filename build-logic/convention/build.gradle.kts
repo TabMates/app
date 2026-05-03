@@ -68,6 +68,10 @@ gradlePlugin {
             id = "de.tabmates.convention.cmp.feature"
             implementationClass = "CmpFeatureConventionPlugin"
         }
+        register("cmpResources") {
+            id = "de.tabmates.convention.cmp.resources"
+            implementationClass = "CmpResourcesConventionPlugin"
+        }
         register("buildKonfig") {
             id = "de.tabmates.convention.buildkonfig"
             implementationClass = "BuildKonfigConventionPlugin"

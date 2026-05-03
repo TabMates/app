@@ -10,6 +10,7 @@ import de.tabmates.core.domain.util.asEmptyResult
 import de.tabmates.core.domain.util.map
 import de.tabmates.features.tabgroup.data.dto.GroupDto
 import de.tabmates.features.tabgroup.data.dto.request.AddNewParticipantToGroupRequest
+import de.tabmates.features.tabgroup.data.dto.request.CreateGroupRequest
 import de.tabmates.features.tabgroup.data.dto.request.ParticipantsRequest
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.domain.group.GroupService
@@ -37,13 +38,21 @@ class KtorGroupService(
             ).map { it.toDomain() }
     }
 
-    override suspend fun createGroup(otherUserIds: Set<String>): Result<Group, DataError.Remote> {
+    override suspend fun createGroup(
+        title: String,
+        description: String?,
+        defaultCurrencyCode: String,
+        otherUserIds: Set<String>,
+    ): Result<Group, DataError.Remote> {
         return httpClient
-            .post<ParticipantsRequest, GroupDto>(
+            .post<CreateGroupRequest, GroupDto>(
                 route = "/api/group",
                 body =
-                    ParticipantsRequest(
-                        userIds = otherUserIds.toList(),
+                    CreateGroupRequest(
+                        title = title,
+                        description = description,
+                        defaultCurrencyCode = defaultCurrencyCode,
+                        otherParticipantUserIds = otherUserIds.toList(),
                     ),
             ).map { it.toDomain() }
     }

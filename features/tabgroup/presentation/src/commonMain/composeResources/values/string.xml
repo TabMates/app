@@ -5,4 +5,26 @@
     <string name="group_label">Group</string>
     <string name="profile_label">Profile</string>
 
+    <string name="create_group_title">New group</string>
+    <string name="create_group_close_cd">Close</string>
+    <string name="create_group_pick_icon">Pick icon</string>
+    <string name="create_group_name_label">Group name</string>
+    <string name="create_group_description_placeholder">Description (optional)</string>
+    <string name="create_group_default_currency">Default currency</string>
+    <string name="create_group_add_members_section">ADD MEMBERS</string>
+    <string name="create_group_invite_email_placeholder">Invite by email</string>
+    <string name="create_group_send_invite_cd">Send invite</string>
+    <string name="create_group_placeholder_caption">Or add a placeholder for someone not signed up yet</string>
+    <string name="create_group_copy_action">Copy</string>
+    <string name="create_group_member_selected_cd">Selected</string>
+    <string name="create_group_invite_sent">Invite sent</string>
+    <string name="create_group_link_copied">Link copied</string>
+    <string name="create_group_submit_action">Create group</string>
+    <string name="create_group_currency_picker_title">Choose currency</string>
+    <string name="create_group_currency_search_placeholder">Search</string>
+    <string name="create_group_currency_selected_cd">Selected currency</string>
+    <string name="create_group_error_title_required">Group name is required</string>
+    <string name="create_group_error_title_too_long">Group name is too long (max 255 characters)</string>
+    <string name="create_group_error_description_too_long">Description is too long (max 1000 characters)</string>
+    <string name="create_group_error_currency_required">Pick a default currency</string>
 </resources>

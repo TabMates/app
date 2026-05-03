@@ -11,12 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import de.tabmates.core.presentation.navigation.LoggableNavKey
 import de.tabmates.core.presentation.navigation.LoggedIn
+import de.tabmates.core.presentation.navigation.ScreenWithTopBar
+import de.tabmates.core.presentation.navigation.TopBarAction
 import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.core.presentation.util.UiText
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.home_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home
@@ -74,4 +77,7 @@ data object Settings : LoggableNavKey(), LoggedIn
 data object AddExpense : LoggableNavKey(), LoggedIn
 
 @Serializable
-data object CreateGroup : LoggableNavKey(), LoggedIn
+data object CreateGroup : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText = UiText.Resource(Res.string.create_group_title)
+    override val topBarAction: TopBarAction = TopBarAction.Close
+}

@@ -17,8 +17,7 @@ class CmpApplicationConventionPlugin : Plugin<Project> {
             with(pluginManager) {
                 apply(libs.findPluginId("android-kmp-library"))
                 apply(libs.findPluginId("kotlin-multiplatform"))
-                apply(libs.findPluginId("compose-multiplatform"))
-                apply(libs.findPluginId("compose-compiler"))
+                apply(libs.findPluginId("tabmates-convention-cmp-resources"))
                 apply(libs.findPluginId("kotlin-serialization"))
             }
 
