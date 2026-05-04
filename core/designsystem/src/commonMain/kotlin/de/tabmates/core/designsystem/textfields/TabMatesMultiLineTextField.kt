@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import de.tabmates.core.designsystem.preview.PreviewThemes
 import de.tabmates.core.designsystem.theme.TabMatesTheme
@@ -86,7 +86,7 @@ fun TabMatesMultiLineTextField(
                 ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        BasicTextField(
+        OutlinedTextField(
             state = state,
             enabled = enabled,
             modifier =
@@ -106,17 +106,18 @@ fun TabMatesMultiLineTextField(
             onKeyboardAction = {
                 onKeyboardAction()
             },
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            decorator = { innerBox ->
+            placeholder =
                 if (placeholder != null && state.text.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        // color = MaterialTheme.colorScheme.extended.textPlaceholder,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
-                innerBox()
-            },
+                    {
+                        Text(
+                            text = placeholder,
+                            // color = MaterialTheme.colorScheme.extended.textPlaceholder,
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                    }
+                } else {
+                    null
+                },
         )
         bottomContent?.let {
             Row(
