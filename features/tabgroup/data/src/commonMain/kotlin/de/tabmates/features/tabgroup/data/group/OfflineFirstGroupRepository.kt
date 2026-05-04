@@ -60,22 +60,48 @@ class OfflineFirstGroupRepository(
     override suspend fun fetchGroups(): Result<List<Group>, DataError.Remote> {
         return groupService
             .getGroups()
-            .onSuccess { groups ->
-                val groupsWithParticipants =
-                    groups.map { group ->
-                        GroupWithParticipants(
-                            group = group.toEntity(),
-                            participants = group.participants.map { it.toEntity() },
-                            lastTabEntry = null,
-                        )
-                    }
+            .onSuccess { groups -> replaceAllGroups(groups) }
+    }
 
-                database.groupDao.upsertGroupsWithParticipantsAndCrossRefs(
-                    groups = groupsWithParticipants,
-                    participantDao = database.groupParticipantDao,
-                    crossRefDao = database.groupParticipantCrossRefDao,
+    override suspend fun createGroup(
+        title: String,
+        description: String?,
+        defaultCurrencyCode: String,
+        otherUserIds: Set<String>,
+    ): Result<Group, DataError.Remote> {
+        return groupService
+            .createGroup(
+                title = title,
+                description = description,
+                defaultCurrencyCode = defaultCurrencyCode,
+                otherUserIds = otherUserIds,
+            ).onSuccess { group -> upsertGroup(group) }
+    }
+
+    private suspend fun replaceAllGroups(groups: List<Group>) {
+        val groupsWithParticipants =
+            groups.map { group ->
+                GroupWithParticipants(
+                    group = group.toEntity(),
+                    participants = group.participants.map { it.toEntity() },
+                    lastTabEntry = null,
                 )
             }
+
+        database.groupDao.upsertGroupsWithParticipantsAndCrossRefs(
+            groups = groupsWithParticipants,
+            participantDao = database.groupParticipantDao,
+            crossRefDao = database.groupParticipantCrossRefDao,
+        )
+    }
+
+    private suspend fun upsertGroup(group: Group) {
+        database.groupDao.upsertGroupWithParticipantsAndCrossRefs(
+            group = group.toEntity(),
+            participants = group.participants.map { it.toEntity() },
+            participantDao = database.groupParticipantDao,
+            crossRefDao = database.groupParticipantCrossRefDao,
+        )
     }
 
     override suspend fun fetchGroupById(groupId: String): EmptyResult<DataError.Remote> {

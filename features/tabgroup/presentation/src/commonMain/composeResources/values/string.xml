@@ -27,4 +27,13 @@
     <string name="create_group_error_title_too_long">Group name is too long (max 255 characters)</string>
     <string name="create_group_error_description_too_long">Description is too long (max 1000 characters)</string>
     <string name="create_group_error_currency_required">Pick a default currency</string>
+
+    <string name="group_empty_title">No groups yet</string>
+    <string name="group_empty_subtitle">Groups keep shared expenses in one tidy place. Make your first one.</string>
+    <string name="group_empty_create_action">Create a group</string>
+
+    <string name="group_members_count">%1$d members</string>
+    <string name="group_balance_settled">settled</string>
+    <string name="group_balance_owed">you\'re owed</string>
+    <string name="group_balance_owe">you owe</string>
 </resources>

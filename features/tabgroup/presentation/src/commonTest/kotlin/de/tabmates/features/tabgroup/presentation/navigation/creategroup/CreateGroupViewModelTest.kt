@@ -73,15 +73,15 @@ class CreateGroupViewModelTest {
     @Test
     fun onCreateClickPassesTitleDescriptionAndCurrency() =
         runTest(testDispatcher) {
-            val groupService = FakeGroupService()
-            val viewModel = createViewModel(groupService = groupService)
+            val groupRepository = FakeGroupRepository()
+            val viewModel = createViewModel(groupRepository = groupRepository)
             fillRequiredFields(viewModel, title = "Trip", description = "Lisbon weekend")
 
             viewModel.onCreateClick()
             advanceUntilIdle()
 
-            assertEquals(1, groupService.createGroupCalls.size)
-            val call = groupService.createGroupCalls.single()
+            assertEquals(1, groupRepository.createGroupCalls.size)
+            val call = groupRepository.createGroupCalls.single()
             assertEquals("Trip", call.title)
             assertEquals("Lisbon weekend", call.description)
             assertEquals(emptySet(), call.otherUserIds)
@@ -103,9 +103,9 @@ class CreateGroupViewModelTest {
     @Test
     fun onCreateClickFailureSendsErrorEvent() =
         runTest(testDispatcher) {
-            val groupService =
-                FakeGroupService(createGroupResult = Result.Failure(DataError.Remote.UNKNOWN))
-            val viewModel = createViewModel(groupService = groupService)
+            val groupRepository =
+                FakeGroupRepository(createGroupResult = Result.Failure(DataError.Remote.UNKNOWN))
+            val viewModel = createViewModel(groupRepository = groupRepository)
             fillRequiredFields(viewModel)
 
             viewModel.events.test {
@@ -118,8 +118,8 @@ class CreateGroupViewModelTest {
     @Test
     fun onCreateClickEmitsErrorWhenTitleBlank() =
         runTest(testDispatcher) {
-            val groupService = FakeGroupService()
-            val viewModel = createViewModel(groupService = groupService)
+            val groupRepository = FakeGroupRepository()
+            val viewModel = createViewModel(groupRepository = groupRepository)
             viewModel.onCurrencySelected("EUR")
 
             viewModel.events.test {
@@ -131,14 +131,14 @@ class CreateGroupViewModelTest {
                 )
                 cancelAndConsumeRemainingEvents()
             }
-            assertTrue(groupService.createGroupCalls.isEmpty())
+            assertTrue(groupRepository.createGroupCalls.isEmpty())
         }
 
     @Test
     fun onCreateClickEmitsErrorWhenTitleTooLong() =
         runTest(testDispatcher) {
-            val groupService = FakeGroupService()
-            val viewModel = createViewModel(groupService = groupService)
+            val groupRepository = FakeGroupRepository()
+            val viewModel = createViewModel(groupRepository = groupRepository)
             viewModel.onCurrencySelected("EUR")
             viewModel.state.value.nameTextState
                 .edit { replace(0, length, "x".repeat(256)) }
@@ -154,14 +154,14 @@ class CreateGroupViewModelTest {
                 )
                 cancelAndConsumeRemainingEvents()
             }
-            assertTrue(groupService.createGroupCalls.isEmpty())
+            assertTrue(groupRepository.createGroupCalls.isEmpty())
         }
 
     @Test
     fun onCreateClickEmitsErrorWhenDescriptionTooLong() =
         runTest(testDispatcher) {
-            val groupService = FakeGroupService()
-            val viewModel = createViewModel(groupService = groupService)
+            val groupRepository = FakeGroupRepository()
+            val viewModel = createViewModel(groupRepository = groupRepository)
             fillRequiredFields(viewModel)
             viewModel.state.value.descriptionTextState
                 .edit { replace(0, length, "x".repeat(1001)) }
@@ -177,14 +177,14 @@ class CreateGroupViewModelTest {
                 )
                 cancelAndConsumeRemainingEvents()
             }
-            assertTrue(groupService.createGroupCalls.isEmpty())
+            assertTrue(groupRepository.createGroupCalls.isEmpty())
         }
 
     @Test
     fun onCreateClickEmitsErrorWhenCurrencyMissing() =
         runTest(testDispatcher) {
-            val groupService = FakeGroupService()
-            val viewModel = createViewModel(groupService = groupService)
+            val groupRepository = FakeGroupRepository()
+            val viewModel = createViewModel(groupRepository = groupRepository)
             viewModel.state.value.nameTextState
                 .edit { replace(0, length, "Trip") }
             Snapshot.sendApplyNotifications()
@@ -199,7 +199,7 @@ class CreateGroupViewModelTest {
                 )
                 cancelAndConsumeRemainingEvents()
             }
-            assertTrue(groupService.createGroupCalls.isEmpty())
+            assertTrue(groupRepository.createGroupCalls.isEmpty())
         }
 
     @Test
@@ -263,8 +263,8 @@ class CreateGroupViewModelTest {
     @Test
     fun onCreateClickUsesSelectedCurrency() =
         runTest(testDispatcher) {
-            val groupService = FakeGroupService()
-            val viewModel = createViewModel(groupService = groupService)
+            val groupRepository = FakeGroupRepository()
+            val viewModel = createViewModel(groupRepository = groupRepository)
             viewModel.onCurrencySelected("USD")
             viewModel.state.value.nameTextState
                 .edit { replace(0, length, "Trip") }
@@ -274,7 +274,7 @@ class CreateGroupViewModelTest {
             viewModel.onCreateClick()
             advanceUntilIdle()
 
-            assertEquals("USD", groupService.createGroupCalls.single().defaultCurrencyCode)
+            assertEquals("USD", groupRepository.createGroupCalls.single().defaultCurrencyCode)
         }
 
     private fun TestScope.activateState(viewModel: CreateGroupViewModel) {
@@ -285,12 +285,12 @@ class CreateGroupViewModelTest {
     }
 
     private fun TestScope.createViewModel(
-        groupService: FakeGroupService = FakeGroupService(),
+        groupRepository: FakeGroupRepository = FakeGroupRepository(),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
     ): CreateGroupViewModel {
         val viewModel =
             CreateGroupViewModel(
-                groupService = groupService,
+                groupRepository = groupRepository,
                 currencyRepository = currencyRepository,
             )
         activateState(viewModel)

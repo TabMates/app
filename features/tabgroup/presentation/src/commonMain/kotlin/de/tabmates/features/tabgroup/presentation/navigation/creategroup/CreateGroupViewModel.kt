@@ -8,7 +8,7 @@ import de.tabmates.core.presentation.share.LinkShareResult
 import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
-import de.tabmates.features.tabgroup.domain.group.GroupService
+import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @KoinViewModel
 class CreateGroupViewModel(
-    private val groupService: GroupService,
+    private val groupRepository: GroupRepository,
     private val currencyRepository: CurrencyRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(CreateGroupState())
@@ -108,7 +108,7 @@ class CreateGroupViewModel(
         }
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true) }
-            groupService
+            groupRepository
                 .createGroup(
                     title =
                         current.nameTextState.text

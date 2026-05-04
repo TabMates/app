@@ -11,6 +11,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CreateGroupRoot
+import de.tabmates.features.tabgroup.presentation.navigation.group.GroupRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -42,7 +43,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
     }
 
     entry<Group> {
-        PlaceholderScreen("Group")
+        GroupRoot(backStack = backStack)
     }
 
     entry<Profile> {
