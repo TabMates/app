@@ -3,9 +3,7 @@ package de.tabmates.core.designsystem.textfields
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -15,16 +13,15 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
@@ -73,23 +70,27 @@ fun TabMatesPasswordTextField(
     onFocusChanged: (Boolean) -> Unit = {},
 ) {
     TabMatesTextFieldLayout(
-        title = title,
         isError = isError,
         supportingText = supportingText,
-        enabled = enabled,
         onFocusChanged = onFocusChanged,
         modifier = modifier,
-    ) { styleModifier, interactionSource ->
-        BasicSecureTextField(
+    ) { interactionSource ->
+        OutlinedSecureTextField(
             state = state,
+            label =
+                if (title != null) {
+                    { Text(text = title) }
+                } else {
+                    null
+                },
             modifier =
-                styleModifier.then(
-                    if (contentType != null) {
-                        Modifier.semantics { this.contentType = contentType }
-                    } else {
-                        Modifier
-                    },
-                ),
+                if (contentType != null) {
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { this.contentType = contentType }
+                } else {
+                    Modifier.fillMaxWidth()
+                },
             enabled = enabled,
             textObfuscationMode =
                 if (isPasswordVisible) {
@@ -111,58 +112,46 @@ fun TabMatesPasswordTextField(
                         },
                 ),
             interactionSource = interactionSource,
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurface),
-            decorator = { innerBox ->
-                Row(
+            placeholder =
+                if (state.text.isEmpty() && placeholder != null) {
+                    {
+                        Text(
+                            text = placeholder,
+                            // color = MaterialTheme.colorScheme.extended.textPlaceholder,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                } else {
+                    null
+                },
+            trailingIcon = {
+                Icon(
+                    imageVector =
+                        if (isPasswordVisible) {
+                            vectorResource(Res.drawable.ic_eye_off)
+                        } else {
+                            vectorResource(Res.drawable.ic_eye)
+                        },
+                    contentDescription =
+                        if (isPasswordVisible) {
+                            stringResource(Res.string.hide_password)
+                        } else {
+                            stringResource(Res.string.show_password)
+                        },
+                    // tint = MaterialTheme.colorScheme.extended.textDisabled,
                     modifier =
                         Modifier
-                            .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .weight(1f),
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
-                        if (state.text.isEmpty() && placeholder != null) {
-                            Text(
-                                text = placeholder,
-                                // color = MaterialTheme.colorScheme.extended.textPlaceholder,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                        innerBox()
-                    }
-
-                    Icon(
-                        imageVector =
-                            if (isPasswordVisible) {
-                                vectorResource(Res.drawable.ic_eye_off)
-                            } else {
-                                vectorResource(Res.drawable.ic_eye)
-                            },
-                        contentDescription =
-                            if (isPasswordVisible) {
-                                stringResource(Res.string.hide_password)
-                            } else {
-                                stringResource(Res.string.show_password)
-                            },
-                        // tint = MaterialTheme.colorScheme.extended.textDisabled,
-                        modifier =
-                            Modifier
-                                .size(24.dp)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication =
-                                        ripple(
-                                            bounded = false,
-                                            radius = 24.dp,
-                                        ),
-                                    onClick = onToggleVisibilityClick,
-                                ),
-                    )
-                }
+                            .size(24.dp)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication =
+                                    ripple(
+                                        bounded = false,
+                                        radius = 24.dp,
+                                    ),
+                                onClick = onToggleVisibilityClick,
+                            ),
+                )
             },
         )
     }
