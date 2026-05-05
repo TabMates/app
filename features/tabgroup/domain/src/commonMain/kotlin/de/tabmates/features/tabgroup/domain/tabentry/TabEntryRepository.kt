@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
 interface TabEntryRepository {
-    fun getTabEntries(groupId: String): Flow<List<TabEntry>>
+    fun getTabEntriesForGroup(groupId: String): Flow<List<TabEntry>>
 
     suspend fun fetchTabEntries(
         groupId: String,

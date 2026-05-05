@@ -18,7 +18,7 @@ class OfflineFirstTabEntryRepository(
     private val service: TabEntryService,
     private val database: TabMatesDatabase,
 ) : TabEntryRepository {
-    override fun getTabEntries(groupId: String): Flow<List<TabEntry>> =
+    override fun getTabEntriesForGroup(groupId: String): Flow<List<TabEntry>> =
         database.tabEntryDao
             .getTabEntriesByGroupId(groupId)
             .map { rows -> rows.map { it.toDomain() } }

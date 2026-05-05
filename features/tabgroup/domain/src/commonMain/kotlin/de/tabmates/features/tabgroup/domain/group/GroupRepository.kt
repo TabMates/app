@@ -1,12 +1,29 @@
 package de.tabmates.features.tabgroup.domain.group
 
 import de.tabmates.core.domain.util.DataError
+import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.domain.models.Group
+import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import kotlinx.coroutines.flow.Flow
 
 interface GroupRepository {
     fun getGroups(): Flow<List<Group>>
 
+    fun getActiveParticipantsByGroupId(groupId: String): Flow<List<GroupParticipant>>
+
     suspend fun fetchGroups(): Result<List<Group>, DataError.Remote>
+
+    suspend fun fetchGroupById(groupId: String): EmptyResult<DataError.Remote>
+
+    suspend fun createGroup(otherUserIds: Set<String>): Result<Group, DataError.Remote>
+
+    suspend fun leaveGroup(groupId: String): EmptyResult<DataError.Remote>
+
+    suspend fun addParticipantsToGroup(
+        groupId: String,
+        userIds: Set<String>,
+    ): Result<Group, DataError.Remote>
+
+    suspend fun deleteAllGroups()
 }
