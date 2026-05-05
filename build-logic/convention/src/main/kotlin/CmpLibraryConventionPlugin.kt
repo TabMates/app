@@ -9,8 +9,7 @@ class CmpLibraryConventionPlugin : Plugin<Project> {
         with(target) {
             with(pluginManager) {
                 apply(libs.findPluginId("tabmates-convention-kmp-library"))
-                apply(libs.findPluginId("compose-compiler"))
-                apply(libs.findPluginId("compose-multiplatform"))
+                apply(libs.findPluginId("tabmates-convention-cmp-resources"))
             }
 
             dependencies {

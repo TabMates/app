@@ -2,6 +2,7 @@ package de.tabmates.features.tabgroup.presentation.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -9,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CreateGroupRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -27,7 +29,10 @@ val mainSerializersModule =
         }
     }
 
-fun EntryProviderScope<NavKey>.mainGraph(backStack: NavBackStack<NavKey>) {
+fun EntryProviderScope<NavKey>.mainGraph(
+    backStack: NavBackStack<NavKey>,
+    snackbarHostState: SnackbarHostState,
+) {
     entry<Home> {
         HomeRoot()
     }
@@ -53,7 +58,10 @@ fun EntryProviderScope<NavKey>.mainGraph(backStack: NavBackStack<NavKey>) {
     }
 
     entry<CreateGroup> {
-        PlaceholderScreen("Create Group")
+        CreateGroupRoot(
+            backStack = backStack,
+            snackbarHostState = snackbarHostState,
+        )
     }
 }
 

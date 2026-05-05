@@ -162,6 +162,7 @@ tabmates-convention-buildkonfig = { id = "de.tabmates.convention.buildkonfig" }
 tabmates-convention-cmp-application = { id = "de.tabmates.convention.cmp.application" }
 tabmates-convention-cmp-feature = { id = "de.tabmates.convention.cmp.feature" }
 tabmates-convention-cmp-library = { id = "de.tabmates.convention.cmp.library" }
+tabmates-convention-cmp-resources = { id = "de.tabmates.convention.cmp.resources" }
 tabmates-convention-kmp-library = { id = "de.tabmates.convention.kmp.library" }
 tabmates-convention-koin = { id = "de.tabmates.convention.koin" }
 tabmates-convention-ktlint = { id = "de.tabmates.convention.ktlint" }

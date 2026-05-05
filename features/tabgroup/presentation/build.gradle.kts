@@ -19,13 +19,14 @@ kotlin {
                 implementation(projects.features.authentication.domain)
                 implementation(projects.features.tabgroup.data)
                 implementation(projects.features.tabgroup.domain)
-                implementation(libs.jetbrains.compose.components.resources)
             }
         }
 
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.turbine)
             }
         }
 

@@ -35,8 +35,10 @@ import de.tabmates.composeapp.deeplink.DeepLinkHandler
 import de.tabmates.composeapp.deeplink.navDeepLink
 import de.tabmates.composeapp.deeplink.resolveDeepLink
 import de.tabmates.composeapp.di.TabMatesKoinApp
+import de.tabmates.composeapp.navigation.ScreenTopBar
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.navigation.LoggedIn
+import de.tabmates.core.presentation.navigation.ScreenWithTopBar
 import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.authentication.presentation.navigation.EmailVerification
@@ -114,6 +116,7 @@ fun App() {
             }
 
             val topLevelTabs = remember { listOf(Home, Activity, Group, Profile) }
+            val snackbarHostState = remember { SnackbarHostState() }
 
             if (currentKey is LoggedIn) {
                 NavigationSuiteScaffold(
@@ -152,17 +155,32 @@ fun App() {
                         }
                     },
                 ) {
-                    NavDisplay(
-                        backStack = backStack,
-                        onBack = { backStack.removeLastOrNull() },
-                        entryDecorators = entryDecorators,
-                        entryProvider = entryProvider {
-                            mainGraph(backStack)
+                    Scaffold(
+                        snackbarHost = { SnackbarHost(snackbarHostState) },
+                        topBar = {
+                            (currentKey as? ScreenWithTopBar)?.let { config ->
+                                ScreenTopBar(
+                                    config = config,
+                                    onNavigationClick = { backStack.removeLastOrNull() },
+                                )
+                            }
                         },
-                    )
+                    ) {
+                        NavDisplay(
+                            modifier = Modifier.fillMaxSize().padding(it),
+                            backStack = backStack,
+                            onBack = { backStack.removeLastOrNull() },
+                            entryDecorators = entryDecorators,
+                            entryProvider = entryProvider {
+                                mainGraph(
+                                    backStack = backStack,
+                                    snackbarHostState = snackbarHostState,
+                                )
+                            },
+                        )
+                    }
                 }
             } else {
-                val snackbarHostState = remember { SnackbarHostState() }
                 Scaffold(
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     topBar = {

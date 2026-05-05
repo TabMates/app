@@ -33,7 +33,6 @@ kotlin {
             implementation(projects.features.tabgroup.domain)
             implementation(projects.features.tabgroup.presentation)
 
-            implementation(libs.jetbrains.compose.components.resources)
             implementation(libs.jetbrains.compose.ui)
             implementation(libs.jetbrains.navigation3.ui)
             implementation(libs.material3.adaptive.navigation.suite)
