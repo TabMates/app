@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c8eeb192c42ceceda16bcd1639d09411",
+    "identityHash": "7d9158379c39637a4172457b720a51cd",
     "entities": [
       {
         "tableName": "GroupEntity",
@@ -394,6 +394,90 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "CurrencyEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code` TEXT NOT NULL, `name` TEXT NOT NULL, `nativeSymbol` TEXT NOT NULL, `decimalDigits` INTEGER NOT NULL, `type` TEXT NOT NULL, `countries` TEXT NOT NULL, PRIMARY KEY(`code`))",
+        "fields": [
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nativeSymbol",
+            "columnName": "nativeSymbol",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "decimalDigits",
+            "columnName": "decimalDigits",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "countries",
+            "columnName": "countries",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code"
+          ]
+        }
+      },
+      {
+        "tableName": "ExchangeRateEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`currencyCode` TEXT NOT NULL, `rateToBase` REAL NOT NULL, `baseCurrency` TEXT NOT NULL, `lastUpdatedAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`currencyCode`))",
+        "fields": [
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currencyCode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rateToBase",
+            "columnName": "rateToBase",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseCurrency",
+            "columnName": "baseCurrency",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdatedAtEpochMs",
+            "columnName": "lastUpdatedAtEpochMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "currencyCode"
+          ]
+        }
       }
     ],
     "views": [
@@ -404,7 +488,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c8eeb192c42ceceda16bcd1639d09411')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7d9158379c39637a4172457b720a51cd')"
     ]
   }
 }

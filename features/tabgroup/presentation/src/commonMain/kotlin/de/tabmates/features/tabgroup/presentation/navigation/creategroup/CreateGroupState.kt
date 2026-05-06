@@ -1,7 +1,7 @@
 package de.tabmates.features.tabgroup.presentation.navigation.creategroup
 
 import androidx.compose.foundation.text.input.TextFieldState
-import de.tabmates.features.tabgroup.domain.currency.Currency
+import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 
 data class CreateGroupState(

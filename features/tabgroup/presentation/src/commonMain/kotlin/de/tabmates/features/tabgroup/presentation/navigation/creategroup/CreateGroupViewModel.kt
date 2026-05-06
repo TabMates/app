@@ -13,6 +13,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -47,10 +49,11 @@ class CreateGroupViewModel(
             )
 
     private fun loadSupportedCurrencies() {
-        viewModelScope.launch {
-            val currencies = currencyRepository.getCurrencies()
-            _state.update { it.copy(supportedCurrencies = currencies) }
-        }
+        currencyRepository
+            .getCurrencies()
+            .onEach { currencies ->
+                _state.update { it.copy(supportedCurrencies = currencies) }
+            }.launchIn(viewModelScope)
     }
 
     private val eventChannel = Channel<CreateGroupEvent>()
