@@ -91,10 +91,19 @@ class OfflineFirstGroupRepository(
             }.asEmptyResult()
     }
 
-    override suspend fun createGroup(otherUserIds: Set<String>): Result<Group, DataError.Remote> {
+    override suspend fun createGroup(
+        title: String,
+        description: String?,
+        defaultCurrencyCode: String,
+        otherUserIds: Set<String>,
+    ): Result<Group, DataError.Remote> {
         return groupService
-            .createGroup(otherUserIds)
-            .onSuccess { chat ->
+            .createGroup(
+                title = title,
+                description = description,
+                defaultCurrencyCode = defaultCurrencyCode,
+                otherUserIds = otherUserIds,
+            ).onSuccess { chat ->
                 database.groupDao.upsertGroupWithParticipantsAndCrossRefs(
                     group = chat.toEntity(),
                     participants = chat.participants.map { it.toEntity() },

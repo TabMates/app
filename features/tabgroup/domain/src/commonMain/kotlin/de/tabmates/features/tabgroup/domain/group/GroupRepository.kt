@@ -16,7 +16,12 @@ interface GroupRepository {
 
     suspend fun fetchGroupById(groupId: String): EmptyResult<DataError.Remote>
 
-    suspend fun createGroup(otherUserIds: Set<String>): Result<Group, DataError.Remote>
+    suspend fun createGroup(
+        title: String,
+        description: String?,
+        defaultCurrencyCode: String,
+        otherUserIds: Set<String>,
+    ): Result<Group, DataError.Remote>
 
     suspend fun leaveGroup(groupId: String): EmptyResult<DataError.Remote>
 
