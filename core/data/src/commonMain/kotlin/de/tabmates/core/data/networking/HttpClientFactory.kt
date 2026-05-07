@@ -33,16 +33,12 @@ private const val TAG = "HttpClientFactory"
 class HttpClientFactory(
     private val tabMatesLogger: TabMatesLogger,
     private val sessionStorage: SessionStorage,
+    private val json: Json,
 ) {
     fun create(engine: HttpClientEngine): HttpClient {
         return HttpClient(engine) {
             install(ContentNegotiation) {
-                json(
-                    json =
-                        Json {
-                            ignoreUnknownKeys = true
-                        },
-                )
+                json(json = json)
             }
             install(HttpTimeout) {
                 socketTimeoutMillis = 20_000L

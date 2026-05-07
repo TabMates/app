@@ -1,5 +1,8 @@
 package de.tabmates.features.tabgroup.data.di
 
+import de.tabmates.features.tabgroup.data.lifecycle.AppLifecycleObserver
+import de.tabmates.features.tabgroup.data.network.ConnectionErrorHandler
+import de.tabmates.features.tabgroup.data.network.ConnectivityObserver
 import de.tabmates.features.tabgroup.database.DatabaseFactory
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import de.tabmates.features.tabgroup.sqlitewasmworker.createSQLiteWasmWorker
@@ -20,4 +23,13 @@ actual class PlatformTabgroupDataModule {
             .setDriver(createSQLiteWasmWorker())
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
+
+    @Single
+    fun provideConnectionErrorHandler(): ConnectionErrorHandler = ConnectionErrorHandler()
+
+    @Single
+    fun provideConnectivityObserver(): ConnectivityObserver = ConnectivityObserver()
+
+    @Single
+    fun provideAppLifecycleObserver(): AppLifecycleObserver = AppLifecycleObserver()
 }

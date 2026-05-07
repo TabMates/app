@@ -6,6 +6,7 @@ import tabmatesapp.core.presentation.generated.resources.error_bad_request
 import tabmatesapp.core.presentation.generated.resources.error_conflict
 import tabmatesapp.core.presentation.generated.resources.error_disk_full
 import tabmatesapp.core.presentation.generated.resources.error_forbidden
+import tabmatesapp.core.presentation.generated.resources.error_message_send_failed
 import tabmatesapp.core.presentation.generated.resources.error_no_internet
 import tabmatesapp.core.presentation.generated.resources.error_not_found
 import tabmatesapp.core.presentation.generated.resources.error_payload_too_large
@@ -39,6 +40,7 @@ fun DataError.toUiText(): UiText {
             DataError.Remote.UNKNOWN -> Res.string.error_unknown
             DataError.Connection.NOT_CONNECTED -> Res.string.error_no_internet
             DataError.Connection.CREATE_EXPENSE_FAILED -> Res.string.error_unable_to_create_expense
+            DataError.Connection.MESSAGE_SEND_FAILED -> Res.string.error_message_send_failed
         }
     return UiText.Resource(resource)
 }
