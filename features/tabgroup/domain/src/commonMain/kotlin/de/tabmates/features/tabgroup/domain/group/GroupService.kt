@@ -28,4 +28,8 @@ interface GroupService {
     ): Result<Group, DataError.Remote>
 
     suspend fun leaveGroup(groupId: String): EmptyResult<DataError.Remote>
+
+    suspend fun rotateInviteToken(groupId: String): Result<Group, DataError.Remote>
+
+    suspend fun joinGroup(token: String): Result<Group, DataError.Remote>
 }

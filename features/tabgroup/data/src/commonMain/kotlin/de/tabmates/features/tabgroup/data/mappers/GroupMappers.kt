@@ -14,6 +14,7 @@ fun GroupDto.toDomain(): Group {
         defaultCurrencyCode = defaultCurrencyCode,
         participants = participants.map { it.toDomain() }.toSet(),
         creator = creator.toDomain(),
+        inviteToken = inviteToken,
         lastActivityAt = lastActivityAt,
         lastTabEntry = null,
         createdAt = createdAt,
@@ -27,6 +28,7 @@ fun Group.toEntity(): GroupEntity {
         description = description,
         defaultCurrencyCode = defaultCurrencyCode,
         creator = creator.toEntity(),
+        inviteToken = inviteToken,
         createdAt = createdAt.toEpochMilliseconds(),
         lastModifiedAt = lastActivityAt.toEpochMilliseconds(),
     )
@@ -40,6 +42,7 @@ fun GroupWithParticipants.toDomain(): Group {
         defaultCurrencyCode = group.defaultCurrencyCode,
         participants = participants.map { it.toDomain() }.toSet(),
         creator = group.creator.toDomain(),
+        inviteToken = group.inviteToken,
         lastActivityAt = Instant.fromEpochMilliseconds(group.lastModifiedAt),
         lastTabEntry = lastTabEntry?.toDomain(),
         createdAt = Instant.fromEpochMilliseconds(group.createdAt),

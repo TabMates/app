@@ -30,5 +30,9 @@ interface GroupRepository {
         userIds: Set<String>,
     ): Result<Group, DataError.Remote>
 
+    suspend fun rotateInviteToken(groupId: String): Result<Group, DataError.Remote>
+
+    suspend fun joinGroup(token: String): Result<Group, DataError.Remote>
+
     suspend fun deleteAllGroups()
 }

@@ -15,6 +15,7 @@ data class GroupEntity(
     val defaultCurrencyCode: String,
     @Embedded(prefix = "creator_")
     val creator: GroupParticipantEntity,
+    val inviteToken: String,
     val createdAt: Long,
     val lastModifiedAt: Long,
 )
