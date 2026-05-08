@@ -39,6 +39,7 @@ kotlin {
             implementation(libs.bundles.koin.common)
             implementation(libs.jetbrains.lifecycle.viewmodel.navigation3)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.ksafe)
             implementation(libs.jetbrains.material3.adaptive)
         }
         desktopMain.dependencies {

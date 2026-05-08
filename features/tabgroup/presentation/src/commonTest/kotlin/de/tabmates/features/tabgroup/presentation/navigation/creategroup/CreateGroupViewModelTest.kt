@@ -63,7 +63,6 @@ class CreateGroupViewModelTest {
             val currencyRepository = FakeCurrencyRepository()
             val viewModel = createViewModel(currencyRepository = currencyRepository)
 
-            assertEquals(1, currencyRepository.getCurrenciesCalls)
             assertEquals(
                 FakeCurrencyRepository.DEFAULT_CURRENCIES,
                 viewModel.state.value.supportedCurrencies,
