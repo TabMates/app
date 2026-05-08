@@ -11,6 +11,7 @@ data class GroupDto(
     val defaultCurrencyCode: String,
     val participants: Set<GroupParticipantDto>,
     val creator: GroupParticipantDto,
+    val inviteToken: String,
     val lastActivityAt: Instant,
     val createdAt: Instant,
 )

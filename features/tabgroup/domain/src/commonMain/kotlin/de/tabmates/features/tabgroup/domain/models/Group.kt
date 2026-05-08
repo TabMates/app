@@ -9,6 +9,7 @@ data class Group(
     val defaultCurrencyCode: String,
     val participants: Set<GroupParticipant>,
     val creator: GroupParticipant,
+    val inviteToken: String,
     val lastActivityAt: Instant,
     val lastTabEntry: TabEntry?,
     val createdAt: Instant,

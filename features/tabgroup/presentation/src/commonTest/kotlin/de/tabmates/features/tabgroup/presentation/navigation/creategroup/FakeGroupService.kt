@@ -48,6 +48,12 @@ class FakeGroupService(
 
     override suspend fun leaveGroup(groupId: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
 
+    override suspend fun rotateInviteToken(groupId: String): Result<Group, DataError.Remote> =
+        Result.Failure(DataError.Remote.UNKNOWN)
+
+    override suspend fun joinGroup(token: String): Result<Group, DataError.Remote> =
+        Result.Failure(DataError.Remote.UNKNOWN)
+
     companion object {
         private val FAKE_PARTICIPANT =
             GroupParticipant(
@@ -63,6 +69,7 @@ class FakeGroupService(
                 defaultCurrencyCode = "EUR",
                 participants = setOf(FAKE_PARTICIPANT),
                 creator = FAKE_PARTICIPANT,
+                inviteToken = "",
                 lastActivityAt = Instant.fromEpochMilliseconds(0),
                 lastTabEntry = null,
                 createdAt = Instant.fromEpochMilliseconds(0),

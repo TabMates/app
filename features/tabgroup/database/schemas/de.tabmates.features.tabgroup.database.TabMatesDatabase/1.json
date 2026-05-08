@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "7d9158379c39637a4172457b720a51cd",
+    "identityHash": "4412eefc0c8be7ce33d543934cf2efaf",
     "entities": [
       {
         "tableName": "GroupEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`groupId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `defaultCurrencyCode` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `lastModifiedAt` INTEGER NOT NULL, `creator_userId` TEXT NOT NULL, `creator_username` TEXT NOT NULL, `creator_participantType` TEXT NOT NULL, PRIMARY KEY(`groupId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`groupId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `defaultCurrencyCode` TEXT NOT NULL, `inviteToken` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `lastModifiedAt` INTEGER NOT NULL, `creator_userId` TEXT NOT NULL, `creator_username` TEXT NOT NULL, `creator_participantType` TEXT NOT NULL, PRIMARY KEY(`groupId`))",
         "fields": [
           {
             "fieldPath": "groupId",
@@ -28,6 +28,12 @@
           {
             "fieldPath": "defaultCurrencyCode",
             "columnName": "defaultCurrencyCode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inviteToken",
+            "columnName": "inviteToken",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -488,7 +494,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7d9158379c39637a4172457b720a51cd')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4412eefc0c8be7ce33d543934cf2efaf')"
     ]
   }
 }

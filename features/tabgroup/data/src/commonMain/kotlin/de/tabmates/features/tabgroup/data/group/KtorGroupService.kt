@@ -11,6 +11,7 @@ import de.tabmates.core.domain.util.map
 import de.tabmates.features.tabgroup.data.dto.GroupDto
 import de.tabmates.features.tabgroup.data.dto.request.AddNewParticipantToGroupRequest
 import de.tabmates.features.tabgroup.data.dto.request.CreateGroupRequest
+import de.tabmates.features.tabgroup.data.dto.request.JoinGroupRequest
 import de.tabmates.features.tabgroup.data.dto.request.ParticipantsRequest
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.domain.group.GroupService
@@ -90,5 +91,21 @@ class KtorGroupService(
             .delete<Unit>(
                 route = "/api/group/$groupId/leave",
             ).asEmptyResult()
+    }
+
+    override suspend fun rotateInviteToken(groupId: String): Result<Group, DataError.Remote> {
+        return httpClient
+            .post<Unit, GroupDto>(
+                route = "/api/group/$groupId/invite/rotate",
+                body = Unit,
+            ).map { it.toDomain() }
+    }
+
+    override suspend fun joinGroup(token: String): Result<Group, DataError.Remote> {
+        return httpClient
+            .post<JoinGroupRequest, GroupDto>(
+                route = "/api/group/join",
+                body = JoinGroupRequest(token = token),
+            ).map { it.toDomain() }
     }
 }
