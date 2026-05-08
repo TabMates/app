@@ -47,7 +47,6 @@ jobs:
     name: Build Android app and Desktop
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    needs: code_formatting
 
     permissions:
       actions: read
@@ -74,7 +73,14 @@ jobs:
       - name: Run Build, Lint and Tests
         run: |
           set -o pipefail
-          ./gradlew build --no-daemon --stacktrace 2>&1 | tee build_log.txt
+          ./gradlew \
+            :androidApp:assembleDebug \
+            :androidApp:lintDebug \
+            :androidApp:testDebugUnitTest \
+            :composeApp:desktopJar \
+            :composeApp:wasmJsBrowserDevelopmentExecutableDistribution \
+            allTests \
+            --no-daemon --stacktrace 2>&1 | tee build_log.txt
 
       - name: Check compiler warnings against baseline
         run: bash .github/check-compiler-warnings.sh build_log.txt
