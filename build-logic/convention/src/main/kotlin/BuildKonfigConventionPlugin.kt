@@ -7,6 +7,7 @@ import de.tabmates.convention.pathToPackageName
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.internal.Actions.with
+import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.configure
 import java.util.Properties
 
