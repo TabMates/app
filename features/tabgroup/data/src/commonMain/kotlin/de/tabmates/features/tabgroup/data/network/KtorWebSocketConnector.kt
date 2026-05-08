@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
@@ -209,11 +210,13 @@ class KtorWebSocketConnector(
             } ?: throw IllegalStateException("Failed to establish WebSocket connection")
 
             awaitClose {
-                launch(NonCancellable) {
-                    logger.info(TAG, "Disconnecting from WebSocket session...")
-                    _connectionState.value = ConnectionState.DISCONNECTED
-                    currentSession?.close()
-                    currentSession = null
+                applicationScope.launch {
+                    withContext(NonCancellable) {
+                        logger.info(TAG, "Disconnecting from WebSocket session...")
+                        _connectionState.value = ConnectionState.DISCONNECTED
+                        currentSession?.close()
+                        currentSession = null
+                    }
                 }
             }
         }
