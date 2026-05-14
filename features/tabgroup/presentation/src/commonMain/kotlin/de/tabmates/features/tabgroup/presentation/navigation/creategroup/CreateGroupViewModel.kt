@@ -9,7 +9,9 @@ import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
-import de.tabmates.features.tabgroup.domain.group.GroupService
+import de.tabmates.features.tabgroup.domain.group.GroupRepository
+import de.tabmates.features.tabgroup.domain.group.GroupValidationError
+import de.tabmates.features.tabgroup.domain.group.GroupValidator
 import de.tabmates.features.tabgroup.domain.models.Currency
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +36,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @KoinViewModel
 class CreateGroupViewModel(
-    private val groupService: GroupService,
+    private val groupRepository: GroupRepository,
     private val currencyRepository: CurrencyRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(CreateGroupState())
@@ -220,7 +222,7 @@ class CreateGroupViewModel(
         }
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true) }
-            groupService
+            groupRepository
                 .createGroup(
                     title =
                         current.nameTextState.text
@@ -247,38 +249,39 @@ class CreateGroupViewModel(
             state.nameTextState.text
                 .toString()
                 .trim()
-        return when {
-            title.isEmpty() -> {
+        val description = state.descriptionTextState.text.toString()
+        return GroupValidator
+            .validate(
+                title = title,
+                description = description,
+                defaultCurrencyCode = state.defaultCurrencyCode,
+            )?.toUiText()
+    }
+
+    private fun GroupValidationError.toUiText(): UiText =
+        when (this) {
+            GroupValidationError.TitleRequired -> {
                 UiText.Resource(Res.string.create_group_error_title_required)
             }
 
-            title.length > MAX_TITLE_LENGTH -> {
+            GroupValidationError.TitleTooLong -> {
                 UiText.Resource(Res.string.create_group_error_title_too_long)
             }
 
-            state.descriptionTextState.text
-                .toString()
-                .length > MAX_DESCRIPTION_LENGTH -> {
+            GroupValidationError.DescriptionTooLong -> {
                 UiText.Resource(Res.string.create_group_error_description_too_long)
             }
 
-            state.defaultCurrencyCode.isBlank() -> {
+            GroupValidationError.CurrencyRequired -> {
                 UiText.Resource(Res.string.create_group_error_currency_required)
             }
-
-            else -> {
-                null
-            }
         }
-    }
 
     private fun TextFieldState.clearText() {
         edit { replace(0, length, "") }
     }
 
     private companion object {
-        private const val MAX_TITLE_LENGTH = 255
-        private const val MAX_DESCRIPTION_LENGTH = 1000
         private const val MAX_RECENT_CURRENCIES = 5
     }
 }
