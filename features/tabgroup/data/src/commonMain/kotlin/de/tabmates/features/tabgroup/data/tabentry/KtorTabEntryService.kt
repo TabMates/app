@@ -7,6 +7,7 @@ import de.tabmates.core.domain.util.map
 import de.tabmates.features.tabgroup.data.dto.TabEntryDto
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.domain.models.TabEntry
+import de.tabmates.features.tabgroup.domain.tabentry.TabEntryService
 import io.ktor.client.HttpClient
 import org.koin.core.annotation.Single
 import kotlin.time.Instant
