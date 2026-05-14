@@ -2,28 +2,35 @@ package de.tabmates.features.tabgroup.presentation.navigation.creategroup
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -42,35 +49,29 @@ import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.designsystem.theme.TabMatesTheme
-import de.tabmates.core.presentation.share.rememberLinkSharer
 import de.tabmates.core.presentation.util.ObserveAsEvents
-import de.tabmates.features.tabgroup.domain.models.GroupParticipant
-import de.tabmates.features.tabgroup.domain.models.ParticipantType
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_add_members_section
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_copy_action
+import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_add_placeholder
+import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_change_icon_caption
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_default_currency
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_description_placeholder
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_invite_email_placeholder
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_invite_sent
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_link_copied
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_member_selected_cd
+import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_edit_icon_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_name_label
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_pick_icon
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholder_caption
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_send_invite_cd
+import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholder_dialog_cancel
+import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholder_dialog_confirm
+import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholder_dialog_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholder_name_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholder_remove_cd
+import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholders_caption
+import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholders_section
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_submit_action
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_check
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_content_copy
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_flight
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_link
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_palette
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_send
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_down
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_close
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_edit
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
 
 @Composable
 fun CreateGroupRoot(
@@ -80,31 +81,29 @@ fun CreateGroupRoot(
     viewModel: CreateGroupViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val inviteSentMessage = stringResource(Res.string.create_group_invite_sent)
-    val linkCopiedMessage = stringResource(Res.string.create_group_link_copied)
-    val linkSharer = rememberLinkSharer()
+    val currencyPickerState by viewModel.currencyPickerState.collectAsStateWithLifecycle()
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
             CreateGroupEvent.GroupCreated -> backStack.removeLastOrNull()
-            CreateGroupEvent.InviteSent -> snackbarHostState.showSnackbar(inviteSentMessage)
-            CreateGroupEvent.LinkCopied -> snackbarHostState.showSnackbar(linkCopiedMessage)
-            CreateGroupEvent.LinkShared -> Unit
             is CreateGroupEvent.Error -> snackbarHostState.showSnackbar(event.message.asStringAsync())
         }
     }
 
     CreateGroupScreen(
         state = state,
+        currencyPickerState = currencyPickerState,
         onPickIconClick = viewModel::onPickIconClick,
+        onIconPickerDismiss = viewModel::onIconPickerDismiss,
+        onIconPickerSave = viewModel::onIconPickerSave,
+        onIconDraftSelected = viewModel::onIconDraftSelected,
+        onColorDraftSelected = viewModel::onColorDraftSelected,
+        onIconCategorySelected = viewModel::onIconCategorySelected,
         onCurrencyClick = viewModel::onCurrencyClick,
-        onInviteByEmail = viewModel::onInviteByEmail,
-        onCopyLink = {
-            state.inviteLink?.let { link ->
-                viewModel.onLinkShared(linkSharer.share(link))
-            }
-        },
-        onToggleMember = viewModel::onToggleMember,
+        onAddPlaceholderClick = viewModel::onAddPlaceholderClick,
+        onPlaceholderDialogConfirm = viewModel::onPlaceholderDialogConfirm,
+        onPlaceholderDialogDismiss = viewModel::onPlaceholderDialogDismiss,
+        onRemovePlaceholder = viewModel::onRemovePlaceholder,
         onCreateClick = viewModel::onCreateClick,
         onCurrencySelected = viewModel::onCurrencySelected,
         onCurrencyPickerDismiss = viewModel::onCurrencyPickerDismiss,
@@ -115,11 +114,18 @@ fun CreateGroupRoot(
 @Composable
 private fun CreateGroupScreen(
     state: CreateGroupState,
+    currencyPickerState: CurrencyPickerUiState,
     onPickIconClick: () -> Unit,
+    onIconPickerDismiss: () -> Unit,
+    onIconPickerSave: () -> Unit,
+    onIconDraftSelected: (String) -> Unit,
+    onColorDraftSelected: (String) -> Unit,
+    onIconCategorySelected: (IconCategory) -> Unit,
     onCurrencyClick: () -> Unit,
-    onInviteByEmail: () -> Unit,
-    onCopyLink: () -> Unit,
-    onToggleMember: (String) -> Unit,
+    onAddPlaceholderClick: () -> Unit,
+    onPlaceholderDialogConfirm: () -> Unit,
+    onPlaceholderDialogDismiss: () -> Unit,
+    onRemovePlaceholder: (String) -> Unit,
     onCreateClick: () -> Unit,
     onCurrencySelected: (String) -> Unit,
     onCurrencyPickerDismiss: () -> Unit,
@@ -128,10 +134,26 @@ private fun CreateGroupScreen(
     if (state.isCurrencyPickerVisible) {
         CurrencyPickerBottomSheet(
             queryState = state.currencyQueryState,
-            currencies = state.supportedCurrencies,
-            selectedCode = state.defaultCurrencyCode,
+            state = currencyPickerState,
             onCurrencySelected = onCurrencySelected,
             onDismiss = onCurrencyPickerDismiss,
+        )
+    }
+    if (state.iconPicker.isVisible) {
+        IconPickerBottomSheet(
+            state = state.iconPicker,
+            onIconSelected = onIconDraftSelected,
+            onColorSelected = onColorDraftSelected,
+            onCategorySelected = onIconCategorySelected,
+            onSave = onIconPickerSave,
+            onCancel = onIconPickerDismiss,
+        )
+    }
+    if (state.isPlaceholderDialogVisible) {
+        AddPlaceholderDialog(
+            textState = state.newPlaceholderTextState,
+            onConfirm = onPlaceholderDialogConfirm,
+            onDismiss = onPlaceholderDialogDismiss,
         )
     }
     Column(
@@ -139,70 +161,73 @@ private fun CreateGroupScreen(
             modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .wrapContentWidth()
-                .widthIn(max = 480.dp)
                 .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         VerticalSpacer(8.dp)
-        IconPickerRow(
+        GroupIconAvatar(
             iconKey = state.iconKey,
-            onPickIconClick = onPickIconClick,
+            colorKey = state.colorKey,
+            onClick = onPickIconClick,
+        )
+        VerticalSpacer(8.dp)
+        Text(
+            text = stringResource(Res.string.create_group_change_icon_caption),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
+            textAlign = TextAlign.Center,
         )
         VerticalSpacer(24.dp)
         TabMatesTextField(
             state = state.nameTextState,
             title = stringResource(Res.string.create_group_name_label),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
             singleLine = true,
         )
-        VerticalSpacer(16.dp)
+        VerticalSpacer(12.dp)
         TabMatesTextField(
             state = state.descriptionTextState,
             title = stringResource(Res.string.create_group_description_placeholder),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
             singleLine = true,
         )
-        VerticalSpacer(16.dp)
+        VerticalSpacer(12.dp)
         CurrencyRow(
             code = state.defaultCurrencyCode,
             symbol = state.supportedCurrencies.firstOrNull { it.code == state.defaultCurrencyCode }?.nativeSymbol,
             onClick = onCurrencyClick,
+            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         VerticalSpacer(24.dp)
-        SectionHeader(text = stringResource(Res.string.create_group_add_members_section))
-        VerticalSpacer(8.dp)
-        EmailInviteRow(
-            state = state.emailTextState,
-            onSendClick = onInviteByEmail,
-        )
-        state.inviteLink?.let {
+        Column(
+            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
+        ) {
+            Text(
+                text = stringResource(Res.string.create_group_placeholders_section),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            VerticalSpacer(8.dp)
+            Text(
+                text = stringResource(Res.string.create_group_placeholders_caption),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+            )
             VerticalSpacer(12.dp)
-            InviteLinkCard(
-                link = it,
-                onCopyClick = onCopyLink,
+            PlaceholderChipsRow(
+                placeholders = state.placeholders,
+                onRemove = onRemovePlaceholder,
+                onAddClick = onAddPlaceholderClick,
             )
         }
-        VerticalSpacer(12.dp)
-        Text(
-            text = stringResource(Res.string.create_group_placeholder_caption),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
-            textAlign = TextAlign.Center,
-        )
-        VerticalSpacer(12.dp)
-        MemberRow(
-            members = state.members,
-            onToggleMember = onToggleMember,
-        )
-        VerticalSpacer(24.dp)
+        VerticalSpacer(32.dp)
         TabMatesButton(
             text = stringResource(Res.string.create_group_submit_action),
             onClick = onCreateClick,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
             isLoading = state.isSubmitting,
         )
         VerticalSpacer(16.dp)
@@ -210,61 +235,49 @@ private fun CreateGroupScreen(
 }
 
 @Composable
-private fun IconPickerRow(
-    iconKey: String?,
-    onPickIconClick: () -> Unit,
+private fun GroupIconAvatar(
+    iconKey: String,
+    colorKey: String,
+    onClick: () -> Unit,
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    val color = IconCatalog.colorOption(colorKey)
+    val icon = IconCatalog.iconOption(iconKey) ?: return
+    Box(modifier = Modifier.size(72.dp).clickable(onClick = onClick)) {
         Box(
             modifier =
                 Modifier
                     .size(64.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                        shape = RoundedCornerShape(16.dp),
-                    ),
+                    .align(Alignment.TopStart)
+                    .background(color.color, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            iconKey?.let { key ->
-                Icon(
-                    imageVector = vectorResource(iconKeyToDrawable(key)),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                    modifier = Modifier.size(32.dp),
-                )
-            }
+            Icon(
+                imageVector = vectorResource(icon.drawable),
+                contentDescription = null,
+                tint = color.onColor,
+                modifier = Modifier.size(32.dp),
+            )
         }
-        PickIconButton(onClick = onPickIconClick)
+        EditBadge(modifier = Modifier.align(Alignment.BottomEnd))
     }
 }
 
 @Composable
-private fun PickIconButton(onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(24.dp),
-        color = Color.Transparent,
-        contentColor = MaterialTheme.colorScheme.primary,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+private fun EditBadge(modifier: Modifier = Modifier) {
+    Box(
+        modifier =
+            modifier
+                .size(24.dp)
+                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
+        contentAlignment = Alignment.Center,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_palette),
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-            )
-            Text(
-                text = stringResource(Res.string.create_group_pick_icon),
-                style = MaterialTheme.typography.labelLarge,
-            )
-        }
+        Icon(
+            imageVector = vectorResource(Res.drawable.ic_edit),
+            contentDescription = stringResource(Res.string.create_group_edit_icon_cd),
+            tint = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier.size(12.dp),
+        )
     }
 }
 
@@ -273,216 +286,161 @@ private fun CurrencyRow(
     code: String,
     symbol: String?,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(8.dp),
+        color = Color.Transparent,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        modifier = modifier,
     ) {
-        Text(
-            text = symbol.orEmpty(),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.widthIn(min = 32.dp),
-        )
-        HorizontalSpacer(8.dp)
-        Text(
-            text = stringResource(Res.string.create_group_default_currency),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = code,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Icon(
-            imageVector = vectorResource(Res.drawable.ic_chevron_right),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = symbol.orEmpty(),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.widthIn(min = 20.dp),
+            )
+            HorizontalSpacer(12.dp)
+            Text(
+                text =
+                    if (code.isNotEmpty()) {
+                        "${stringResource(Res.string.create_group_default_currency)} · $code"
+                    } else {
+                        stringResource(Res.string.create_group_default_currency)
+                    },
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_chevron_down),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PlaceholderChipsRow(
+    placeholders: List<CreateGroupPlaceholder>,
+    onRemove: (String) -> Unit,
+    onAddClick: () -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        placeholders.forEach { placeholder ->
+            PlaceholderChip(
+                placeholder = placeholder,
+                onRemove = { onRemove(placeholder.id) },
+            )
+        }
+        AddPlaceholderButton(onClick = onAddClick)
     }
 }
 
 @Composable
-private fun SectionHeader(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.fillMaxWidth(),
+private fun PlaceholderChip(
+    placeholder: CreateGroupPlaceholder,
+    onRemove: () -> Unit,
+) {
+    InputChip(
+        selected = false,
+        onClick = onRemove,
+        label = { Text(placeholder.name) },
+        avatar = {
+            Box(
+                modifier =
+                    Modifier
+                        .size(InputChipDefaults.AvatarSize)
+                        .background(
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            shape = CircleShape,
+                        ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = placeholder.initial,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            }
+        },
+        trailingIcon = {
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_close),
+                contentDescription = stringResource(Res.string.create_group_placeholder_remove_cd),
+                modifier = Modifier.size(InputChipDefaults.IconSize),
+            )
+        },
     )
 }
 
 @Composable
-private fun EmailInviteRow(
-    state: TextFieldState,
-    onSendClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        TabMatesTextField(
-            state = state,
-            title = stringResource(Res.string.create_group_invite_email_placeholder),
-            singleLine = true,
-            modifier = Modifier.weight(1f),
-        )
-        IconButton(onClick = onSendClick) {
+private fun AddPlaceholderButton(onClick: () -> Unit) {
+    AssistChip(
+        onClick = onClick,
+        label = { Text(stringResource(Res.string.create_group_add_placeholder)) },
+        leadingIcon = {
             Icon(
-                imageVector = vectorResource(Res.drawable.ic_send),
-                contentDescription = stringResource(Res.string.create_group_send_invite_cd),
+                imageVector = vectorResource(Res.drawable.ic_person_add),
+                contentDescription = null,
+                modifier = Modifier.size(AssistChipDefaults.IconSize),
             )
-        }
-    }
+        },
+    )
 }
 
 @Composable
-private fun InviteLinkCard(
-    link: String,
-    onCopyClick: () -> Unit,
+private fun AddPlaceholderDialog(
+    textState: TextFieldState,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_link),
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.create_group_placeholder_dialog_title)) },
+        text = {
+            TabMatesTextField(
+                state = textState,
+                title = stringResource(Res.string.create_group_placeholder_name_label),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
             )
-            HorizontalSpacer(12.dp)
-            Text(
-                text = link,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f),
-            )
-            Row(
-                modifier =
-                    Modifier
-                        .clickable(onClick = onCopyClick)
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_content_copy),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp),
-                )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
                 Text(
-                    text = stringResource(Res.string.create_group_copy_action),
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.primary,
+                    text = stringResource(Res.string.create_group_placeholder_dialog_confirm),
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
-        }
-    }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.create_group_placeholder_dialog_cancel))
+            }
+        },
+    )
 }
-
-@Composable
-private fun MemberRow(
-    members: List<CreateGroupMember>,
-    onToggleMember: (String) -> Unit,
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        members.forEach { member ->
-            MemberItem(
-                member = member,
-                onToggle = { onToggleMember(member.id) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun MemberItem(
-    member: CreateGroupMember,
-    onToggle: () -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onToggle)
-                .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                        shape = CircleShape,
-                    ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = member.initials,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
-            )
-        }
-        HorizontalSpacer(12.dp)
-        Text(
-            text = member.name,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        if (member.isSelected) {
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_check),
-                contentDescription = stringResource(Res.string.create_group_member_selected_cd),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        }
-    }
-}
-
-private fun iconKeyToDrawable(key: String): DrawableResource =
-    when (key) {
-        "airplane" -> Res.drawable.ic_flight
-        else -> Res.drawable.ic_flight
-    }
 
 private fun previewState(): CreateGroupState =
     CreateGroupState(
         nameTextState = TextFieldState("Weekend in Lisbon"),
         defaultCurrencyCode = "EUR",
         iconKey = "airplane",
-        inviteLink = "tabmates.app/g/XyzQ12",
-        members =
+        placeholders =
             listOf(
-                CreateGroupMember(
-                    participant =
-                        GroupParticipant(
-                            userId = "alice",
-                            username = "Alice",
-                            participantType = ParticipantType.REGISTERED,
-                        ),
-                    isSelected = true,
-                ),
-                CreateGroupMember(
-                    participant =
-                        GroupParticipant(
-                            userId = "ben",
-                            username = "Ben",
-                            participantType = ParticipantType.REGISTERED,
-                        ),
-                    isSelected = true,
-                ),
+                CreateGroupPlaceholder(id = "p1", name = "Ben"),
+                CreateGroupPlaceholder(id = "p2", name = "Clara"),
             ),
     )
 
@@ -493,11 +451,18 @@ private fun CreateGroupScreenThemesPreview() {
         Surface {
             CreateGroupScreen(
                 state = previewState(),
+                currencyPickerState = CurrencyPickerUiState(),
                 onPickIconClick = {},
+                onIconPickerDismiss = {},
+                onIconPickerSave = {},
+                onIconDraftSelected = {},
+                onColorDraftSelected = {},
+                onIconCategorySelected = {},
                 onCurrencyClick = {},
-                onInviteByEmail = {},
-                onCopyLink = {},
-                onToggleMember = {},
+                onAddPlaceholderClick = {},
+                onPlaceholderDialogConfirm = {},
+                onPlaceholderDialogDismiss = {},
+                onRemovePlaceholder = {},
                 onCreateClick = {},
                 onCurrencySelected = {},
                 onCurrencyPickerDismiss = {},
@@ -513,11 +478,18 @@ private fun CreateGroupScreenSizesPreview() {
         Surface {
             CreateGroupScreen(
                 state = previewState(),
+                currencyPickerState = CurrencyPickerUiState(),
                 onPickIconClick = {},
+                onIconPickerDismiss = {},
+                onIconPickerSave = {},
+                onIconDraftSelected = {},
+                onColorDraftSelected = {},
+                onIconCategorySelected = {},
                 onCurrencyClick = {},
-                onInviteByEmail = {},
-                onCopyLink = {},
-                onToggleMember = {},
+                onAddPlaceholderClick = {},
+                onPlaceholderDialogConfirm = {},
+                onPlaceholderDialogDismiss = {},
+                onRemovePlaceholder = {},
                 onCreateClick = {},
                 onCurrencySelected = {},
                 onCurrencyPickerDismiss = {},

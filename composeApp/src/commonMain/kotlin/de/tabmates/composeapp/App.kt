@@ -37,7 +37,9 @@ import de.tabmates.composeapp.deeplink.resolveDeepLink
 import de.tabmates.composeapp.di.TabMatesKoinApp
 import de.tabmates.composeapp.navigation.ScreenTopBar
 import de.tabmates.core.designsystem.theme.TabMatesTheme
+import de.tabmates.core.presentation.navigation.FabAction
 import de.tabmates.core.presentation.navigation.LoggedIn
+import de.tabmates.core.presentation.navigation.ScreenWithFab
 import de.tabmates.core.presentation.navigation.ScreenWithTopBar
 import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.core.presentation.util.ObserveAsEvents
@@ -47,6 +49,7 @@ import de.tabmates.features.authentication.presentation.navigation.Welcome
 import de.tabmates.features.authentication.presentation.navigation.authGraph
 import de.tabmates.features.authentication.presentation.navigation.authSerializersModule
 import de.tabmates.features.tabgroup.presentation.navigation.Activity
+import de.tabmates.features.tabgroup.presentation.navigation.AddExpense
 import de.tabmates.features.tabgroup.presentation.navigation.CreateGroup
 import de.tabmates.features.tabgroup.presentation.navigation.Group
 import de.tabmates.features.tabgroup.presentation.navigation.Home
@@ -141,17 +144,22 @@ fun App() {
                         }
                     },
                     primaryActionContent = {
-                        FloatingActionButton(
-                            modifier = Modifier.padding(start = 16.dp),
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            onClick = {
-                                backStack.add(CreateGroup)
-                            },
-                        ) {
-                            Icon(
-                                imageVector = vectorResource(Res.drawable.ic_add),
-                                contentDescription = stringResource(Res.string.create_group),
-                            )
+                        (currentKey as? ScreenWithFab)?.let { screen ->
+                            FloatingActionButton(
+                                modifier = Modifier.padding(start = 16.dp),
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                onClick = {
+                                    when (screen.fabAction) {
+                                        FabAction.CreateGroup -> backStack.add(CreateGroup)
+                                        is FabAction.AddExpense -> backStack.add(AddExpense)
+                                    }
+                                },
+                            ) {
+                                Icon(
+                                    imageVector = vectorResource(Res.drawable.ic_add),
+                                    contentDescription = stringResource(Res.string.create_group),
+                                )
+                            }
                         }
                     },
                 ) {

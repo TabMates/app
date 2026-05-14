@@ -4,7 +4,6 @@ import androidx.compose.runtime.snapshots.Snapshot
 import app.cash.turbine.test
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.Result
-import de.tabmates.core.presentation.share.LinkShareResult
 import de.tabmates.core.presentation.util.UiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -52,7 +51,7 @@ class CreateGroupViewModelTest {
                 assertEquals("", state.nameTextState.text.toString())
                 assertEquals("", state.descriptionTextState.text.toString())
                 assertEquals("", state.defaultCurrencyCode)
-                assertTrue(state.members.isEmpty())
+                assertTrue(state.placeholders.isEmpty())
                 cancelAndConsumeRemainingEvents()
             }
         }
@@ -202,27 +201,178 @@ class CreateGroupViewModelTest {
         }
 
     @Test
-    fun onLinkSharedWithCopiedSendsLinkCopiedEvent() =
+    fun onAddPlaceholderClickShowsDialog() =
         runTest(testDispatcher) {
             val viewModel = createViewModel()
 
-            viewModel.events.test {
-                viewModel.onLinkShared(LinkShareResult.Copied)
-                assertEquals(CreateGroupEvent.LinkCopied, awaitItem())
-                cancelAndConsumeRemainingEvents()
-            }
+            viewModel.onAddPlaceholderClick()
+
+            assertTrue(viewModel.state.value.isPlaceholderDialogVisible)
         }
 
     @Test
-    fun onLinkSharedWithSharedSendsLinkSharedEvent() =
+    fun onPlaceholderDialogConfirmAddsPlaceholder() =
         runTest(testDispatcher) {
             val viewModel = createViewModel()
+            viewModel.onAddPlaceholderClick()
+            viewModel.state.value.newPlaceholderTextState
+                .edit { replace(0, length, "Ben") }
+            Snapshot.sendApplyNotifications()
+            advanceUntilIdle()
 
-            viewModel.events.test {
-                viewModel.onLinkShared(LinkShareResult.Shared)
-                assertEquals(CreateGroupEvent.LinkShared, awaitItem())
-                cancelAndConsumeRemainingEvents()
-            }
+            viewModel.onPlaceholderDialogConfirm()
+
+            val placeholders = viewModel.state.value.placeholders
+            assertEquals(1, placeholders.size)
+            assertEquals("Ben", placeholders.single().name)
+            assertFalse(viewModel.state.value.isPlaceholderDialogVisible)
+        }
+
+    @Test
+    fun onPlaceholderDialogConfirmIgnoresBlankName() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            viewModel.onAddPlaceholderClick()
+
+            viewModel.onPlaceholderDialogConfirm()
+
+            assertTrue(
+                viewModel.state.value.placeholders
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun onPickIconClickOpensPickerWithCurrentValuesAsDraft() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            viewModel.onIconDraftSelected("car")
+            viewModel.onColorDraftSelected("mint")
+            viewModel.onIconPickerSave()
+
+            viewModel.onPickIconClick()
+
+            val picker = viewModel.state.value.iconPicker
+            assertTrue(picker.isVisible)
+            assertEquals("car", picker.draftIconKey)
+            assertEquals("mint", picker.draftColorKey)
+            assertEquals(null, picker.selectedCategory)
+        }
+
+    @Test
+    fun onIconPickerSaveCommitsDraftsAndClosesPicker() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            viewModel.onPickIconClick()
+            viewModel.onIconDraftSelected("coffee")
+            viewModel.onColorDraftSelected("teal")
+
+            viewModel.onIconPickerSave()
+
+            val state = viewModel.state.value
+            assertEquals("coffee", state.iconKey)
+            assertEquals("teal", state.colorKey)
+            assertFalse(state.iconPicker.isVisible)
+        }
+
+    @Test
+    fun onIconPickerDismissDiscardsDraftsAndClosesPicker() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            val originalIcon = viewModel.state.value.iconKey
+            val originalColor = viewModel.state.value.colorKey
+            viewModel.onPickIconClick()
+            viewModel.onIconDraftSelected("pizza")
+            viewModel.onColorDraftSelected("pink")
+
+            viewModel.onIconPickerDismiss()
+
+            val state = viewModel.state.value
+            assertEquals(originalIcon, state.iconKey)
+            assertEquals(originalColor, state.colorKey)
+            assertFalse(state.iconPicker.isVisible)
+            assertEquals(IconCatalog.defaultIconKey, state.iconPicker.draftIconKey)
+            assertEquals(IconCatalog.defaultColorKey, state.iconPicker.draftColorKey)
+        }
+
+    @Test
+    fun onIconDraftSelectedUpdatesDraftIcon() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            viewModel.onPickIconClick()
+
+            viewModel.onIconDraftSelected("train")
+
+            assertEquals("train", viewModel.state.value.iconPicker.draftIconKey)
+        }
+
+    @Test
+    fun onColorDraftSelectedUpdatesDraftColor() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            viewModel.onPickIconClick()
+
+            viewModel.onColorDraftSelected("blush")
+
+            assertEquals("blush", viewModel.state.value.iconPicker.draftColorKey)
+        }
+
+    @Test
+    fun onIconCategorySelectedSetsCategory() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            viewModel.onPickIconClick()
+
+            viewModel.onIconCategorySelected(IconCategory.FOOD)
+
+            assertEquals(IconCategory.FOOD, viewModel.state.value.iconPicker.selectedCategory)
+        }
+
+    @Test
+    fun onIconCategorySelectedTogglesOffWhenSameCategory() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            viewModel.onPickIconClick()
+            viewModel.onIconCategorySelected(IconCategory.FOOD)
+
+            viewModel.onIconCategorySelected(IconCategory.FOOD)
+
+            assertEquals(null, viewModel.state.value.iconPicker.selectedCategory)
+        }
+
+    @Test
+    fun onIconCategorySelectedSwitchesWhenDifferentCategory() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            viewModel.onPickIconClick()
+            viewModel.onIconCategorySelected(IconCategory.FOOD)
+
+            viewModel.onIconCategorySelected(IconCategory.HOME)
+
+            assertEquals(IconCategory.HOME, viewModel.state.value.iconPicker.selectedCategory)
+        }
+
+    @Test
+    fun onRemovePlaceholderDropsMatchingEntry() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            viewModel.onAddPlaceholderClick()
+            viewModel.state.value.newPlaceholderTextState
+                .edit { replace(0, length, "Ben") }
+            Snapshot.sendApplyNotifications()
+            advanceUntilIdle()
+            viewModel.onPlaceholderDialogConfirm()
+            val placeholderId =
+                viewModel.state.value.placeholders
+                    .single()
+                    .id
+
+            viewModel.onRemovePlaceholder(placeholderId)
+
+            assertTrue(
+                viewModel.state.value.placeholders
+                    .isEmpty(),
+            )
         }
 
     @Test
