@@ -9,8 +9,10 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import de.tabmates.core.presentation.navigation.FabAction
 import de.tabmates.core.presentation.navigation.LoggableNavKey
 import de.tabmates.core.presentation.navigation.LoggedIn
+import de.tabmates.core.presentation.navigation.ScreenWithFab
 import de.tabmates.core.presentation.navigation.ScreenWithTopBar
 import de.tabmates.core.presentation.navigation.TopBarAction
 import de.tabmates.core.presentation.navigation.TopLevelTab
@@ -27,7 +29,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home_fi
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_label
 
 @Serializable
-data object Home : LoggableNavKey(), TopLevelTab {
+data object Home : LoggableNavKey(), TopLevelTab, ScreenWithFab {
     override val icon: ImageVector
         @Composable
         get() = vectorResource(Res.drawable.ic_home)
@@ -35,10 +37,11 @@ data object Home : LoggableNavKey(), TopLevelTab {
         @Composable
         get() = vectorResource(Res.drawable.ic_home_filled)
     override val label: UiText = UiText.Resource(Res.string.home_label)
+    override val fabAction: FabAction = FabAction.CreateGroup
 }
 
 @Serializable
-data object Activity : LoggableNavKey(), TopLevelTab {
+data object Activity : LoggableNavKey(), TopLevelTab, ScreenWithFab {
     override val icon: ImageVector
         @Composable
         get() = Icons.Outlined.Notifications
@@ -46,10 +49,11 @@ data object Activity : LoggableNavKey(), TopLevelTab {
         @Composable
         get() = Icons.Filled.Notifications
     override val label: UiText = UiText.Resource(Res.string.activity_label)
+    override val fabAction: FabAction = FabAction.CreateGroup
 }
 
 @Serializable
-data object Group : LoggableNavKey(), TopLevelTab {
+data object Group : LoggableNavKey(), TopLevelTab, ScreenWithFab {
     override val icon: ImageVector
         @Composable
         get() = Icons.Outlined.Person
@@ -57,10 +61,11 @@ data object Group : LoggableNavKey(), TopLevelTab {
         @Composable
         get() = Icons.Filled.Person
     override val label: UiText = UiText.Resource(Res.string.group_label)
+    override val fabAction: FabAction = FabAction.CreateGroup
 }
 
 @Serializable
-data object Profile : LoggableNavKey(), TopLevelTab {
+data object Profile : LoggableNavKey(), TopLevelTab, ScreenWithFab {
     override val icon: ImageVector
         @Composable
         get() = Icons.Outlined.AccountCircle
@@ -68,6 +73,7 @@ data object Profile : LoggableNavKey(), TopLevelTab {
         @Composable
         get() = Icons.Filled.AccountCircle
     override val label: UiText = UiText.Resource(Res.string.profile_label)
+    override val fabAction: FabAction = FabAction.CreateGroup
 }
 
 @Serializable
