@@ -18,7 +18,9 @@ open class FakeAuthService(
     var resetPasswordResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var registerAnonymousResult: Result<AuthInfo, DataError.Remote> =
         Result.Failure(DataError.Remote.UNKNOWN),
+    var logoutResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
 ) : AuthService {
+    val logoutCalls: MutableList<String> = mutableListOf()
     var registerCalls: Int = 0
         private set
 
@@ -88,7 +90,10 @@ open class FakeAuthService(
         return forgotPasswordResult
     }
 
-    override suspend fun logout(refreshToken: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
+    override suspend fun logout(refreshToken: String): EmptyResult<DataError.Remote> {
+        logoutCalls += refreshToken
+        return logoutResult
+    }
 
     override suspend fun resetPassword(
         newPassword: String,
