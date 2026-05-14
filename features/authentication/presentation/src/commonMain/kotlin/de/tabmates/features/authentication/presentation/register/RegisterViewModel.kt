@@ -11,6 +11,7 @@ import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.authentication.domain.EmailValidator
+import de.tabmates.features.authentication.domain.UsernameValidator
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -114,7 +115,7 @@ class RegisterViewModel(
                 .toString()
         if (username.isEmpty()) return
         val error =
-            if (username.length !in 3..20) {
+            if (!UsernameValidator.validate(username)) {
                 UiText.Resource(Res.string.error_username_invalid)
             } else {
                 null
@@ -236,7 +237,7 @@ class RegisterViewModel(
         val isEmailValid = EmailValidator.validate(email)
         val isPasswordValid = PasswordValidator.validate(password)
         val isConfirmPasswordValid = confirmPassword == password
-        val isUsernameValid = username.length in 3..20
+        val isUsernameValid = UsernameValidator.validate(username)
 
         _state.update {
             it.copy(
