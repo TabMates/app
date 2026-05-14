@@ -11,6 +11,8 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CreateGroupRoot
+import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.GroupDetailRoot
+import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.GroupOverviewRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -26,6 +28,7 @@ val mainSerializersModule =
             subclass(Settings::class)
             subclass(AddExpense::class)
             subclass(CreateGroup::class)
+            subclass(GroupDetail::class)
         }
     }
 
@@ -42,7 +45,13 @@ fun EntryProviderScope<NavKey>.mainGraph(
     }
 
     entry<Group> {
-        PlaceholderScreen("Group")
+        GroupOverviewRoot(
+            onGroupOpen = { groupId -> backStack.add(GroupDetail(groupId)) },
+        )
+    }
+
+    entry<GroupDetail> { route ->
+        GroupDetailRoot(groupId = route.groupId)
     }
 
     entry<Profile> {

@@ -19,6 +19,7 @@ kotlin {
                 implementation(projects.features.authentication.domain)
                 implementation(projects.features.tabgroup.data)
                 implementation(projects.features.tabgroup.domain)
+                implementation(libs.jetbrains.material3.adaptive)
             }
         }
 
@@ -27,6 +28,7 @@ kotlin {
                 implementation(libs.kotlin.test)
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.turbine)
+                implementation(projects.features.authentication.testing)
             }
         }
 
