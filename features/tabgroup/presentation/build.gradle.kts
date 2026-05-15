@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.tabmates.convention.cmp.feature)
+    alias(libs.plugins.tabmates.convention.buildkonfig)
 }
 
 kotlin {

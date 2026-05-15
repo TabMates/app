@@ -22,6 +22,7 @@ internal fun Group.toUiItem(currency: Currency?): GroupOverviewItem {
         currencySymbol = currency?.nativeSymbol ?: defaultCurrencyCode,
         currencyDecimalDigits = currency?.decimalDigits ?: 2,
         lastActivityAt = lastActivityAt,
+        inviteToken = inviteToken,
     )
 }
 

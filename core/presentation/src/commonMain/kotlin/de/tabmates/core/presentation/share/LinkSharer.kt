@@ -7,7 +7,9 @@ enum class LinkShareResult {
     Shared,
 }
 
-fun interface LinkSharer {
+interface LinkSharer {
+    fun copy(link: String): LinkShareResult
+
     fun share(link: String): LinkShareResult
 }
 

@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -88,6 +89,7 @@ import kotlin.time.Clock
 @Composable
 fun GroupOverviewRoot(
     onGroupOpen: (String) -> Unit,
+    snackbarHostState: SnackbarHostState,
     viewModel: GroupOverviewViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -96,6 +98,7 @@ fun GroupOverviewRoot(
         onFilterSelected = viewModel::onFilterSelected,
         onGroupSelected = viewModel::onGroupSelected,
         onGroupOpen = onGroupOpen,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -105,6 +108,7 @@ private fun GroupOverviewScreen(
     onFilterSelected: (GroupFilter) -> Unit,
     onGroupSelected: (String) -> Unit,
     onGroupOpen: (String) -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     val isExpanded =
@@ -116,6 +120,7 @@ private fun GroupOverviewScreen(
             state = state,
             onFilterSelected = onFilterSelected,
             onGroupSelected = onGroupSelected,
+            snackbarHostState = snackbarHostState,
             modifier = modifier,
         )
     } else {
@@ -165,6 +170,7 @@ private fun ExpandedLayout(
     state: GroupOverviewState,
     onFilterSelected: (GroupFilter) -> Unit,
     onGroupSelected: (String) -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier.fillMaxSize()) {
@@ -206,6 +212,7 @@ private fun ExpandedLayout(
                 key(selectedId) {
                     GroupDetailRoot(
                         groupId = selectedId,
+                        snackbarHostState = snackbarHostState,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -523,6 +530,7 @@ private fun GroupOverviewPreviewThemes() {
                 onFilterSelected = {},
                 onGroupSelected = {},
                 onGroupOpen = {},
+                snackbarHostState = remember { SnackbarHostState() },
             )
         }
     }
@@ -538,6 +546,7 @@ private fun GroupOverviewPreviewSizes() {
                 onFilterSelected = {},
                 onGroupSelected = {},
                 onGroupOpen = {},
+                snackbarHostState = remember { SnackbarHostState() },
             )
         }
     }

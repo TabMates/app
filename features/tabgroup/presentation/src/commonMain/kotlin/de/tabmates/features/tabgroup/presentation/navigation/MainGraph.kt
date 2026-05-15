@@ -47,11 +47,15 @@ fun EntryProviderScope<NavKey>.mainGraph(
     entry<Group> {
         GroupOverviewRoot(
             onGroupOpen = { groupId -> backStack.add(GroupDetail(groupId)) },
+            snackbarHostState = snackbarHostState,
         )
     }
 
     entry<GroupDetail> { route ->
-        GroupDetailRoot(groupId = route.groupId)
+        GroupDetailRoot(
+            groupId = route.groupId,
+            snackbarHostState = snackbarHostState,
+        )
     }
 
     entry<Profile> {

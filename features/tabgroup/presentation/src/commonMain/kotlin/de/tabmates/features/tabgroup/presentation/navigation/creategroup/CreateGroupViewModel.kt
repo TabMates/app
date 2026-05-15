@@ -222,6 +222,10 @@ class CreateGroupViewModel(
         }
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true) }
+            val placeholderNames =
+                current.placeholders
+                    .map { it.name.trim() }
+                    .filter { it.isNotEmpty() }
             groupRepository
                 .createGroup(
                     title =
@@ -234,9 +238,21 @@ class CreateGroupViewModel(
                             .ifBlank { null },
                     defaultCurrencyCode = current.defaultCurrencyCode,
                     otherUserIds = emptySet(),
-                ).onSuccess {
-                    _state.update { it.copy(isSubmitting = false) }
-                    eventChannel.send(CreateGroupEvent.GroupCreated)
+                ).onSuccess { group ->
+                    if (placeholderNames.isEmpty()) {
+                        _state.update { it.copy(isSubmitting = false) }
+                        eventChannel.send(CreateGroupEvent.GroupCreated)
+                    } else {
+                        groupRepository
+                            .addNewParticipantsToGroup(group.id, placeholderNames)
+                            .onSuccess {
+                                _state.update { it.copy(isSubmitting = false) }
+                                eventChannel.send(CreateGroupEvent.GroupCreated)
+                            }.onFailure { error ->
+                                _state.update { it.copy(isSubmitting = false) }
+                                eventChannel.send(CreateGroupEvent.Error(error.toUiText()))
+                            }
+                    }
                 }.onFailure { error ->
                     _state.update { it.copy(isSubmitting = false) }
                     eventChannel.send(CreateGroupEvent.Error(error.toUiText()))

@@ -10,9 +10,16 @@ import kotlin.js.JsAny
 @Composable
 actual fun rememberLinkSharer(): LinkSharer =
     remember {
-        LinkSharer { link ->
-            writeTextToClipboard(link)
-            LinkShareResult.Copied
+        object : LinkSharer {
+            override fun copy(link: String): LinkShareResult {
+                writeTextToClipboard(link)
+                return LinkShareResult.Copied
+            }
+
+            override fun share(link: String): LinkShareResult {
+                writeTextToClipboard(link)
+                return LinkShareResult.Copied
+            }
         }
     }
 
