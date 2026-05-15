@@ -62,6 +62,22 @@ class FakeGroupRepository(
         userIds: Set<String>,
     ): Result<Group, DataError.Remote> = Result.Failure(DataError.Remote.UNKNOWN)
 
+    data class AddNewParticipantsCall(
+        val groupId: String,
+        val usernames: List<String>,
+    )
+
+    val addNewParticipantsCalls: MutableList<AddNewParticipantsCall> = mutableListOf()
+    var addNewParticipantsResult: Result<Group, DataError.Remote> = Result.Success(DEFAULT_GROUP)
+
+    override suspend fun addNewParticipantsToGroup(
+        groupId: String,
+        usernames: List<String>,
+    ): Result<Group, DataError.Remote> {
+        addNewParticipantsCalls += AddNewParticipantsCall(groupId, usernames)
+        return addNewParticipantsResult
+    }
+
     override suspend fun rotateInviteToken(groupId: String): Result<Group, DataError.Remote> =
         Result.Failure(DataError.Remote.UNKNOWN)
 

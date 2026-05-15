@@ -137,6 +137,22 @@ class OfflineFirstGroupRepository(
             }
     }
 
+    override suspend fun addNewParticipantsToGroup(
+        groupId: String,
+        usernames: List<String>,
+    ): Result<Group, DataError.Remote> {
+        return groupService
+            .addNewParticipantsToGroup(groupId, usernames)
+            .onSuccess { group ->
+                database.groupDao.upsertGroupWithParticipantsAndCrossRefs(
+                    group = group.toEntity(),
+                    participants = group.participants.map { it.toEntity() },
+                    participantDao = database.groupParticipantDao,
+                    crossRefDao = database.groupParticipantCrossRefDao,
+                )
+            }
+    }
+
     override suspend fun rotateInviteToken(groupId: String): Result<Group, DataError.Remote> {
         return groupService
             .rotateInviteToken(groupId)
