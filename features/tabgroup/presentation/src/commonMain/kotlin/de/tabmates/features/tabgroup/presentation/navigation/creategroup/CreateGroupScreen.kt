@@ -50,6 +50,7 @@ import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.util.ObserveAsEvents
+import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -240,24 +241,15 @@ private fun GroupIconAvatar(
     colorKey: String,
     onClick: () -> Unit,
 ) {
-    val color = IconCatalog.colorOption(colorKey)
-    val icon = IconCatalog.iconOption(iconKey) ?: return
     Box(modifier = Modifier.size(72.dp).clickable(onClick = onClick)) {
-        Box(
-            modifier =
-                Modifier
-                    .size(64.dp)
-                    .align(Alignment.TopStart)
-                    .background(color.color, RoundedCornerShape(16.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = vectorResource(icon.drawable),
-                contentDescription = null,
-                tint = color.onColor,
-                modifier = Modifier.size(32.dp),
-            )
-        }
+        GroupAvatar(
+            iconKey = iconKey,
+            colorKey = colorKey,
+            size = 64.dp,
+            cornerRadius = 16.dp,
+            iconSize = 32.dp,
+            modifier = Modifier.align(Alignment.TopStart),
+        )
         EditBadge(modifier = Modifier.align(Alignment.BottomEnd))
     }
 }

@@ -1,0 +1,675 @@
+package de.tabmates.features.tabgroup.presentation.navigation.groupoverview
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
+import de.tabmates.core.designsystem.spacer.HorizontalSpacer
+import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.designsystem.theme.extended
+import de.tabmates.features.tabgroup.domain.models.GroupBalance
+import de.tabmates.features.tabgroup.domain.models.GroupParticipant
+import de.tabmates.features.tabgroup.domain.models.TabEntry
+import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
+import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_across_people
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_add_expense
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_empty_expenses
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_owes_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_owner_badge
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_paid_by
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_paid_by_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_balances
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_expenses
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_members
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_total_spent
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_you_owe
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_you_owe_them
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_youre_owed
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_member_count_singular
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_members_count
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_status_settled
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
+import kotlin.math.abs
+
+private enum class DetailTab { EXPENSES, BALANCES, MEMBERS }
+
+@Composable
+internal fun GroupDetailPane(
+    item: GroupOverviewItem,
+    currentUserInitials: String,
+    currentUserId: String,
+    members: List<GroupParticipant>,
+    expenses: List<TabEntry.Expense>,
+    perPersonBalances: Map<String, Double>,
+    modifier: Modifier = Modifier,
+) {
+    var selectedTab by remember(item.id) { mutableStateOf(DetailTab.EXPENSES) }
+    Column(modifier = modifier) {
+        DetailHeader(
+            item = item,
+            currentUserInitials = currentUserInitials,
+        )
+        PrimaryTabRow(
+            selectedTabIndex = selectedTab.ordinal,
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            DetailTab.entries.forEach { tab ->
+                Tab(
+                    selected = selectedTab == tab,
+                    onClick = { selectedTab = tab },
+                    text = { Text(tab.label()) },
+                )
+            }
+        }
+        VerticalSpacer(16.dp)
+        when (selectedTab) {
+            DetailTab.EXPENSES -> {
+                ExpensesTab(
+                    item = item,
+                    currentUserId = currentUserId,
+                    members = members,
+                    expenses = expenses,
+                )
+            }
+
+            DetailTab.BALANCES -> {
+                BalancesTab(
+                    item = item,
+                    members = members,
+                    perPersonBalances = perPersonBalances,
+                )
+            }
+
+            DetailTab.MEMBERS -> {
+                MembersTab(
+                    item = item,
+                    members = members,
+                    currentUserId = currentUserId,
+                    perPersonBalances = perPersonBalances,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailHeader(
+    item: GroupOverviewItem,
+    currentUserInitials: String,
+) {
+    val isExpanded =
+        currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
+            WIDTH_DP_MEDIUM_LOWER_BOUND,
+        )
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            GroupAvatar(
+                iconKey = item.iconKey,
+                colorKey = item.colorKey,
+                size = 48.dp,
+                cornerRadius = 14.dp,
+                iconSize = 26.dp,
+            )
+            HorizontalSpacer(12.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = memberCountText(item.memberCount),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (isExpanded) {
+                HeaderActions(modifier = Modifier)
+                HorizontalSpacer(12.dp)
+                UserAvatar(initials = currentUserInitials)
+            }
+        }
+        if (!isExpanded) {
+            VerticalSpacer(16.dp)
+            HeaderActions(modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+@Composable
+private fun HeaderActions(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        OutlinedButton(
+            onClick = {},
+            modifier = Modifier.weight(1f, fill = false),
+        ) {
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_person_add),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            HorizontalSpacer(8.dp)
+            Text(stringResource(Res.string.groups_detail_invite))
+        }
+        FilledTonalButton(
+            onClick = {},
+            modifier = Modifier.weight(1f, fill = false),
+        ) {
+            Text("+ ${stringResource(Res.string.groups_detail_add_expense)}")
+        }
+    }
+}
+
+@Composable
+private fun ExpensesTab(
+    item: GroupOverviewItem,
+    currentUserId: String,
+    members: List<GroupParticipant>,
+    expenses: List<TabEntry.Expense>,
+) {
+    val payerById = remember(members) { members.associateBy { it.userId } }
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+    ) {
+        StatCardsRow(item = item)
+        VerticalSpacer(16.dp)
+        if (expenses.isEmpty()) {
+            EmptyTabHint(text = stringResource(Res.string.groups_detail_empty_expenses))
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                items(items = expenses, key = { it.tabEntryId }) { expense ->
+                    ExpenseRow(
+                        expense = expense,
+                        currentUserId = currentUserId,
+                        payerName = payerById[expense.paidByUserId]?.username.orEmpty(),
+                        item = item,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpenseRow(
+    expense: TabEntry.Expense,
+    currentUserId: String,
+    payerName: String,
+    item: GroupOverviewItem,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ExpenseIcon()
+        HorizontalSpacer(12.dp)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = expense.title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val subtitle =
+                if (expense.paidByUserId == currentUserId) {
+                    stringResource(Res.string.groups_detail_paid_by_you)
+                } else {
+                    stringResource(Res.string.groups_detail_paid_by, payerName.ifEmpty { "?" })
+                }
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        HorizontalSpacer(8.dp)
+        Text(
+            text = formatAmount(item, expense.amount),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun ExpenseIcon() {
+    Box(
+        modifier =
+            Modifier
+                .size(40.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "·",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun BalancesTab(
+    item: GroupOverviewItem,
+    members: List<GroupParticipant>,
+    perPersonBalances: Map<String, Double>,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        BalanceHero(item = item)
+        if (perPersonBalances.isEmpty()) {
+            EmptyTabHint(text = stringResource(Res.string.groups_status_settled))
+        } else {
+            members
+                .filter { it.userId in perPersonBalances.keys }
+                .forEach { participant ->
+                    val net = perPersonBalances[participant.userId] ?: 0.0
+                    PerPersonRow(
+                        participant = participant,
+                        net = net,
+                        item = item,
+                    )
+                }
+        }
+    }
+}
+
+@Composable
+private fun BalanceHero(item: GroupOverviewItem) {
+    val extended = MaterialTheme.colorScheme.extended
+    val (title, value, container, onContainer) =
+        when (item.balance) {
+            is GroupBalance.Owed -> {
+                HeroPalette(
+                    title = stringResource(Res.string.groups_detail_youre_owed),
+                    value = "+${formatAmount(item, item.balance.amount)}",
+                    container = extended.positive,
+                    onContainer = MaterialTheme.colorScheme.surface,
+                )
+            }
+
+            is GroupBalance.Owe -> {
+                HeroPalette(
+                    title = stringResource(Res.string.groups_detail_you_owe),
+                    value = "−${formatAmount(item, item.balance.amount)}",
+                    container = extended.negative,
+                    onContainer = MaterialTheme.colorScheme.surface,
+                )
+            }
+
+            GroupBalance.Settled -> {
+                HeroPalette(
+                    title = stringResource(Res.string.groups_status_settled),
+                    value = stringResource(Res.string.groups_status_settled),
+                    container = extended.settledContainer,
+                    onContainer = extended.onSettledContainer,
+                )
+            }
+        }
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = container, contentColor = onContainer),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(text = title, style = MaterialTheme.typography.bodyMedium)
+            VerticalSpacer(4.dp)
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            VerticalSpacer(4.dp)
+            Text(
+                text =
+                    stringResource(
+                        Res.string.groups_detail_across_people,
+                        (item.memberCount - 1).coerceAtLeast(0),
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+private data class HeroPalette(
+    val title: String,
+    val value: String,
+    val container: Color,
+    val onContainer: Color,
+)
+
+@Composable
+private fun PerPersonRow(
+    participant: GroupParticipant,
+    net: Double,
+    item: GroupOverviewItem,
+) {
+    val isPositive = net >= 0
+    val (verb, sign, color) =
+        if (isPositive) {
+            Triple(
+                stringResource(Res.string.groups_detail_owes_you),
+                "+",
+                MaterialTheme.colorScheme.extended.positive,
+            )
+        } else {
+            Triple(
+                stringResource(Res.string.groups_detail_you_owe_them),
+                "−",
+                MaterialTheme.colorScheme.extended.negative,
+            )
+        }
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            UserAvatar(initials = participant.initials)
+            HorizontalSpacer(12.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = participant.username,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = verb,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Text(
+                text = "$sign${formatAmount(item, abs(net))}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = color,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MembersTab(
+    item: GroupOverviewItem,
+    members: List<GroupParticipant>,
+    currentUserId: String,
+    perPersonBalances: Map<String, Double>,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = memberCountText(members.size).uppercase(),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        members.forEach { participant ->
+            MemberRow(
+                participant = participant,
+                isCurrentUser = participant.userId == currentUserId,
+                net = perPersonBalances[participant.userId] ?: 0.0,
+                item = item,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MemberRow(
+    participant: GroupParticipant,
+    isCurrentUser: Boolean,
+    net: Double,
+    item: GroupOverviewItem,
+) {
+    val balanceText =
+        when {
+            isCurrentUser -> null
+            net > 0 -> "+${formatAmount(item, net)}"
+            net < 0 -> "−${formatAmount(item, abs(net))}"
+            else -> null
+        }
+    val balanceColor =
+        when {
+            net > 0 -> MaterialTheme.colorScheme.extended.positive
+            net < 0 -> MaterialTheme.colorScheme.extended.negative
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        UserAvatar(initials = participant.initials)
+        HorizontalSpacer(12.dp)
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (isCurrentUser) "You" else participant.username,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (isCurrentUser) {
+                    HorizontalSpacer(8.dp)
+                    AssistChip(
+                        onClick = {},
+                        label = {
+                            Text(stringResource(Res.string.groups_detail_owner_badge))
+                        },
+                    )
+                }
+            }
+            Text(
+                text = participant.username,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (balanceText != null) {
+            Text(
+                text = balanceText,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = balanceColor,
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatCardsRow(
+    item: GroupOverviewItem,
+    modifier: Modifier = Modifier,
+) {
+    val extended = MaterialTheme.colorScheme.extended
+    val balanceTitle =
+        when (item.balance) {
+            is GroupBalance.Owed -> stringResource(Res.string.groups_detail_youre_owed)
+            is GroupBalance.Owe -> stringResource(Res.string.groups_detail_you_owe)
+            GroupBalance.Settled -> stringResource(Res.string.groups_status_settled)
+        }
+    val balanceValue =
+        when (item.balance) {
+            is GroupBalance.Owed -> "+${formatAmount(item, item.balance.amount)}"
+            is GroupBalance.Owe -> "−${formatAmount(item, item.balance.amount)}"
+            GroupBalance.Settled -> stringResource(Res.string.groups_status_settled)
+        }
+    val balanceColor =
+        when (item.balance) {
+            is GroupBalance.Owed -> extended.positiveContainer
+            is GroupBalance.Owe -> extended.negativeContainer
+            GroupBalance.Settled -> extended.settledContainer
+        }
+    val balanceTextColor =
+        when (item.balance) {
+            is GroupBalance.Owed -> extended.onPositiveContainer
+            is GroupBalance.Owe -> extended.onNegativeContainer
+            GroupBalance.Settled -> extended.onSettledContainer
+        }
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        StatCard(
+            title = balanceTitle,
+            value = balanceValue,
+            caption =
+                stringResource(
+                    Res.string.groups_detail_across_people,
+                    (item.memberCount - 1).coerceAtLeast(0),
+                ),
+            container = balanceColor,
+            onContainer = balanceTextColor,
+            modifier = Modifier.weight(1f),
+        )
+        StatCard(
+            title = stringResource(Res.string.groups_detail_total_spent),
+            value = formatAmount(item, item.totalSpent),
+            caption = expenseCaption(item.expenseCount),
+            container = MaterialTheme.colorScheme.surfaceVariant,
+            onContainer = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun StatCard(
+    title: String,
+    value: String,
+    caption: String,
+    container: Color,
+    onContainer: Color,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = container,
+                contentColor = onContainer,
+            ),
+        modifier = modifier,
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            VerticalSpacer(4.dp)
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            VerticalSpacer(4.dp)
+            Text(
+                text = caption,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyTabHint(text: String) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(24.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun DetailTab.label(): String =
+    when (this) {
+        DetailTab.EXPENSES -> stringResource(Res.string.groups_detail_tab_expenses)
+        DetailTab.BALANCES -> stringResource(Res.string.groups_detail_tab_balances)
+        DetailTab.MEMBERS -> stringResource(Res.string.groups_detail_tab_members)
+    }
+
+@Composable
+private fun memberCountText(count: Int): String =
+    if (count == 1) {
+        stringResource(Res.string.groups_member_count_singular)
+    } else {
+        stringResource(Res.string.groups_members_count, count)
+    }
+
+@Composable
+private fun expenseCaption(count: Int): String =
+    if (count == 1) {
+        "1 expense"
+    } else {
+        "$count expenses"
+    }

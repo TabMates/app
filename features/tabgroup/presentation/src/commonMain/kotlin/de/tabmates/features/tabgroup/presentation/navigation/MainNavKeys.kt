@@ -87,3 +87,9 @@ data object CreateGroup : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
     override val topBarTitle: UiText = UiText.Resource(Res.string.create_group_title)
     override val topBarAction: TopBarAction = TopBarAction.Close
 }
+
+@Serializable
+data class GroupDetail(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText = UiText.DynamicString("")
+    override val topBarAction: TopBarAction = TopBarAction.Back
+}

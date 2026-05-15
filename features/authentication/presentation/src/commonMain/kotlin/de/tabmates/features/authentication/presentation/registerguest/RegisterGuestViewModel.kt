@@ -8,6 +8,7 @@ import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.authentication.domain.AuthService
+import de.tabmates.features.authentication.domain.UsernameValidator
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -77,7 +78,7 @@ class RegisterGuestViewModel(
         val currentState = state.value
         val username = currentState.usernameTextState.text.toString()
 
-        val isUsernameValid = username.length in 3..20
+        val isUsernameValid = UsernameValidator.validate(username)
 
         _state.update {
             it.copy(

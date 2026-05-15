@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.data.tabentry
+package de.tabmates.features.tabgroup.domain.tabentry
 
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.Result

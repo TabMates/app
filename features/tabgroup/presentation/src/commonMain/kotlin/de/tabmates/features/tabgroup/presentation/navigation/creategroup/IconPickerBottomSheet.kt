@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.tabmates.core.designsystem.buttons.TabMatesButton
 import de.tabmates.core.designsystem.buttons.TabMatesButtonStyle
+import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
@@ -164,20 +165,13 @@ private fun LivePreview(
             )
         },
         leadingContent = {
-            Box(
-                modifier =
-                    Modifier
-                        .size(56.dp)
-                        .background(color.color, RoundedCornerShape(16.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = vectorResource(icon.drawable),
-                    contentDescription = null,
-                    tint = color.onColor,
-                    modifier = Modifier.size(28.dp),
-                )
-            }
+            GroupAvatar(
+                iconKey = iconKey,
+                colorKey = colorKey,
+                size = 56.dp,
+                cornerRadius = 16.dp,
+                iconSize = 28.dp,
+            )
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )

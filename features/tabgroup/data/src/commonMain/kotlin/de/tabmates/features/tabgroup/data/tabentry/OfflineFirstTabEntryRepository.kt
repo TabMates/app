@@ -8,6 +8,7 @@ import de.tabmates.features.tabgroup.data.mappers.toEntity
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.domain.tabentry.TabEntryService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.koin.core.annotation.Single
