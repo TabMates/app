@@ -8,17 +8,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -27,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,10 +42,17 @@ import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOW
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.theme.extended
+import de.tabmates.core.presentation.share.LinkShareResult
+import de.tabmates.core.presentation.share.rememberLinkSharer
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
+import de.tabmates.features.tabgroup.domain.models.ParticipantType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
+import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.buildInviteUrl
+import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.shortInviteUrl
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
@@ -49,10 +60,18 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_add_expense
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_empty_expenses
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_copied
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_copy
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_link_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_rotate_cd
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_share
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_share_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_owes_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_owner_badge
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_paid_by
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_paid_by_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_badge
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_not_claimed
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_balances
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_expenses
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_members
@@ -63,7 +82,11 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_member_count_singular
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_members_count
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_status_settled
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_content_copy
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_link
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_refresh
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_send
 import kotlin.math.abs
 
 private enum class DetailTab { EXPENSES, BALANCES, MEMBERS }
@@ -76,13 +99,42 @@ internal fun GroupDetailPane(
     members: List<GroupParticipant>,
     expenses: List<TabEntry.Expense>,
     perPersonBalances: Map<String, Double>,
+    onRotateInvite: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     var selectedTab by remember(item.id) { mutableStateOf(DetailTab.EXPENSES) }
+    val linkSharer = rememberLinkSharer()
+    val scope = rememberCoroutineScope()
+    val inviteUrl = remember(item.inviteToken) { buildInviteUrl(item.inviteToken) }
+    val showResultSnackbar: (LinkShareResult) -> Unit = { result ->
+        if (result == LinkShareResult.Copied) {
+            scope.launch {
+                snackbarHostState.showSnackbar(getString(Res.string.groups_detail_invite_copied))
+            }
+        }
+    }
+    val onCopyInvite: () -> Unit =
+        remember(linkSharer, inviteUrl, item.inviteToken) {
+            {
+                if (item.inviteToken.isNotBlank()) {
+                    showResultSnackbar(linkSharer.copy(inviteUrl))
+                }
+            }
+        }
+    val onShareInvite: () -> Unit =
+        remember(linkSharer, inviteUrl, item.inviteToken) {
+            {
+                if (item.inviteToken.isNotBlank()) {
+                    showResultSnackbar(linkSharer.share(inviteUrl))
+                }
+            }
+        }
     Column(modifier = modifier) {
         DetailHeader(
             item = item,
             currentUserInitials = currentUserInitials,
+            onInviteClick = onShareInvite,
         )
         PrimaryTabRow(
             selectedTabIndex = selectedTab.ordinal,
@@ -121,6 +173,10 @@ internal fun GroupDetailPane(
                     members = members,
                     currentUserId = currentUserId,
                     perPersonBalances = perPersonBalances,
+                    onCopyInvite = onCopyInvite,
+                    onShareInvite = onShareInvite,
+                    onSharePendingInvite = onShareInvite,
+                    onRotateInvite = onRotateInvite,
                 )
             }
         }
@@ -131,6 +187,7 @@ internal fun GroupDetailPane(
 private fun DetailHeader(
     item: GroupOverviewItem,
     currentUserInitials: String,
+    onInviteClick: () -> Unit,
 ) {
     val isExpanded =
         currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
@@ -166,27 +223,30 @@ private fun DetailHeader(
                 )
             }
             if (isExpanded) {
-                HeaderActions(modifier = Modifier)
+                HeaderActions(modifier = Modifier, onInviteClick = onInviteClick)
                 HorizontalSpacer(12.dp)
                 UserAvatar(initials = currentUserInitials)
             }
         }
         if (!isExpanded) {
             VerticalSpacer(16.dp)
-            HeaderActions(modifier = Modifier.fillMaxWidth())
+            HeaderActions(modifier = Modifier.fillMaxWidth(), onInviteClick = onInviteClick)
         }
     }
 }
 
 @Composable
-private fun HeaderActions(modifier: Modifier = Modifier) {
+private fun HeaderActions(
+    modifier: Modifier = Modifier,
+    onInviteClick: () -> Unit,
+) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         OutlinedButton(
-            onClick = {},
+            onClick = onInviteClick,
             modifier = Modifier.weight(1f, fill = false),
         ) {
             Icon(
@@ -215,25 +275,25 @@ private fun ExpensesTab(
 ) {
     val payerById = remember(members) { members.associateBy { it.userId } }
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         StatCardsRow(item = item)
-        VerticalSpacer(16.dp)
         if (expenses.isEmpty()) {
             EmptyTabHint(text = stringResource(Res.string.groups_detail_empty_expenses))
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(items = expenses, key = { it.tabEntryId }) { expense ->
-                    ExpenseRow(
-                        expense = expense,
-                        currentUserId = currentUserId,
-                        payerName = payerById[expense.paidByUserId]?.username.orEmpty(),
-                        item = item,
-                    )
-                }
+            expenses.forEach { expense ->
+                ExpenseRow(
+                    expense = expense,
+                    currentUserId = currentUserId,
+                    payerName = payerById[expense.paidByUserId]?.username.orEmpty(),
+                    item = item,
+                )
             }
         }
     }
@@ -305,7 +365,12 @@ private fun BalancesTab(
     perPersonBalances: Map<String, Double>,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BalanceHero(item = item)
@@ -454,23 +519,162 @@ private fun MembersTab(
     members: List<GroupParticipant>,
     currentUserId: String,
     perPersonBalances: Map<String, Double>,
+    onCopyInvite: () -> Unit,
+    onShareInvite: () -> Unit,
+    onSharePendingInvite: () -> Unit,
+    onRotateInvite: () -> Unit,
 ) {
+    val active = members.filter { it.participantType != ParticipantType.PLACEHOLDER }
+    val pending = members.filter { it.participantType == ParticipantType.PLACEHOLDER }
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text = memberCountText(members.size).uppercase(),
+            text = memberCountText(active.size).uppercase(),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        members.forEach { participant ->
+        active.forEach { participant ->
             MemberRow(
                 participant = participant,
                 isCurrentUser = participant.userId == currentUserId,
                 net = perPersonBalances[participant.userId] ?: 0.0,
                 item = item,
             )
+        }
+        pending.forEach { participant ->
+            PendingMemberRow(
+                participant = participant,
+                onShareClick = onSharePendingInvite,
+            )
+        }
+        if (item.inviteToken.isNotBlank()) {
+            InviteLinkCard(
+                inviteToken = item.inviteToken,
+                onCopy = onCopyInvite,
+                onShare = onShareInvite,
+                onRotate = onRotateInvite,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PendingMemberRow(
+    participant: GroupParticipant,
+    onShareClick: () -> Unit,
+) {
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            UserAvatar(initials = participant.initials)
+            HorizontalSpacer(12.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = participant.username,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    HorizontalSpacer(8.dp)
+                    AssistChip(
+                        onClick = onShareClick,
+                        label = {
+                            Text(stringResource(Res.string.groups_detail_pending_badge))
+                        },
+                    )
+                }
+                Text(
+                    text = stringResource(Res.string.groups_detail_pending_not_claimed),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            IconButton(onClick = onShareClick) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_send),
+                    contentDescription = stringResource(Res.string.groups_detail_invite_share_cd),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun InviteLinkCard(
+    inviteToken: String,
+    onCopy: () -> Unit,
+    onShare: () -> Unit,
+    onRotate: () -> Unit,
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_link),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                HorizontalSpacer(8.dp)
+                Text(
+                    text = stringResource(Res.string.groups_detail_invite_link_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = onRotate) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_refresh),
+                        contentDescription = stringResource(Res.string.groups_detail_invite_rotate_cd),
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+            VerticalSpacer(8.dp)
+            Text(
+                text = shortInviteUrl(inviteToken),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            VerticalSpacer(12.dp)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onCopy) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_content_copy),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    HorizontalSpacer(6.dp)
+                    Text(stringResource(Res.string.groups_detail_invite_copy))
+                }
+                FilledTonalButton(onClick = onShare) {
+                    Text(stringResource(Res.string.groups_detail_invite_share))
+                }
+            }
         }
     }
 }

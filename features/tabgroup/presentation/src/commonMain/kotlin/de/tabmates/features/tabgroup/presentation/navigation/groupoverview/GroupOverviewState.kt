@@ -32,4 +32,5 @@ data class GroupOverviewItem(
     val currencySymbol: String,
     val currencyDecimalDigits: Int,
     val lastActivityAt: Instant,
+    val inviteToken: String = "",
 )

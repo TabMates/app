@@ -12,6 +12,7 @@ import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.GroupOverviewItem
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.toUiItem
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.withStats
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
@@ -19,6 +20,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 import kotlin.time.Duration.Companion.seconds
@@ -35,13 +38,14 @@ data class GroupDetailState(
 @KoinViewModel
 class GroupDetailViewModel(
     @InjectedParam private val groupId: String,
-    groupRepository: GroupRepository,
+    private val groupRepository: GroupRepository,
     tabEntryRepository: TabEntryRepository,
     currencyRepository: CurrencyRepository,
     sessionStorage: SessionStorage,
 ) : ViewModel() {
     private val currentUser = sessionStorage.get()?.user
     private val currentUserId = currentUser?.id.orEmpty()
+    private val isRotatingInvite = MutableStateFlow(false)
 
     val state: StateFlow<GroupDetailState> =
         combine(
@@ -80,4 +84,13 @@ class GroupDetailViewModel(
             started = SharingStarted.WhileSubscribed(5.seconds),
             initialValue = GroupDetailState(),
         )
+
+    fun rotateInvite() {
+        if (groupId.isBlank() || isRotatingInvite.value) return
+        viewModelScope.launch {
+            isRotatingInvite.update { true }
+            groupRepository.rotateInviteToken(groupId)
+            isRotatingInvite.update { false }
+        }
+    }
 }

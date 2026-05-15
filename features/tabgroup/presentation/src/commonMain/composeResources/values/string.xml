@@ -128,4 +128,12 @@
     <string name="groups_detail_paid_by">%1$s paid</string>
     <string name="groups_detail_owner_badge">Owner</string>
     <string name="groups_detail_member_count_pending">%1$d members · %2$d pending</string>
+    <string name="groups_detail_pending_badge">Pending</string>
+    <string name="groups_detail_pending_not_claimed">Hasn't claimed invite</string>
+    <string name="groups_detail_invite_share_cd">Share invite</string>
+    <string name="groups_detail_invite_link_title">Invite link</string>
+    <string name="groups_detail_invite_copy">Copy</string>
+    <string name="groups_detail_invite_share">Share</string>
+    <string name="groups_detail_invite_rotate_cd">Rotate invite link</string>
+    <string name="groups_detail_invite_copied">Invite link copied</string>
 </resources>
