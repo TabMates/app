@@ -21,6 +21,7 @@ import kotlinx.serialization.serializer
 data class NavDeepLink<T : NavKey>(
     val basePath: String,
     val serializer: KSerializer<T>,
+    val pathSuffixParam: String? = null,
 )
 
 /**
@@ -28,10 +29,14 @@ data class NavDeepLink<T : NavKey>(
  *
  * Mirrors the upcoming Nav3 `navDeepLink<T>(basePath)` API signature.
  * TODO: Replace import with `androidx.navigation3.navDeepLink` when available.
+ *
+ * @param pathSuffixParam If set, the path segment immediately following [basePath]
+ *   (e.g. `abc123` in `/j/abc123`) is decoded as the value for this query param.
  */
 inline fun <reified T : NavKey> navDeepLink(
     basePath: String,
-): NavDeepLink<T> = NavDeepLink(basePath = basePath, serializer = serializer())
+    pathSuffixParam: String? = null,
+): NavDeepLink<T> = NavDeepLink(basePath = basePath, serializer = serializer(), pathSuffixParam = pathSuffixParam)
 
 private val lenientJson = Json { ignoreUnknownKeys = true; isLenient = true }
 
@@ -49,14 +54,24 @@ private val lenientJson = Json { ignoreUnknownKeys = true; isLenient = true }
  */
 fun resolveDeepLink(uri: String, deepLinks: List<NavDeepLink<*>>): NavKey? {
     val parsed = decomposeUri(uri) ?: return null
+    val decodedPath = percentDecode(parsed.path)
 
     val deepLink = deepLinks.firstOrNull { link ->
         val base = decomposeUri(link.basePath) ?: return@firstOrNull false
         parsed.host.equals(base.host, ignoreCase = true) &&
-            pathMatches(incoming = percentDecode(parsed.path), base = base.path)
+            pathMatches(incoming = decodedPath, base = base.path)
     } ?: return null
 
-    return decodeNavKey(deepLink, parseQueryParams(parsed.rawQuery))
+    val basePath = decomposeUri(deepLink.basePath)?.path.orEmpty()
+    val queryParams = parseQueryParams(parsed.rawQuery).toMutableMap()
+    deepLink.pathSuffixParam?.let { name ->
+        val suffix = decodedPath
+            .removePrefix(basePath)
+            .removePrefix("/")
+            .substringBefore('/')
+        if (suffix.isNotEmpty()) queryParams[name] = suffix
+    }
+    return decodeNavKey(deepLink, queryParams)
 }
 
 // ---------------------------------------------------------------------------
