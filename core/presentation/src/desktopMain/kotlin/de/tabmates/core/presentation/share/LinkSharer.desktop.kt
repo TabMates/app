@@ -8,9 +8,20 @@ import java.awt.datatransfer.StringSelection
 @Composable
 actual fun rememberLinkSharer(): LinkSharer =
     remember {
-        LinkSharer { link ->
-            val selection = StringSelection(link)
-            Toolkit.getDefaultToolkit().systemClipboard.setContents(selection, selection)
-            LinkShareResult.Copied
+        object : LinkSharer {
+            override fun copy(link: String): LinkShareResult {
+                writeToClipboard(link)
+                return LinkShareResult.Copied
+            }
+
+            override fun share(link: String): LinkShareResult {
+                writeToClipboard(link)
+                return LinkShareResult.Copied
+            }
+
+            private fun writeToClipboard(text: String) {
+                val selection = StringSelection(text)
+                Toolkit.getDefaultToolkit().systemClipboard.setContents(selection, selection)
+            }
         }
     }
