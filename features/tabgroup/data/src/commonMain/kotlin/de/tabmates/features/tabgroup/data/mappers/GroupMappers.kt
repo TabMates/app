@@ -1,9 +1,11 @@
 package de.tabmates.features.tabgroup.data.mappers
 
 import de.tabmates.features.tabgroup.data.dto.GroupDto
+import de.tabmates.features.tabgroup.data.dto.GroupInvitePreviewDto
 import de.tabmates.features.tabgroup.database.entities.GroupEntity
 import de.tabmates.features.tabgroup.database.entities.GroupWithParticipants
 import de.tabmates.features.tabgroup.domain.models.Group
+import de.tabmates.features.tabgroup.domain.models.GroupInvitePreview
 import kotlin.time.Instant
 
 fun GroupDto.toDomain(): Group {
@@ -31,6 +33,19 @@ fun Group.toEntity(): GroupEntity {
         inviteToken = inviteToken,
         createdAt = createdAt.toEpochMilliseconds(),
         lastModifiedAt = lastActivityAt.toEpochMilliseconds(),
+    )
+}
+
+fun GroupInvitePreviewDto.toDomain(): GroupInvitePreview {
+    return GroupInvitePreview(
+        groupId = groupId,
+        title = title,
+        inviterUsername = inviterUsername,
+        memberCount = memberCount,
+        totalSpent = totalSpent,
+        defaultCurrencyCode = defaultCurrencyCode,
+        members = members.map { it.toDomain() },
+        placeholders = placeholders.map { it.toDomain() },
     )
 }
 

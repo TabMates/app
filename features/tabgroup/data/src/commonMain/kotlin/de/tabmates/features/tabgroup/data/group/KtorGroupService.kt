@@ -9,6 +9,7 @@ import de.tabmates.core.domain.util.Result
 import de.tabmates.core.domain.util.asEmptyResult
 import de.tabmates.core.domain.util.map
 import de.tabmates.features.tabgroup.data.dto.GroupDto
+import de.tabmates.features.tabgroup.data.dto.GroupInvitePreviewDto
 import de.tabmates.features.tabgroup.data.dto.request.AddNewParticipantToGroupRequest
 import de.tabmates.features.tabgroup.data.dto.request.CreateGroupRequest
 import de.tabmates.features.tabgroup.data.dto.request.JoinGroupRequest
@@ -16,6 +17,7 @@ import de.tabmates.features.tabgroup.data.dto.request.ParticipantsRequest
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.domain.group.GroupService
 import de.tabmates.features.tabgroup.domain.models.Group
+import de.tabmates.features.tabgroup.domain.models.GroupInvitePreview
 import io.ktor.client.HttpClient
 import org.koin.core.annotation.Single
 
@@ -101,11 +103,21 @@ class KtorGroupService(
             ).map { it.toDomain() }
     }
 
-    override suspend fun joinGroup(token: String): Result<Group, DataError.Remote> {
+    override suspend fun previewInvite(token: String): Result<GroupInvitePreview, DataError.Remote> {
+        return httpClient
+            .get<GroupInvitePreviewDto>(
+                route = "/api/group/invite/$token",
+            ).map { it.toDomain() }
+    }
+
+    override suspend fun joinGroup(
+        token: String,
+        claimPlaceholderId: String?,
+    ): Result<Group, DataError.Remote> {
         return httpClient
             .post<JoinGroupRequest, GroupDto>(
                 route = "/api/group/join",
-                body = JoinGroupRequest(token = token),
+                body = JoinGroupRequest(token = token, claimPlaceholderId = claimPlaceholderId),
             ).map { it.toDomain() }
     }
 }

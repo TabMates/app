@@ -5,6 +5,7 @@ import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.Group
+import de.tabmates.features.tabgroup.domain.models.GroupInvitePreview
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.ParticipantType
 import kotlinx.coroutines.flow.Flow
@@ -81,8 +82,30 @@ class FakeGroupRepository(
     override suspend fun rotateInviteToken(groupId: String): Result<Group, DataError.Remote> =
         Result.Failure(DataError.Remote.UNKNOWN)
 
-    override suspend fun joinGroup(token: String): Result<Group, DataError.Remote> =
+    var previewInviteResult: Result<GroupInvitePreview, DataError.Remote> =
         Result.Failure(DataError.Remote.UNKNOWN)
+    val previewInviteCalls: MutableList<String> = mutableListOf()
+
+    override suspend fun previewInvite(token: String): Result<GroupInvitePreview, DataError.Remote> {
+        previewInviteCalls += token
+        return previewInviteResult
+    }
+
+    data class JoinGroupCall(
+        val token: String,
+        val claimPlaceholderId: String?,
+    )
+
+    var joinGroupResult: Result<Group, DataError.Remote> = Result.Success(DEFAULT_GROUP)
+    val joinGroupCalls: MutableList<JoinGroupCall> = mutableListOf()
+
+    override suspend fun joinGroup(
+        token: String,
+        claimPlaceholderId: String?,
+    ): Result<Group, DataError.Remote> {
+        joinGroupCalls += JoinGroupCall(token, claimPlaceholderId)
+        return joinGroupResult
+    }
 
     override suspend fun deleteAllGroups() = Unit
 
