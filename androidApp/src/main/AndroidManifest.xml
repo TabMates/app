@@ -29,6 +29,7 @@
 
                 <data android:pathPrefix="/api/auth/verify" />
                 <data android:pathPrefix="/api/auth/reset-password" />
+                <data android:pathPrefix="/j/" />
             </intent-filter>
 
             <intent-filter>
@@ -41,6 +42,7 @@
 
                 <data android:pathPrefix="/api/auth/verify" />
                 <data android:pathPrefix="/api/auth/reset-password" />
+                <data android:pathPrefix="/j/" />
             </intent-filter>
         </activity>
     </application>

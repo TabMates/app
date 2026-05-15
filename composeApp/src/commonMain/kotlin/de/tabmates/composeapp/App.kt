@@ -53,6 +53,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.AddExpense
 import de.tabmates.features.tabgroup.presentation.navigation.CreateGroup
 import de.tabmates.features.tabgroup.presentation.navigation.Group
 import de.tabmates.features.tabgroup.presentation.navigation.Home
+import de.tabmates.features.tabgroup.presentation.navigation.JoinGroup
 import de.tabmates.features.tabgroup.presentation.navigation.Profile
 import de.tabmates.features.tabgroup.presentation.navigation.mainGraph
 import de.tabmates.features.tabgroup.presentation.navigation.mainSerializersModule
@@ -77,6 +78,7 @@ private val savedStateConfiguration = SavedStateConfiguration {
 private val deepLinks = listOf(
     navDeepLink<EmailVerification>(basePath = "${BuildKonfig.BASE_URL_HTTP}/api/auth/verify"),
     navDeepLink<ResetPassword>(basePath = "${BuildKonfig.BASE_URL_HTTP}/api/auth/reset-password"),
+    navDeepLink<JoinGroup>(basePath = "${BuildKonfig.BASE_URL_HTTP}/j", pathSuffixParam = "token"),
 )
 
 @get:Composable
@@ -111,9 +113,19 @@ fun App() {
             DisposableEffect(Unit) {
                 DeepLinkHandler.listener = listener@{ uri ->
                     val navKey = resolveDeepLink(uri, deepLinks) ?: return@listener
-                    backStack.clear()
-                    backStack.add(Welcome)
-                    backStack.add(navKey)
+                    if (navKey is LoggedIn && !mainViewModel.isLoggedIn.value) {
+                        mainViewModel.setPendingPostAuthNavKey(navKey)
+                        backStack.clear()
+                        backStack.add(Welcome)
+                    } else {
+                        backStack.clear()
+                        if (navKey is LoggedIn) {
+                            backStack.add(Home)
+                        } else {
+                            backStack.add(Welcome)
+                        }
+                        backStack.add(navKey)
+                    }
                 }
                 onDispose { DeepLinkHandler.listener = null }
             }
@@ -218,10 +230,12 @@ fun App() {
                                 onGuestClick = {
                                     backStack.clear()
                                     backStack.add(Home)
+                                    mainViewModel.consumePendingPostAuthNavKey()?.let(backStack::add)
                                 },
                                 onLoginSuccess = {
                                     backStack.clear()
                                     backStack.add(Home)
+                                    mainViewModel.consumePendingPostAuthNavKey()?.let(backStack::add)
                                 },
                                 snackbarHostState = snackbarHostState,
                             )
