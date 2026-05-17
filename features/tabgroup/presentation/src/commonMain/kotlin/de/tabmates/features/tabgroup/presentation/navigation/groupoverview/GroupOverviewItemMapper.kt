@@ -23,6 +23,7 @@ internal fun Group.toUiItem(currency: Currency?): GroupOverviewItem {
         currencyDecimalDigits = currency?.decimalDigits ?: 2,
         lastActivityAt = lastActivityAt,
         inviteToken = inviteToken,
+        creatorUserId = creator.userId,
     )
 }
 

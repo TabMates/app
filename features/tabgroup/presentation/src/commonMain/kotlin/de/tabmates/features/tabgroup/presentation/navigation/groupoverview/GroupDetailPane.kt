@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +52,7 @@ import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.buildInviteUrl
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.shortInviteUrl
+import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -75,10 +77,12 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_balances
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_expenses
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_members
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_settings
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_total_spent
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_you_owe
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_you_owe_them
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_youre_owed
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_open_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_member_count_singular
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_members_count
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_status_settled
@@ -87,9 +91,10 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_link
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_refresh
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_send
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_settings
 import kotlin.math.abs
 
-private enum class DetailTab { EXPENSES, BALANCES, MEMBERS }
+private enum class DetailTab { EXPENSES, BALANCES, MEMBERS, SETTINGS }
 
 @Composable
 internal fun GroupDetailPane(
@@ -100,10 +105,18 @@ internal fun GroupDetailPane(
     expenses: List<TabEntry.Expense>,
     perPersonBalances: Map<String, Double>,
     onRotateInvite: () -> Unit,
+    onSettingsClick: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
-    var selectedTab by remember(item.id) { mutableStateOf(DetailTab.EXPENSES) }
+    val isExpanded =
+        currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
+            WIDTH_DP_MEDIUM_LOWER_BOUND,
+        )
+    val visibleTabs =
+        if (isExpanded) DetailTab.entries.toList() else DetailTab.entries.filterNot { it == DetailTab.SETTINGS }
+    var selectedTab by rememberSaveable(item.id) { mutableStateOf(DetailTab.EXPENSES) }
+    if (selectedTab !in visibleTabs) selectedTab = DetailTab.EXPENSES
     val linkSharer = rememberLinkSharer()
     val scope = rememberCoroutineScope()
     val inviteUrl = remember(item.inviteToken) { buildInviteUrl(item.inviteToken) }
@@ -128,13 +141,15 @@ internal fun GroupDetailPane(
         DetailHeader(
             item = item,
             currentUserInitials = currentUserInitials,
+            isExpanded = isExpanded,
             onInviteClick = onShareInvite,
+            onSettingsClick = onSettingsClick,
         )
         PrimaryTabRow(
-            selectedTabIndex = selectedTab.ordinal,
+            selectedTabIndex = visibleTabs.indexOf(selectedTab).coerceAtLeast(0),
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
-            DetailTab.entries.forEach { tab ->
+            visibleTabs.forEach { tab ->
                 Tab(
                     selected = selectedTab == tab,
                     onClick = { selectedTab = tab },
@@ -173,6 +188,14 @@ internal fun GroupDetailPane(
                     onRotateInvite = onRotateInvite,
                 )
             }
+
+            DetailTab.SETTINGS -> {
+                GroupSettingsRoot(
+                    groupId = item.id,
+                    onLeft = {},
+                    snackbarHostState = snackbarHostState,
+                )
+            }
         }
     }
 }
@@ -181,12 +204,10 @@ internal fun GroupDetailPane(
 private fun DetailHeader(
     item: GroupOverviewItem,
     currentUserInitials: String,
+    isExpanded: Boolean,
     onInviteClick: () -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
-    val isExpanded =
-        currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
-            WIDTH_DP_MEDIUM_LOWER_BOUND,
-        )
     Column(
         modifier =
             Modifier
@@ -220,6 +241,13 @@ private fun DetailHeader(
                 HeaderActions(modifier = Modifier, onInviteClick = onInviteClick)
                 HorizontalSpacer(12.dp)
                 UserAvatar(initials = currentUserInitials)
+            } else {
+                IconButton(onClick = onSettingsClick) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_settings),
+                        contentDescription = stringResource(Res.string.group_settings_open_cd),
+                    )
+                }
             }
         }
         if (!isExpanded) {
@@ -535,6 +563,7 @@ private fun MembersTab(
             MemberRow(
                 participant = participant,
                 isCurrentUser = participant.userId == currentUserId,
+                isCreator = participant.userId == item.creatorUserId,
                 net = perPersonBalances[participant.userId] ?: 0.0,
                 item = item,
             )
@@ -674,6 +703,7 @@ private fun InviteLinkCard(
 private fun MemberRow(
     participant: GroupParticipant,
     isCurrentUser: Boolean,
+    isCreator: Boolean,
     net: Double,
     item: GroupOverviewItem,
 ) {
@@ -703,14 +733,19 @@ private fun MemberRow(
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                 )
-                if (isCurrentUser) {
+                if (isCreator) {
                     HorizontalSpacer(8.dp)
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            Text(stringResource(Res.string.groups_detail_owner_badge))
-                        },
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.groups_detail_owner_badge),
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        )
+                    }
                 }
             }
             Text(
@@ -851,6 +886,7 @@ private fun DetailTab.label(): String =
         DetailTab.EXPENSES -> stringResource(Res.string.groups_detail_tab_expenses)
         DetailTab.BALANCES -> stringResource(Res.string.groups_detail_tab_balances)
         DetailTab.MEMBERS -> stringResource(Res.string.groups_detail_tab_members)
+        DetailTab.SETTINGS -> stringResource(Res.string.groups_detail_tab_settings)
     }
 
 @Composable
