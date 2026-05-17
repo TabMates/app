@@ -36,7 +36,6 @@ import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -75,12 +74,18 @@ fun GroupSettingsRoot(
     val leftMessage = stringResource(Res.string.group_settings_left)
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            GroupSettingsEvent.Saved -> snackbarHostState.showSnackbar(savedMessage)
+            GroupSettingsEvent.Saved -> {
+                snackbarHostState.showSnackbar(savedMessage)
+            }
+
             GroupSettingsEvent.Left -> {
                 snackbarHostState.showSnackbar(leftMessage)
                 onLeft()
             }
-            is GroupSettingsEvent.Error -> snackbarHostState.showSnackbar(event.message.asStringAsync())
+
+            is GroupSettingsEvent.Error -> {
+                snackbarHostState.showSnackbar(event.message.asStringAsync())
+            }
         }
     }
     GroupSettingsScreen(

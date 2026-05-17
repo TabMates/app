@@ -106,11 +106,12 @@ class KtorGroupService(
         return httpClient
             .patch<UpdateGroupRequest, GroupDto>(
                 route = "/api/group/$groupId",
-                body = UpdateGroupRequest(
-                    title = title,
-                    description = description,
-                    defaultCurrencyCode = defaultCurrencyCode,
-                ),
+                body =
+                    UpdateGroupRequest(
+                        title = title,
+                        description = description,
+                        defaultCurrencyCode = defaultCurrencyCode,
+                    ),
             ).map { it.toDomain() }
     }
 

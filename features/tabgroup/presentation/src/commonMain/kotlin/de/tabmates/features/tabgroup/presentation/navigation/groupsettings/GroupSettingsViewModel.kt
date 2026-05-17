@@ -75,7 +75,10 @@ class GroupSettingsViewModel(
     private fun save() {
         val current = _state.value
         if (current.isSaving) return
-        val title = current.nameTextState.text.toString().trim()
+        val title =
+            current.nameTextState.text
+                .toString()
+                .trim()
         val description = current.descriptionTextState.text.toString()
         val error = GroupValidator.validate(title, description, current.defaultCurrencyCode)
         if (error != null) {
@@ -117,13 +120,20 @@ class GroupSettingsViewModel(
 
     private fun GroupValidationError.toUiText(): UiText =
         when (this) {
-            GroupValidationError.TitleRequired ->
+            GroupValidationError.TitleRequired -> {
                 UiText.Resource(Res.string.create_group_error_title_required)
-            GroupValidationError.TitleTooLong ->
+            }
+
+            GroupValidationError.TitleTooLong -> {
                 UiText.Resource(Res.string.create_group_error_title_too_long)
-            GroupValidationError.DescriptionTooLong ->
+            }
+
+            GroupValidationError.DescriptionTooLong -> {
                 UiText.Resource(Res.string.create_group_error_description_too_long)
-            GroupValidationError.CurrencyRequired ->
+            }
+
+            GroupValidationError.CurrencyRequired -> {
                 UiText.Resource(Res.string.create_group_error_currency_required)
+            }
         }
 }

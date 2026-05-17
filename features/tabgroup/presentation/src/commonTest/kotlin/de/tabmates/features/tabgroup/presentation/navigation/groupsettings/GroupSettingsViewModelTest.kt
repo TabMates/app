@@ -1,7 +1,6 @@
 package de.tabmates.features.tabgroup.presentation.navigation.groupsettings
 
 import app.cash.turbine.test
-import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
