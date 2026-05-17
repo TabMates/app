@@ -40,9 +40,10 @@ class JoinGroupViewModelTest {
     fun previewSuccessExposesReadyStateWithPreview() =
         runTest(testDispatcher) {
             val preview = samplePreview()
-            val repo = FakeGroupRepository().apply {
-                previewInviteResult = Result.Success(preview)
-            }
+            val repo =
+                FakeGroupRepository().apply {
+                    previewInviteResult = Result.Success(preview)
+                }
             val viewModel = JoinGroupViewModel(token = "tok", groupRepository = repo)
             advanceUntilIdle()
 
@@ -56,9 +57,10 @@ class JoinGroupViewModelTest {
     @Test
     fun previewNotFoundExposesExpiredState() =
         runTest(testDispatcher) {
-            val repo = FakeGroupRepository().apply {
-                previewInviteResult = Result.Failure(DataError.Remote.NOT_FOUND)
-            }
+            val repo =
+                FakeGroupRepository().apply {
+                    previewInviteResult = Result.Failure(DataError.Remote.NOT_FOUND)
+                }
             val viewModel = JoinGroupViewModel(token = "tok", groupRepository = repo)
             advanceUntilIdle()
 
@@ -68,9 +70,10 @@ class JoinGroupViewModelTest {
     @Test
     fun previewOtherErrorFallsBackToReadyWithoutPreview() =
         runTest(testDispatcher) {
-            val repo = FakeGroupRepository().apply {
-                previewInviteResult = Result.Failure(DataError.Remote.UNKNOWN)
-            }
+            val repo =
+                FakeGroupRepository().apply {
+                    previewInviteResult = Result.Failure(DataError.Remote.UNKNOWN)
+                }
             val viewModel = JoinGroupViewModel(token = "tok", groupRepository = repo)
             advanceUntilIdle()
 
@@ -81,9 +84,10 @@ class JoinGroupViewModelTest {
     @Test
     fun selectClaimUpdatesSelectedOption() =
         runTest(testDispatcher) {
-            val repo = FakeGroupRepository().apply {
-                previewInviteResult = Result.Success(samplePreview())
-            }
+            val repo =
+                FakeGroupRepository().apply {
+                    previewInviteResult = Result.Success(samplePreview())
+                }
             val viewModel = JoinGroupViewModel(token = "tok", groupRepository = repo)
             advanceUntilIdle()
 
@@ -98,10 +102,11 @@ class JoinGroupViewModelTest {
     @Test
     fun submitWithNewMemberPassesNullClaimId() =
         runTest(testDispatcher) {
-            val repo = FakeGroupRepository().apply {
-                previewInviteResult = Result.Success(samplePreview())
-                joinGroupResult = Result.Success(Fixtures.group(id = "g99"))
-            }
+            val repo =
+                FakeGroupRepository().apply {
+                    previewInviteResult = Result.Success(samplePreview())
+                    joinGroupResult = Result.Success(Fixtures.group(id = "g99"))
+                }
             val viewModel = JoinGroupViewModel(token = "tok", groupRepository = repo)
             advanceUntilIdle()
 
@@ -121,10 +126,11 @@ class JoinGroupViewModelTest {
     @Test
     fun submitWithClaimPassesPlaceholderId() =
         runTest(testDispatcher) {
-            val repo = FakeGroupRepository().apply {
-                previewInviteResult = Result.Success(samplePreview())
-                joinGroupResult = Result.Success(Fixtures.group(id = "g99"))
-            }
+            val repo =
+                FakeGroupRepository().apply {
+                    previewInviteResult = Result.Success(samplePreview())
+                    joinGroupResult = Result.Success(Fixtures.group(id = "g99"))
+                }
             val viewModel = JoinGroupViewModel(token = "tok", groupRepository = repo)
             advanceUntilIdle()
 
@@ -144,10 +150,11 @@ class JoinGroupViewModelTest {
     @Test
     fun submitNotFoundRoutesToExpired() =
         runTest(testDispatcher) {
-            val repo = FakeGroupRepository().apply {
-                previewInviteResult = Result.Success(samplePreview())
-                joinGroupResult = Result.Failure(DataError.Remote.NOT_FOUND)
-            }
+            val repo =
+                FakeGroupRepository().apply {
+                    previewInviteResult = Result.Success(samplePreview())
+                    joinGroupResult = Result.Failure(DataError.Remote.NOT_FOUND)
+                }
             val viewModel = JoinGroupViewModel(token = "tok", groupRepository = repo)
             advanceUntilIdle()
 
@@ -160,10 +167,11 @@ class JoinGroupViewModelTest {
     @Test
     fun submitBadRequestRoutesToExpired() =
         runTest(testDispatcher) {
-            val repo = FakeGroupRepository().apply {
-                previewInviteResult = Result.Success(samplePreview())
-                joinGroupResult = Result.Failure(DataError.Remote.BAD_REQUEST)
-            }
+            val repo =
+                FakeGroupRepository().apply {
+                    previewInviteResult = Result.Success(samplePreview())
+                    joinGroupResult = Result.Failure(DataError.Remote.BAD_REQUEST)
+                }
             val viewModel = JoinGroupViewModel(token = "tok", groupRepository = repo)
             advanceUntilIdle()
 
@@ -176,10 +184,11 @@ class JoinGroupViewModelTest {
     @Test
     fun submitOtherErrorEmitsErrorEventAndRestoresReady() =
         runTest(testDispatcher) {
-            val repo = FakeGroupRepository().apply {
-                previewInviteResult = Result.Success(samplePreview())
-                joinGroupResult = Result.Failure(DataError.Remote.UNKNOWN)
-            }
+            val repo =
+                FakeGroupRepository().apply {
+                    previewInviteResult = Result.Success(samplePreview())
+                    joinGroupResult = Result.Failure(DataError.Remote.UNKNOWN)
+                }
             val viewModel = JoinGroupViewModel(token = "tok", groupRepository = repo)
             advanceUntilIdle()
 
@@ -196,10 +205,11 @@ class JoinGroupViewModelTest {
     @Test
     fun secondSubmitWhileJoiningIsIgnored() =
         runTest(testDispatcher) {
-            val repo = FakeGroupRepository().apply {
-                previewInviteResult = Result.Success(samplePreview())
-                joinGroupResult = Result.Success(Fixtures.group(id = "g99"))
-            }
+            val repo =
+                FakeGroupRepository().apply {
+                    previewInviteResult = Result.Success(samplePreview())
+                    joinGroupResult = Result.Success(Fixtures.group(id = "g99"))
+                }
             val viewModel = JoinGroupViewModel(token = "tok", groupRepository = repo)
             advanceUntilIdle()
 
@@ -215,25 +225,16 @@ class JoinGroupViewModelTest {
 
     private fun samplePreview(): GroupInvitePreview =
         GroupInvitePreview(
-            groupId = "g1",
             title = "Weekend in Lisbon",
             inviterUsername = "Ben",
             memberCount = 4,
-            totalSpent = 521.0,
-            defaultCurrencyCode = "EUR",
-            members = listOf(
-                GroupParticipant(
-                    userId = "u1",
-                    username = "Sam",
-                    participantType = ParticipantType.REGISTERED,
+            placeholders =
+                listOf(
+                    GroupParticipant(
+                        userId = "p1",
+                        username = "Dan",
+                        participantType = ParticipantType.PLACEHOLDER,
+                    ),
                 ),
-            ),
-            placeholders = listOf(
-                GroupParticipant(
-                    userId = "p1",
-                    username = "Dan",
-                    participantType = ParticipantType.PLACEHOLDER,
-                ),
-            ),
         )
 }

@@ -1,15 +1,12 @@
 package de.tabmates.features.tabgroup.data.dto
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class GroupInvitePreviewDto(
-    val groupId: String,
-    val title: String,
-    val inviterUsername: String,
+    @SerialName("groupName") val title: String,
+    @SerialName("creatorUsername") val inviterUsername: String,
     val memberCount: Int,
-    val totalSpent: Double,
-    val defaultCurrencyCode: String,
-    val members: List<GroupParticipantDto> = emptyList(),
-    val placeholders: List<GroupParticipantDto> = emptyList(),
+    @SerialName("claimablePlaceholders") val placeholders: List<GroupParticipantDto> = emptyList(),
 )

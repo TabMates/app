@@ -106,7 +106,7 @@ class KtorGroupService(
     override suspend fun previewInvite(token: String): Result<GroupInvitePreview, DataError.Remote> {
         return httpClient
             .get<GroupInvitePreviewDto>(
-                route = "/api/group/invite/$token",
+                route = "/api/group/invite/preview/$token",
             ).map { it.toDomain() }
     }
 

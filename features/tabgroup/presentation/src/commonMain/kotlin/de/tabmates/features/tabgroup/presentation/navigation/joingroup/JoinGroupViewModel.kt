@@ -37,20 +37,22 @@ class JoinGroupViewModel(
             groupRepository
                 .previewInvite(token)
                 .onSuccess { preview ->
-                    _state.value = JoinGroupState.Ready(
-                        preview = preview,
-                        token = token,
-                        selectedOption = JoinOption.NewMember,
-                    )
+                    _state.value =
+                        JoinGroupState.Ready(
+                            preview = preview,
+                            token = token,
+                            selectedOption = JoinOption.NewMember,
+                        )
                 }.onFailure { error ->
                     if (error == DataError.Remote.NOT_FOUND) {
                         _state.value = JoinGroupState.Expired
                     } else {
-                        _state.value = JoinGroupState.Ready(
-                            preview = null,
-                            token = token,
-                            selectedOption = JoinOption.NewMember,
-                        )
+                        _state.value =
+                            JoinGroupState.Ready(
+                                preview = null,
+                                token = token,
+                                selectedOption = JoinOption.NewMember,
+                            )
                     }
                 }
         }
@@ -86,7 +88,10 @@ class JoinGroupViewModel(
                         DataError.Remote.NOT_FOUND, DataError.Remote.BAD_REQUEST -> {
                             _state.value = JoinGroupState.Expired
                         }
-                        else -> eventChannel.send(JoinGroupEvent.Error(error.toUiText()))
+
+                        else -> {
+                            eventChannel.send(JoinGroupEvent.Error(error.toUiText()))
+                        }
                     }
                 }
         }

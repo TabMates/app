@@ -141,7 +141,6 @@
     <string name="join_group_fallback_title">Join group</string>
     <string name="join_group_invited_by">Invited by %1$s</string>
     <string name="join_group_member_count">%1$d members</string>
-    <string name="join_group_amount_tracked">%1$s tracked</string>
     <string name="join_group_join_as_section">JOIN AS…</string>
     <string name="join_group_option_new_member">A new member</string>
     <string name="join_group_option_new_member_caption">Use my account</string>

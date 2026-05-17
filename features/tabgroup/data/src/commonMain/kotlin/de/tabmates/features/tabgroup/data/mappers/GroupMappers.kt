@@ -38,13 +38,9 @@ fun Group.toEntity(): GroupEntity {
 
 fun GroupInvitePreviewDto.toDomain(): GroupInvitePreview {
     return GroupInvitePreview(
-        groupId = groupId,
         title = title,
         inviterUsername = inviterUsername,
         memberCount = memberCount,
-        totalSpent = totalSpent,
-        defaultCurrencyCode = defaultCurrencyCode,
-        members = members.map { it.toDomain() },
         placeholders = placeholders.map { it.toDomain() },
     )
 }

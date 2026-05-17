@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,22 +24,25 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.domain.models.GroupInvitePreview
-import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_flight
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_link_off
-import tabmatesapp.features.tabgroup.presentation.generated.resources.join_group_amount_tracked
 import tabmatesapp.features.tabgroup.presentation.generated.resources.join_group_expired_back_home
 import tabmatesapp.features.tabgroup.presentation.generated.resources.join_group_expired_caption
 import tabmatesapp.features.tabgroup.presentation.generated.resources.join_group_expired_title
@@ -53,7 +57,33 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.join_group
 import tabmatesapp.features.tabgroup.presentation.generated.resources.join_group_submit
 
 @Composable
-internal fun JoinGroupScreen(
+fun JoinGroupRoot(
+    token: String,
+    onClose: () -> Unit,
+    onJoined: (groupId: String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: JoinGroupViewModel =
+        koinViewModel(
+            key = token,
+            parameters = { parametersOf(token) },
+        ),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    ObserveAsEvents(viewModel.events) { event ->
+        if (event is JoinGroupEvent.Joined) {
+            onJoined(event.groupId)
+        }
+    }
+    JoinGroupScreen(
+        state = state,
+        onAction = viewModel::onAction,
+        onCloseClick = onClose,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun JoinGroupScreen(
     state: JoinGroupState,
     onAction: (JoinGroupAction) -> Unit,
     onCloseClick: () -> Unit,
@@ -61,16 +91,22 @@ internal fun JoinGroupScreen(
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (state) {
-            JoinGroupState.Loading -> Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
+            JoinGroupState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
             }
 
-            JoinGroupState.Expired -> ExpiredContent(onBack = onCloseClick)
+            JoinGroupState.Expired -> {
+                ExpiredContent(onBack = onCloseClick)
+            }
 
-            is JoinGroupState.Ready -> ReadyContent(state = state, onAction = onAction)
+            is JoinGroupState.Ready -> {
+                ReadyContent(state = state, onAction = onAction)
+            }
         }
     }
 }
@@ -82,11 +118,12 @@ private fun ReadyContent(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             PreviewCard(preview = state.preview)
@@ -103,10 +140,11 @@ private fun ReadyContent(
                 leading = { AvatarBadge(initials = "?", outlined = false) },
             )
             state.preview?.placeholders?.forEach { placeholder ->
-                val claimOption = JoinOption.ClaimPlaceholder(
-                    placeholderId = placeholder.userId,
-                    placeholderName = placeholder.username,
-                )
+                val claimOption =
+                    JoinOption.ClaimPlaceholder(
+                        placeholderId = placeholder.userId,
+                        placeholderName = placeholder.username,
+                    )
                 val selected =
                     (state.selectedOption as? JoinOption.ClaimPlaceholder)?.placeholderId == placeholder.userId
                 JoinOptionRow(
@@ -121,7 +159,7 @@ private fun ReadyContent(
         Button(
             onClick = { onAction(JoinGroupAction.Submit) },
             enabled = !state.isJoining,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
         ) {
             Text(stringResource(Res.string.join_group_submit))
         }
@@ -132,10 +170,11 @@ private fun ReadyContent(
 private fun PreviewCard(preview: GroupInvitePreview?) {
     Card(
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            ),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
@@ -161,10 +200,6 @@ private fun PreviewCard(preview: GroupInvitePreview?) {
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                 )
-                if (preview.members.isNotEmpty()) {
-                    VerticalSpacer(12.dp)
-                    MemberAvatarRow(members = preview.members.take(MAX_PREVIEW_AVATARS))
-                }
             }
         }
     }
@@ -174,31 +209,7 @@ private fun PreviewCard(preview: GroupInvitePreview?) {
 private fun buildSubtitle(preview: GroupInvitePreview): String {
     val invitedBy = stringResource(Res.string.join_group_invited_by, preview.inviterUsername)
     val memberCount = stringResource(Res.string.join_group_member_count, preview.memberCount)
-    val tracked = stringResource(
-        Res.string.join_group_amount_tracked,
-        formatMoney(preview.totalSpent, preview.defaultCurrencyCode),
-    )
-    return "$invitedBy · $memberCount · $tracked"
-}
-
-private fun formatMoney(amount: Double, currencyCode: String): String {
-    val cents = kotlin.math.round(amount * 100).toLong()
-    val whole = cents / 100
-    val frac = (cents % 100).toString().padStart(2, '0')
-    return "$currencyCode $whole.$frac"
-}
-
-@Composable
-private fun MemberAvatarRow(members: List<GroupParticipant>) {
-    Row(horizontalArrangement = Arrangement.spacedBy(-8.dp)) {
-        members.forEach { participant ->
-            AvatarBadge(
-                initials = participant.initials,
-                outlined = false,
-                size = 32.dp,
-            )
-        }
-    }
+    return "$invitedBy · $memberCount"
 }
 
 @Composable
@@ -210,7 +221,12 @@ private fun AvatarBadge(
     Surface(
         shape = CircleShape,
         color = if (outlined) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.tertiaryContainer,
-        contentColor = if (outlined) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onTertiaryContainer,
+        contentColor =
+            if (outlined) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                MaterialTheme.colorScheme.onTertiaryContainer
+            },
         modifier = Modifier.size(size),
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -232,10 +248,16 @@ private fun JoinOptionRow(
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (selected) {
+                        MaterialTheme.colorScheme.surface
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ),
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -264,51 +286,45 @@ private fun JoinOptionRow(
 
 @Composable
 private fun ExpiredContent(onBack: () -> Unit) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+    Column(
+        modifier = Modifier.fillMaxSize().padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(Modifier.weight(1f))
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.errorContainer,
+            modifier = Modifier.size(96.dp),
         ) {
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.errorContainer,
-                modifier = Modifier.size(96.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.ic_link_off),
-                        contentDescription = null,
-                        modifier = Modifier.size(40.dp),
-                        tint = MaterialTheme.colorScheme.error,
-                    )
-                }
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_link_off),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.error,
+                )
             }
-            VerticalSpacer(24.dp)
-            Text(
-                text = stringResource(Res.string.join_group_expired_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-            )
-            VerticalSpacer(8.dp)
-            Text(
-                text = stringResource(Res.string.join_group_expired_caption),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
         }
+        VerticalSpacer(24.dp)
+        Text(
+            text = stringResource(Res.string.join_group_expired_title),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+        )
+        VerticalSpacer(8.dp)
+        Text(
+            text = stringResource(Res.string.join_group_expired_caption),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.weight(1f))
         OutlinedButton(
             onClick = onBack,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(Res.string.join_group_expired_back_home))
         }
     }
 }
-
-private const val MAX_PREVIEW_AVATARS = 5
