@@ -114,22 +114,16 @@ internal fun GroupDetailPane(
             }
         }
     }
-    val onCopyInvite: () -> Unit =
-        remember(linkSharer, inviteUrl, item.inviteToken) {
-            {
-                if (item.inviteToken.isNotBlank()) {
-                    showResultSnackbar(linkSharer.copy(inviteUrl))
-                }
-            }
+    val onCopyInvite: () -> Unit = {
+        if (item.inviteToken.isNotBlank()) {
+            showResultSnackbar(linkSharer.copy(inviteUrl))
         }
-    val onShareInvite: () -> Unit =
-        remember(linkSharer, inviteUrl, item.inviteToken) {
-            {
-                if (item.inviteToken.isNotBlank()) {
-                    showResultSnackbar(linkSharer.share(inviteUrl))
-                }
-            }
+    }
+    val onShareInvite: () -> Unit = {
+        if (item.inviteToken.isNotBlank()) {
+            showResultSnackbar(linkSharer.share(inviteUrl))
         }
+    }
     Column(modifier = modifier) {
         DetailHeader(
             item = item,
@@ -279,8 +273,7 @@ private fun ExpensesTab(
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp),
+                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         StatCardsRow(item = item)
@@ -369,8 +362,7 @@ private fun BalancesTab(
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp),
+                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BalanceHero(item = item)
@@ -531,8 +523,7 @@ private fun MembersTab(
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp),
+                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
