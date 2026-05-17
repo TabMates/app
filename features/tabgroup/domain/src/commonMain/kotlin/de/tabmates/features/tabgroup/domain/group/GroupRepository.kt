@@ -36,6 +36,13 @@ interface GroupRepository {
         usernames: List<String>,
     ): Result<Group, DataError.Remote>
 
+    suspend fun updateGroup(
+        groupId: String,
+        title: String,
+        description: String?,
+        defaultCurrencyCode: String,
+    ): Result<Group, DataError.Remote>
+
     suspend fun rotateInviteToken(groupId: String): Result<Group, DataError.Remote>
 
     suspend fun previewInvite(token: String): Result<GroupInvitePreview, DataError.Remote>

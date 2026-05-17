@@ -79,6 +79,26 @@ class FakeGroupRepository(
         return addNewParticipantsResult
     }
 
+    data class UpdateGroupCall(
+        val groupId: String,
+        val title: String,
+        val description: String?,
+        val defaultCurrencyCode: String,
+    )
+
+    val updateGroupCalls: MutableList<UpdateGroupCall> = mutableListOf()
+    var updateGroupResult: Result<Group, DataError.Remote> = Result.Success(DEFAULT_GROUP)
+
+    override suspend fun updateGroup(
+        groupId: String,
+        title: String,
+        description: String?,
+        defaultCurrencyCode: String,
+    ): Result<Group, DataError.Remote> {
+        updateGroupCalls += UpdateGroupCall(groupId, title, description, defaultCurrencyCode)
+        return updateGroupResult
+    }
+
     override suspend fun rotateInviteToken(groupId: String): Result<Group, DataError.Remote> =
         Result.Failure(DataError.Remote.UNKNOWN)
 
