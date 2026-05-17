@@ -13,6 +13,7 @@ import de.tabmates.features.tabgroup.database.entities.GroupWithParticipants
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.group.GroupService
 import de.tabmates.features.tabgroup.domain.models.Group
+import de.tabmates.features.tabgroup.domain.models.GroupInvitePreview
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -166,9 +167,15 @@ class OfflineFirstGroupRepository(
             }
     }
 
-    override suspend fun joinGroup(token: String): Result<Group, DataError.Remote> {
+    override suspend fun previewInvite(token: String): Result<GroupInvitePreview, DataError.Remote> =
+        groupService.previewInvite(token)
+
+    override suspend fun joinGroup(
+        token: String,
+        claimPlaceholderId: String?,
+    ): Result<Group, DataError.Remote> {
         return groupService
-            .joinGroup(token)
+            .joinGroup(token, claimPlaceholderId)
             .onSuccess { group ->
                 database.groupDao.upsertGroupWithParticipantsAndCrossRefs(
                     group = group.toEntity(),

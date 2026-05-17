@@ -5,4 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class JoinGroupRequest(
     val token: String,
+    val claimPlaceholderId: String? = null,
 )

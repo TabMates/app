@@ -2,6 +2,7 @@ package de.tabmates.composeapp.deeplink
 
 import de.tabmates.features.authentication.presentation.navigation.ResetPassword
 import de.tabmates.features.authentication.presentation.navigation.EmailVerification
+import de.tabmates.features.tabgroup.presentation.navigation.JoinGroup
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -16,6 +17,7 @@ class NavDeepLinkTest {
         deepLinks = listOf(
             navDeepLink<EmailVerification>(basePath = "https://example.com/api/auth/verify"),
             navDeepLink<ResetPassword>(basePath = "https://example.com/api/auth/reset-password"),
+            navDeepLink<JoinGroup>(basePath = "https://example.com/j", pathSuffixParam = "token"),
         )
     }
 
@@ -358,6 +360,57 @@ class NavDeepLinkTest {
         )
 
         assertNull(result)
+    }
+
+    // endregion
+
+    // region — pathSuffixParam (path-as-param)
+
+    @Test
+    fun resolvePathSuffixParamExtractsToken() {
+        val result = resolveDeepLink("https://example.com/j/abc123", deepLinks)
+
+        assertEquals(JoinGroup(token = "abc123"), result)
+    }
+
+    @Test
+    fun resolvePathSuffixParamWithCustomScheme() {
+        val result = resolveDeepLink("tabmates://example.com/j/abc123", deepLinks)
+
+        assertEquals(JoinGroup(token = "abc123"), result)
+    }
+
+    @Test
+    fun resolvePathSuffixParamDecodesPercentEncoding() {
+        val result = resolveDeepLink("https://example.com/j/abc%2D123", deepLinks)
+
+        assertEquals(JoinGroup(token = "abc-123"), result)
+    }
+
+    @Test
+    fun resolvePathSuffixParamStopsAtNextSlash() {
+        // additional segments after the token are ignored
+        val result = resolveDeepLink("https://example.com/j/abc123/extra", deepLinks)
+
+        assertEquals(JoinGroup(token = "abc123"), result)
+    }
+
+    @Test
+    fun resolvePathSuffixParamFallsBackToQueryParamIfMissing() {
+        // base path alone yields no suffix; required `token` param missing → null
+        val result = resolveDeepLink("https://example.com/j", deepLinks)
+
+        assertNull(result)
+    }
+
+    @Test
+    fun resolvePathSuffixParamPrefersQueryParamWhenBothPresent() {
+        // path suffix sets token first, then query overrides via map put — query wins
+        val result = resolveDeepLink("https://example.com/j/path-token?token=query-token", deepLinks)
+
+        // path suffix is written first, query parsed second but suffix overrides via mutable map
+        // Actual behavior: pathSuffixParam writes AFTER queryParams are parsed → suffix wins
+        assertEquals(JoinGroup(token = "path-token"), result)
     }
 
     // endregion

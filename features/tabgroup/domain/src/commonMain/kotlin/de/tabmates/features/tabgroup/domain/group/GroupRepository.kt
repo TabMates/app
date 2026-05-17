@@ -4,6 +4,7 @@ import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.domain.models.Group
+import de.tabmates.features.tabgroup.domain.models.GroupInvitePreview
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import kotlinx.coroutines.flow.Flow
 
@@ -37,7 +38,12 @@ interface GroupRepository {
 
     suspend fun rotateInviteToken(groupId: String): Result<Group, DataError.Remote>
 
-    suspend fun joinGroup(token: String): Result<Group, DataError.Remote>
+    suspend fun previewInvite(token: String): Result<GroupInvitePreview, DataError.Remote>
+
+    suspend fun joinGroup(
+        token: String,
+        claimPlaceholderId: String?,
+    ): Result<Group, DataError.Remote>
 
     suspend fun deleteAllGroups()
 }

@@ -136,4 +136,18 @@
     <string name="groups_detail_invite_share">Share</string>
     <string name="groups_detail_invite_rotate_cd">Rotate invite link</string>
     <string name="groups_detail_invite_copied">Invite link copied</string>
+
+    <string name="join_group_title">Join group</string>
+    <string name="join_group_fallback_title">Join group</string>
+    <string name="join_group_invited_by">Invited by %1$s</string>
+    <string name="join_group_member_count">%1$d members</string>
+    <string name="join_group_join_as_section">JOIN AS…</string>
+    <string name="join_group_option_new_member">A new member</string>
+    <string name="join_group_option_new_member_caption">Use my account</string>
+    <string name="join_group_option_claim">Claim \"%1$s\"</string>
+    <string name="join_group_option_claim_caption">Pre-existing placeholder · keeps their share</string>
+    <string name="join_group_submit">Join group</string>
+    <string name="join_group_expired_title">Invite link expired.</string>
+    <string name="join_group_expired_caption">Ask the person who invited you for a fresh one.</string>
+    <string name="join_group_expired_back_home">Back to home</string>
 </resources>
