@@ -10,6 +10,7 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -79,6 +80,24 @@ suspend inline fun <reified Request, reified Response : Any> HttpClient.put(
 ): Result<Response, DataError.Remote> {
     return safeCall {
         put {
+            url(constructRoute(route))
+            queryParams.forEach { (key, value) ->
+                parameter(key, value)
+            }
+            setBody(body)
+            builder()
+        }
+    }
+}
+
+suspend inline fun <reified Request, reified Response : Any> HttpClient.patch(
+    route: String,
+    body: Request,
+    queryParams: Map<String, Any> = mapOf(),
+    crossinline builder: HttpRequestBuilder.() -> Unit = {},
+): Result<Response, DataError.Remote> {
+    return safeCall {
+        patch {
             url(constructRoute(route))
             queryParams.forEach { (key, value) ->
                 parameter(key, value)

@@ -6,6 +6,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.navigation3.runtime.NavKey
 import de.tabmates.core.presentation.navigation.ScreenWithTopBar
 import de.tabmates.core.presentation.navigation.TopBarAction
 import org.jetbrains.compose.resources.DrawableResource
@@ -23,6 +24,7 @@ import tabmatesapp.composeapp.generated.resources.ic_close
 fun ScreenTopBar(
     config: ScreenWithTopBar,
     onNavigationClick: () -> Unit,
+    onTrailingActionClick: (NavKey) -> Unit,
 ) {
     TopAppBar(
         title = { Text(config.topBarTitle.asString()) },
@@ -32,6 +34,16 @@ fun ScreenTopBar(
                     imageVector = vectorResource(config.topBarAction.iconRes),
                     contentDescription = stringResource(config.topBarAction.contentDescriptionRes),
                 )
+            }
+        },
+        actions = {
+            config.trailingActions.forEach { action ->
+                IconButton(onClick = { onTrailingActionClick(action.target) }) {
+                    Icon(
+                        imageVector = vectorResource(action.icon),
+                        contentDescription = action.contentDescription.asString(),
+                    )
+                }
             }
         },
     )

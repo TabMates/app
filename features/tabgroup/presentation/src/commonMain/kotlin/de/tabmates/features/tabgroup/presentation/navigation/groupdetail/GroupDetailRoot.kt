@@ -23,6 +23,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 fun GroupDetailRoot(
     groupId: String,
     snackbarHostState: SnackbarHostState,
+    onSettingsClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: GroupDetailViewModel =
         koinViewModel(
@@ -52,6 +53,7 @@ fun GroupDetailRoot(
             expenses = state.expenses,
             perPersonBalances = state.perPersonBalances,
             onRotateInvite = viewModel::rotateInvite,
+            onSettingsClick = onSettingsClick,
             snackbarHostState = snackbarHostState,
             modifier = modifier.fillMaxSize(),
         )

@@ -23,6 +23,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.home_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home_filled
@@ -85,18 +86,24 @@ data object AddExpense : LoggableNavKey(), LoggedIn
 
 @Serializable
 data object CreateGroup : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
-    override val topBarTitle: UiText = UiText.Resource(Res.string.create_group_title)
-    override val topBarAction: TopBarAction = TopBarAction.Close
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.create_group_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
 
 @Serializable
 data class GroupDetail(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
-    override val topBarTitle: UiText = UiText.DynamicString("")
-    override val topBarAction: TopBarAction = TopBarAction.Back
+    override val topBarTitle: UiText get() = UiText.DynamicString("")
+    override val topBarAction: TopBarAction get() = TopBarAction.Back
+}
+
+@Serializable
+data class GroupSettings(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.group_settings_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Back
 }
 
 @Serializable
 data class JoinGroup(val token: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
-    override val topBarTitle: UiText = UiText.Resource(Res.string.join_group_title)
-    override val topBarAction: TopBarAction = TopBarAction.Close
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.join_group_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Close
 }

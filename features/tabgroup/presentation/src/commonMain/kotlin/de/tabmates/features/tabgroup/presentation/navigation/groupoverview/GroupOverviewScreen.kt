@@ -89,6 +89,7 @@ import kotlin.time.Clock
 @Composable
 fun GroupOverviewRoot(
     onGroupOpen: (String) -> Unit,
+    onSettingsOpen: (String) -> Unit,
     snackbarHostState: SnackbarHostState,
     viewModel: GroupOverviewViewModel = koinViewModel(),
 ) {
@@ -98,6 +99,7 @@ fun GroupOverviewRoot(
         onFilterSelected = viewModel::onFilterSelected,
         onGroupSelected = viewModel::onGroupSelected,
         onGroupOpen = onGroupOpen,
+        onSettingsOpen = onSettingsOpen,
         snackbarHostState = snackbarHostState,
     )
 }
@@ -108,6 +110,7 @@ private fun GroupOverviewScreen(
     onFilterSelected: (GroupFilter) -> Unit,
     onGroupSelected: (String) -> Unit,
     onGroupOpen: (String) -> Unit,
+    onSettingsOpen: (String) -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -120,6 +123,7 @@ private fun GroupOverviewScreen(
             state = state,
             onFilterSelected = onFilterSelected,
             onGroupSelected = onGroupSelected,
+            onSettingsOpen = onSettingsOpen,
             snackbarHostState = snackbarHostState,
             modifier = modifier,
         )
@@ -170,6 +174,7 @@ private fun ExpandedLayout(
     state: GroupOverviewState,
     onFilterSelected: (GroupFilter) -> Unit,
     onGroupSelected: (String) -> Unit,
+    onSettingsOpen: (String) -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -213,6 +218,7 @@ private fun ExpandedLayout(
                     GroupDetailRoot(
                         groupId = selectedId,
                         snackbarHostState = snackbarHostState,
+                        onSettingsClick = { onSettingsOpen(selectedId) },
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -530,6 +536,7 @@ private fun GroupOverviewPreviewThemes() {
                 onFilterSelected = {},
                 onGroupSelected = {},
                 onGroupOpen = {},
+                onSettingsOpen = {},
                 snackbarHostState = remember { SnackbarHostState() },
             )
         }
@@ -546,6 +553,7 @@ private fun GroupOverviewPreviewSizes() {
                 onFilterSelected = {},
                 onGroupSelected = {},
                 onGroupOpen = {},
+                onSettingsOpen = {},
                 snackbarHostState = remember { SnackbarHostState() },
             )
         }

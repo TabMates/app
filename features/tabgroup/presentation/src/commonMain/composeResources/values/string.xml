@@ -150,4 +150,21 @@
     <string name="join_group_expired_title">Invite link expired.</string>
     <string name="join_group_expired_caption">Ask the person who invited you for a fresh one.</string>
     <string name="join_group_expired_back_home">Back to home</string>
+
+    <string name="group_settings_title">Group settings</string>
+    <string name="group_settings_open_cd">Group settings</string>
+    <string name="group_settings_change_icon_color">Change icon &amp; color</string>
+    <string name="group_settings_name_label">Group name</string>
+    <string name="group_settings_description_label">Description</string>
+    <string name="group_settings_default_currency">Default currency</string>
+    <string name="group_settings_danger_zone">DANGER ZONE</string>
+    <string name="group_settings_leave_group">Leave group</string>
+    <string name="group_settings_leave_caption">You will lose access to expenses in this group.</string>
+    <string name="group_settings_leave_dialog_title">Leave group?</string>
+    <string name="group_settings_leave_dialog_message">You will lose access to all expenses in this group. This cannot be undone from the app.</string>
+    <string name="group_settings_leave_dialog_confirm">Leave</string>
+    <string name="group_settings_leave_dialog_cancel">Cancel</string>
+    <string name="group_settings_save">Save</string>
+    <string name="group_settings_saved">Changes saved</string>
+    <string name="group_settings_left">You left the group</string>
 </resources>

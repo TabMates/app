@@ -13,6 +13,7 @@ import androidx.navigation3.runtime.NavKey
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CreateGroupRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.GroupDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.GroupOverviewRoot
+import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
 import kotlinx.serialization.modules.SerializersModule
@@ -30,6 +31,7 @@ val mainSerializersModule =
             subclass(AddExpense::class)
             subclass(CreateGroup::class)
             subclass(GroupDetail::class)
+            subclass(GroupSettings::class)
             subclass(JoinGroup::class)
         }
     }
@@ -49,6 +51,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
     entry<Group> {
         GroupOverviewRoot(
             onGroupOpen = { groupId -> backStack.add(GroupDetail(groupId)) },
+            onSettingsOpen = { groupId -> backStack.add(GroupSettings(groupId)) },
             snackbarHostState = snackbarHostState,
         )
     }
@@ -57,6 +60,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
         GroupDetailRoot(
             groupId = route.groupId,
             snackbarHostState = snackbarHostState,
+            onSettingsClick = { backStack.add(GroupSettings(route.groupId)) },
         )
     }
 
@@ -87,6 +91,16 @@ fun EntryProviderScope<NavKey>.mainGraph(
                 backStack.removeAll { it is JoinGroup }
                 backStack.add(GroupDetail(groupId))
             },
+        )
+    }
+
+    entry<GroupSettings> { route ->
+        GroupSettingsRoot(
+            groupId = route.groupId,
+            onLeft = {
+                backStack.removeAll { it is GroupSettings || (it is GroupDetail && it.groupId == route.groupId) }
+            },
+            snackbarHostState = snackbarHostState,
         )
     }
 }

@@ -182,6 +182,7 @@ fun App() {
                                 ScreenTopBar(
                                     config = config,
                                     onNavigationClick = { backStack.removeLastOrNull() },
+                                    onTrailingActionClick = { target -> backStack.add(target) },
                                 )
                             }
                         },

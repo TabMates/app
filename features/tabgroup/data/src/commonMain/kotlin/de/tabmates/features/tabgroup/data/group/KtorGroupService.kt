@@ -2,6 +2,7 @@ package de.tabmates.features.tabgroup.data.group
 
 import de.tabmates.core.data.networking.delete
 import de.tabmates.core.data.networking.get
+import de.tabmates.core.data.networking.patch
 import de.tabmates.core.data.networking.post
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
@@ -14,6 +15,7 @@ import de.tabmates.features.tabgroup.data.dto.request.AddNewParticipantToGroupRe
 import de.tabmates.features.tabgroup.data.dto.request.CreateGroupRequest
 import de.tabmates.features.tabgroup.data.dto.request.JoinGroupRequest
 import de.tabmates.features.tabgroup.data.dto.request.ParticipantsRequest
+import de.tabmates.features.tabgroup.data.dto.request.UpdateGroupRequest
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.domain.group.GroupService
 import de.tabmates.features.tabgroup.domain.models.Group
@@ -93,6 +95,24 @@ class KtorGroupService(
             .delete<Unit>(
                 route = "/api/group/$groupId/leave",
             ).asEmptyResult()
+    }
+
+    override suspend fun updateGroup(
+        groupId: String,
+        title: String,
+        description: String?,
+        defaultCurrencyCode: String,
+    ): Result<Group, DataError.Remote> {
+        return httpClient
+            .patch<UpdateGroupRequest, GroupDto>(
+                route = "/api/group/$groupId",
+                body =
+                    UpdateGroupRequest(
+                        title = title,
+                        description = description,
+                        defaultCurrencyCode = defaultCurrencyCode,
+                    ),
+            ).map { it.toDomain() }
     }
 
     override suspend fun rotateInviteToken(groupId: String): Result<Group, DataError.Remote> {
