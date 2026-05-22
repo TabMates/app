@@ -7,8 +7,8 @@ import de.tabmates.features.tabgroup.database.view.LastTabEntryView
 data class LastTabEntryWithSplits(
     @Embedded val lastTabEntry: LastTabEntryView,
     @Relation(
-        parentColumn = "tabEntryId",
-        entityColumn = "tabEntryId",
+        parentColumns = ["tabEntryId"],
+        entityColumns = ["tabEntryId"],
     )
     val splits: List<TabEntrySplitEntity>,
 )

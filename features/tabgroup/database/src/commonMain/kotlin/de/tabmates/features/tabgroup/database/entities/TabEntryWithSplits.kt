@@ -7,8 +7,8 @@ data class TabEntryWithSplits(
     @Embedded
     val tabEntry: TabEntryEntity,
     @Relation(
-        parentColumn = "tabEntryId",
-        entityColumn = "tabEntryId",
+        parentColumns = ["tabEntryId"],
+        entityColumns = ["tabEntryId"],
     )
     val splits: List<TabEntrySplitEntity>,
 )
