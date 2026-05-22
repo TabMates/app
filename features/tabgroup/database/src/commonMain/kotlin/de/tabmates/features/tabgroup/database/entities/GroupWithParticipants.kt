@@ -9,14 +9,14 @@ data class GroupWithParticipants(
     @Embedded
     val group: GroupEntity,
     @Relation(
-        parentColumn = "groupId",
-        entityColumn = "userId",
+        parentColumns = ["groupId"],
+        entityColumns = ["userId"],
         associateBy = Junction(GroupParticipantCrossRef::class),
     )
     val participants: List<GroupParticipantEntity>,
     @Relation(
-        parentColumn = "groupId",
-        entityColumn = "groupId",
+        parentColumns = ["groupId"],
+        entityColumns = ["groupId"],
         entity = LastTabEntryView::class,
     )
     val lastTabEntry: LastTabEntryWithSplits?,
@@ -26,14 +26,14 @@ data class GroupInfoEntity(
     @Embedded
     val group: GroupEntity,
     @Relation(
-        parentColumn = "groupId",
-        entityColumn = "userId",
+        parentColumns = ["groupId"],
+        entityColumns = ["userId"],
         associateBy = Junction(GroupParticipantCrossRef::class),
     )
     val participants: List<GroupParticipantEntity>,
     @Relation(
-        parentColumn = "groupId",
-        entityColumn = "groupId",
+        parentColumns = ["groupId"],
+        entityColumns = ["groupId"],
         entity = TabEntryEntity::class,
     )
     val tabEntriesWithCreator: List<TabEntryWithCreator>,

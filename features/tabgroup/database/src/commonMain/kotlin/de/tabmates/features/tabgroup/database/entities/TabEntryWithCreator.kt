@@ -7,8 +7,8 @@ data class TabEntryWithCreator(
     @Embedded
     val tabEntry: TabEntryEntity,
     @Relation(
-        parentColumn = "creatorId",
-        entityColumn = "userId",
+        parentColumns = ["creatorId"],
+        entityColumns = ["userId"],
     )
     val creator: GroupParticipantEntity,
 )
