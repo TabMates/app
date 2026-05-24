@@ -10,7 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import de.tabmates.features.tabgroup.presentation.navigation.addexpense.AddExpenseRoot
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CreateGroupRoot
+import de.tabmates.features.tabgroup.presentation.navigation.expensedetail.ExpenseDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.GroupDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.GroupOverviewRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
@@ -29,6 +31,7 @@ val mainSerializersModule =
             subclass(Profile::class)
             subclass(Settings::class)
             subclass(AddExpense::class)
+            subclass(ExpenseDetail::class)
             subclass(CreateGroup::class)
             subclass(GroupDetail::class)
             subclass(GroupSettings::class)
@@ -52,6 +55,10 @@ fun EntryProviderScope<NavKey>.mainGraph(
         GroupOverviewRoot(
             onGroupOpen = { groupId -> backStack.add(GroupDetail(groupId)) },
             onSettingsOpen = { groupId -> backStack.add(GroupSettings(groupId)) },
+            onAddExpenseClick = { groupId -> backStack.add(AddExpense(groupId)) },
+            onExpenseClick = { groupId, expenseId ->
+                backStack.add(ExpenseDetail(expenseId = expenseId, groupId = groupId))
+            },
             snackbarHostState = snackbarHostState,
         )
     }
@@ -61,6 +68,10 @@ fun EntryProviderScope<NavKey>.mainGraph(
             groupId = route.groupId,
             snackbarHostState = snackbarHostState,
             onSettingsClick = { backStack.add(GroupSettings(route.groupId)) },
+            onAddExpenseClick = { backStack.add(AddExpense(route.groupId)) },
+            onExpenseClick = { expenseId ->
+                backStack.add(ExpenseDetail(expenseId = expenseId, groupId = route.groupId))
+            },
         )
     }
 
@@ -72,8 +83,22 @@ fun EntryProviderScope<NavKey>.mainGraph(
         PlaceholderScreen("Settings")
     }
 
-    entry<AddExpense> {
-        PlaceholderScreen("Add Expense")
+    entry<AddExpense> { route ->
+        AddExpenseRoot(
+            groupId = route.groupId,
+            snackbarHostState = snackbarHostState,
+            onClose = { backStack.removeLastOrNull() },
+            onSaved = { backStack.removeAll { it is AddExpense } },
+        )
+    }
+
+    entry<ExpenseDetail> { route ->
+        ExpenseDetailRoot(
+            expenseId = route.expenseId,
+            groupId = route.groupId,
+            snackbarHostState = snackbarHostState,
+            onBack = { backStack.removeLastOrNull() },
+        )
     }
 
     entry<CreateGroup> {

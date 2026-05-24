@@ -39,13 +39,14 @@ data class GroupDetailState(
 class GroupDetailViewModel(
     @InjectedParam private val groupId: String,
     private val groupRepository: GroupRepository,
-    tabEntryRepository: TabEntryRepository,
+    private val tabEntryRepository: TabEntryRepository,
     currencyRepository: CurrencyRepository,
     sessionStorage: SessionStorage,
 ) : ViewModel() {
     private val currentUser = sessionStorage.get()?.user
     private val currentUserId = currentUser?.id.orEmpty()
     private val isRotatingInvite = MutableStateFlow(false)
+    private var hasFetchedRemote = false
 
     val state: StateFlow<GroupDetailState> =
         combine(
@@ -54,7 +55,15 @@ class GroupDetailViewModel(
                 .map { groups -> groups.firstOrNull { it.id == groupId } }
                 .onStart { emit(null) },
             currencyRepository.getCurrencies().onStart { emit(emptyList()) },
-            tabEntryRepository.getTabEntriesForGroup(groupId).onStart { emit(emptyList()) },
+            tabEntryRepository
+                .getTabEntriesForGroup(groupId)
+                .onStart {
+                    emit(emptyList())
+                    if (!hasFetchedRemote) {
+                        hasFetchedRemote = true
+                        viewModelScope.launch { tabEntryRepository.fetchTabEntries(groupId) }
+                    }
+                },
         ) { group, currencies, entries ->
             val visibleEntries = entries.filterNot { it.isDeleted }
             val item =

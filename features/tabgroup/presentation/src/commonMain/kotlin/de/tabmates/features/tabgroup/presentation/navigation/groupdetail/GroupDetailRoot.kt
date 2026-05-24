@@ -24,6 +24,8 @@ fun GroupDetailRoot(
     groupId: String,
     snackbarHostState: SnackbarHostState,
     onSettingsClick: () -> Unit = {},
+    onAddExpenseClick: () -> Unit = {},
+    onExpenseClick: (String) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: GroupDetailViewModel =
         koinViewModel(
@@ -54,6 +56,8 @@ fun GroupDetailRoot(
             perPersonBalances = state.perPersonBalances,
             onRotateInvite = viewModel::rotateInvite,
             onSettingsClick = onSettingsClick,
+            onAddExpenseClick = onAddExpenseClick,
+            onExpenseClick = onExpenseClick,
             snackbarHostState = snackbarHostState,
             modifier = modifier.fillMaxSize(),
         )

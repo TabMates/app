@@ -161,9 +161,9 @@ fun App() {
                                 modifier = Modifier.padding(start = 16.dp),
                                 contentColor = MaterialTheme.colorScheme.onPrimary,
                                 onClick = {
-                                    when (screen.fabAction) {
+                                    when (val action = screen.fabAction) {
                                         FabAction.CreateGroup -> backStack.add(CreateGroup)
-                                        is FabAction.AddExpense -> backStack.add(AddExpense)
+                                        is FabAction.AddExpense -> backStack.add(AddExpense(action.groupId))
                                     }
                                 },
                             ) {

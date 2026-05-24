@@ -117,7 +117,7 @@
     <string name="groups_detail_tab_balances">Balances</string>
     <string name="groups_detail_tab_members">Members</string>
     <string name="groups_detail_tab_settings">Settings</string>
-    <string name="groups_detail_youre_owed">You\'re owed</string>
+    <string name="groups_detail_youre_owed">You're owed</string>
     <string name="groups_detail_you_owe">You owe</string>
     <string name="groups_detail_total_spent">Total spent</string>
     <string name="groups_detail_across_people">across %1$d people</string>
@@ -144,7 +144,7 @@
     <string name="join_group_join_as_section">JOIN AS…</string>
     <string name="join_group_option_new_member">A new member</string>
     <string name="join_group_option_new_member_caption">Use my account</string>
-    <string name="join_group_option_claim">Claim \"%1$s\"</string>
+    <string name="join_group_option_claim">Claim "%1$s"</string>
     <string name="join_group_option_claim_caption">Pre-existing placeholder · keeps their share</string>
     <string name="join_group_submit">Join group</string>
     <string name="join_group_expired_title">Invite link expired.</string>
@@ -167,4 +167,56 @@
     <string name="group_settings_save">Save</string>
     <string name="group_settings_saved">Changes saved</string>
     <string name="group_settings_left">You left the group</string>
+
+    <string name="add_expense_title">Add expense</string>
+    <string name="add_expense_save">Save</string>
+    <string name="add_expense_close_cd">Close</string>
+    <string name="add_expense_amount_label">AMOUNT</string>
+    <string name="add_expense_amount_placeholder">0</string>
+    <string name="add_expense_date_confirm">Set</string>
+    <string name="add_expense_date_cancel">Cancel</string>
+    <string name="add_expense_title_placeholder">What was it for?</string>
+    <string name="add_expense_paid_by_label">Paid by</string>
+    <string name="add_expense_paid_by_you">You</string>
+    <string name="add_expense_split_label">Split</string>
+    <string name="add_expense_split_summary_equal">Equally · %1$d %2$s</string>
+    <string name="add_expense_split_summary_exact">Exact amounts</string>
+    <string name="add_expense_split_summary_percentage">By percentage</string>
+    <string name="add_expense_split_summary_shares">By shares</string>
+    <string name="add_expense_people_singular">person</string>
+    <string name="add_expense_people_plural">people</string>
+    <string name="add_expense_date_label">Date</string>
+    <string name="add_expense_paid_by_sheet_title">Paid by</string>
+    <string name="add_expense_paid_by_sheet_done">Done</string>
+    <string name="add_expense_error_amount_required">Enter an amount</string>
+    <string name="add_expense_error_title_required">Add a title</string>
+    <string name="add_expense_error_paid_by_required">Pick who paid</string>
+    <string name="add_expense_error_split_total_mismatch">Split must equal %1$s</string>
+    <string name="add_expense_error_no_splits">Pick at least one person to split with</string>
+    <string name="add_expense_saved">Expense added</string>
+
+    <string name="split_screen_title">Split</string>
+    <string name="split_screen_done">Done</string>
+    <string name="split_screen_back_cd">Back</string>
+    <string name="split_screen_total">TOTAL · %1$s</string>
+    <string name="split_screen_left_to_assign">%1$s left to assign</string>
+    <string name="split_screen_over_by">%1$s over</string>
+    <string name="split_screen_balanced">Ready to save</string>
+    <string name="split_screen_tab_equal">Equal</string>
+    <string name="split_screen_tab_exact">Exact</string>
+    <string name="split_screen_tab_percentage">%</string>
+    <string name="split_screen_tab_shares">Shares</string>
+    <string name="split_screen_running_total_must_equal">Running total must equal %1$s to save.</string>
+    <string name="split_screen_percent_total_must_equal_100">Percentages must total 100%% to save.</string>
+    <string name="split_screen_shares_must_be_positive">Add at least one share to save.</string>
+
+    <string name="expense_detail_edit_cd">Edit</string>
+    <string name="expense_detail_delete_cd">Delete</string>
+    <string name="expense_detail_paid_by_section">PAID BY</string>
+    <string name="expense_detail_split_between_section">SPLIT BETWEEN</string>
+    <string name="expense_detail_removed_member">[Removed Member]</string>
+    <string name="expense_detail_delete_dialog_title">Delete expense?</string>
+    <string name="expense_detail_delete_dialog_message">This expense will be removed from the group. This cannot be undone.</string>
+    <string name="expense_detail_delete_dialog_confirm">Delete</string>
+    <string name="expense_detail_delete_dialog_cancel">Cancel</string>
 </resources>

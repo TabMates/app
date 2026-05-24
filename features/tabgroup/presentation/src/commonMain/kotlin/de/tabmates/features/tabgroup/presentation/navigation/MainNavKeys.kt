@@ -82,7 +82,10 @@ data object Profile : LoggableNavKey(), TopLevelTab, ScreenWithFab {
 data object Settings : LoggableNavKey(), LoggedIn
 
 @Serializable
-data object AddExpense : LoggableNavKey(), LoggedIn
+data class AddExpense(val groupId: String) : LoggableNavKey(), LoggedIn
+
+@Serializable
+data class ExpenseDetail(val expenseId: String, val groupId: String) : LoggableNavKey(), LoggedIn
 
 @Serializable
 data object CreateGroup : LoggableNavKey(), LoggedIn, ScreenWithTopBar {

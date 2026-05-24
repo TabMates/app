@@ -2,7 +2,6 @@ package de.tabmates.features.tabgroup.presentation.navigation.groupoverview
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -91,6 +90,8 @@ fun GroupOverviewRoot(
     onGroupOpen: (String) -> Unit,
     onSettingsOpen: (String) -> Unit,
     snackbarHostState: SnackbarHostState,
+    onAddExpenseClick: (String) -> Unit = {},
+    onExpenseClick: (groupId: String, expenseId: String) -> Unit = { _, _ -> },
     viewModel: GroupOverviewViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -100,6 +101,8 @@ fun GroupOverviewRoot(
         onGroupSelected = viewModel::onGroupSelected,
         onGroupOpen = onGroupOpen,
         onSettingsOpen = onSettingsOpen,
+        onAddExpenseClick = onAddExpenseClick,
+        onExpenseClick = onExpenseClick,
         snackbarHostState = snackbarHostState,
     )
 }
@@ -111,6 +114,8 @@ private fun GroupOverviewScreen(
     onGroupSelected: (String) -> Unit,
     onGroupOpen: (String) -> Unit,
     onSettingsOpen: (String) -> Unit,
+    onAddExpenseClick: (String) -> Unit,
+    onExpenseClick: (groupId: String, expenseId: String) -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -124,6 +129,8 @@ private fun GroupOverviewScreen(
             onFilterSelected = onFilterSelected,
             onGroupSelected = onGroupSelected,
             onSettingsOpen = onSettingsOpen,
+            onAddExpenseClick = onAddExpenseClick,
+            onExpenseClick = onExpenseClick,
             snackbarHostState = snackbarHostState,
             modifier = modifier,
         )
@@ -175,6 +182,8 @@ private fun ExpandedLayout(
     onFilterSelected: (GroupFilter) -> Unit,
     onGroupSelected: (String) -> Unit,
     onSettingsOpen: (String) -> Unit,
+    onAddExpenseClick: (String) -> Unit,
+    onExpenseClick: (groupId: String, expenseId: String) -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -219,6 +228,8 @@ private fun ExpandedLayout(
                         groupId = selectedId,
                         snackbarHostState = snackbarHostState,
                         onSettingsClick = { onSettingsOpen(selectedId) },
+                        onAddExpenseClick = { onAddExpenseClick(selectedId) },
+                        onExpenseClick = { expenseId -> onExpenseClick(selectedId, expenseId) },
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -537,6 +548,8 @@ private fun GroupOverviewPreviewThemes() {
                 onGroupSelected = {},
                 onGroupOpen = {},
                 onSettingsOpen = {},
+                onAddExpenseClick = {},
+                onExpenseClick = { _, _ -> },
                 snackbarHostState = remember { SnackbarHostState() },
             )
         }
@@ -554,6 +567,8 @@ private fun GroupOverviewPreviewSizes() {
                 onGroupSelected = {},
                 onGroupOpen = {},
                 onSettingsOpen = {},
+                onAddExpenseClick = {},
+                onExpenseClick = { _, _ -> },
                 snackbarHostState = remember { SnackbarHostState() },
             )
         }
