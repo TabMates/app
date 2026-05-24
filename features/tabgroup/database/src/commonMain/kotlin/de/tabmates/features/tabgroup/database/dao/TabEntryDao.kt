@@ -37,6 +37,34 @@ interface TabEntryDao {
     @Query("SELECT * FROM tabentryentity WHERE tabEntryId = :tabEntryId")
     suspend fun getTabEntryById(tabEntryId: String): TabEntryWithSplits?
 
+    /**
+     * Atomically replaces a tab-entry plus its full set of splits. Used by the realtime sync to
+     * apply server echoes: prevents leaving the row with stale/orphaned splits if the call is
+     * interrupted between the delete and the upsert.
+     */
+    @Transaction
+    suspend fun replaceTabEntryWithSplits(
+        entry: TabEntryEntity,
+        splits: List<TabEntrySplitEntity>,
+        splitDao: TabEntrySplitDao,
+    ) {
+        upsertTabEntry(entry)
+        splitDao.deleteSplitsByTabEntryIds(listOf(entry.tabEntryId))
+        if (splits.isNotEmpty()) {
+            splitDao.upsertSplits(splits)
+        }
+    }
+
+    /** Atomically removes a tab-entry and all its splits. */
+    @Transaction
+    suspend fun deleteTabEntryAndSplits(
+        tabEntryId: String,
+        splitDao: TabEntrySplitDao,
+    ) {
+        splitDao.deleteSplitsByTabEntryIds(listOf(tabEntryId))
+        deleteTabEntryById(tabEntryId)
+    }
+
     @Transaction
     suspend fun upsertTabEntriesAndSyncIfNecessary(
         groupId: String,
@@ -62,7 +90,7 @@ interface TabEntryDao {
         val serverIds = entries.map { it.tabEntryId }.toSet()
         val staleIds =
             localEntries
-                .filter { it.tabEntryId !in serverIds }
+                .filter { it.tabEntryId !in serverIds && !it.pendingSync }
                 .map { it.tabEntryId }
         if (staleIds.isNotEmpty()) {
             deleteTabEntriesById(staleIds)

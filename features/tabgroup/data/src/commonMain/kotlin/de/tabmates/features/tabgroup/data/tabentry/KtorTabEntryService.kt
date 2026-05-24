@@ -1,8 +1,11 @@
 package de.tabmates.features.tabgroup.data.tabentry
 
+import de.tabmates.core.data.networking.delete
 import de.tabmates.core.data.networking.get
 import de.tabmates.core.domain.util.DataError
+import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
+import de.tabmates.core.domain.util.asEmptyResult
 import de.tabmates.core.domain.util.map
 import de.tabmates.features.tabgroup.data.dto.TabEntryDto
 import de.tabmates.features.tabgroup.data.mappers.toDomain
@@ -32,4 +35,9 @@ class KtorTabEntryService(
                 queryParams = queryParams,
             ).map { dtos -> dtos.map { it.toDomain() } }
     }
+
+    override suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote> =
+        httpClient
+            .delete<Unit>(route = "/api/tab-entry/$tabEntryId")
+            .asEmptyResult()
 }

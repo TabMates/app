@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.database.entities
 
+import androidx.room3.ColumnInfo
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
 import androidx.room3.Index
@@ -35,6 +36,9 @@ data class TabEntryEntity(
     val version: Int,
     val deletedAt: Long?,
     val deletedByUserId: String?,
+    /** True while this row is an optimistic local write awaiting server confirmation. */
+    @ColumnInfo(defaultValue = "0")
+    val pendingSync: Boolean = false,
 ) {
     val isDeleted: Boolean
         get() = deletedAt != null

@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.database
 
+import androidx.room3.AutoMigration
 import androidx.room3.ConstructedBy
 import androidx.room3.Database
 import androidx.room3.RoomDatabase
@@ -8,6 +9,7 @@ import de.tabmates.features.tabgroup.database.dao.ExchangeRateDao
 import de.tabmates.features.tabgroup.database.dao.GroupDao
 import de.tabmates.features.tabgroup.database.dao.GroupParticipantCrossRefDao
 import de.tabmates.features.tabgroup.database.dao.GroupParticipantDao
+import de.tabmates.features.tabgroup.database.dao.PendingOutboxDao
 import de.tabmates.features.tabgroup.database.dao.TabEntryDao
 import de.tabmates.features.tabgroup.database.dao.TabEntrySplitDao
 import de.tabmates.features.tabgroup.database.entities.CurrencyEntity
@@ -15,6 +17,7 @@ import de.tabmates.features.tabgroup.database.entities.ExchangeRateEntity
 import de.tabmates.features.tabgroup.database.entities.GroupEntity
 import de.tabmates.features.tabgroup.database.entities.GroupParticipantCrossRef
 import de.tabmates.features.tabgroup.database.entities.GroupParticipantEntity
+import de.tabmates.features.tabgroup.database.entities.PendingOutboxEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntryEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntrySplitEntity
 import de.tabmates.features.tabgroup.database.view.LastTabEntryView
@@ -28,11 +31,14 @@ import de.tabmates.features.tabgroup.database.view.LastTabEntryView
         TabEntrySplitEntity::class,
         CurrencyEntity::class,
         ExchangeRateEntity::class,
+        PendingOutboxEntity::class,
     ],
     views = [
         LastTabEntryView::class,
     ],
-    version = 1,
+    version = 3,
+    exportSchema = true,
+    autoMigrations = [AutoMigration(from = 2, to = 3)],
 )
 @ConstructedBy(TabMatesDatabaseConstructor::class)
 abstract class TabMatesDatabase : RoomDatabase() {
@@ -43,6 +49,7 @@ abstract class TabMatesDatabase : RoomDatabase() {
     abstract val tabEntrySplitDao: TabEntrySplitDao
     abstract val currencyDao: CurrencyDao
     abstract val exchangeRateDao: ExchangeRateDao
+    abstract val pendingOutboxDao: PendingOutboxDao
 
     companion object {
         const val DATABASE_NAME = "tabmates.db"

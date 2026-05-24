@@ -2,6 +2,7 @@
 
 package de.tabmates.features.tabgroup.data.network
 
+import de.tabmates.core.data.di.APPLICATION_SCOPE
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.util.DataError
@@ -39,6 +40,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Named
@@ -49,7 +52,7 @@ import kotlin.time.Duration.Companion.seconds
 @Single
 class KtorWebSocketConnector(
     private val httpClient: HttpClient,
-    @Named("applicationScope") private val applicationScope: CoroutineScope,
+    @Named(APPLICATION_SCOPE) private val applicationScope: CoroutineScope,
     private val sessionStorage: SessionStorage,
     private val json: Json,
     private val connectionErrorHandler: ConnectionErrorHandler,
@@ -61,7 +64,21 @@ class KtorWebSocketConnector(
     private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
     val connectionState = _connectionState.asStateFlow()
 
+    private val sessionMutex = Mutex()
     private var currentSession: WebSocketSession? = null
+
+    private suspend fun setCurrentSession(session: WebSocketSession?) {
+        sessionMutex.withLock { currentSession = session }
+    }
+
+    private suspend fun currentSessionSnapshot(): WebSocketSession? = sessionMutex.withLock { currentSession }
+
+    private suspend fun closeAndClearSession() {
+        sessionMutex.withLock {
+            currentSession?.close()
+            currentSession = null
+        }
+    }
 
     private val isConnected =
         connectivityObserver
@@ -96,8 +113,7 @@ class KtorWebSocketConnector(
                 authInfo == null -> {
                     logger.info(TAG, "No authentication details. Clearing session and disconnecting...")
                     _connectionState.value = ConnectionState.DISCONNECTED
-                    currentSession?.close()
-                    currentSession = null
+                    closeAndClearSession()
                     connectionRetryHandler.resetDelay()
                     null
                 }
@@ -105,16 +121,14 @@ class KtorWebSocketConnector(
                 !isInForeground -> {
                     logger.info(TAG, "App in background, disconnecting socket proactively.")
                     _connectionState.value = ConnectionState.DISCONNECTED
-                    currentSession?.close()
-                    currentSession = null
+                    closeAndClearSession()
                     null
                 }
 
                 !isConnected -> {
                     logger.info(TAG, "Device is disconnected, closing WebSocket connection.")
                     _connectionState.value = ConnectionState.ERROR_NETWORK
-                    currentSession?.close()
-                    currentSession = null
+                    closeAndClearSession()
                     null
                 }
 
@@ -142,8 +156,7 @@ class KtorWebSocketConnector(
                     .catch { e ->
                         logger.error(TAG, "Exception in WebSocket", e)
 
-                        currentSession?.close()
-                        currentSession = null
+                        closeAndClearSession()
 
                         val transformedException = connectionErrorHandler.transformException(e)
                         throw transformedException
@@ -172,64 +185,69 @@ class KtorWebSocketConnector(
         callbackFlow {
             _connectionState.value = ConnectionState.CONNECTING
 
-            currentSession =
+            val session =
                 httpClient.webSocketSession(
-                    urlString = "${BuildKonfig.BASE_URL_WS}/tabgroup",
+                    urlString = "${BuildKonfig.BASE_URL_WS}/group",
                 ) {
                     header("Authorization", "Bearer $accessToken")
                     header("x-api-key", BuildKonfig.API_KEY)
                 }
+            setCurrentSession(session)
+            _connectionState.value = ConnectionState.CONNECTED
 
-            currentSession?.let { session ->
-                _connectionState.value = ConnectionState.CONNECTED
+            session
+                .incoming
+                .consumeAsFlow()
+                .buffer(capacity = 100)
+                .collect { frame ->
+                    when (frame) {
+                        is Frame.Text -> {
+                            val text = frame.readText()
+                            logger.debug(TAG, "Received raw text frame: $text")
 
-                session
-                    .incoming
-                    .consumeAsFlow()
-                    .buffer(capacity = 100)
-                    .collect { frame ->
-                        when (frame) {
-                            is Frame.Text -> {
-                                val text = frame.readText()
-                                logger.debug(TAG, "Received raw text frame: $text")
-
-                                val messageDto = json.decodeFromString<WebSocketMessageDto>(text)
+                            val messageDto =
+                                try {
+                                    json.decodeFromString<WebSocketMessageDto>(text)
+                                } catch (e: Exception) {
+                                    coroutineContext.ensureActive()
+                                    logger.error(TAG, "Could not decode WS frame, skipping: $text", e)
+                                    null
+                                }
+                            if (messageDto != null) {
                                 send(messageDto)
                             }
+                        }
 
-                            is Frame.Ping -> {
-                                logger.debug(TAG, "Received ping from server. Sending pong...")
-                                session.send(Frame.Pong(frame.data))
-                            }
+                        is Frame.Ping -> {
+                            logger.debug(TAG, "Received ping from server. Sending pong...")
+                            session.send(Frame.Pong(frame.data))
+                        }
 
-                            else -> {
-                                Unit
-                            }
+                        else -> {
+                            Unit
                         }
                     }
-            } ?: throw IllegalStateException("Failed to establish WebSocket connection")
+                }
 
             awaitClose {
                 applicationScope.launch {
                     withContext(NonCancellable) {
                         logger.info(TAG, "Disconnecting from WebSocket session...")
                         _connectionState.value = ConnectionState.DISCONNECTED
-                        currentSession?.close()
-                        currentSession = null
+                        closeAndClearSession()
                     }
                 }
             }
         }
 
     suspend fun sendMessage(message: String): EmptyResult<DataError.Connection> {
-        val state = connectionState.value
-
-        if (currentSession == null || state != ConnectionState.CONNECTED) {
+        val session = currentSessionSnapshot()
+        if (session == null || connectionState.value != ConnectionState.CONNECTED) {
             return Result.Failure(DataError.Connection.NOT_CONNECTED)
         }
 
         return try {
-            currentSession?.send(message)
+            session.send(message)
             Result.Success(Unit)
         } catch (e: Exception) {
             coroutineContext.ensureActive()

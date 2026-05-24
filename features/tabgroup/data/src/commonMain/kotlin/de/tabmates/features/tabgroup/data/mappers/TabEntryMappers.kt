@@ -71,7 +71,7 @@ fun TabEntryDto.toDomain(): TabEntry =
         }
     }
 
-fun TabEntry.toEntity(): TabEntryEntity =
+fun TabEntry.toEntity(pendingSync: Boolean = false): TabEntryEntity =
     TabEntryEntity(
         tabEntryId = tabEntryId,
         title = title,
@@ -89,6 +89,7 @@ fun TabEntry.toEntity(): TabEntryEntity =
         version = version,
         deletedAt = deletedAt?.toEpochMilliseconds(),
         deletedByUserId = deletedByUserId,
+        pendingSync = pendingSync,
     )
 
 fun TabEntryWithSplits.toDomain(): TabEntry =
