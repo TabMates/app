@@ -15,7 +15,6 @@ import tabmatesapp.core.presentation.generated.resources.error_serialization
 import tabmatesapp.core.presentation.generated.resources.error_server
 import tabmatesapp.core.presentation.generated.resources.error_service_unavailable
 import tabmatesapp.core.presentation.generated.resources.error_too_many_requests
-import tabmatesapp.core.presentation.generated.resources.error_unable_to_create_expense
 import tabmatesapp.core.presentation.generated.resources.error_unauthorized
 import tabmatesapp.core.presentation.generated.resources.error_unknown
 
@@ -39,7 +38,6 @@ fun DataError.toUiText(): UiText {
             DataError.Remote.SERIALIZATION -> Res.string.error_serialization
             DataError.Remote.UNKNOWN -> Res.string.error_unknown
             DataError.Connection.NOT_CONNECTED -> Res.string.error_no_internet
-            DataError.Connection.CREATE_EXPENSE_FAILED -> Res.string.error_unable_to_create_expense
             DataError.Connection.MESSAGE_SEND_FAILED -> Res.string.error_message_send_failed
         }
     return UiText.Resource(resource)

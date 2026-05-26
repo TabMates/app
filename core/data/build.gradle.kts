@@ -41,7 +41,7 @@ kotlin {
 
         desktopMain {
             dependencies {
-                implementation(libs.ktor.client.apache5)
+                implementation(libs.ktor.client.okhttp)
             }
         }
 

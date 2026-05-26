@@ -1,6 +1,7 @@
 package de.tabmates.features.tabgroup.presentation.navigation.groupoverview
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -106,6 +107,8 @@ internal fun GroupDetailPane(
     perPersonBalances: Map<String, Double>,
     onRotateInvite: () -> Unit,
     onSettingsClick: () -> Unit,
+    onAddExpenseClick: () -> Unit = {},
+    onExpenseClick: (String) -> Unit = {},
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -144,6 +147,7 @@ internal fun GroupDetailPane(
             isExpanded = isExpanded,
             onInviteClick = onShareInvite,
             onSettingsClick = onSettingsClick,
+            onAddExpenseClick = onAddExpenseClick,
         )
         PrimaryTabRow(
             selectedTabIndex = visibleTabs.indexOf(selectedTab).coerceAtLeast(0),
@@ -165,6 +169,7 @@ internal fun GroupDetailPane(
                     currentUserId = currentUserId,
                     members = members,
                     expenses = expenses,
+                    onExpenseClick = onExpenseClick,
                 )
             }
 
@@ -207,6 +212,7 @@ private fun DetailHeader(
     isExpanded: Boolean,
     onInviteClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onAddExpenseClick: () -> Unit,
 ) {
     Column(
         modifier =
@@ -238,7 +244,11 @@ private fun DetailHeader(
                 )
             }
             if (isExpanded) {
-                HeaderActions(modifier = Modifier, onInviteClick = onInviteClick)
+                HeaderActions(
+                    modifier = Modifier,
+                    onInviteClick = onInviteClick,
+                    onAddExpenseClick = onAddExpenseClick,
+                )
                 HorizontalSpacer(12.dp)
                 UserAvatar(initials = currentUserInitials)
             } else {
@@ -252,7 +262,11 @@ private fun DetailHeader(
         }
         if (!isExpanded) {
             VerticalSpacer(16.dp)
-            HeaderActions(modifier = Modifier.fillMaxWidth(), onInviteClick = onInviteClick)
+            HeaderActions(
+                modifier = Modifier.fillMaxWidth(),
+                onInviteClick = onInviteClick,
+                onAddExpenseClick = onAddExpenseClick,
+            )
         }
     }
 }
@@ -261,6 +275,7 @@ private fun DetailHeader(
 private fun HeaderActions(
     modifier: Modifier = Modifier,
     onInviteClick: () -> Unit,
+    onAddExpenseClick: () -> Unit,
 ) {
     Row(
         modifier = modifier,
@@ -280,7 +295,7 @@ private fun HeaderActions(
             Text(stringResource(Res.string.groups_detail_invite))
         }
         FilledTonalButton(
-            onClick = {},
+            onClick = onAddExpenseClick,
             modifier = Modifier.weight(1f, fill = false),
         ) {
             Text("+ ${stringResource(Res.string.groups_detail_add_expense)}")
@@ -294,6 +309,7 @@ private fun ExpensesTab(
     currentUserId: String,
     members: List<GroupParticipant>,
     expenses: List<TabEntry.Expense>,
+    onExpenseClick: (String) -> Unit,
 ) {
     val payerById = remember(members) { members.associateBy { it.userId } }
     Column(
@@ -314,6 +330,7 @@ private fun ExpensesTab(
                     currentUserId = currentUserId,
                     payerName = payerById[expense.paidByUserId]?.username.orEmpty(),
                     item = item,
+                    onClick = { onExpenseClick(expense.tabEntryId) },
                 )
             }
         }
@@ -326,9 +343,13 @@ private fun ExpenseRow(
     currentUserId: String,
     payerName: String,
     item: GroupOverviewItem,
+    onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ExpenseIcon()

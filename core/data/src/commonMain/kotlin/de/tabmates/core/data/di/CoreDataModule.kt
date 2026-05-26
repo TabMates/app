@@ -15,6 +15,8 @@ import org.koin.core.annotation.Module
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
+const val APPLICATION_SCOPE = "applicationScope"
+
 @Module
 @Configuration
 @ComponentScan("de.tabmates.core.data")
@@ -26,7 +28,7 @@ class CoreDataModule {
         }
 
     @Single
-    @Named("applicationScope")
+    @Named(APPLICATION_SCOPE)
     fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @Single

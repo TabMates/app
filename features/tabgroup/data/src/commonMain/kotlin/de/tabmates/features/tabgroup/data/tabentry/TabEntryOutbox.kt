@@ -1,0 +1,270 @@
+package de.tabmates.features.tabgroup.data.tabentry
+
+import de.tabmates.core.data.di.APPLICATION_SCOPE
+import de.tabmates.core.domain.logging.TabMatesLogger
+import de.tabmates.core.domain.util.DataError
+import de.tabmates.core.domain.util.Result
+import de.tabmates.features.tabgroup.data.mappers.toWsSplit
+import de.tabmates.features.tabgroup.data.network.ConnectionState
+import de.tabmates.features.tabgroup.data.network.KtorWebSocketConnector
+import de.tabmates.features.tabgroup.data.network.dto.NewTabEntrySplitWsPayload
+import de.tabmates.features.tabgroup.data.network.dto.NewTabEntryWsPayload
+import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
+import de.tabmates.features.tabgroup.data.network.dto.WsMessageType
+import de.tabmates.features.tabgroup.database.TabMatesDatabase
+import de.tabmates.features.tabgroup.database.entities.PendingOutboxEntity
+import de.tabmates.features.tabgroup.domain.tabentry.NewExpenseSplit
+import de.tabmates.features.tabgroup.domain.tabentry.SplitResolver
+import de.tabmates.features.tabgroup.domain.tabentry.TabEntryService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.Json
+import org.koin.core.annotation.Named
+import org.koin.core.annotation.Single
+import kotlin.time.Clock
+
+/**
+ * Durable outbox for tab-entry writes. The repository enqueues every write here; the outbox
+ * tries to dispatch it when the WS is CONNECTED. If dispatch fails transiently (offline, server
+ * 5xx) the row is left untouched and re-drained on the next CONNECTED tick. Only PERMANENT
+ * failures (server rejection, bad payload, auth) count toward [MAX_ATTEMPTS]; once reached, the
+ * row is parked and skipped on subsequent drains.
+ */
+@Single(createdAtStart = true)
+class TabEntryOutbox(
+    private val database: TabMatesDatabase,
+    private val webSocketConnector: KtorWebSocketConnector,
+    private val service: TabEntryService,
+    private val json: Json,
+    private val logger: TabMatesLogger,
+    @Named(APPLICATION_SCOPE) private val applicationScope: CoroutineScope,
+) {
+    private val mutex = Mutex()
+
+    /**
+     * Per-session retry counter. Resets every app launch so the user can recover stuck rows
+     * (e.g. a transient server bug that masqueraded as permanent) simply by reopening the app.
+     * Always accessed under [mutex]; the DB [PendingOutboxEntity.attemptCount] is kept for
+     * forensics only and never consulted for parking decisions.
+     */
+    private val sessionAttempts = mutableMapOf<String, Int>()
+
+    init {
+        webSocketConnector
+            .connectionState
+            .filter { it == ConnectionState.CONNECTED }
+            .onEach { drain() }
+            .launchIn(applicationScope)
+    }
+
+    suspend fun enqueueCreateExpense(
+        clientRequestId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        splits: List<NewExpenseSplit>,
+    ) {
+        val payload =
+            NewTabEntryWsPayload.Expense(
+                id = clientRequestId,
+                groupId = groupId,
+                paidByUserId = paidByUserId,
+                title = title,
+                description = description,
+                amount = amount,
+                currency = currencyCode,
+                splits = buildSplitPayloads(splits, amount),
+            )
+        val envelope =
+            WebSocketMessageDto(
+                type = WsMessageType.NEW_TAB_ENTRY,
+                payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
+            )
+        database.pendingOutboxDao.upsert(
+            PendingOutboxEntity(
+                id = clientRequestId,
+                type = OUTBOX_TYPE_NEW_TAB_ENTRY,
+                payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
+                createdAt = Clock.System.now().toEpochMilliseconds(),
+            ),
+        )
+        applicationScope.launch { drain() }
+    }
+
+    suspend fun enqueueDeleteTabEntry(tabEntryId: String) {
+        database.pendingOutboxDao.upsert(
+            PendingOutboxEntity(
+                id = "$DELETE_ID_PREFIX$tabEntryId",
+                type = OUTBOX_TYPE_TAB_ENTRY_DELETE,
+                payload = tabEntryId,
+                createdAt = Clock.System.now().toEpochMilliseconds(),
+            ),
+        )
+        applicationScope.launch { drain() }
+    }
+
+    private fun buildSplitPayloads(
+        splits: List<NewExpenseSplit>,
+        amount: Double,
+    ): List<NewTabEntrySplitWsPayload> {
+        if (splits.isEmpty()) return emptyList()
+        val resolved = SplitResolver.resolveAmounts(splits, amount)
+        return splits.mapIndexed { index, split ->
+            NewTabEntrySplitWsPayload(
+                id = null,
+                participantId = split.participantId,
+                split = toWsSplit(split.splitType, split.value),
+                resolvedAmount = resolved[index],
+            )
+        }
+    }
+
+    private suspend fun drain() {
+        // No connection → nothing to attempt. Drain will re-run on next CONNECTED edge.
+        if (webSocketConnector.connectionState.value != ConnectionState.CONNECTED) return
+
+        mutex.withLock {
+            val pending = database.pendingOutboxDao.getAll()
+            for (item in pending) {
+                val sessionCount = sessionAttempts[item.id] ?: 0
+                if (sessionCount >= MAX_ATTEMPTS) {
+                    // Parked for this session — will retry on next app launch.
+                    continue
+                }
+                when (val result = dispatch(item)) {
+                    is DispatchResult.Success -> {
+                        database.pendingOutboxDao.deleteById(item.id)
+                        sessionAttempts.remove(item.id)
+                    }
+
+                    is DispatchResult.Transient -> {
+                        // Don't burn attempt budget on retriable failures (offline, 5xx, timeouts).
+                        logger.debug(
+                            TAG,
+                            "Transient dispatch failure id=${item.id} reason=${result.reason}; leaving for retry",
+                        )
+                    }
+
+                    is DispatchResult.Permanent -> {
+                        val nextCount = sessionCount + 1
+                        sessionAttempts[item.id] = nextCount
+                        val tag =
+                            if (nextCount >= MAX_ATTEMPTS) {
+                                logger.error(
+                                    TAG,
+                                    "Outbox entry id=${item.id} exhausted retries ($nextCount/$MAX_ATTEMPTS) this session; parking until restart. last=${result.reason}",
+                                )
+                                "permanent_${result.reason}_parked_session"
+                            } else {
+                                "permanent_${result.reason}_attempt_$nextCount"
+                            }
+                        recordAttempt(item, lastError = tag)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun dispatch(item: PendingOutboxEntity): DispatchResult =
+        try {
+            when (item.type) {
+                OUTBOX_TYPE_NEW_TAB_ENTRY -> {
+                    dispatchNewTabEntry(item.payload)
+                }
+
+                OUTBOX_TYPE_TAB_ENTRY_DELETE -> {
+                    dispatchDelete(item.payload)
+                }
+
+                else -> {
+                    logger.warning(TAG, "Dropping unknown outbox entry type=${item.type} id=${item.id}")
+                    DispatchResult.Success
+                }
+            }
+        } catch (e: Throwable) {
+            logger.error(TAG, "Outbox dispatch crashed for id=${item.id}", e)
+            DispatchResult.Permanent("dispatch_crash")
+        }
+
+    private suspend fun dispatchNewTabEntry(envelopeJson: String): DispatchResult =
+        when (val result = webSocketConnector.sendMessage(envelopeJson)) {
+            is Result.Success -> {
+                DispatchResult.Success
+            }
+
+            is Result.Failure -> {
+                // Lost the socket between drain gate and send — retry on next CONNECTED tick.
+                when (result.error) {
+                    DataError.Connection.NOT_CONNECTED -> DispatchResult.Transient("not_connected")
+                    DataError.Connection.MESSAGE_SEND_FAILED -> DispatchResult.Transient("send_failed")
+                }
+            }
+        }
+
+    private suspend fun dispatchDelete(tabEntryId: String): DispatchResult =
+        when (val result = service.deleteTabEntry(tabEntryId)) {
+            is Result.Success -> {
+                DispatchResult.Success
+            }
+
+            is Result.Failure -> {
+                when (result.error) {
+                    DataError.Remote.NO_INTERNET,
+                    DataError.Remote.REQUEST_TIMEOUT,
+                    DataError.Remote.SERVER_ERROR,
+                    DataError.Remote.SERVICE_UNAVAILABLE,
+                    DataError.Remote.TOO_MANY_REQUESTS,
+                    DataError.Remote.UNKNOWN,
+                    -> DispatchResult.Transient(result.error.name.lowercase())
+
+                    // 404 on delete: entry is already gone on the server, treat as success.
+                    DataError.Remote.NOT_FOUND -> DispatchResult.Success
+
+                    DataError.Remote.BAD_REQUEST,
+                    DataError.Remote.UNAUTHORIZED,
+                    DataError.Remote.FORBIDDEN,
+                    DataError.Remote.CONFLICT,
+                    DataError.Remote.PAYLOAD_TOO_LARGE,
+                    DataError.Remote.SERIALIZATION,
+                    -> DispatchResult.Permanent(result.error.name.lowercase())
+                }
+            }
+        }
+
+    private suspend fun recordAttempt(
+        item: PendingOutboxEntity,
+        lastError: String,
+    ) {
+        database.pendingOutboxDao.upsert(
+            item.copy(
+                attemptCount = item.attemptCount + 1,
+                lastAttemptAt = Clock.System.now().toEpochMilliseconds(),
+                lastError = lastError,
+            ),
+        )
+    }
+
+    private sealed class DispatchResult {
+        data object Success : DispatchResult()
+
+        data class Transient(val reason: String) : DispatchResult()
+
+        data class Permanent(val reason: String) : DispatchResult()
+    }
+
+    private companion object {
+        private const val TAG = "TabEntryOutbox"
+        private const val DELETE_ID_PREFIX = "delete:"
+        private const val MAX_ATTEMPTS = 10
+        private const val OUTBOX_TYPE_NEW_TAB_ENTRY = "new_tab_entry"
+        private const val OUTBOX_TYPE_TAB_ENTRY_DELETE = "tab_entry.delete"
+    }
+}
