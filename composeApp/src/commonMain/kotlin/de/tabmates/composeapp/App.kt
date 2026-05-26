@@ -17,6 +17,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,9 +42,11 @@ import de.tabmates.composeapp.sync.CurrencySyncCoordinator
 import de.tabmates.composeapp.sync.GroupSyncCoordinator
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.navigation.FabAction
+import de.tabmates.core.presentation.navigation.LocalTopBarActionsController
 import de.tabmates.core.presentation.navigation.LoggedIn
 import de.tabmates.core.presentation.navigation.ScreenWithFab
 import de.tabmates.core.presentation.navigation.ScreenWithTopBar
+import de.tabmates.core.presentation.navigation.TopBarActionsController
 import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.authentication.presentation.navigation.EmailVerification
@@ -150,6 +153,7 @@ fun App() {
             val snackbarHostState = remember { SnackbarHostState() }
 
             if (currentKey is LoggedIn) {
+                val topBarActions = remember { TopBarActionsController() }
                 NavigationSuiteScaffold(
                     navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfoV2()),
                     navigationItems = {
@@ -198,23 +202,25 @@ fun App() {
                                 ScreenTopBar(
                                     config = config,
                                     onNavigationClick = { backStack.removeLastOrNull() },
-                                    onTrailingActionClick = { target -> backStack.add(target) },
+                                    actions = { topBarActions.contentFor(currentKey)?.invoke() },
                                 )
                             }
                         },
                     ) {
-                        NavDisplay(
-                            modifier = Modifier.fillMaxSize().padding(it),
-                            backStack = backStack,
-                            onBack = { backStack.removeLastOrNull() },
-                            entryDecorators = entryDecorators,
-                            entryProvider = entryProvider {
-                                mainGraph(
-                                    backStack = backStack,
-                                    snackbarHostState = snackbarHostState,
-                                )
-                            },
-                        )
+                        CompositionLocalProvider(LocalTopBarActionsController provides topBarActions) {
+                            NavDisplay(
+                                modifier = Modifier.fillMaxSize().padding(it),
+                                backStack = backStack,
+                                onBack = { backStack.removeLastOrNull() },
+                                entryDecorators = entryDecorators,
+                                entryProvider = entryProvider {
+                                    mainGraph(
+                                        backStack = backStack,
+                                        snackbarHostState = snackbarHostState,
+                                    )
+                                },
+                            )
+                        }
                     }
                 }
             } else {
