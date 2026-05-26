@@ -1,7 +1,6 @@
 package de.tabmates.core.data.di
 
 import eu.anifantakis.lib.ksafe.KSafe
-import eu.anifantakis.lib.ksafe.KSafeMemoryPolicy
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.darwin.Darwin
 import org.koin.core.annotation.Configuration
@@ -20,7 +19,6 @@ actual class PlatformCoreDataModule {
     fun providePrefsKSafe(): KSafe =
         KSafe(
             fileName = "prefs",
-            memoryPolicy = KSafeMemoryPolicy.PLAIN_TEXT,
         )
 
     @Single

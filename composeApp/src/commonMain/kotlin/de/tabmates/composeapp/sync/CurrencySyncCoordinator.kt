@@ -5,6 +5,7 @@ import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import eu.anifantakis.lib.ksafe.KSafe
+import eu.anifantakis.lib.ksafe.KSafeWriteMode
 import eu.anifantakis.lib.ksafe.invoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +30,7 @@ class CurrencySyncCoordinator(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private var lastCurrencySyncEpochMs: Long by prefs(0L, key = "lastCurrencySync")
+    private var lastCurrencySyncEpochMs: Long by prefs(0L, key = "lastCurrencySync", mode = KSafeWriteMode.Plain)
 
     init {
         sessionStorage.authState
