@@ -73,6 +73,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expens
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_cancel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_confirm
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_description_placeholder
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_sheet_done
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_sheet_title
@@ -180,6 +181,12 @@ internal fun AddExpenseScreen(
                 state = state.titleTextState,
                 placeholder = stringResource(Res.string.add_expense_title_placeholder),
                 singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            TabMatesTextField(
+                state = state.descriptionTextState,
+                placeholder = stringResource(Res.string.add_expense_description_placeholder),
+                singleLine = false,
                 modifier = Modifier.fillMaxWidth(),
             )
             FieldRow(
