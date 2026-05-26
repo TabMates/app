@@ -169,6 +169,7 @@
     <string name="group_settings_left">You left the group</string>
 
     <string name="add_expense_title">Add expense</string>
+    <string name="edit_expense_title">Edit expense</string>
     <string name="add_expense_save">Save</string>
     <string name="add_expense_close_cd">Close</string>
     <string name="add_expense_amount_label">AMOUNT</string>

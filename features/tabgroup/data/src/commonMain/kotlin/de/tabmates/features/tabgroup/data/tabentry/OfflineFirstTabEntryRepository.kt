@@ -100,6 +100,58 @@ class OfflineFirstTabEntryRepository(
         return Result.Success(expense)
     }
 
+    override suspend fun updateExpense(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        createdAt: Instant,
+        splits: List<NewExpenseSplit>,
+    ): Result<TabEntry.Expense, DataError.Remote> {
+        // Preserve server-owned fields from the existing row; the server reconciles the rest on echo.
+        val existing = database.tabEntryDao.getTabEntryById(tabEntryId)?.toDomain() as? TabEntry.Expense
+        val now = Clock.System.now()
+        val resolvedSplits = resolveSplits(tabEntryId, splits, amount)
+        val expense =
+            TabEntry.Expense(
+                tabEntryId = tabEntryId,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currencyCode,
+                creatorId = existing?.creatorId ?: paidByUserId,
+                paidByUserId = paidByUserId,
+                createdAt = createdAt,
+                lastModifiedAt = now,
+                lastModifiedByUserId = paidByUserId,
+                version = existing?.version ?: 0,
+                deletedAt = null,
+                deletedByUserId = null,
+                splits = resolvedSplits,
+            )
+
+        database.tabEntryDao.replaceTabEntryWithSplits(
+            entry = expense.toEntity(pendingSync = true),
+            splits = resolvedSplits.map { it.toEntity() },
+            splitDao = database.tabEntrySplitDao,
+        )
+        outbox.enqueueUpdateExpense(
+            tabEntryId = tabEntryId,
+            groupId = groupId,
+            title = title,
+            description = description,
+            amount = amount,
+            currencyCode = currencyCode,
+            paidByUserId = paidByUserId,
+            splits = splits,
+        )
+        return Result.Success(expense)
+    }
+
     override suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote> {
         // Persist intent first so a crash between enqueue and local delete still drives the
         // remote delete on next drain. Outbox upsert by id is idempotent.

@@ -8,6 +8,7 @@ import kotlin.time.Instant
 
 data class AddExpenseState(
     val groupId: String = "",
+    val isEditing: Boolean = false,
     val isLoading: Boolean = true,
     val isSubmitting: Boolean = false,
     val groupCurrencyCode: String = "",

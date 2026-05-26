@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.presentation.navigation.addexpense
 
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.SessionStorage
@@ -11,6 +12,7 @@ import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.ParticipantType
 import de.tabmates.features.tabgroup.domain.models.SplitType
+import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.NewExpenseSplit
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import kotlinx.coroutines.channels.Channel
@@ -41,18 +43,23 @@ import kotlin.time.Instant
 @KoinViewModel
 class AddExpenseViewModel(
     @InjectedParam private val groupId: String,
+    @InjectedParam private val expenseId: String,
     private val tabEntryRepository: TabEntryRepository,
     private val groupRepository: GroupRepository,
     private val currencyRepository: CurrencyRepository,
     sessionStorage: SessionStorage,
 ) : ViewModel() {
+    private val isEditing = expenseId.isNotBlank()
     private val currentUserId =
         sessionStorage
             .get()
             ?.user
             ?.id
             .orEmpty()
-    private val _state = MutableStateFlow(AddExpenseState(groupId = groupId, currentUserId = currentUserId))
+    private val _state =
+        MutableStateFlow(
+            AddExpenseState(groupId = groupId, currentUserId = currentUserId, isEditing = isEditing),
+        )
     private var hasLoadedInitialData = false
 
     val state: StateFlow<AddExpenseState> =
@@ -76,25 +83,70 @@ class AddExpenseViewModel(
             val group = groupRepository.getGroups().first().firstOrNull { it.id == groupId }
             val currencies = currencyRepository.getCurrencies().first()
             val currency = currencies.firstOrNull { it.code == group?.defaultCurrencyCode }
+            val decimals = currency?.decimalDigits ?: 2
             val activeMembers =
                 group
                     ?.participants
                     ?.filter { it.participantType != ParticipantType.PLACEHOLDER }
                     .orEmpty()
+            val existing =
+                if (isEditing) {
+                    tabEntryRepository.getTabEntryById(expenseId).first() as? TabEntry.Expense
+                } else {
+                    null
+                }
             val defaultPaidBy =
-                activeMembers.firstOrNull { it.userId == currentUserId }?.userId
+                existing?.paidByUserId
+                    ?: activeMembers.firstOrNull { it.userId == currentUserId }?.userId
                     ?: activeMembers.firstOrNull()?.userId.orEmpty()
+            val splitsByParticipant = existing?.splits?.associateBy { it.participantId }.orEmpty()
             _state.update {
                 it.copy(
                     isLoading = false,
                     members = activeMembers,
                     paidByUserId = defaultPaidBy,
-                    groupCurrencyCode = group?.defaultCurrencyCode.orEmpty(),
+                    groupCurrencyCode = existing?.currencyCode ?: group?.defaultCurrencyCode.orEmpty(),
                     groupCurrencySymbol = currency?.nativeSymbol ?: group?.defaultCurrencyCode.orEmpty(),
-                    groupCurrencyDecimalDigits = currency?.decimalDigits ?: 2,
+                    groupCurrencyDecimalDigits = decimals,
+                    createdAt = existing?.createdAt ?: it.createdAt,
+                    splitType = existing?.splits?.firstOrNull()?.splitType ?: it.splitType,
+                    titleTextState = TextFieldState(existing?.title.orEmpty()),
+                    descriptionTextState = TextFieldState(existing?.description.orEmpty()),
+                    amountTextState =
+                        TextFieldState(
+                            existing?.let { e -> formatMoney("", e.amount, decimals) }.orEmpty(),
+                        ),
                     splitInputs =
                         activeMembers.map { member ->
-                            ParticipantSplitInput(participantId = member.userId)
+                            val split = splitsByParticipant[member.userId]
+                            ParticipantSplitInput(
+                                participantId = member.userId,
+                                included = if (isEditing) split != null else true,
+                                exactAmountState =
+                                    TextFieldState(
+                                        if (split?.splitType == SplitType.EXACT_AMOUNT) {
+                                            formatMoney("", split.value, decimals)
+                                        } else {
+                                            ""
+                                        },
+                                    ),
+                                percentageState =
+                                    TextFieldState(
+                                        if (split?.splitType == SplitType.PERCENTAGE) {
+                                            formatMoney("", split.value, 2)
+                                        } else {
+                                            ""
+                                        },
+                                    ),
+                                sharesState =
+                                    TextFieldState(
+                                        if (split?.splitType == SplitType.SHARES) {
+                                            split.value.toLong().toString()
+                                        } else {
+                                            "1"
+                                        },
+                                    ),
+                            )
                         },
                 )
             }
@@ -198,17 +250,33 @@ class AddExpenseViewModel(
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true) }
-            tabEntryRepository
-                .createExpense(
-                    groupId = current.groupId,
-                    title = title,
-                    description = description,
-                    amount = amount,
-                    currencyCode = current.groupCurrencyCode,
-                    paidByUserId = current.paidByUserId,
-                    createdAt = current.createdAt,
-                    splits = splits,
-                ).onSuccess {
+            val result =
+                if (isEditing) {
+                    tabEntryRepository.updateExpense(
+                        tabEntryId = expenseId,
+                        groupId = current.groupId,
+                        title = title,
+                        description = description,
+                        amount = amount,
+                        currencyCode = current.groupCurrencyCode,
+                        paidByUserId = current.paidByUserId,
+                        createdAt = current.createdAt,
+                        splits = splits,
+                    )
+                } else {
+                    tabEntryRepository.createExpense(
+                        groupId = current.groupId,
+                        title = title,
+                        description = description,
+                        amount = amount,
+                        currencyCode = current.groupCurrencyCode,
+                        paidByUserId = current.paidByUserId,
+                        createdAt = current.createdAt,
+                        splits = splits,
+                    )
+                }
+            result
+                .onSuccess {
                     _state.update { it.copy(isSubmitting = false) }
                     eventChannel.send(AddExpenseEvent.ExpenseCreated)
                 }.onFailure { error ->

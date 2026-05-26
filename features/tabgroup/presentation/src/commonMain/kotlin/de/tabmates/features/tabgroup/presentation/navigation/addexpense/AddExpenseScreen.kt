@@ -88,6 +88,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expens
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_shares
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_title_placeholder
+import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_expense_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_calendar
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_close
@@ -100,10 +101,11 @@ fun AddExpenseRoot(
     onClose: () -> Unit,
     onSaved: () -> Unit,
     modifier: Modifier = Modifier,
+    expenseId: String = "",
     viewModel: AddExpenseViewModel =
         koinViewModel(
-            key = groupId,
-            parameters = { parametersOf(groupId) },
+            key = expenseId.ifBlank { groupId },
+            parameters = { parametersOf(groupId, expenseId) },
         ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -162,6 +164,14 @@ internal fun AddExpenseScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AddExpenseTopBar(
+            title =
+                stringResource(
+                    if (state.isEditing) {
+                        Res.string.edit_expense_title
+                    } else {
+                        Res.string.add_expense_title
+                    },
+                ),
             onClose = onClose,
             onSave = onSaveClick,
             isSubmitting = state.isSubmitting,
@@ -243,6 +253,7 @@ internal fun AddExpenseScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddExpenseTopBar(
+    title: String,
     onClose: () -> Unit,
     onSave: () -> Unit,
     isSubmitting: Boolean,
@@ -250,7 +261,7 @@ private fun AddExpenseTopBar(
     TopAppBar(
         title = {
             Text(
-                text = stringResource(Res.string.add_expense_title),
+                text = title,
                 fontWeight = FontWeight.SemiBold,
             )
         },

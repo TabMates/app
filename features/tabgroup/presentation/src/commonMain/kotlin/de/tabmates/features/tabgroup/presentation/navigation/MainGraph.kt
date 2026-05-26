@@ -31,6 +31,7 @@ val mainSerializersModule =
             subclass(Profile::class)
             subclass(Settings::class)
             subclass(AddExpense::class)
+            subclass(EditExpense::class)
             subclass(ExpenseDetail::class)
             subclass(CreateGroup::class)
             subclass(GroupDetail::class)
@@ -92,12 +93,25 @@ fun EntryProviderScope<NavKey>.mainGraph(
         )
     }
 
+    entry<EditExpense> { route ->
+        AddExpenseRoot(
+            groupId = route.groupId,
+            expenseId = route.expenseId,
+            snackbarHostState = snackbarHostState,
+            onClose = { backStack.removeLastOrNull() },
+            onSaved = { backStack.removeAll { it is EditExpense } },
+        )
+    }
+
     entry<ExpenseDetail> { route ->
         ExpenseDetailRoot(
             expenseId = route.expenseId,
             groupId = route.groupId,
             snackbarHostState = snackbarHostState,
             onBack = { backStack.removeLastOrNull() },
+            onEdit = {
+                backStack.add(EditExpense(groupId = route.groupId, expenseId = route.expenseId))
+            },
         )
     }
 

@@ -29,6 +29,18 @@ interface TabEntryRepository {
         splits: List<NewExpenseSplit>,
     ): Result<TabEntry.Expense, DataError.Remote>
 
+    suspend fun updateExpense(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        createdAt: Instant,
+        splits: List<NewExpenseSplit>,
+    ): Result<TabEntry.Expense, DataError.Remote>
+
     suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote>
 
     companion object {
