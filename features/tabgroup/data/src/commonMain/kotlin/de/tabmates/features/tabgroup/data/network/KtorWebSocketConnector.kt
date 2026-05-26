@@ -3,17 +3,10 @@
 package de.tabmates.features.tabgroup.data.network
 
 import de.tabmates.core.data.di.APPLICATION_SCOPE
-import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
-import de.tabmates.features.tabgroup.data.BuildKonfig
-import de.tabmates.features.tabgroup.data.lifecycle.AppLifecycleObserver
-import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.websocket.webSocketSession
-import io.ktor.client.request.header
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
@@ -26,39 +19,29 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import kotlin.coroutines.coroutineContext
-import kotlin.time.Duration.Companion.seconds
 
 @Single
 class KtorWebSocketConnector(
-    private val httpClient: HttpClient,
     @Named(APPLICATION_SCOPE) private val applicationScope: CoroutineScope,
-    private val sessionStorage: SessionStorage,
-    private val json: Json,
-    private val connectionErrorHandler: ConnectionErrorHandler,
+    private val connectionGate: ConnectionGate,
+    private val transport: WebSocketTransport,
     private val connectionRetryHandler: ConnectionRetryHandler,
-    private val appLifecycleObserver: AppLifecycleObserver,
-    private val connectivityObserver: ConnectivityObserver,
     private val logger: TabMatesLogger,
 ) {
     private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
@@ -80,34 +63,11 @@ class KtorWebSocketConnector(
         }
     }
 
-    private val isConnected =
-        connectivityObserver
-            .isConnected
-            .debounce(1.seconds)
-            .stateIn(
-                applicationScope,
-                SharingStarted.WhileSubscribed(5_000L),
-                false,
-            )
-
-    private val isInForeground =
-        appLifecycleObserver
-            .isInForeground
-            .onEach { isInForeground ->
-                if (isInForeground) {
-                    connectionRetryHandler.resetDelay()
-                }
-            }.stateIn(
-                applicationScope,
-                SharingStarted.WhileSubscribed(5_000L),
-                false,
-            )
-
     val messages =
         combine(
-            sessionStorage.authState,
-            isConnected,
-            isInForeground,
+            connectionGate.authState,
+            connectionGate.isConnected,
+            connectionGate.isInForeground,
         ) { authInfo, isConnected, isInForeground ->
             when {
                 authInfo == null -> {
@@ -158,7 +118,7 @@ class KtorWebSocketConnector(
 
                         closeAndClearSession()
 
-                        val transformedException = connectionErrorHandler.transformException(e)
+                        val transformedException = connectionRetryHandler.transformException(e)
                         throw transformedException
                     }.retryWhen { t, attempt ->
                         logger.info(TAG, "Connection failed on attempt $attempt")
@@ -176,7 +136,7 @@ class KtorWebSocketConnector(
                     .catch { e ->
                         logger.error(TAG, "Unhandled WebSocket error", e)
 
-                        _connectionState.value = connectionErrorHandler.getConnectionStateForError(e)
+                        _connectionState.value = connectionRetryHandler.getConnectionStateForError(e)
                     }
             }
         }
@@ -185,13 +145,7 @@ class KtorWebSocketConnector(
         callbackFlow {
             _connectionState.value = ConnectionState.CONNECTING
 
-            val session =
-                httpClient.webSocketSession(
-                    urlString = "${BuildKonfig.BASE_URL_WS}/group",
-                ) {
-                    header("Authorization", "Bearer $accessToken")
-                    header("x-api-key", BuildKonfig.API_KEY)
-                }
+            val session = transport.openSession(accessToken)
             setCurrentSession(session)
             _connectionState.value = ConnectionState.CONNECTED
 
@@ -205,14 +159,7 @@ class KtorWebSocketConnector(
                             val text = frame.readText()
                             logger.debug(TAG, "Received raw text frame: $text")
 
-                            val messageDto =
-                                try {
-                                    json.decodeFromString<WebSocketMessageDto>(text)
-                                } catch (e: Exception) {
-                                    coroutineContext.ensureActive()
-                                    logger.error(TAG, "Could not decode WS frame, skipping: $text", e)
-                                    null
-                                }
+                            val messageDto = transport.decode(text)
                             if (messageDto != null) {
                                 send(messageDto)
                             }
@@ -257,6 +204,6 @@ class KtorWebSocketConnector(
     }
 
     private companion object {
-        const val TAG = "KtorWebSocketConnector"
+        private const val TAG = "KtorWebSocketConnector"
     }
 }
