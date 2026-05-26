@@ -32,6 +32,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expens
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_paid_by_required
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_split_total_mismatch
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_title_required
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_title_too_long
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -176,6 +177,10 @@ class AddExpenseViewModel(
             emitError(UiText.Resource(Res.string.add_expense_error_title_required))
             return
         }
+        if (title.length > MAX_TITLE_LENGTH) {
+            emitError(UiText.Resource(Res.string.add_expense_error_title_too_long))
+            return
+        }
         if (current.paidByUserId.isBlank()) {
             emitError(UiText.Resource(Res.string.add_expense_error_paid_by_required))
             return
@@ -300,5 +305,9 @@ class AddExpenseViewModel(
         var v = 1.0
         repeat(decimals) { v /= 10.0 }
         return v / 2.0
+    }
+
+    private companion object {
+        private const val MAX_TITLE_LENGTH = 255
     }
 }

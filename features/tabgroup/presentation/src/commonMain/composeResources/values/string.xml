@@ -190,6 +190,7 @@
     <string name="add_expense_paid_by_sheet_done">Done</string>
     <string name="add_expense_error_amount_required">Enter an amount</string>
     <string name="add_expense_error_title_required">Add a title</string>
+    <string name="add_expense_error_title_too_long">Title must be 255 characters or fewer</string>
     <string name="add_expense_error_paid_by_required">Pick who paid</string>
     <string name="add_expense_error_split_total_mismatch">Split must equal %1$s</string>
     <string name="add_expense_error_no_splits">Pick at least one person to split with</string>
