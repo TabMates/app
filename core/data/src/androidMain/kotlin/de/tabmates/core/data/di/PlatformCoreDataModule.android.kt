@@ -2,7 +2,6 @@ package de.tabmates.core.data.di
 
 import android.content.Context
 import eu.anifantakis.lib.ksafe.KSafe
-import eu.anifantakis.lib.ksafe.KSafeMemoryPolicy
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
 import org.koin.core.annotation.Configuration
@@ -22,7 +21,6 @@ actual class PlatformCoreDataModule {
         KSafe(
             context = context,
             fileName = "prefs",
-            memoryPolicy = KSafeMemoryPolicy.PLAIN_TEXT,
         )
 
     @Single

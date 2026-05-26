@@ -12,6 +12,11 @@ class ConnectionRetryHandler(
 
     fun shouldRetry(cause: Throwable): Boolean = connectionErrorHandler.isRetriableError(cause)
 
+    fun transformException(exception: Throwable): Throwable = connectionErrorHandler.transformException(exception)
+
+    fun getConnectionStateForError(cause: Throwable): ConnectionState =
+        connectionErrorHandler.getConnectionStateForError(cause)
+
     suspend fun applyRetryDelay(attempt: Long) {
         if (!shouldSkipBackoff) {
             val delayMs = createBackoffDelay(attempt)

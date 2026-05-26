@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import org.koin.core.annotation.Single
 
-@Single(createdAtStart = true)
+@Single
 class GroupSyncCoordinator(
     sessionStorage: SessionStorage,
     private val groupRepository: GroupRepository,
