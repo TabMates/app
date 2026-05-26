@@ -25,13 +25,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
@@ -42,8 +42,6 @@ import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatEx
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.rememberMonthAbbreviations
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
-import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -71,6 +69,7 @@ fun ExpenseDetailRoot(
     groupId: String,
     snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
+    onEdit: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ExpenseDetailViewModel =
         koinViewModel(
@@ -80,7 +79,6 @@ fun ExpenseDetailRoot(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
@@ -102,13 +100,7 @@ fun ExpenseDetailRoot(
     ExpenseDetailScreen(
         state = state,
         onBack = onBack,
-        onEditClick = {
-            scope.launch {
-                snackbarHostState.showSnackbar(
-                    getString(Res.string.expense_detail_edit_cd),
-                )
-            }
-        },
+        onEditClick = onEdit,
         onDeleteClick = { showDeleteDialog = true },
         modifier = modifier,
     )
@@ -150,6 +142,7 @@ private fun ExpenseDetailScreen(
                     state.groupCurrencyDecimalDigits,
                 ),
             dateText = formatExpenseDate(expense.createdAt, monthLabels),
+            description = expense.description,
         )
         VerticalSpacer(24.dp)
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -223,6 +216,7 @@ private fun HeroSection(
     title: String,
     amountFormatted: String,
     dateText: String,
+    description: String,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -261,6 +255,14 @@ private fun HeroSection(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (description.isNotBlank()) {
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 

@@ -87,6 +87,50 @@ class FakeTabEntryRepository(
         return Result.Success(expense)
     }
 
+    override suspend fun updateExpense(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        createdAt: Instant,
+        splits: List<NewExpenseSplit>,
+    ): Result<TabEntry.Expense, DataError.Remote> {
+        val expense =
+            TabEntry.Expense(
+                tabEntryId = tabEntryId,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currencyCode,
+                creatorId = paidByUserId,
+                paidByUserId = paidByUserId,
+                createdAt = createdAt,
+                lastModifiedAt = Clock.System.now(),
+                lastModifiedByUserId = paidByUserId,
+                version = 0,
+                deletedAt = null,
+                deletedByUserId = null,
+                splits =
+                    splits.mapIndexed { index, split ->
+                        TabEntrySplit(
+                            splitId = "$tabEntryId-split-$index",
+                            tabEntryId = tabEntryId,
+                            participantId = split.participantId,
+                            splitType = split.splitType,
+                            value = split.value,
+                            resolvedAmount = split.value,
+                        )
+                    },
+            )
+        val flow = flowByGroupId.getOrPut(groupId) { MutableStateFlow(emptyList()) }
+        flow.value = flow.value.map { if (it.tabEntryId == tabEntryId) expense else it }
+        return Result.Success(expense)
+    }
+
     override suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote> {
         flowByGroupId.values.forEach { flow ->
             flow.value = flow.value.filterNot { it.tabEntryId == tabEntryId }

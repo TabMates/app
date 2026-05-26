@@ -99,6 +99,43 @@ class TabEntryOutbox(
         applicationScope.launch { drain() }
     }
 
+    suspend fun enqueueUpdateExpense(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        splits: List<NewExpenseSplit>,
+    ) {
+        val payload =
+            NewTabEntryWsPayload.Expense(
+                id = tabEntryId,
+                groupId = groupId,
+                paidByUserId = paidByUserId,
+                title = title,
+                description = description,
+                amount = amount,
+                currency = currencyCode,
+                splits = buildSplitPayloads(splits, amount),
+            )
+        val envelope =
+            WebSocketMessageDto(
+                type = WsMessageType.UPDATED_TAB_ENTRY,
+                payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
+            )
+        database.pendingOutboxDao.upsert(
+            PendingOutboxEntity(
+                id = "$UPDATE_ID_PREFIX$tabEntryId",
+                type = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
+                payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
+                createdAt = Clock.System.now().toEpochMilliseconds(),
+            ),
+        )
+        applicationScope.launch { drain() }
+    }
+
     suspend fun enqueueDeleteTabEntry(tabEntryId: String) {
         database.pendingOutboxDao.upsert(
             PendingOutboxEntity(
@@ -176,7 +213,9 @@ class TabEntryOutbox(
     private suspend fun dispatch(item: PendingOutboxEntity): DispatchResult =
         try {
             when (item.type) {
-                OUTBOX_TYPE_NEW_TAB_ENTRY -> {
+                OUTBOX_TYPE_NEW_TAB_ENTRY,
+                OUTBOX_TYPE_TAB_ENTRY_UPDATE,
+                -> {
                     dispatchNewTabEntry(item.payload)
                 }
 
@@ -263,8 +302,10 @@ class TabEntryOutbox(
     private companion object {
         private const val TAG = "TabEntryOutbox"
         private const val DELETE_ID_PREFIX = "delete:"
+        private const val UPDATE_ID_PREFIX = "update:"
         private const val MAX_ATTEMPTS = 10
         private const val OUTBOX_TYPE_NEW_TAB_ENTRY = "new_tab_entry"
+        private const val OUTBOX_TYPE_TAB_ENTRY_UPDATE = "tab_entry.update"
         private const val OUTBOX_TYPE_TAB_ENTRY_DELETE = "tab_entry.delete"
     }
 }
