@@ -17,6 +17,7 @@ data class AddExpenseState(
     val currentUserId: String = "",
     val amountTextState: TextFieldState = TextFieldState(),
     val titleTextState: TextFieldState = TextFieldState(),
+    val descriptionTextState: TextFieldState = TextFieldState(),
     val paidByUserId: String = "",
     val splitType: SplitType = SplitType.EQUAL,
     val splitInputs: List<ParticipantSplitInput> = emptyList(),

@@ -28,6 +28,7 @@ import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_amount_required
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_description_too_long
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_no_splits
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_paid_by_required
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_split_total_mismatch
@@ -181,6 +182,14 @@ class AddExpenseViewModel(
             emitError(UiText.Resource(Res.string.add_expense_error_title_too_long))
             return
         }
+        val description =
+            current.descriptionTextState.text
+                .toString()
+                .trim()
+        if (description.length > MAX_DESCRIPTION_LENGTH) {
+            emitError(UiText.Resource(Res.string.add_expense_error_description_too_long))
+            return
+        }
         if (current.paidByUserId.isBlank()) {
             emitError(UiText.Resource(Res.string.add_expense_error_paid_by_required))
             return
@@ -193,7 +202,7 @@ class AddExpenseViewModel(
                 .createExpense(
                     groupId = current.groupId,
                     title = title,
-                    description = "",
+                    description = description,
                     amount = amount,
                     currencyCode = current.groupCurrencyCode,
                     paidByUserId = current.paidByUserId,
@@ -309,5 +318,6 @@ class AddExpenseViewModel(
 
     private companion object {
         private const val MAX_TITLE_LENGTH = 255
+        private const val MAX_DESCRIPTION_LENGTH = 255
     }
 }
