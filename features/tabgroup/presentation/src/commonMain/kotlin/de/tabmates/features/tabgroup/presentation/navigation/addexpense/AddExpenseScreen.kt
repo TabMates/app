@@ -25,7 +25,6 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +34,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -54,9 +52,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavKey
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
+import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.SplitType
@@ -69,7 +69,6 @@ import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_amount_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_amount_placeholder
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_close_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_cancel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_confirm
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_label
@@ -86,19 +85,16 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expens
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_exact
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_percentage
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_shares
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_title_placeholder
-import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_expense_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_calendar
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_close
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_pie_chart
 
 @Composable
 fun AddExpenseRoot(
     groupId: String,
+    navKey: NavKey,
     snackbarHostState: SnackbarHostState,
-    onClose: () -> Unit,
     onSaved: () -> Unit,
     modifier: Modifier = Modifier,
     expenseId: String = "",
@@ -117,9 +113,20 @@ fun AddExpenseRoot(
         }
     }
 
+    TopBarActions(navKey) {
+        TextButton(
+            onClick = viewModel::onSaveClick,
+            enabled = !state.isSubmitting,
+        ) {
+            Text(
+                text = stringResource(Res.string.add_expense_save),
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+
     AddExpenseScreen(
         state = state,
-        onClose = onClose,
         onPaidByClick = viewModel::onPaidByClick,
         onPaidByPickerDismiss = viewModel::onPaidByPickerDismiss,
         onPaidBySelected = viewModel::onPaidBySelected,
@@ -131,7 +138,6 @@ fun AddExpenseRoot(
         onDateClick = viewModel::onDateClick,
         onDatePickerDismiss = viewModel::onDatePickerDismiss,
         onDateSelected = viewModel::onDateSelected,
-        onSaveClick = viewModel::onSaveClick,
         modifier = modifier,
     )
 }
@@ -140,7 +146,6 @@ fun AddExpenseRoot(
 @Composable
 internal fun AddExpenseScreen(
     state: AddExpenseState,
-    onClose: () -> Unit,
     onPaidByClick: () -> Unit,
     onPaidByPickerDismiss: () -> Unit,
     onPaidBySelected: (String) -> Unit,
@@ -152,7 +157,6 @@ internal fun AddExpenseScreen(
     onDateClick: () -> Unit,
     onDatePickerDismiss: () -> Unit,
     onDateSelected: (Long) -> Unit,
-    onSaveClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val monthLabels = rememberMonthAbbreviations()
@@ -163,19 +167,6 @@ internal fun AddExpenseScreen(
                 .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        AddExpenseTopBar(
-            title =
-                stringResource(
-                    if (state.isEditing) {
-                        Res.string.edit_expense_title
-                    } else {
-                        Res.string.add_expense_title
-                    },
-                ),
-            onClose = onClose,
-            onSave = onSaveClick,
-            isSubmitting = state.isSubmitting,
-        )
         VerticalSpacer(8.dp)
         AmountInput(
             amountState = state.amountTextState,
@@ -248,43 +239,6 @@ internal fun AddExpenseScreen(
             onDone = onSplitConfirm,
         )
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddExpenseTopBar(
-    title: String,
-    onClose: () -> Unit,
-    onSave: () -> Unit,
-    isSubmitting: Boolean,
-) {
-    TopAppBar(
-        title = {
-            Text(
-                text = title,
-                fontWeight = FontWeight.SemiBold,
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onClose) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_close),
-                    contentDescription = stringResource(Res.string.add_expense_close_cd),
-                )
-            }
-        },
-        actions = {
-            TextButton(
-                onClick = onSave,
-                enabled = !isSubmitting,
-            ) {
-                Text(
-                    text = stringResource(Res.string.add_expense_save),
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        },
-    )
 }
 
 @Composable
