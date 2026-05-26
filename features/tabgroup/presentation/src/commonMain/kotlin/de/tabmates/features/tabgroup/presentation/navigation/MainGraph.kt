@@ -87,8 +87,8 @@ fun EntryProviderScope<NavKey>.mainGraph(
     entry<AddExpense> { route ->
         AddExpenseRoot(
             groupId = route.groupId,
+            navKey = route,
             snackbarHostState = snackbarHostState,
-            onClose = { backStack.removeLastOrNull() },
             onSaved = { backStack.removeAll { it is AddExpense } },
         )
     }
@@ -96,9 +96,9 @@ fun EntryProviderScope<NavKey>.mainGraph(
     entry<EditExpense> { route ->
         AddExpenseRoot(
             groupId = route.groupId,
+            navKey = route,
             expenseId = route.expenseId,
             snackbarHostState = snackbarHostState,
-            onClose = { backStack.removeLastOrNull() },
             onSaved = { backStack.removeAll { it is EditExpense } },
         )
     }
@@ -107,6 +107,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
         ExpenseDetailRoot(
             expenseId = route.expenseId,
             groupId = route.groupId,
+            navKey = route,
             snackbarHostState = snackbarHostState,
             onBack = { backStack.removeLastOrNull() },
             onEdit = {

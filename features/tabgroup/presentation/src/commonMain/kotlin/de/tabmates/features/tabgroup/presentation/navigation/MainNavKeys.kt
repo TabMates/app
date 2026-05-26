@@ -21,7 +21,9 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_expense_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.home_label
@@ -82,13 +84,25 @@ data object Profile : LoggableNavKey(), TopLevelTab, ScreenWithFab {
 data object Settings : LoggableNavKey(), LoggedIn
 
 @Serializable
-data class AddExpense(val groupId: String) : LoggableNavKey(), LoggedIn
+data class AddExpense(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.add_expense_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Close
+}
 
 @Serializable
-data class EditExpense(val groupId: String, val expenseId: String) : LoggableNavKey(), LoggedIn
+data class EditExpense(val groupId: String, val expenseId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.edit_expense_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Close
+}
 
 @Serializable
-data class ExpenseDetail(val expenseId: String, val groupId: String) : LoggableNavKey(), LoggedIn
+data class ExpenseDetail(
+    val expenseId: String,
+    val groupId: String,
+) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.DynamicString("")
+    override val topBarAction: TopBarAction get() = TopBarAction.Back
+}
 
 @Serializable
 data object CreateGroup : LoggableNavKey(), LoggedIn, ScreenWithTopBar {

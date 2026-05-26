@@ -14,14 +14,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,8 +32,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavKey
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatExpenseDate
@@ -57,16 +57,15 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_de
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_paid_by_section
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_removed_member
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_split_between_section
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_arrow_back
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_delete
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_edit
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_restaurant
-import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_back_cd
 
 @Composable
 fun ExpenseDetailRoot(
     expenseId: String,
     groupId: String,
+    navKey: NavKey,
     snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
     onEdit: () -> Unit,
@@ -97,11 +96,23 @@ fun ExpenseDetailRoot(
         )
     }
 
+    TopBarActions(navKey) {
+        IconButton(onClick = onEdit) {
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_edit),
+                contentDescription = stringResource(Res.string.expense_detail_edit_cd),
+            )
+        }
+        IconButton(onClick = { showDeleteDialog = true }) {
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_delete),
+                contentDescription = stringResource(Res.string.expense_detail_delete_cd),
+            )
+        }
+    }
+
     ExpenseDetailScreen(
         state = state,
-        onBack = onBack,
-        onEditClick = onEdit,
-        onDeleteClick = { showDeleteDialog = true },
         modifier = modifier,
     )
 }
@@ -109,20 +120,12 @@ fun ExpenseDetailRoot(
 @Composable
 private fun ExpenseDetailScreen(
     state: ExpenseDetailState,
-    onBack: () -> Unit,
-    onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val monthLabels = rememberMonthAbbreviations()
     val expense = state.expense
 
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        DetailTopBar(
-            onBack = onBack,
-            onEditClick = onEditClick,
-            onDeleteClick = onDeleteClick,
-        )
         if (expense == null) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(48.dp),
@@ -175,40 +178,6 @@ private fun ExpenseDetailScreen(
         }
         VerticalSpacer(24.dp)
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DetailTopBar(
-    onBack: () -> Unit,
-    onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit,
-) {
-    TopAppBar(
-        title = {},
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_arrow_back),
-                    contentDescription = stringResource(Res.string.split_screen_back_cd),
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = onEditClick) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_edit),
-                    contentDescription = stringResource(Res.string.expense_detail_edit_cd),
-                )
-            }
-            IconButton(onClick = onDeleteClick) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_delete),
-                    contentDescription = stringResource(Res.string.expense_detail_delete_cd),
-                )
-            }
-        },
-    )
 }
 
 @Composable
