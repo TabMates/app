@@ -20,7 +20,7 @@ import org.koin.core.annotation.Single
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
-@Single(createdAtStart = true)
+@Single
 class CurrencySyncCoordinator(
     sessionStorage: SessionStorage,
     @Named("prefs") prefs: KSafe,

@@ -18,6 +18,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -36,6 +37,8 @@ import de.tabmates.composeapp.deeplink.navDeepLink
 import de.tabmates.composeapp.deeplink.resolveDeepLink
 import de.tabmates.composeapp.di.TabMatesKoinApp
 import de.tabmates.composeapp.navigation.ScreenTopBar
+import de.tabmates.composeapp.sync.CurrencySyncCoordinator
+import de.tabmates.composeapp.sync.GroupSyncCoordinator
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.navigation.FabAction
 import de.tabmates.core.presentation.navigation.LoggedIn
@@ -57,10 +60,13 @@ import de.tabmates.features.tabgroup.presentation.navigation.JoinGroup
 import de.tabmates.features.tabgroup.presentation.navigation.Profile
 import de.tabmates.features.tabgroup.presentation.navigation.mainGraph
 import de.tabmates.features.tabgroup.presentation.navigation.mainSerializersModule
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.modules.plus
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.KoinApplication
+import org.koin.compose.getKoin
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.plugin.module.dsl.koinConfiguration
 import tabmatesapp.composeapp.generated.resources.Res
@@ -97,6 +103,16 @@ fun App() {
         TabMatesTheme {
             val mainViewModel = koinViewModel<MainViewModel>()
             val isLoggedIn by mainViewModel.isLoggedIn.collectAsStateWithLifecycle()
+
+            // Start sync coordinators off the main thread, post-first-frame.
+            // Keeps KSafe construction + repository graph off the startup critical path.
+            val koin = getKoin()
+            LaunchedEffect(Unit) {
+                withContext(Dispatchers.Default) {
+                    koin.get<GroupSyncCoordinator>()
+                    koin.get<CurrencySyncCoordinator>()
+                }
+            }
 
             val startDestination = if (isLoggedIn) Home else Welcome
             val backStack = rememberNavBackStack(configuration = savedStateConfiguration, startDestination)
