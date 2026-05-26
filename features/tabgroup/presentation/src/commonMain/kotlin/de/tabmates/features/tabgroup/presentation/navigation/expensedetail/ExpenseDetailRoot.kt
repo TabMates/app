@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
@@ -141,6 +142,7 @@ private fun ExpenseDetailScreen(
                     state.groupCurrencyDecimalDigits,
                 ),
             dateText = formatExpenseDate(expense.createdAt, monthLabels),
+            description = expense.description,
         )
         VerticalSpacer(24.dp)
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -214,6 +216,7 @@ private fun HeroSection(
     title: String,
     amountFormatted: String,
     dateText: String,
+    description: String,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -252,6 +255,14 @@ private fun HeroSection(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (description.isNotBlank()) {
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 

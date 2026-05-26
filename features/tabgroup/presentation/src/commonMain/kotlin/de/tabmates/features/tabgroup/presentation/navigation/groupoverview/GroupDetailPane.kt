@@ -91,6 +91,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_content
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_link
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_refresh
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_restaurant
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_send
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_settings
 import kotlin.math.abs
@@ -392,10 +393,11 @@ private fun ExpenseIcon() {
                 .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp)),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = "·",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Icon(
+            imageVector = vectorResource(Res.drawable.ic_restaurant),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp),
         )
     }
 }
