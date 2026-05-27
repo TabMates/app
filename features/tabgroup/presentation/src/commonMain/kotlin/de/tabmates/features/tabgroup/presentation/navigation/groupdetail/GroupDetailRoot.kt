@@ -25,6 +25,7 @@ fun GroupDetailRoot(
     snackbarHostState: SnackbarHostState,
     onSettingsClick: () -> Unit = {},
     onAddExpenseClick: () -> Unit = {},
+    onSettleUpClick: () -> Unit = {},
     onExpenseClick: (String) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: GroupDetailViewModel =
@@ -57,6 +58,7 @@ fun GroupDetailRoot(
             onRotateInvite = viewModel::rotateInvite,
             onSettingsClick = onSettingsClick,
             onAddExpenseClick = onAddExpenseClick,
+            onSettleUpClick = onSettleUpClick,
             onExpenseClick = onExpenseClick,
             snackbarHostState = snackbarHostState,
             modifier = modifier.fillMaxSize(),

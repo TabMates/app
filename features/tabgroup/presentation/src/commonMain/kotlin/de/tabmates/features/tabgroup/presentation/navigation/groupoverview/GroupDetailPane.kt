@@ -94,6 +94,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_refresh
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_restaurant
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_send
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_settings
+import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_action
 import kotlin.math.abs
 
 private enum class DetailTab { EXPENSES, BALANCES, MEMBERS, SETTINGS }
@@ -109,6 +110,7 @@ internal fun GroupDetailPane(
     onRotateInvite: () -> Unit,
     onSettingsClick: () -> Unit,
     onAddExpenseClick: () -> Unit = {},
+    onSettleUpClick: () -> Unit = {},
     onExpenseClick: (String) -> Unit = {},
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
@@ -179,6 +181,7 @@ internal fun GroupDetailPane(
                     item = item,
                     members = members,
                     perPersonBalances = perPersonBalances,
+                    onSettleUpClick = onSettleUpClick,
                 )
             }
 
@@ -407,7 +410,9 @@ private fun BalancesTab(
     item: GroupOverviewItem,
     members: List<GroupParticipant>,
     perPersonBalances: Map<String, Double>,
+    onSettleUpClick: () -> Unit,
 ) {
+    val owesSomeone = perPersonBalances.values.any { it < 0 }
     Column(
         modifier =
             Modifier
@@ -417,6 +422,14 @@ private fun BalancesTab(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BalanceHero(item = item)
+        if (owesSomeone) {
+            Button(
+                onClick = onSettleUpClick,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(Res.string.settle_up_action))
+            }
+        }
         if (perPersonBalances.isEmpty()) {
             EmptyTabHint(text = stringResource(Res.string.groups_status_settled))
         } else {
