@@ -56,8 +56,11 @@ import androidx.navigation3.runtime.NavKey
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
+import de.tabmates.core.presentation.navigation.OverrideTopBar
+import de.tabmates.core.presentation.navigation.TopBarAction
 import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
+import de.tabmates.core.presentation.util.UiText
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
@@ -89,6 +92,8 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expens
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_calendar
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_pie_chart
+import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_done
+import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_title
 
 @Composable
 fun AddExpenseRoot(
@@ -113,15 +118,32 @@ fun AddExpenseRoot(
         }
     }
 
-    TopBarActions(navKey) {
-        TextButton(
-            onClick = viewModel::onSaveClick,
-            enabled = !state.isSubmitting,
+    if (state.isSplitEditorVisible) {
+        // Split editor is an in-screen sub-view; take over the scaffold top bar while it is open.
+        OverrideTopBar(
+            key = navKey,
+            title = UiText.Resource(Res.string.split_screen_title),
+            navigationAction = TopBarAction.Back,
+            onNavigationClick = viewModel::onSplitDismiss,
         ) {
-            Text(
-                text = stringResource(Res.string.add_expense_save),
-                fontWeight = FontWeight.SemiBold,
-            )
+            TextButton(onClick = viewModel::onSplitConfirm) {
+                Text(
+                    text = stringResource(Res.string.split_screen_done),
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+    } else {
+        TopBarActions(navKey) {
+            TextButton(
+                onClick = viewModel::onSaveClick,
+                enabled = !state.isSubmitting,
+            ) {
+                Text(
+                    text = stringResource(Res.string.add_expense_save),
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
         }
     }
 
@@ -131,10 +153,8 @@ fun AddExpenseRoot(
         onPaidByPickerDismiss = viewModel::onPaidByPickerDismiss,
         onPaidBySelected = viewModel::onPaidBySelected,
         onSplitOpen = viewModel::onSplitOpen,
-        onSplitDismiss = viewModel::onSplitDismiss,
         onSplitTypeChange = viewModel::onSplitTypeChange,
         onSplitParticipantToggle = viewModel::onSplitParticipantToggle,
-        onSplitConfirm = viewModel::onSplitConfirm,
         onDateClick = viewModel::onDateClick,
         onDatePickerDismiss = viewModel::onDatePickerDismiss,
         onDateSelected = viewModel::onDateSelected,
@@ -150,10 +170,8 @@ internal fun AddExpenseScreen(
     onPaidByPickerDismiss: () -> Unit,
     onPaidBySelected: (String) -> Unit,
     onSplitOpen: () -> Unit,
-    onSplitDismiss: () -> Unit,
     onSplitTypeChange: (SplitType) -> Unit,
     onSplitParticipantToggle: (String) -> Unit,
-    onSplitConfirm: () -> Unit,
     onDateClick: () -> Unit,
     onDatePickerDismiss: () -> Unit,
     onDateSelected: (Long) -> Unit,
@@ -233,10 +251,8 @@ internal fun AddExpenseScreen(
     if (state.isSplitEditorVisible) {
         SplitEditorScreen(
             state = state,
-            onBack = onSplitDismiss,
             onTypeChange = onSplitTypeChange,
             onToggleParticipant = onSplitParticipantToggle,
-            onDone = onSplitConfirm,
         )
     }
 }
