@@ -152,6 +152,51 @@ class OfflineFirstTabEntryRepository(
         return Result.Success(expense)
     }
 
+    override suspend fun createSettlement(
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        receivedByUserId: String,
+        createdAt: Instant,
+    ): Result<TabEntry.Settlement, DataError.Remote> {
+        val localId = generateLocalId()
+        val now = Clock.System.now()
+        val settlement =
+            TabEntry.Settlement(
+                tabEntryId = localId,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currencyCode,
+                creatorId = paidByUserId,
+                paidByUserId = paidByUserId,
+                createdAt = createdAt,
+                lastModifiedAt = now,
+                lastModifiedByUserId = paidByUserId,
+                version = 0,
+                deletedAt = null,
+                deletedByUserId = null,
+                receivedByUserId = receivedByUserId,
+            )
+
+        database.tabEntryDao.upsertTabEntry(settlement.toEntity(pendingSync = true))
+        outbox.enqueueCreateSettlement(
+            clientRequestId = localId,
+            groupId = groupId,
+            title = title,
+            description = description,
+            amount = amount,
+            currencyCode = currencyCode,
+            paidByUserId = paidByUserId,
+            receivedByUserId = receivedByUserId,
+        )
+        return Result.Success(settlement)
+    }
+
     override suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote> {
         // Persist intent first so a crash between enqueue and local delete still drives the
         // remote delete on next drain. Outbox upsert by id is idempotent.

@@ -131,6 +131,40 @@ class FakeTabEntryRepository(
         return Result.Success(expense)
     }
 
+    override suspend fun createSettlement(
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        receivedByUserId: String,
+        createdAt: Instant,
+    ): Result<TabEntry.Settlement, DataError.Remote> {
+        val id = "fake-${flowByGroupId.values.sumOf { it.value.size } + 1}"
+        val settlement =
+            TabEntry.Settlement(
+                tabEntryId = id,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currencyCode,
+                creatorId = paidByUserId,
+                paidByUserId = paidByUserId,
+                createdAt = createdAt,
+                lastModifiedAt = Clock.System.now(),
+                lastModifiedByUserId = paidByUserId,
+                version = 0,
+                deletedAt = null,
+                deletedByUserId = null,
+                receivedByUserId = receivedByUserId,
+            )
+        val flow = flowByGroupId.getOrPut(groupId) { MutableStateFlow(emptyList()) }
+        flow.value = flow.value + settlement
+        return Result.Success(settlement)
+    }
+
     override suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote> {
         flowByGroupId.values.forEach { flow ->
             flow.value = flow.value.filterNot { it.tabEntryId == tabEntryId }
