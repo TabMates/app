@@ -6,8 +6,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import de.tabmates.core.presentation.navigation.ScreenWithTopBar
 import de.tabmates.core.presentation.navigation.TopBarAction
+import de.tabmates.core.presentation.util.UiText
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -21,17 +21,18 @@ import tabmatesapp.composeapp.generated.resources.ic_close
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenTopBar(
-    config: ScreenWithTopBar,
+    title: UiText,
+    navigationAction: TopBarAction,
     onNavigationClick: () -> Unit,
     actions: @Composable () -> Unit = {},
 ) {
     TopAppBar(
-        title = { Text(config.topBarTitle.asString()) },
+        title = { Text(title.asString()) },
         navigationIcon = {
             IconButton(onClick = onNavigationClick) {
                 Icon(
-                    imageVector = vectorResource(config.topBarAction.iconRes),
-                    contentDescription = stringResource(config.topBarAction.contentDescriptionRes),
+                    imageVector = vectorResource(navigationAction.iconRes),
+                    contentDescription = stringResource(navigationAction.contentDescriptionRes),
                 )
             }
         },

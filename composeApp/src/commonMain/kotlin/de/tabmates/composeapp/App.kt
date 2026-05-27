@@ -198,12 +198,23 @@ fun App() {
                     Scaffold(
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = {
-                            (currentKey as? ScreenWithTopBar)?.let { config ->
+                            val override = topBarActions.overrideFor(currentKey)
+                            if (override != null) {
                                 ScreenTopBar(
-                                    config = config,
-                                    onNavigationClick = { backStack.removeLastOrNull() },
-                                    actions = { topBarActions.contentFor(currentKey)?.invoke() },
+                                    title = override.title,
+                                    navigationAction = override.navigationAction,
+                                    onNavigationClick = override.onNavigationClick,
+                                    actions = override.actions,
                                 )
+                            } else {
+                                (currentKey as? ScreenWithTopBar)?.let { config ->
+                                    ScreenTopBar(
+                                        title = config.topBarTitle,
+                                        navigationAction = config.topBarAction,
+                                        onNavigationClick = { backStack.removeLastOrNull() },
+                                        actions = { topBarActions.actionsFor(currentKey)?.invoke() },
+                                    )
+                                }
                             }
                         },
                     ) {

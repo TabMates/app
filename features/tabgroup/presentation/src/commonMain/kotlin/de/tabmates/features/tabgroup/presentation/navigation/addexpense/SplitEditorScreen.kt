@@ -14,16 +14,11 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -39,13 +34,9 @@ import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_you
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_arrow_back
-import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_back_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_balanced
-import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_done
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_left_to_assign
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_over_by
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_percent_total_must_equal_100
@@ -55,17 +46,14 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.split_scre
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_tab_exact
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_tab_percentage
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_tab_shares
-import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_total
 import kotlin.math.abs
 
 @Composable
 internal fun SplitEditorScreen(
     state: AddExpenseState,
-    onBack: () -> Unit,
     onTypeChange: (SplitType) -> Unit,
     onToggleParticipant: (String) -> Unit,
-    onDone: () -> Unit,
 ) {
     val total = parseAmount(state.amountTextState.text.toString()) ?: 0.0
     val tabs = remember { SplitType.entries.toList() }
@@ -77,7 +65,6 @@ internal fun SplitEditorScreen(
                 .background(MaterialTheme.colorScheme.surface)
                 .verticalScroll(rememberScrollState()),
     ) {
-        SplitTopBar(onBack = onBack, onDone = onDone)
         VerticalSpacer(8.dp)
         SplitHero(
             total = total,
@@ -128,38 +115,6 @@ internal fun SplitEditorScreen(
         ValidationBanner(state = state, total = total)
         VerticalSpacer(24.dp)
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SplitTopBar(
-    onBack: () -> Unit,
-    onDone: () -> Unit,
-) {
-    TopAppBar(
-        title = {
-            Text(
-                text = stringResource(Res.string.split_screen_title),
-                fontWeight = FontWeight.SemiBold,
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_arrow_back),
-                    contentDescription = stringResource(Res.string.split_screen_back_cd),
-                )
-            }
-        },
-        actions = {
-            TextButton(onClick = onDone) {
-                Text(
-                    text = stringResource(Res.string.split_screen_done),
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        },
-    )
 }
 
 @Composable
