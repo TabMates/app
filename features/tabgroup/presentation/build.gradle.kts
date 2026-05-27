@@ -21,6 +21,7 @@ kotlin {
                 implementation(projects.features.tabgroup.data)
                 implementation(projects.features.tabgroup.domain)
                 implementation(libs.jetbrains.material3.adaptive)
+                implementation(libs.jetbrains.navigationevent.compose)
             }
         }
 

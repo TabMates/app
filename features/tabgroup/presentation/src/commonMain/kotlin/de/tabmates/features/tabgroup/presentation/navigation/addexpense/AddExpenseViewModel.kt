@@ -10,7 +10,6 @@ import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
-import de.tabmates.features.tabgroup.domain.models.ParticipantType
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.NewExpenseSplit
@@ -84,11 +83,7 @@ class AddExpenseViewModel(
             val currencies = currencyRepository.getCurrencies().first()
             val currency = currencies.firstOrNull { it.code == group?.defaultCurrencyCode }
             val decimals = currency?.decimalDigits ?: 2
-            val activeMembers =
-                group
-                    ?.participants
-                    ?.filter { it.participantType != ParticipantType.PLACEHOLDER }
-                    .orEmpty()
+            val activeMembers = group?.participants.orEmpty().toList()
             val existing =
                 if (isEditing) {
                     tabEntryRepository.getTabEntryById(expenseId).first() as? TabEntry.Expense
