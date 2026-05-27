@@ -2,6 +2,7 @@ package de.tabmates.features.tabgroup.data.tabentry
 
 import de.tabmates.core.data.di.APPLICATION_SCOPE
 import de.tabmates.core.domain.logging.TabMatesLogger
+import de.tabmates.core.domain.util.onFailure
 import de.tabmates.features.tabgroup.data.dto.TabEntryDto
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.data.mappers.toEntity
@@ -12,6 +13,7 @@ import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
 import de.tabmates.features.tabgroup.data.network.dto.WsErrorPayload
 import de.tabmates.features.tabgroup.data.network.dto.WsMessageType
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
+import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filterNotNull
@@ -31,6 +33,7 @@ import org.koin.core.annotation.Single
 class TabEntryRealtimeSync(
     webSocketConnector: KtorWebSocketConnector,
     private val database: TabMatesDatabase,
+    private val groupRepository: GroupRepository,
     private val json: Json,
     private val logger: TabMatesLogger,
     @Named(APPLICATION_SCOPE) private val applicationScope: CoroutineScope,
@@ -89,9 +92,16 @@ class TabEntryRealtimeSync(
         )
     }
 
-    private fun handleGroupMetadataChanged(payload: String) {
+    private suspend fun handleGroupMetadataChanged(payload: String) {
         val event = json.decodeFromString(GroupMetadataChangedWsPayload.serializer(), payload)
-        logger.info(TAG, "Group metadata changed for ${event.groupId} — refresh not yet implemented")
+        // Server broadcasts this on participant join/leave and placeholder claims. Re-fetch the
+        // group so the local cache (and every Flow observer) reflects the new participant list
+        // without waiting for the next cold-start sync.
+        groupRepository
+            .fetchGroupById(event.groupId)
+            .onFailure { error ->
+                logger.error(TAG, "Failed to refresh group ${event.groupId} after metadata change: $error")
+            }
     }
 
     private fun handleError(payload: String) {
