@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -53,6 +54,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.NavigationEventTransitionState
+import androidx.navigationevent.compose.NavigationEventHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
@@ -153,6 +158,7 @@ fun AddExpenseRoot(
         onPaidByPickerDismiss = viewModel::onPaidByPickerDismiss,
         onPaidBySelected = viewModel::onPaidBySelected,
         onSplitOpen = viewModel::onSplitOpen,
+        onSplitDismiss = viewModel::onSplitDismiss,
         onSplitTypeChange = viewModel::onSplitTypeChange,
         onSplitParticipantToggle = viewModel::onSplitParticipantToggle,
         onDateClick = viewModel::onDateClick,
@@ -170,6 +176,7 @@ internal fun AddExpenseScreen(
     onPaidByPickerDismiss: () -> Unit,
     onPaidBySelected: (String) -> Unit,
     onSplitOpen: () -> Unit,
+    onSplitDismiss: () -> Unit,
     onSplitTypeChange: (SplitType) -> Unit,
     onSplitParticipantToggle: (String) -> Unit,
     onDateClick: () -> Unit,
@@ -178,6 +185,18 @@ internal fun AddExpenseScreen(
     modifier: Modifier = Modifier,
 ) {
     val monthLabels = rememberMonthAbbreviations()
+
+    // Intercept the back gesture while the split editor sub-view is open so it dismisses the
+    // sub-view instead of leaving the whole add-expense screen. Hoisting the state lets the split
+    // editor follow the predictive-back gesture progress.
+    val backState = rememberNavigationEventState(NavigationEventInfo.None)
+    NavigationEventHandler(
+        state = backState,
+        isForwardEnabled = false,
+        isBackEnabled = state.isSplitEditorVisible,
+        onBackCompleted = onSplitDismiss,
+    )
+
     Column(
         modifier =
             modifier
@@ -253,6 +272,15 @@ internal fun AddExpenseScreen(
             state = state,
             onTypeChange = onSplitTypeChange,
             onToggleParticipant = onSplitParticipantToggle,
+            modifier =
+                Modifier.graphicsLayer {
+                    val progress =
+                        (backState.transitionState as? NavigationEventTransitionState.InProgress)
+                            ?.latestEvent
+                            ?.progress ?: 0f
+                    translationX = size.width * progress
+                    alpha = 1f - progress * 0.3f
+                },
         )
     }
 }

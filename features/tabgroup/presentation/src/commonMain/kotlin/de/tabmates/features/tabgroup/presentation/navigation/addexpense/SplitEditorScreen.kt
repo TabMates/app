@@ -54,13 +54,14 @@ internal fun SplitEditorScreen(
     state: AddExpenseState,
     onTypeChange: (SplitType) -> Unit,
     onToggleParticipant: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val total = parseAmount(state.amountTextState.text.toString()) ?: 0.0
     val tabs = remember { SplitType.entries.toList() }
 
     Column(
         modifier =
-            Modifier
+            modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
                 .verticalScroll(rememberScrollState()),
