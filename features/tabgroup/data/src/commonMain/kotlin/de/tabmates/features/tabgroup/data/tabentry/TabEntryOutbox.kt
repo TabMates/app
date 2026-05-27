@@ -99,6 +99,43 @@ class TabEntryOutbox(
         applicationScope.launch { drain() }
     }
 
+    suspend fun enqueueCreateSettlement(
+        clientRequestId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        receivedByUserId: String,
+    ) {
+        val payload =
+            NewTabEntryWsPayload.Settlement(
+                id = clientRequestId,
+                groupId = groupId,
+                paidByUserId = paidByUserId,
+                title = title,
+                description = description,
+                amount = amount,
+                currency = currencyCode,
+                receivedByUserId = receivedByUserId,
+            )
+        val envelope =
+            WebSocketMessageDto(
+                type = WsMessageType.NEW_TAB_ENTRY,
+                payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
+            )
+        database.pendingOutboxDao.upsert(
+            PendingOutboxEntity(
+                id = clientRequestId,
+                type = OUTBOX_TYPE_NEW_TAB_ENTRY,
+                payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
+                createdAt = Clock.System.now().toEpochMilliseconds(),
+            ),
+        )
+        applicationScope.launch { drain() }
+    }
+
     suspend fun enqueueUpdateExpense(
         tabEntryId: String,
         groupId: String,

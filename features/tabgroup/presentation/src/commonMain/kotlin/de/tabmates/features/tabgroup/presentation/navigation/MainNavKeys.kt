@@ -31,6 +31,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home_filled
 import tabmatesapp.features.tabgroup.presentation.generated.resources.join_group_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_title
 
 @Serializable
 data object Home : LoggableNavKey(), TopLevelTab, ScreenWithFab {
@@ -114,6 +115,12 @@ data object CreateGroup : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
 data class GroupDetail(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.DynamicString("")
     override val topBarAction: TopBarAction get() = TopBarAction.Back
+}
+
+@Serializable
+data class SettleUp(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.settle_up_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
 
 @Serializable

@@ -18,6 +18,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.Group
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
+import de.tabmates.features.tabgroup.presentation.navigation.settleup.SettleUpRoot
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
@@ -35,6 +36,7 @@ val mainSerializersModule =
             subclass(ExpenseDetail::class)
             subclass(CreateGroup::class)
             subclass(GroupDetail::class)
+            subclass(SettleUp::class)
             subclass(GroupSettings::class)
             subclass(JoinGroup::class)
         }
@@ -70,9 +72,17 @@ fun EntryProviderScope<NavKey>.mainGraph(
             snackbarHostState = snackbarHostState,
             onSettingsClick = { backStack.add(GroupSettings(route.groupId)) },
             onAddExpenseClick = { backStack.add(AddExpense(route.groupId)) },
+            onSettleUpClick = { backStack.add(SettleUp(route.groupId)) },
             onExpenseClick = { expenseId ->
                 backStack.add(ExpenseDetail(expenseId = expenseId, groupId = route.groupId))
             },
+        )
+    }
+
+    entry<SettleUp> { route ->
+        SettleUpRoot(
+            groupId = route.groupId,
+            snackbarHostState = snackbarHostState,
         )
     }
 

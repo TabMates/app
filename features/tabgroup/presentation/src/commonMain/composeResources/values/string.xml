@@ -223,4 +223,14 @@
     <string name="expense_detail_delete_dialog_message">This expense will be removed from the group. This cannot be undone.</string>
     <string name="expense_detail_delete_dialog_confirm">Delete</string>
     <string name="expense_detail_delete_dialog_cancel">Cancel</string>
+
+    <string name="settle_up_title">Settle up</string>
+    <string name="settle_up_action">Settle up</string>
+    <string name="settle_up_subtitle">Smart payments that clear your share with the fewest transfers.</string>
+    <string name="settle_up_pay_to">Pay %1$s</string>
+    <string name="settle_up_record_action">Settle</string>
+    <string name="settle_up_recorded">Recorded payment to %1$s</string>
+    <string name="settle_up_all_settled_title">You're all settled up</string>
+    <string name="settle_up_all_settled_caption">You don't owe anyone in this group.</string>
+    <string name="settle_up_default_title">Settlement</string>
 </resources>
