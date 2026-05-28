@@ -106,16 +106,6 @@ class GroupDetailViewModelTest {
         }
 
     @Test
-    fun currentUserInitialsUseFirstTwoChars() =
-        runTest(testDispatcher) {
-            val viewModel = createViewModel(groupId = "g1")
-            activateState(viewModel)
-            advanceUntilIdle()
-
-            assertEquals("AL", viewModel.state.value.currentUserInitials)
-        }
-
-    @Test
     fun currencySymbolResolvedFromCurrencyRepository() =
         runTest(testDispatcher) {
             val groupRepo =

@@ -214,17 +214,6 @@ class GroupOverviewViewModelTest {
             assertEquals("g2", viewModel.state.value.selectedGroupId)
         }
 
-    @Test
-    fun currentUserInitialsUseFirstTwoChars() =
-        runTest(testDispatcher) {
-            val sessionStorage = FakeSessionStorage()
-            val viewModel = createViewModel(sessionStorage = sessionStorage)
-            activateState(viewModel)
-            advanceUntilIdle()
-
-            assertEquals("AL", viewModel.state.value.currentUserInitials)
-        }
-
     private fun TestScope.activateState(viewModel: GroupOverviewViewModel) {
         backgroundScope.launch { viewModel.state.collect {} }
         advanceUntilIdle()

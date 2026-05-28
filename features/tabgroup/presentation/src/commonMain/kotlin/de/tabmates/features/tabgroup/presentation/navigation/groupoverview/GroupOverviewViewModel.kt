@@ -106,12 +106,6 @@ class GroupOverviewViewModel(
                 filter = filter,
                 searchQueryState = searchQueryState,
                 selectedGroupId = selected ?: items.firstOrNull()?.id,
-                currentUserInitials =
-                    currentUser
-                        ?.username
-                        ?.take(2)
-                        ?.uppercase()
-                        .orEmpty(),
             )
         }.stateIn(
             scope = viewModelScope,

@@ -45,9 +45,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
@@ -155,8 +157,6 @@ private fun CompactLayout(
         modifier = modifier.fillMaxSize(),
     ) {
         GroupsHeader(
-            currentUserInitials = state.currentUserInitials,
-            showAvatar = true,
             searchQueryState = state.searchQueryState,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         )
@@ -195,8 +195,6 @@ private fun ExpandedLayout(
                     .fillMaxHeight(),
         ) {
             GroupsHeader(
-                currentUserInitials = state.currentUserInitials,
-                showAvatar = false,
                 searchQueryState = state.searchQueryState,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             )
@@ -240,8 +238,6 @@ private fun ExpandedLayout(
 
 @Composable
 private fun GroupsHeader(
-    currentUserInitials: String,
-    showAvatar: Boolean,
     searchQueryState: TextFieldState,
     modifier: Modifier = Modifier,
 ) {
@@ -285,10 +281,6 @@ private fun GroupsHeader(
                     contentDescription = stringResource(Res.string.groups_search_cd),
                 )
             }
-            if (showAvatar) {
-                HorizontalSpacer(4.dp)
-                UserAvatar(initials = currentUserInitials)
-            }
         }
     }
 }
@@ -321,18 +313,25 @@ private fun SearchField(
 }
 
 @Composable
-internal fun UserAvatar(initials: String) {
+internal fun UserAvatar(
+    initials: String,
+    modifier: Modifier = Modifier,
+    size: Dp = 36.dp,
+    containerColor: Color = MaterialTheme.colorScheme.secondaryContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
+    textStyle: TextStyle = MaterialTheme.typography.labelMedium,
+) {
     Box(
         modifier =
-            Modifier
-                .size(36.dp)
-                .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+            modifier
+                .size(size)
+                .background(containerColor, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = initials.ifEmpty { "?" },
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            style = textStyle,
+            color = contentColor,
             fontWeight = FontWeight.SemiBold,
         )
     }
@@ -657,6 +656,5 @@ private fun previewState(): GroupOverviewState {
         filter = GroupFilter.ALL,
         searchQueryState = TextFieldState(),
         selectedGroupId = "1",
-        currentUserInitials = "SR",
     )
 }

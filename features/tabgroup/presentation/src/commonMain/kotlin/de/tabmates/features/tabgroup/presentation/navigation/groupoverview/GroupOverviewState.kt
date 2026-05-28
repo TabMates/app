@@ -11,7 +11,6 @@ data class GroupOverviewState(
     val filter: GroupFilter = GroupFilter.ALL,
     val searchQueryState: TextFieldState = TextFieldState(),
     val selectedGroupId: String? = null,
-    val currentUserInitials: String = "",
 ) {
     val selectedItem: GroupOverviewItem?
         get() = allItems.firstOrNull { it.id == selectedGroupId }
