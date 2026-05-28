@@ -70,6 +70,7 @@ import de.tabmates.core.presentation.util.UiText
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.SplitType
+import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerBottomSheet
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar

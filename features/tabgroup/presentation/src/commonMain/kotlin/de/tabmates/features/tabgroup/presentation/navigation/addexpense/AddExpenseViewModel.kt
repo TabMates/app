@@ -17,6 +17,7 @@ import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.NewExpenseSplit
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.buildCurrencyPickerState
 import kotlinx.coroutines.channels.Channel

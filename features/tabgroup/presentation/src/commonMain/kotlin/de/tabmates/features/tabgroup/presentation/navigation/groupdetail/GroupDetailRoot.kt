@@ -50,7 +50,6 @@ fun GroupDetailRoot(
     } else {
         GroupDetailPane(
             item = item,
-            currentUserInitials = state.currentUserInitials,
             currentUserId = state.currentUserId,
             members = state.members,
             expenses = state.expenses,

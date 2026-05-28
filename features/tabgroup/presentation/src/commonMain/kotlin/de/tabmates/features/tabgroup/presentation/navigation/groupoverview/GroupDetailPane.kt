@@ -104,7 +104,6 @@ private enum class DetailTab { EXPENSES, BALANCES, MEMBERS, SETTINGS }
 @Composable
 internal fun GroupDetailPane(
     item: GroupOverviewItem,
-    currentUserInitials: String,
     currentUserId: String,
     members: List<GroupParticipant>,
     expenses: List<TabEntry.Expense>,
@@ -150,7 +149,6 @@ internal fun GroupDetailPane(
     Column(modifier = modifier) {
         DetailHeader(
             item = item,
-            currentUserInitials = currentUserInitials,
             isExpanded = isExpanded,
             onInviteClick = onShareInvite,
             onSettingsClick = onSettingsClick,
@@ -218,7 +216,6 @@ internal fun GroupDetailPane(
 @Composable
 private fun DetailHeader(
     item: GroupOverviewItem,
-    currentUserInitials: String,
     isExpanded: Boolean,
     onInviteClick: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -259,8 +256,6 @@ private fun DetailHeader(
                     onInviteClick = onInviteClick,
                     onAddExpenseClick = onAddExpenseClick,
                 )
-                HorizontalSpacer(12.dp)
-                UserAvatar(initials = currentUserInitials)
             } else {
                 IconButton(onClick = onSettingsClick) {
                     Icon(

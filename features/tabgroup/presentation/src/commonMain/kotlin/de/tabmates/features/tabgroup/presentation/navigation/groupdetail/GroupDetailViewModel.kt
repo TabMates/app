@@ -32,7 +32,6 @@ import kotlin.time.Duration.Companion.seconds
 data class GroupDetailState(
     val item: GroupOverviewItem? = null,
     val currentUserId: String = "",
-    val currentUserInitials: String = "",
     val members: List<GroupParticipant> = emptyList(),
     val expenses: List<TabEntry.Expense> = emptyList(),
     val perPersonBalances: Map<String, Double> = emptyMap(),
@@ -82,12 +81,6 @@ class GroupDetailViewModel(
             GroupDetailState(
                 item = item,
                 currentUserId = currentUserId,
-                currentUserInitials =
-                    currentUser
-                        ?.username
-                        ?.take(2)
-                        ?.uppercase()
-                        .orEmpty(),
                 members = group?.participants?.toList().orEmpty(),
                 expenses =
                     visibleEntries

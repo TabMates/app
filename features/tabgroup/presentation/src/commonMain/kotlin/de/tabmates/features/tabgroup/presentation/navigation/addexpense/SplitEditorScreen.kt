@@ -32,6 +32,7 @@ import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.SplitType
+import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import org.jetbrains.compose.resources.stringResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
