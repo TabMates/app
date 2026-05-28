@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.AddExpenseRoot
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CreateGroupRoot
 import de.tabmates.features.tabgroup.presentation.navigation.expensedetail.ExpenseDetailRoot
@@ -52,7 +53,13 @@ fun EntryProviderScope<NavKey>.mainGraph(
     snackbarHostState: SnackbarHostState,
 ) {
     entry<Home> {
-        HomeRoot()
+        HomeRoot(
+            onGroupClick = { groupId -> backStack.add(GroupDetail(groupId)) },
+            onSeeAllGroups = {
+                backStack.removeAll { it is TopLevelTab }
+                backStack.add(Group)
+            },
+        )
     }
 
     entry<Activity> {

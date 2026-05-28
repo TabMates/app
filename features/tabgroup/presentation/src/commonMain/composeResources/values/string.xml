@@ -259,6 +259,15 @@
     <string name="profile_nav_notifications">Notifications</string>
     <string name="profile_footer">TabMates</string>
 
+    <string name="home_title">TabMates</string>
+    <string name="home_net_balance">Net balance</string>
+    <string name="home_subtitle_owed">owed to you · across %1$d groups</string>
+    <string name="home_subtitle_owe">you owe · across %1$d groups</string>
+    <string name="home_subtitle_settled">you're all settled up</string>
+    <string name="home_your_groups">YOUR GROUPS</string>
+    <string name="home_see_all">See all</string>
+    <string name="home_empty">No groups yet. Tap + to start one.</string>
+
     <string name="account_save">Save</string>
     <string name="edit_username_title">Username</string>
     <string name="edit_username_label">Username</string>
