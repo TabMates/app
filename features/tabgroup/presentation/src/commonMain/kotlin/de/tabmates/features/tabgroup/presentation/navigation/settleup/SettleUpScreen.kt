@@ -28,7 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.presentation.util.ObserveAsEvents
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatMoney
+import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
