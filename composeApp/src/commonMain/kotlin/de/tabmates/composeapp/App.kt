@@ -1,5 +1,6 @@
 package de.tabmates.composeapp
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +42,7 @@ import de.tabmates.composeapp.navigation.ScreenTopBar
 import de.tabmates.composeapp.sync.CurrencySyncCoordinator
 import de.tabmates.composeapp.sync.GroupSyncCoordinator
 import de.tabmates.core.designsystem.theme.TabMatesTheme
+import de.tabmates.core.domain.preferences.ThemeMode
 import de.tabmates.core.presentation.navigation.FabAction
 import de.tabmates.core.presentation.navigation.LocalTopBarActionsController
 import de.tabmates.core.presentation.navigation.LoggedIn
@@ -103,8 +105,15 @@ fun App() {
     KoinApplication(
         configuration = koinConfiguration<TabMatesKoinApp>(),
     ) {
-        TabMatesTheme {
-            val mainViewModel = koinViewModel<MainViewModel>()
+        val mainViewModel = koinViewModel<MainViewModel>()
+        val themeMode by mainViewModel.themeMode.collectAsStateWithLifecycle()
+        val darkTheme =
+            when (themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
+        TabMatesTheme(darkTheme = darkTheme) {
             val isLoggedIn by mainViewModel.isLoggedIn.collectAsStateWithLifecycle()
 
             // Start sync coordinators off the main thread, post-first-frame.

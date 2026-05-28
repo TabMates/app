@@ -22,8 +22,10 @@ import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.change_password_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_expense_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_username_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.home_label
@@ -83,6 +85,18 @@ data object Profile : LoggableNavKey(), TopLevelTab, ScreenWithFab {
 
 @Serializable
 data object Settings : LoggableNavKey(), LoggedIn
+
+@Serializable
+data object EditUsername : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.edit_username_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Close
+}
+
+@Serializable
+data object ChangePassword : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.change_password_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Close
+}
 
 @Serializable
 data class AddExpense(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {

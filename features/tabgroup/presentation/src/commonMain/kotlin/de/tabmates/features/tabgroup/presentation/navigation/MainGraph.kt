@@ -18,6 +18,9 @@ import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.Group
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.ChangePasswordRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.EditUsernameRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.ProfileRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settleup.SettleUpRoot
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -39,6 +42,8 @@ val mainSerializersModule =
             subclass(SettleUp::class)
             subclass(GroupSettings::class)
             subclass(JoinGroup::class)
+            subclass(EditUsername::class)
+            subclass(ChangePassword::class)
         }
     }
 
@@ -87,7 +92,27 @@ fun EntryProviderScope<NavKey>.mainGraph(
     }
 
     entry<Profile> {
-        PlaceholderScreen("Profile")
+        ProfileRoot(
+            snackbarHostState = snackbarHostState,
+            onEditUsername = { backStack.add(EditUsername) },
+            onChangePassword = { backStack.add(ChangePassword) },
+        )
+    }
+
+    entry<EditUsername> { route ->
+        EditUsernameRoot(
+            navKey = route,
+            snackbarHostState = snackbarHostState,
+            onSaved = { backStack.removeLastOrNull() },
+        )
+    }
+
+    entry<ChangePassword> { route ->
+        ChangePasswordRoot(
+            navKey = route,
+            snackbarHostState = snackbarHostState,
+            onSaved = { backStack.removeLastOrNull() },
+        )
     }
 
     entry<Settings> {
