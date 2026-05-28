@@ -11,6 +11,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import de.tabmates.core.presentation.navigation.TopLevelTab
+import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivityRoot
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.AddExpenseRoot
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CreateGroupRoot
 import de.tabmates.features.tabgroup.presentation.navigation.expensedetail.ExpenseDetailRoot
@@ -63,7 +64,9 @@ fun EntryProviderScope<NavKey>.mainGraph(
     }
 
     entry<Activity> {
-        PlaceholderScreen("Activity")
+        ActivityRoot(
+            onGroupClick = { groupId -> backStack.add(GroupDetail(groupId)) },
+        )
     }
 
     entry<Group> {
