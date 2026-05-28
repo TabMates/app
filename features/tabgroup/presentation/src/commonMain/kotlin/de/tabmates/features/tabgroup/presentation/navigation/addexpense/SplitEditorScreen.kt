@@ -97,8 +97,8 @@ internal fun SplitEditorScreen(
                     isCurrentUser = member.userId == state.currentUserId,
                     included = input.included,
                     splitType = state.splitType,
-                    currencySymbol = state.groupCurrencySymbol,
-                    currencyDecimals = state.groupCurrencyDecimalDigits,
+                    currencySymbol = state.expenseCurrencySymbol,
+                    currencyDecimals = state.expenseCurrencyDecimalDigits,
                     equalShare =
                         if (state.splitType == SplitType.EQUAL) {
                             equalShareFor(input, state, total)
@@ -131,7 +131,7 @@ private fun SplitHero(
             text =
                 stringResource(
                     Res.string.split_screen_total,
-                    formatMoney(state.groupCurrencySymbol, total, state.groupCurrencyDecimalDigits),
+                    formatMoney(state.expenseCurrencySymbol, total, state.expenseCurrencyDecimalDigits),
                 ),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -153,8 +153,8 @@ private fun SplitRemainderText(
             val remaining = total - assigned
             RemainderText(
                 remaining = remaining,
-                symbol = state.groupCurrencySymbol,
-                decimals = state.groupCurrencyDecimalDigits,
+                symbol = state.expenseCurrencySymbol,
+                decimals = state.expenseCurrencyDecimalDigits,
             )
         }
 
@@ -261,10 +261,10 @@ private fun ValidationBanner(
             SplitType.EXACT_AMOUNT -> {
                 val assigned =
                     state.splitInputs.sumOf { parseAmount(it.exactAmountState.text.toString()) ?: 0.0 }
-                if (abs(assigned - total) > epsilon(state.groupCurrencyDecimalDigits)) {
+                if (abs(assigned - total) > epsilon(state.expenseCurrencyDecimalDigits)) {
                     stringResource(
                         Res.string.split_screen_running_total_must_equal,
-                        formatMoney(state.groupCurrencySymbol, total, state.groupCurrencyDecimalDigits),
+                        formatMoney(state.expenseCurrencySymbol, total, state.expenseCurrencyDecimalDigits),
                     )
                 } else {
                     null

@@ -5,6 +5,7 @@ import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
@@ -217,6 +218,7 @@ class AddExpenseViewModelTest {
         groupRepository: FakeGroupRepository =
             FakeGroupRepository(initialGroups = listOf(Fixtures.group(id = "g1", currency = "EUR"))),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
+        exchangeRateRepository: FakeExchangeRateRepository = FakeExchangeRateRepository(),
         sessionStorage: FakeSessionStorage = FakeSessionStorage(),
     ): AddExpenseViewModel =
         AddExpenseViewModel(
@@ -225,6 +227,7 @@ class AddExpenseViewModelTest {
             tabEntryRepository = tabEntryRepository,
             groupRepository = groupRepository,
             currencyRepository = currencyRepository,
+            exchangeRateRepository = exchangeRateRepository,
             sessionStorage = sessionStorage,
         )
 }

@@ -74,7 +74,7 @@
     <string name="create_group_description_placeholder">Description (optional)</string>
     <string name="create_group_default_currency">Default currency</string>
     <string name="create_group_placeholders_section">PLACEHOLDERS</string>
-    <string name="create_group_placeholders_caption">Add spots for people now — they can claim them later with an invite link.</string>
+    <string name="create_group_placeholders_caption">Add spots for people now — they can claim them later with an invitation link.</string>
     <string name="create_group_add_placeholder">Add placeholder</string>
     <string name="create_group_placeholder_name_label">Placeholder name</string>
     <string name="create_group_placeholder_dialog_title">Add placeholder</string>
@@ -172,6 +172,8 @@
     <string name="edit_expense_title">Edit expense</string>
     <string name="add_expense_save">Save</string>
     <string name="add_expense_close_cd">Close</string>
+    <string name="add_expense_currency_cd">Change currency</string>
+    <string name="add_expense_rate_unavailable">Exchange rate unavailable — saved as entered</string>
     <string name="add_expense_amount_label">AMOUNT</string>
     <string name="add_expense_amount_placeholder">0</string>
     <string name="add_expense_date_confirm">Set</string>

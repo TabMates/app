@@ -293,3 +293,27 @@ internal fun filterCurrencies(
             c.name.contains(trimmed, ignoreCase = true)
     }
 }
+
+/** Builds the [CurrencyPickerUiState] shown by [CurrencyPickerBottomSheet] for a given query. */
+internal fun buildCurrencyPickerState(
+    currencies: List<Currency>,
+    recentCodes: List<String>,
+    selectedCode: String,
+    query: String,
+): CurrencyPickerUiState {
+    val recents = recentCodes.mapNotNull { code -> currencies.firstOrNull { it.code == code } }
+    val showSections = query.isBlank()
+    val filteredRecents = if (showSections) recents else filterCurrencies(recents, query)
+    val results =
+        if (showSections) {
+            currencies.filter { it.code !in recentCodes }
+        } else {
+            filterCurrencies(currencies, query)
+        }
+    return CurrencyPickerUiState(
+        recents = filteredRecents,
+        results = results,
+        showSections = showSections,
+        selectedCode = selectedCode,
+    )
+}

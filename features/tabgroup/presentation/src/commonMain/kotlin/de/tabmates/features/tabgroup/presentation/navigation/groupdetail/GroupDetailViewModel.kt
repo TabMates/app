@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.features.tabgroup.domain.balance.PerPersonBalanceCalculator
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
+import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
+import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
@@ -33,6 +36,8 @@ data class GroupDetailState(
     val members: List<GroupParticipant> = emptyList(),
     val expenses: List<TabEntry.Expense> = emptyList(),
     val perPersonBalances: Map<String, Double> = emptyMap(),
+    val currencyByCode: Map<String, Currency> = emptyMap(),
+    val ratesByCurrency: Map<String, Double> = emptyMap(),
 )
 
 @KoinViewModel
@@ -41,6 +46,7 @@ class GroupDetailViewModel(
     private val groupRepository: GroupRepository,
     private val tabEntryRepository: TabEntryRepository,
     currencyRepository: CurrencyRepository,
+    exchangeRateRepository: ExchangeRateRepository,
     sessionStorage: SessionStorage,
 ) : ViewModel() {
     private val currentUser = sessionStorage.get()?.user
@@ -64,12 +70,14 @@ class GroupDetailViewModel(
                         viewModelScope.launch { tabEntryRepository.fetchTabEntries(groupId) }
                     }
                 },
-        ) { group, currencies, entries ->
+            exchangeRateRepository.getExchangeRates().onStart { emit(emptyList()) },
+        ) { group, currencies, entries, rates ->
             val visibleEntries = entries.filterNot { it.isDeleted }
+            val conversion = group?.let { CurrencyConversion.from(it.defaultCurrencyCode, rates) }
             val item =
                 group?.let {
                     val currency = currencies.firstOrNull { c -> c.code == it.defaultCurrencyCode }
-                    it.toUiItem(currency).withStats(entries, currentUserId)
+                    it.toUiItem(currency).withStats(entries, currentUserId, conversion)
                 }
             GroupDetailState(
                 item = item,
@@ -86,7 +94,9 @@ class GroupDetailViewModel(
                         .filterIsInstance<TabEntry.Expense>()
                         .sortedByDescending { it.createdAt },
                 perPersonBalances =
-                    PerPersonBalanceCalculator.computeByParticipant(visibleEntries, currentUserId),
+                    PerPersonBalanceCalculator.computeByParticipant(visibleEntries, currentUserId, conversion),
+                currencyByCode = currencies.associateBy { it.code },
+                ratesByCurrency = rates.associate { it.currencyCode to it.rateToBase },
             )
         }.stateIn(
             scope = viewModelScope,

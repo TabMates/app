@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,8 +67,11 @@ import de.tabmates.core.presentation.navigation.TopBarAction
 import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.core.presentation.util.UiText
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.SplitType
+import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerBottomSheet
+import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.stringResource
@@ -77,6 +81,7 @@ import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_amount_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_amount_placeholder
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_currency_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_cancel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_confirm
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_label
@@ -87,6 +92,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expens
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_people_plural
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_people_singular
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_rate_unavailable
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_save
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_equal
@@ -115,6 +121,7 @@ fun AddExpenseRoot(
         ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val currencyPickerState by viewModel.currencyPickerState.collectAsStateWithLifecycle()
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
@@ -154,9 +161,13 @@ fun AddExpenseRoot(
 
     AddExpenseScreen(
         state = state,
+        currencyPickerState = currencyPickerState,
         onPaidByClick = viewModel::onPaidByClick,
         onPaidByPickerDismiss = viewModel::onPaidByPickerDismiss,
         onPaidBySelected = viewModel::onPaidBySelected,
+        onCurrencyClick = viewModel::onCurrencyClick,
+        onCurrencyPickerDismiss = viewModel::onCurrencyPickerDismiss,
+        onCurrencySelected = viewModel::onCurrencySelected,
         onSplitOpen = viewModel::onSplitOpen,
         onSplitDismiss = viewModel::onSplitDismiss,
         onSplitTypeChange = viewModel::onSplitTypeChange,
@@ -172,9 +183,13 @@ fun AddExpenseRoot(
 @Composable
 internal fun AddExpenseScreen(
     state: AddExpenseState,
+    currencyPickerState: CurrencyPickerUiState,
     onPaidByClick: () -> Unit,
     onPaidByPickerDismiss: () -> Unit,
     onPaidBySelected: (String) -> Unit,
+    onCurrencyClick: () -> Unit,
+    onCurrencyPickerDismiss: () -> Unit,
+    onCurrencySelected: (String) -> Unit,
     onSplitOpen: () -> Unit,
     onSplitDismiss: () -> Unit,
     onSplitTypeChange: (SplitType) -> Unit,
@@ -207,8 +222,13 @@ internal fun AddExpenseScreen(
         VerticalSpacer(8.dp)
         AmountInput(
             amountState = state.amountTextState,
-            symbol = state.groupCurrencySymbol,
+            symbol = state.expenseCurrencySymbol,
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
+        )
+        VerticalSpacer(8.dp)
+        CurrencySelector(
+            state = state,
+            onCurrencyClick = onCurrencyClick,
         )
         VerticalSpacer(24.dp)
         Column(
@@ -264,6 +284,15 @@ internal fun AddExpenseScreen(
             initialEpochMillis = state.createdAt.toEpochMilliseconds(),
             onDismiss = onDatePickerDismiss,
             onConfirm = onDateSelected,
+        )
+    }
+
+    if (state.isCurrencyPickerVisible) {
+        CurrencyPickerBottomSheet(
+            queryState = state.currencyQueryState,
+            state = currencyPickerState,
+            onCurrencySelected = onCurrencySelected,
+            onDismiss = onCurrencyPickerDismiss,
         )
     }
 
@@ -389,6 +418,63 @@ private fun AmountInput(
             }
         }
     }
+}
+
+@Composable
+private fun CurrencySelector(
+    state: AddExpenseState,
+    onCurrencyClick: () -> Unit,
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        AssistChip(
+            onClick = onCurrencyClick,
+            label = { Text(state.expenseCurrencyCode.ifEmpty { "—" }) },
+            trailingIcon = {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_chevron_right),
+                    contentDescription = stringResource(Res.string.add_expense_currency_cd),
+                    modifier = Modifier.size(16.dp),
+                )
+            },
+        )
+        if (state.isForeignCurrency) {
+            VerticalSpacer(4.dp)
+            ConvertedAmountHint(state = state)
+        }
+    }
+}
+
+@Composable
+private fun ConvertedAmountHint(state: AddExpenseState) {
+    val amount = parseAmount(state.amountTextState.text.toString())
+    val converted =
+        amount?.let {
+            CurrencyConverter.convert(
+                amount = it,
+                from = state.expenseCurrencyCode,
+                to = state.baseCurrencyCode,
+                rates = state.ratesByCurrency,
+            )
+        }
+    val text =
+        when {
+            amount == null -> {
+                null
+            }
+
+            converted != null -> {
+                "≈ ${formatMoney(state.baseCurrencySymbol, converted, state.baseCurrencyDecimalDigits)}"
+            }
+
+            else -> {
+                stringResource(Res.string.add_expense_rate_unavailable)
+            }
+        } ?: return
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable

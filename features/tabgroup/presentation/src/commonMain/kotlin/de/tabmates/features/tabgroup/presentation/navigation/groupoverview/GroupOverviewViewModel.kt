@@ -5,9 +5,13 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
+import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
+import de.tabmates.features.tabgroup.domain.models.ExchangeRate
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
+import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +34,7 @@ class GroupOverviewViewModel(
     groupRepository: GroupRepository,
     tabEntryRepository: TabEntryRepository,
     currencyRepository: CurrencyRepository,
+    exchangeRateRepository: ExchangeRateRepository,
     sessionStorage: SessionStorage,
 ) : ViewModel() {
     private val currentUser = sessionStorage.get()?.user
@@ -54,23 +59,34 @@ class GroupOverviewViewModel(
             if (items.isEmpty()) {
                 flowOf(items)
             } else {
-                enrichWithStats(items, tabEntryRepository)
+                enrichWithStats(items, tabEntryRepository, exchangeRateRepository.getExchangeRates())
             }
         }
 
     private fun enrichWithStats(
         baseItems: List<GroupOverviewItem>,
         tabEntryRepository: TabEntryRepository,
-    ): Flow<List<GroupOverviewItem>> =
-        combine(
-            baseItems.map { item ->
-                tabEntryRepository
-                    .getTabEntriesForGroup(item.id)
-                    .onStart { emit(emptyList()) }
-                    .map { entries -> item.withStats(entries, currentUserId) }
-            },
-        ) { items -> items.toList().sortedByDescending { it.lastActivityAt } }
-            .onStart { emit(baseItems) }
+        ratesFlow: Flow<List<ExchangeRate>>,
+    ): Flow<List<GroupOverviewItem>> {
+        val entriesPerItem: Flow<List<Pair<GroupOverviewItem, List<TabEntry>>>> =
+            combine(
+                baseItems.map { item ->
+                    tabEntryRepository
+                        .getTabEntriesForGroup(item.id)
+                        .onStart { emit(emptyList()) }
+                        .map { entries -> item to entries }
+                },
+            ) { it.toList() }
+        return combine(
+            entriesPerItem,
+            ratesFlow.onStart { emit(emptyList()) },
+        ) { pairs, rates ->
+            pairs
+                .map { (item, entries) ->
+                    item.withStats(entries, currentUserId, CurrencyConversion.from(item.currencyCode, rates))
+                }.sortedByDescending { it.lastActivityAt }
+        }.onStart { emit(baseItems) }
+    }
 
     val state: StateFlow<GroupOverviewState> =
         combine(

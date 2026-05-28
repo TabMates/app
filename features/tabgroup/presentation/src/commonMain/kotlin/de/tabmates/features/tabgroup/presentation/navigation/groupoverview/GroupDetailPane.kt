@@ -46,6 +46,8 @@ import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.theme.extended
 import de.tabmates.core.presentation.share.LinkShareResult
 import de.tabmates.core.presentation.share.rememberLinkSharer
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
+import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.ParticipantType
@@ -107,6 +109,8 @@ internal fun GroupDetailPane(
     members: List<GroupParticipant>,
     expenses: List<TabEntry.Expense>,
     perPersonBalances: Map<String, Double>,
+    currencyByCode: Map<String, Currency>,
+    ratesByCurrency: Map<String, Double>,
     onRotateInvite: () -> Unit,
     onSettingsClick: () -> Unit,
     onAddExpenseClick: () -> Unit = {},
@@ -172,6 +176,8 @@ internal fun GroupDetailPane(
                     currentUserId = currentUserId,
                     members = members,
                     expenses = expenses,
+                    currencyByCode = currencyByCode,
+                    ratesByCurrency = ratesByCurrency,
                     onExpenseClick = onExpenseClick,
                 )
             }
@@ -313,6 +319,8 @@ private fun ExpensesTab(
     currentUserId: String,
     members: List<GroupParticipant>,
     expenses: List<TabEntry.Expense>,
+    currencyByCode: Map<String, Currency>,
+    ratesByCurrency: Map<String, Double>,
     onExpenseClick: (String) -> Unit,
 ) {
     val payerById = remember(members) { members.associateBy { it.userId } }
@@ -334,6 +342,8 @@ private fun ExpensesTab(
                     currentUserId = currentUserId,
                     payerName = payerById[expense.paidByUserId]?.username.orEmpty(),
                     item = item,
+                    currency = currencyByCode[expense.currencyCode],
+                    ratesByCurrency = ratesByCurrency,
                     onClick = { onExpenseClick(expense.tabEntryId) },
                 )
             }
@@ -347,6 +357,8 @@ private fun ExpenseRow(
     currentUserId: String,
     payerName: String,
     item: GroupOverviewItem,
+    currency: Currency?,
+    ratesByCurrency: Map<String, Double>,
     onClick: () -> Unit,
 ) {
     Row(
@@ -380,11 +392,38 @@ private fun ExpenseRow(
         }
         HorizontalSpacer(8.dp)
         Text(
-            text = formatAmount(item, expense.amount),
+            text = expenseAmountLabel(expense, item, currency, ratesByCurrency),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
         )
     }
+}
+
+/**
+ * Amount shown on an expense row. For a foreign-currency expense, the converted amount in the
+ * group's base currency leads, followed by the original amount in brackets
+ * (e.g. `€18.40 - ($20.00)`). Same-currency expenses just show the single amount, and if no rate
+ * is available the original amount is shown on its own.
+ */
+private fun expenseAmountLabel(
+    expense: TabEntry.Expense,
+    item: GroupOverviewItem,
+    currency: Currency?,
+    ratesByCurrency: Map<String, Double>,
+): String {
+    val originalSymbol = currency?.nativeSymbol ?: expense.currencyCode
+    val originalDecimals = currency?.decimalDigits ?: item.currencyDecimalDigits
+    val original = formatAmount(expense.amount, originalSymbol, originalDecimals)
+    if (expense.currencyCode == item.currencyCode) return original
+
+    val converted =
+        CurrencyConverter.convert(
+            amount = expense.amount,
+            from = expense.currencyCode,
+            to = item.currencyCode,
+            rates = ratesByCurrency,
+        ) ?: return original
+    return "${formatAmount(item, converted)} ≈ ($original)"
 }
 
 @Composable
