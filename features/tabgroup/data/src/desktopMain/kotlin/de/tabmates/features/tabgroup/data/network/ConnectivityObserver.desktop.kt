@@ -68,6 +68,6 @@ actual class ConnectivityObserver(
     }
 
     private companion object {
-        const val TAG = "ConnectivityObserver"
+        private const val TAG = "ConnectivityObserver"
     }
 }

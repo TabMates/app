@@ -40,6 +40,6 @@ class WebSocketTransport(
         }
 
     private companion object {
-        const val TAG = "WebSocketTransport"
+        private const val TAG = "WebSocketTransport"
     }
 }
