@@ -1,6 +1,7 @@
 package de.tabmates.features.tabgroup.presentation.navigation.groupoverview
 
 import de.tabmates.features.tabgroup.domain.balance.UserBalanceCalculator
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
@@ -30,11 +31,16 @@ internal fun Group.toUiItem(currency: Currency?): GroupOverviewItem {
 internal fun GroupOverviewItem.withStats(
     entries: List<TabEntry>,
     currentUserId: String,
+    conversion: CurrencyConversion? = null,
 ): GroupOverviewItem {
     val visibleEntries = entries.filterNot { it.isDeleted }
     val expenseCount = visibleEntries.count { it is TabEntry.Expense }
-    val totalSpent = visibleEntries.filterIsInstance<TabEntry.Expense>().sumOf { it.amount }
-    val net = UserBalanceCalculator.computeNet(visibleEntries, currentUserId)
+    val totalSpent =
+        visibleEntries.filterIsInstance<TabEntry.Expense>().sumOf { expense ->
+            val factor = if (conversion == null) 1.0 else conversion.factorToBase(expense.currencyCode) ?: 0.0
+            expense.amount * factor
+        }
+    val net = UserBalanceCalculator.computeNet(visibleEntries, currentUserId, conversion)
     return copy(
         expenseCount = expenseCount,
         totalSpent = totalSpent,

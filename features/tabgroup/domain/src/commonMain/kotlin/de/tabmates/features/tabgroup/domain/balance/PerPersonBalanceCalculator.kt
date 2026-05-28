@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.domain.balance
 
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 
 /**
@@ -9,26 +10,29 @@ import de.tabmates.features.tabgroup.domain.models.TabEntry
  * Positive value = that participant owes the current user.
  * Negative value = the current user owes that participant.
  *
- * Deleted entries must be filtered by the caller.
+ * Deleted entries must be filtered by the caller. When [conversion] is provided, amounts are
+ * converted into the group's base currency; entries with an unknown rate are skipped.
  */
 object PerPersonBalanceCalculator {
     fun computeByParticipant(
         entries: List<TabEntry>,
         currentUserId: String,
+        conversion: CurrencyConversion? = null,
     ): Map<String, Double> {
         if (currentUserId.isEmpty()) return emptyMap()
         val net = mutableMapOf<String, Double>()
         entries.forEach { entry ->
+            val factor = conversionFactor(conversion, entry.currencyCode) ?: return@forEach
             when (entry) {
                 is TabEntry.Expense -> {
                     entry.splits.forEach { split ->
                         when {
                             entry.paidByUserId == currentUserId && split.participantId != currentUserId -> {
-                                net.addTo(split.participantId, split.resolvedAmount)
+                                net.addTo(split.participantId, factor * split.resolvedAmount)
                             }
 
                             entry.paidByUserId != currentUserId && split.participantId == currentUserId -> {
-                                net.addTo(entry.paidByUserId, -split.resolvedAmount)
+                                net.addTo(entry.paidByUserId, -factor * split.resolvedAmount)
                             }
                         }
                     }
@@ -38,11 +42,11 @@ object PerPersonBalanceCalculator {
                     entry.splits.forEach { split ->
                         when {
                             entry.paidByUserId == currentUserId && split.participantId != currentUserId -> {
-                                net.addTo(split.participantId, -split.resolvedAmount)
+                                net.addTo(split.participantId, -factor * split.resolvedAmount)
                             }
 
                             entry.paidByUserId != currentUserId && split.participantId == currentUserId -> {
-                                net.addTo(entry.paidByUserId, split.resolvedAmount)
+                                net.addTo(entry.paidByUserId, factor * split.resolvedAmount)
                             }
                         }
                     }
@@ -50,9 +54,9 @@ object PerPersonBalanceCalculator {
 
                 is TabEntry.Settlement -> {
                     if (entry.paidByUserId == currentUserId && entry.receivedByUserId != currentUserId) {
-                        net.addTo(entry.receivedByUserId, entry.amount)
+                        net.addTo(entry.receivedByUserId, factor * entry.amount)
                     } else if (entry.receivedByUserId == currentUserId && entry.paidByUserId != currentUserId) {
-                        net.addTo(entry.paidByUserId, -entry.amount)
+                        net.addTo(entry.paidByUserId, -factor * entry.amount)
                     }
                 }
             }

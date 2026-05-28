@@ -38,8 +38,9 @@ import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
+import de.tabmates.features.tabgroup.presentation.components.SectionLabel
+import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatExpenseDate
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.rememberMonthAbbreviations
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import org.jetbrains.compose.resources.stringResource
@@ -149,7 +150,10 @@ private fun ExpenseDetailScreen(
         )
         VerticalSpacer(24.dp)
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            SectionLabel(text = stringResource(Res.string.expense_detail_paid_by_section))
+            SectionLabel(
+                text = stringResource(Res.string.expense_detail_paid_by_section),
+                fontWeight = FontWeight.SemiBold,
+            )
             VerticalSpacer(8.dp)
             val payer = state.membersById[expense.paidByUserId]
             val payerName =
@@ -166,7 +170,10 @@ private fun ExpenseDetailScreen(
                 isRemoved = payer == null,
             )
             VerticalSpacer(20.dp)
-            SectionLabel(text = stringResource(Res.string.expense_detail_split_between_section))
+            SectionLabel(
+                text = stringResource(Res.string.expense_detail_split_between_section),
+                fontWeight = FontWeight.SemiBold,
+            )
             VerticalSpacer(8.dp)
             expense.splits.forEach { split ->
                 SplitRow(
@@ -233,16 +240,6 @@ private fun HeroSection(
             )
         }
     }
-}
-
-@Composable
-private fun SectionLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontWeight = FontWeight.SemiBold,
-    )
 }
 
 @Composable

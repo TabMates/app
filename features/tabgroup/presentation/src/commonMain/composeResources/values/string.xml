@@ -74,7 +74,7 @@
     <string name="create_group_description_placeholder">Description (optional)</string>
     <string name="create_group_default_currency">Default currency</string>
     <string name="create_group_placeholders_section">PLACEHOLDERS</string>
-    <string name="create_group_placeholders_caption">Add spots for people now — they can claim them later with an invite link.</string>
+    <string name="create_group_placeholders_caption">Add spots for people now — they can claim them later with an invitation link.</string>
     <string name="create_group_add_placeholder">Add placeholder</string>
     <string name="create_group_placeholder_name_label">Placeholder name</string>
     <string name="create_group_placeholder_dialog_title">Add placeholder</string>
@@ -100,7 +100,6 @@
     <string name="groups_search_cd">Search</string>
     <string name="groups_search_close_cd">Close search</string>
     <string name="groups_search_placeholder">Search groups</string>
-    <string name="groups_avatar_cd">Profile</string>
     <string name="groups_status_settled">Settled</string>
     <string name="groups_members_count">%1$d members</string>
     <string name="groups_member_count_singular">1 member</string>
@@ -172,6 +171,8 @@
     <string name="edit_expense_title">Edit expense</string>
     <string name="add_expense_save">Save</string>
     <string name="add_expense_close_cd">Close</string>
+    <string name="add_expense_currency_cd">Change currency</string>
+    <string name="add_expense_rate_unavailable">Exchange rate unavailable — saved as entered</string>
     <string name="add_expense_amount_label">AMOUNT</string>
     <string name="add_expense_amount_placeholder">0</string>
     <string name="add_expense_date_confirm">Set</string>
@@ -233,4 +234,60 @@
     <string name="settle_up_all_settled_title">You're all settled up</string>
     <string name="settle_up_all_settled_caption">You don't owe anyone in this group.</string>
     <string name="settle_up_default_title">Settlement</string>
+
+    <string name="profile_title">Profile</string>
+    <string name="profile_settings_title">Settings</string>
+    <string name="profile_subtitle">Manage your account &amp; appearance</string>
+    <string name="profile_section_account">ACCOUNT</string>
+    <string name="profile_section_appearance">APPEARANCE</string>
+    <string name="profile_account_username">Username</string>
+    <string name="profile_account_email">Email</string>
+    <string name="profile_account_password">Password</string>
+    <string name="profile_password_subtitle">Change your password</string>
+    <string name="profile_theme">Theme</string>
+    <string name="profile_theme_light">Light</string>
+    <string name="profile_theme_dark">Dark</string>
+    <string name="profile_theme_system">System</string>
+    <string name="profile_theme_caption_light">Always light</string>
+    <string name="profile_theme_caption_dark">Always dark</string>
+    <string name="profile_theme_caption_system">Follows your system setting</string>
+    <string name="profile_notifications">Notifications</string>
+    <string name="profile_notifications_caption">Push · email digest</string>
+    <string name="profile_notifications_cd">Toggle notifications</string>
+    <string name="profile_sign_out">Sign out</string>
+    <string name="profile_nav_appearance">Appearance</string>
+    <string name="profile_nav_notifications">Notifications</string>
+    <string name="profile_footer">TabMates</string>
+
+    <string name="home_title">TabMates</string>
+    <string name="home_net_balance">Net balance</string>
+    <string name="home_subtitle_owed">owed to you · across %1$d groups</string>
+    <string name="home_subtitle_owe">you owe · across %1$d groups</string>
+    <string name="home_subtitle_settled">you're all settled up</string>
+    <string name="home_your_groups">YOUR GROUPS</string>
+    <string name="home_see_all">See all</string>
+    <string name="home_empty">No groups yet. Tap + to start one.</string>
+
+    <string name="activity_title">Activity</string>
+    <string name="activity_today">TODAY</string>
+    <string name="activity_yesterday">YESTERDAY</string>
+    <string name="activity_you">You</string>
+    <string name="activity_action_added">added</string>
+    <string name="activity_action_edited">edited</string>
+    <string name="activity_action_deleted">deleted</string>
+    <string name="activity_action_created">created</string>
+    <string name="activity_settled_with_you">settled up with you</string>
+    <string name="activity_settled_with">settled up with</string>
+    <string name="activity_empty">No activity yet</string>
+
+    <string name="account_save">Save</string>
+    <string name="edit_username_title">Username</string>
+    <string name="edit_username_label">Username</string>
+    <string name="edit_username_error_too_short">Username must be at least 3 characters</string>
+    <string name="change_password_title">Password</string>
+    <string name="change_password_current_label">Current password</string>
+    <string name="change_password_new_label">New password</string>
+    <string name="change_password_error_required">Enter your current and new password</string>
+    <string name="change_password_error_too_short">New password must be at least 8 characters</string>
+    <string name="account_saved">Saved</string>
 </resources>

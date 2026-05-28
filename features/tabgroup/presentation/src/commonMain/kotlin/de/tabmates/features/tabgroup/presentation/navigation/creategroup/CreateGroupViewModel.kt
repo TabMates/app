@@ -12,7 +12,6 @@ import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.group.GroupValidationError
 import de.tabmates.features.tabgroup.domain.group.GroupValidator
-import de.tabmates.features.tabgroup.domain.models.Currency
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -92,29 +91,6 @@ class CreateGroupViewModel(
             started = SharingStarted.WhileSubscribed(5.seconds),
             initialValue = CurrencyPickerUiState(),
         )
-
-    private fun buildCurrencyPickerState(
-        currencies: List<Currency>,
-        recentCodes: List<String>,
-        selectedCode: String,
-        query: String,
-    ): CurrencyPickerUiState {
-        val recents = recentCodes.mapNotNull { code -> currencies.firstOrNull { it.code == code } }
-        val showSections = query.isBlank()
-        val filteredRecents = if (showSections) recents else filterCurrencies(recents, query)
-        val results =
-            if (showSections) {
-                currencies.filter { it.code !in recentCodes }
-            } else {
-                filterCurrencies(currencies, query)
-            }
-        return CurrencyPickerUiState(
-            recents = filteredRecents,
-            results = results,
-            showSections = showSections,
-            selectedCode = selectedCode,
-        )
-    }
 
     fun onPickIconClick() {
         _state.update { current ->

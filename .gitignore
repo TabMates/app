@@ -18,3 +18,6 @@ captures
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
 kotlin-js-store/
+
+# Kotzilla SDK config — contains an API key, keep out of VCS
+kotzilla.json

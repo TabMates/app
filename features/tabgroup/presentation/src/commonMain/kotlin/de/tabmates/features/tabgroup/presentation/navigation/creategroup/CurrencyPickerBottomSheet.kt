@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.tabmates.features.tabgroup.domain.models.Currency
+import de.tabmates.features.tabgroup.presentation.components.SectionLabel
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
@@ -94,7 +95,10 @@ private fun CurrencyList(
         if (state.showSections) {
             if (state.recents.isNotEmpty()) {
                 item {
-                    SectionLabel(text = stringResource(Res.string.create_group_currency_recent_section))
+                    SectionLabel(
+                        text = stringResource(Res.string.create_group_currency_recent_section),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
+                    )
                 }
                 items(items = state.recents, key = { "recent-${it.code}" }) { currency ->
                     CurrencyRow(
@@ -106,7 +110,10 @@ private fun CurrencyList(
             }
             if (state.results.isNotEmpty()) {
                 item {
-                    SectionLabel(text = stringResource(Res.string.create_group_currency_all_section))
+                    SectionLabel(
+                        text = stringResource(Res.string.create_group_currency_all_section),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
+                    )
                 }
             }
             items(items = state.results, key = { "all-${it.code}" }) { currency ->
@@ -184,19 +191,6 @@ private fun SearchField(state: TextFieldState) {
                 disabledIndicatorColor = Color.Transparent,
                 errorIndicatorColor = Color.Transparent,
             ),
-    )
-}
-
-@Composable
-private fun SectionLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 12.dp),
     )
 }
 
@@ -292,4 +286,28 @@ internal fun filterCurrencies(
         c.code.contains(trimmed, ignoreCase = true) ||
             c.name.contains(trimmed, ignoreCase = true)
     }
+}
+
+/** Builds the [CurrencyPickerUiState] shown by [CurrencyPickerBottomSheet] for a given query. */
+internal fun buildCurrencyPickerState(
+    currencies: List<Currency>,
+    recentCodes: List<String>,
+    selectedCode: String,
+    query: String,
+): CurrencyPickerUiState {
+    val recents = recentCodes.mapNotNull { code -> currencies.firstOrNull { it.code == code } }
+    val showSections = query.isBlank()
+    val filteredRecents = if (showSections) recents else filterCurrencies(recents, query)
+    val results =
+        if (showSections) {
+            currencies.filter { it.code !in recentCodes }
+        } else {
+            filterCurrencies(currencies, query)
+        }
+    return CurrencyPickerUiState(
+        recents = filteredRecents,
+        results = results,
+        showSections = showSections,
+        selectedCode = selectedCode,
+    )
 }

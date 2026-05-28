@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import de.tabmates.core.presentation.navigation.TopLevelTab
+import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivityRoot
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.AddExpenseRoot
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CreateGroupRoot
 import de.tabmates.features.tabgroup.presentation.navigation.expensedetail.ExpenseDetailRoot
@@ -18,6 +20,9 @@ import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.Group
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.ChangePasswordRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.EditUsernameRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.ProfileRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settleup.SettleUpRoot
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -39,6 +44,8 @@ val mainSerializersModule =
             subclass(SettleUp::class)
             subclass(GroupSettings::class)
             subclass(JoinGroup::class)
+            subclass(EditUsername::class)
+            subclass(ChangePassword::class)
         }
     }
 
@@ -47,11 +54,19 @@ fun EntryProviderScope<NavKey>.mainGraph(
     snackbarHostState: SnackbarHostState,
 ) {
     entry<Home> {
-        HomeRoot()
+        HomeRoot(
+            onGroupClick = { groupId -> backStack.add(GroupDetail(groupId)) },
+            onSeeAllGroups = {
+                backStack.removeAll { it is TopLevelTab }
+                backStack.add(Group)
+            },
+        )
     }
 
     entry<Activity> {
-        PlaceholderScreen("Activity")
+        ActivityRoot(
+            onGroupClick = { groupId -> backStack.add(GroupDetail(groupId)) },
+        )
     }
 
     entry<Group> {
@@ -87,7 +102,27 @@ fun EntryProviderScope<NavKey>.mainGraph(
     }
 
     entry<Profile> {
-        PlaceholderScreen("Profile")
+        ProfileRoot(
+            snackbarHostState = snackbarHostState,
+            onEditUsername = { backStack.add(EditUsername) },
+            onChangePassword = { backStack.add(ChangePassword) },
+        )
+    }
+
+    entry<EditUsername> { route ->
+        EditUsernameRoot(
+            navKey = route,
+            snackbarHostState = snackbarHostState,
+            onSaved = { backStack.removeLastOrNull() },
+        )
+    }
+
+    entry<ChangePassword> { route ->
+        ChangePasswordRoot(
+            navKey = route,
+            snackbarHostState = snackbarHostState,
+            onSaved = { backStack.removeLastOrNull() },
+        )
     }
 
     entry<Settings> {

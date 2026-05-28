@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.domain.balance
 
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 
 /** A single suggested payment in a simplified debt graph: [fromUserId] pays [toUserId] [amount]. */
@@ -76,12 +77,13 @@ object DebtSimplifier {
     fun simplifyFromEntries(
         entries: List<TabEntry>,
         participantIds: Collection<String>,
+        conversion: CurrencyConversion? = null,
         epsilon: Double = DEFAULT_EPSILON,
     ): List<SimplifiedDebt> {
         val activeEntries = entries.filterNot { it.isDeleted }
         val netByUser =
             participantIds.associateWith { userId ->
-                UserBalanceCalculator.computeNet(activeEntries, userId)
+                UserBalanceCalculator.computeNet(activeEntries, userId, conversion)
             }
         return simplify(netByUser, epsilon)
     }

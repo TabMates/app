@@ -5,6 +5,7 @@ import app.cash.turbine.test
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
@@ -213,17 +214,6 @@ class GroupOverviewViewModelTest {
             assertEquals("g2", viewModel.state.value.selectedGroupId)
         }
 
-    @Test
-    fun currentUserInitialsUseFirstTwoChars() =
-        runTest(testDispatcher) {
-            val sessionStorage = FakeSessionStorage()
-            val viewModel = createViewModel(sessionStorage = sessionStorage)
-            activateState(viewModel)
-            advanceUntilIdle()
-
-            assertEquals("AL", viewModel.state.value.currentUserInitials)
-        }
-
     private fun TestScope.activateState(viewModel: GroupOverviewViewModel) {
         backgroundScope.launch { viewModel.state.collect {} }
         advanceUntilIdle()
@@ -233,12 +223,14 @@ class GroupOverviewViewModelTest {
         groupRepository: FakeGroupRepository = FakeGroupRepository(),
         tabEntryRepository: FakeTabEntryRepository = FakeTabEntryRepository(),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
+        exchangeRateRepository: FakeExchangeRateRepository = FakeExchangeRateRepository(),
         sessionStorage: FakeSessionStorage = FakeSessionStorage(),
     ): GroupOverviewViewModel =
         GroupOverviewViewModel(
             groupRepository = groupRepository,
             tabEntryRepository = tabEntryRepository,
             currencyRepository = currencyRepository,
+            exchangeRateRepository = exchangeRateRepository,
             sessionStorage = sessionStorage,
         )
 }

@@ -19,8 +19,12 @@ open class FakeAuthService(
     var registerAnonymousResult: Result<AuthInfo, DataError.Remote> =
         Result.Failure(DataError.Remote.UNKNOWN),
     var logoutResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var changeUsernameResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var changePasswordResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
 ) : AuthService {
     val logoutCalls: MutableList<String> = mutableListOf()
+    val changeUsernameCalls: MutableList<String> = mutableListOf()
+    val changePasswordCalls: MutableList<Pair<String, String>> = mutableListOf()
     var registerCalls: Int = 0
         private set
 
@@ -101,5 +105,18 @@ open class FakeAuthService(
     ): EmptyResult<DataError.Remote> {
         resetPasswordCalls += 1
         return resetPasswordResult
+    }
+
+    override suspend fun changeUsername(newUsername: String): EmptyResult<DataError.Remote> {
+        changeUsernameCalls += newUsername
+        return changeUsernameResult
+    }
+
+    override suspend fun changePassword(
+        oldPassword: String,
+        newPassword: String,
+    ): EmptyResult<DataError.Remote> {
+        changePasswordCalls += (oldPassword to newPassword)
+        return changePasswordResult
     }
 }

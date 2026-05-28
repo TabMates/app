@@ -7,9 +7,12 @@ import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.tabgroup.domain.balance.DebtSimplifier
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
+import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.Currency
+import de.tabmates.features.tabgroup.domain.models.ExchangeRate
 import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
@@ -38,6 +41,7 @@ class SettleUpViewModel(
     private val tabEntryRepository: TabEntryRepository,
     private val groupRepository: GroupRepository,
     private val currencyRepository: CurrencyRepository,
+    private val exchangeRateRepository: ExchangeRateRepository,
     sessionStorage: SessionStorage,
 ) : ViewModel() {
     private val currentUserId =
@@ -55,9 +59,10 @@ class SettleUpViewModel(
             tabEntryRepository.getTabEntriesForGroup(groupId),
             groupRepository.getGroups(),
             currencyRepository.getCurrencies(),
+            exchangeRateRepository.getExchangeRates(),
             settlingUserIds,
-        ) { entries, groups, currencies, settling ->
-            buildState(entries, groups, currencies, settling)
+        ) { entries, groups, currencies, rates, settling ->
+            buildState(entries, groups, currencies, rates, settling)
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
@@ -98,6 +103,7 @@ class SettleUpViewModel(
         entries: List<TabEntry>,
         groups: List<Group>,
         currencies: List<Currency>,
+        rates: List<ExchangeRate>,
         settling: Set<String>,
     ): SettleUpState {
         val group = groups.firstOrNull { it.id == groupId }
@@ -123,6 +129,7 @@ class SettleUpViewModel(
             DebtSimplifier.simplifyFromEntries(
                 entries = entries,
                 participantIds = participants.map { it.userId },
+                conversion = CurrencyConversion.from(group.defaultCurrencyCode, rates),
                 epsilon = epsilon,
             )
         val payments =

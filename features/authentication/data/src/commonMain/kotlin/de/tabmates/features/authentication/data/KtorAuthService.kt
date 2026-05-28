@@ -1,6 +1,7 @@
 package de.tabmates.features.authentication.data
 
 import de.tabmates.core.data.dto.AuthInfoSerializable
+import de.tabmates.core.data.dto.UserSerializable
 import de.tabmates.core.data.dto.requests.RefreshRequest
 import de.tabmates.core.data.mappers.toDomain
 import de.tabmates.core.data.networking.get
@@ -12,6 +13,8 @@ import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.core.domain.util.map
 import de.tabmates.core.domain.util.onSuccess
+import de.tabmates.features.authentication.data.dto.requests.ChangePasswordRequest
+import de.tabmates.features.authentication.data.dto.requests.ChangeUsernameRequest
 import de.tabmates.features.authentication.data.dto.requests.EmailRequest
 import de.tabmates.features.authentication.data.dto.requests.LoginAnonymousRequest
 import de.tabmates.features.authentication.data.dto.requests.LoginRequest
@@ -138,6 +141,33 @@ class KtorAuthService(
                 ResetPasswordRequest(
                     newPassword = newPassword,
                     token = token,
+                ),
+        )
+    }
+
+    override suspend fun changeUsername(newUsername: String): EmptyResult<DataError.Remote> {
+        return httpClient
+            .post<ChangeUsernameRequest, UserSerializable>(
+                route = "/api/auth/change-username",
+                body = ChangeUsernameRequest(newUsername = newUsername),
+            ).onSuccess { user ->
+                // Keep the cached session in sync so the new username shows everywhere immediately.
+                sessionStorage.get()?.let { current ->
+                    sessionStorage.set(current.copy(user = user.toDomain()))
+                }
+            }.map { }
+    }
+
+    override suspend fun changePassword(
+        oldPassword: String,
+        newPassword: String,
+    ): EmptyResult<DataError.Remote> {
+        return httpClient.post(
+            route = "/api/auth/change-password",
+            body =
+                ChangePasswordRequest(
+                    oldPassword = oldPassword,
+                    newPassword = newPassword,
                 ),
         )
     }

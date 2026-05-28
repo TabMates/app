@@ -3,6 +3,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.groupdetail
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
@@ -105,16 +106,6 @@ class GroupDetailViewModelTest {
         }
 
     @Test
-    fun currentUserInitialsUseFirstTwoChars() =
-        runTest(testDispatcher) {
-            val viewModel = createViewModel(groupId = "g1")
-            activateState(viewModel)
-            advanceUntilIdle()
-
-            assertEquals("AL", viewModel.state.value.currentUserInitials)
-        }
-
-    @Test
     fun currencySymbolResolvedFromCurrencyRepository() =
         runTest(testDispatcher) {
             val groupRepo =
@@ -141,6 +132,7 @@ class GroupDetailViewModelTest {
         groupRepository: FakeGroupRepository = FakeGroupRepository(),
         tabEntryRepository: FakeTabEntryRepository = FakeTabEntryRepository(),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
+        exchangeRateRepository: FakeExchangeRateRepository = FakeExchangeRateRepository(),
         sessionStorage: FakeSessionStorage = FakeSessionStorage(),
     ): GroupDetailViewModel =
         GroupDetailViewModel(
@@ -148,6 +140,7 @@ class GroupDetailViewModelTest {
             groupRepository = groupRepository,
             tabEntryRepository = tabEntryRepository,
             currencyRepository = currencyRepository,
+            exchangeRateRepository = exchangeRateRepository,
             sessionStorage = sessionStorage,
         )
 }

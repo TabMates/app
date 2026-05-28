@@ -1,6 +1,8 @@
 package de.tabmates.features.tabgroup.presentation.navigation.addexpense
 
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.SessionStorage
@@ -9,16 +11,21 @@ import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
+import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.NewExpenseSplit
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.presentation.components.formatMoney
+import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
+import de.tabmates.features.tabgroup.presentation.navigation.creategroup.buildCurrencyPickerState
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -46,6 +53,7 @@ class AddExpenseViewModel(
     private val tabEntryRepository: TabEntryRepository,
     private val groupRepository: GroupRepository,
     private val currencyRepository: CurrencyRepository,
+    private val exchangeRateRepository: ExchangeRateRepository,
     sessionStorage: SessionStorage,
 ) : ViewModel() {
     private val isEditing = expenseId.isNotBlank()
@@ -77,12 +85,53 @@ class AddExpenseViewModel(
     private val eventChannel = Channel<AddExpenseEvent>()
     val events = eventChannel.receiveAsFlow()
 
+    private val currencyQueryFlow =
+        snapshotFlow {
+            _state.value.currencyQueryState.text
+                .toString()
+        }
+
+    val currencyPickerState: StateFlow<CurrencyPickerUiState> =
+        combine(state, currencyQueryFlow) { current, query ->
+            buildCurrencyPickerState(
+                currencies = current.supportedCurrencies,
+                recentCodes = listOfNotNull(current.baseCurrencyCode.ifEmpty { null }),
+                selectedCode = current.expenseCurrencyCode,
+                query = query,
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5.seconds),
+            initialValue = CurrencyPickerUiState(),
+        )
+
+    fun onCurrencyClick() {
+        _state.update { it.copy(isCurrencyPickerVisible = true) }
+    }
+
+    fun onCurrencyPickerDismiss() {
+        _state.value.currencyQueryState.clearText()
+        _state.update { it.copy(isCurrencyPickerVisible = false) }
+    }
+
+    fun onCurrencySelected(code: String) {
+        val currency = _state.value.supportedCurrencies.firstOrNull { it.code == code }
+        _state.value.currencyQueryState.clearText()
+        _state.update {
+            it.copy(
+                expenseCurrencyCode = code,
+                expenseCurrencySymbol = currency?.nativeSymbol ?: code,
+                expenseCurrencyDecimalDigits = currency?.decimalDigits ?: 2,
+                isCurrencyPickerVisible = false,
+            )
+        }
+    }
+
     private fun loadInitialData() {
         viewModelScope.launch {
             val group = groupRepository.getGroups().first().firstOrNull { it.id == groupId }
             val currencies = currencyRepository.getCurrencies().first()
-            val currency = currencies.firstOrNull { it.code == group?.defaultCurrencyCode }
-            val decimals = currency?.decimalDigits ?: 2
+            val rates = exchangeRateRepository.getExchangeRates().first()
             val activeMembers = group?.participants.orEmpty().toList()
             val existing =
                 if (isEditing) {
@@ -90,6 +139,12 @@ class AddExpenseViewModel(
                 } else {
                     null
                 }
+            val baseCurrencyCode = group?.defaultCurrencyCode.orEmpty()
+            val baseCurrency = currencies.firstOrNull { it.code == baseCurrencyCode }
+            // Expense currency defaults to the group's base; an edited expense keeps its own.
+            val expenseCurrencyCode = existing?.currencyCode ?: baseCurrencyCode
+            val expenseCurrency = currencies.firstOrNull { it.code == expenseCurrencyCode }
+            val decimals = expenseCurrency?.decimalDigits ?: 2
             val defaultPaidBy =
                 existing?.paidByUserId
                     ?: activeMembers.firstOrNull { it.userId == currentUserId }?.userId
@@ -100,9 +155,14 @@ class AddExpenseViewModel(
                     isLoading = false,
                     members = activeMembers,
                     paidByUserId = defaultPaidBy,
-                    groupCurrencyCode = existing?.currencyCode ?: group?.defaultCurrencyCode.orEmpty(),
-                    groupCurrencySymbol = currency?.nativeSymbol ?: group?.defaultCurrencyCode.orEmpty(),
-                    groupCurrencyDecimalDigits = decimals,
+                    expenseCurrencyCode = expenseCurrencyCode,
+                    expenseCurrencySymbol = expenseCurrency?.nativeSymbol ?: expenseCurrencyCode,
+                    expenseCurrencyDecimalDigits = decimals,
+                    baseCurrencyCode = baseCurrencyCode,
+                    baseCurrencySymbol = baseCurrency?.nativeSymbol ?: baseCurrencyCode,
+                    baseCurrencyDecimalDigits = baseCurrency?.decimalDigits ?: 2,
+                    supportedCurrencies = currencies,
+                    ratesByCurrency = rates.associate { it.currencyCode to it.rateToBase },
                     createdAt = existing?.createdAt ?: it.createdAt,
                     splitType = existing?.splits?.firstOrNull()?.splitType ?: it.splitType,
                     titleTextState = TextFieldState(existing?.title.orEmpty()),
@@ -253,7 +313,7 @@ class AddExpenseViewModel(
                         title = title,
                         description = description,
                         amount = amount,
-                        currencyCode = current.groupCurrencyCode,
+                        currencyCode = current.expenseCurrencyCode,
                         paidByUserId = current.paidByUserId,
                         createdAt = current.createdAt,
                         splits = splits,
@@ -264,7 +324,7 @@ class AddExpenseViewModel(
                         title = title,
                         description = description,
                         amount = amount,
-                        currencyCode = current.groupCurrencyCode,
+                        currencyCode = current.expenseCurrencyCode,
                         paidByUserId = current.paidByUserId,
                         createdAt = current.createdAt,
                         splits = splits,
@@ -301,15 +361,15 @@ class AddExpenseViewModel(
                         input.participantId to (parseAmount(input.exactAmountState.text.toString()) ?: 0.0)
                     }
                 val total = rows.sumOf { it.second }
-                if (abs(total - totalAmount) > epsilon(state.groupCurrencyDecimalDigits)) {
+                if (abs(total - totalAmount) > epsilon(state.expenseCurrencyDecimalDigits)) {
                     emitError(
                         UiText.Resource(
                             Res.string.add_expense_error_split_total_mismatch,
                             arrayOf(
                                 formatMoney(
-                                    state.groupCurrencySymbol,
+                                    state.expenseCurrencySymbol,
                                     totalAmount,
-                                    state.groupCurrencyDecimalDigits,
+                                    state.expenseCurrencyDecimalDigits,
                                 ),
                             ),
                         ),
