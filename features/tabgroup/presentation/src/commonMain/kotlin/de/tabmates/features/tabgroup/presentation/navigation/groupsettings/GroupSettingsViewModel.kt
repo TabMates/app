@@ -74,18 +74,34 @@ class GroupSettingsViewModel(
 
     fun onAction(action: GroupSettingsAction) {
         when (action) {
-            GroupSettingsAction.Save -> save()
+            GroupSettingsAction.Save -> {
+                save()
+            }
+
             GroupSettingsAction.AddPlaceholderClick -> {
                 _state.value.newPlaceholderTextState.clearText()
                 _state.update { it.copy(isPlaceholderDialogVisible = true) }
             }
+
             GroupSettingsAction.PlaceholderDialogDismiss -> {
                 _state.update { it.copy(isPlaceholderDialogVisible = false) }
             }
-            GroupSettingsAction.PlaceholderDialogConfirm -> addPlaceholder()
-            GroupSettingsAction.RequestLeave -> _state.update { it.copy(showLeaveDialog = true) }
-            GroupSettingsAction.DismissLeaveDialog -> _state.update { it.copy(showLeaveDialog = false) }
-            GroupSettingsAction.ConfirmLeave -> leave()
+
+            GroupSettingsAction.PlaceholderDialogConfirm -> {
+                addPlaceholder()
+            }
+
+            GroupSettingsAction.RequestLeave -> {
+                _state.update { it.copy(showLeaveDialog = true) }
+            }
+
+            GroupSettingsAction.DismissLeaveDialog -> {
+                _state.update { it.copy(showLeaveDialog = false) }
+            }
+
+            GroupSettingsAction.ConfirmLeave -> {
+                leave()
+            }
         }
     }
 
