@@ -4,6 +4,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
+import kotlin.time.Instant
 
 /**
  * Envelope/payload types match the server contract in
@@ -52,6 +53,7 @@ sealed class NewTabEntryWsPayload {
         override val description: String,
         override val amount: Double,
         override val currency: String,
+        val createdAt: Instant? = null,
         val splits: List<NewTabEntrySplitWsPayload>,
     ) : NewTabEntryWsPayload()
 
@@ -65,6 +67,7 @@ sealed class NewTabEntryWsPayload {
         override val description: String,
         override val amount: Double,
         override val currency: String,
+        val createdAt: Instant? = null,
         val splits: List<NewTabEntrySplitWsPayload>,
     ) : NewTabEntryWsPayload()
 
@@ -78,6 +81,7 @@ sealed class NewTabEntryWsPayload {
         override val description: String,
         override val amount: Double,
         override val currency: String,
+        val createdAt: Instant? = null,
         val receivedByUserId: String,
     ) : NewTabEntryWsPayload()
 }

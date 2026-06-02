@@ -27,6 +27,7 @@ import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 /**
  * Durable outbox for tab-entry writes. The repository enqueues every write here; the outbox
@@ -70,6 +71,7 @@ class TabEntryOutbox(
         amount: Double,
         currencyCode: String,
         paidByUserId: String,
+        createdAt: Instant,
         splits: List<NewExpenseSplit>,
     ) {
         val payload =
@@ -81,6 +83,7 @@ class TabEntryOutbox(
                 description = description,
                 amount = amount,
                 currency = currencyCode,
+                createdAt = createdAt,
                 splits = buildSplitPayloads(splits, amount),
             )
         val envelope =
@@ -108,6 +111,7 @@ class TabEntryOutbox(
         currencyCode: String,
         paidByUserId: String,
         receivedByUserId: String,
+        createdAt: Instant,
     ) {
         val payload =
             NewTabEntryWsPayload.Settlement(
@@ -118,6 +122,7 @@ class TabEntryOutbox(
                 description = description,
                 amount = amount,
                 currency = currencyCode,
+                createdAt = createdAt,
                 receivedByUserId = receivedByUserId,
             )
         val envelope =
@@ -144,6 +149,7 @@ class TabEntryOutbox(
         amount: Double,
         currencyCode: String,
         paidByUserId: String,
+        createdAt: Instant,
         splits: List<NewExpenseSplit>,
     ) {
         val payload =
@@ -155,6 +161,7 @@ class TabEntryOutbox(
                 description = description,
                 amount = amount,
                 currency = currencyCode,
+                createdAt = createdAt,
                 splits = buildSplitPayloads(splits, amount),
             )
         val envelope =
