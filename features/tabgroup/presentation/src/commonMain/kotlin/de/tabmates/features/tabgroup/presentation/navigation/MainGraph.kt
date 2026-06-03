@@ -1,12 +1,6 @@
 package de.tabmates.features.tabgroup.presentation.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -22,6 +16,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ChangePasswordRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.EditUsernameRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.OssLicensesRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ProfileRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settleup.SettleUpRoot
 import kotlinx.serialization.modules.SerializersModule
@@ -35,7 +30,6 @@ val mainSerializersModule =
             subclass(Activity::class)
             subclass(Group::class)
             subclass(Profile::class)
-            subclass(Settings::class)
             subclass(AddExpense::class)
             subclass(EditExpense::class)
             subclass(ExpenseDetail::class)
@@ -46,6 +40,7 @@ val mainSerializersModule =
             subclass(JoinGroup::class)
             subclass(EditUsername::class)
             subclass(ChangePassword::class)
+            subclass(OssLicenses::class)
         }
     }
 
@@ -106,7 +101,12 @@ fun EntryProviderScope<NavKey>.mainGraph(
             snackbarHostState = snackbarHostState,
             onEditUsername = { backStack.add(EditUsername) },
             onChangePassword = { backStack.add(ChangePassword) },
+            onOpenOssLicenses = { backStack.add(OssLicenses) },
         )
+    }
+
+    entry<OssLicenses> {
+        OssLicensesRoot()
     }
 
     entry<EditUsername> { route ->
@@ -123,10 +123,6 @@ fun EntryProviderScope<NavKey>.mainGraph(
             snackbarHostState = snackbarHostState,
             onSaved = { backStack.removeLastOrNull() },
         )
-    }
-
-    entry<Settings> {
-        PlaceholderScreen("Settings")
     }
 
     entry<AddExpense> { route ->
@@ -187,15 +183,5 @@ fun EntryProviderScope<NavKey>.mainGraph(
             },
             snackbarHostState = snackbarHostState,
         )
-    }
-}
-
-@Composable
-private fun PlaceholderScreen(title: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text = title)
     }
 }

@@ -7,6 +7,7 @@ enum class SettingsSection {
     PROFILE,
     APPEARANCE,
     NOTIFICATIONS,
+    ABOUT,
 }
 
 data class ProfileState(

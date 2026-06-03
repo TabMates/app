@@ -32,6 +32,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.home_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home_filled
 import tabmatesapp.features.tabgroup.presentation.generated.resources.join_group_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.oss_licenses_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_title
 
@@ -84,9 +85,6 @@ data object Profile : LoggableNavKey(), TopLevelTab, ScreenWithFab {
 }
 
 @Serializable
-data object Settings : LoggableNavKey(), LoggedIn
-
-@Serializable
 data object EditUsername : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.edit_username_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Close
@@ -96,6 +94,12 @@ data object EditUsername : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
 data object ChangePassword : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.change_password_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Close
+}
+
+@Serializable
+data object OssLicenses : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.oss_licenses_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Back
 }
 
 @Serializable

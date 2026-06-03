@@ -247,6 +247,10 @@
     <string name="profile_subtitle">Manage your account &amp; appearance</string>
     <string name="profile_section_account">ACCOUNT</string>
     <string name="profile_section_appearance">APPEARANCE</string>
+    <string name="profile_section_about">ABOUT</string>
+    <string name="profile_oss_licenses">Open-source licenses</string>
+    <string name="profile_oss_licenses_caption">Third-party libraries</string>
+    <string name="oss_licenses_title">Open-source licenses</string>
     <string name="profile_account_username">Username</string>
     <string name="profile_account_email">Email</string>
     <string name="profile_account_password">Password</string>
@@ -266,6 +270,7 @@
     <string name="profile_sign_out">Sign out</string>
     <string name="profile_nav_appearance">Appearance</string>
     <string name="profile_nav_notifications">Notifications</string>
+    <string name="profile_nav_about">About</string>
     <string name="profile_footer">TabMates</string>
 
     <string name="home_title">TabMates</string>

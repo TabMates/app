@@ -1,6 +1,19 @@
 plugins {
     alias(libs.plugins.tabmates.convention.cmp.feature)
     alias(libs.plugins.tabmates.convention.buildkonfig)
+    alias(libs.plugins.aboutlibraries)
+}
+
+// Generate the open-source license list into composeResources for the OSS licenses screen.
+aboutLibraries {
+    export {
+        outputFile = file("src/commonMain/composeResources/files/aboutlibraries.json")
+        prettyPrint = true
+    }
+    library {
+        duplicationMode = com.mikepenz.aboutlibraries.plugin.DuplicateMode.MERGE
+        duplicationRule = com.mikepenz.aboutlibraries.plugin.DuplicateRule.SIMPLE
+    }
 }
 
 kotlin {
@@ -24,6 +37,8 @@ kotlin {
                 implementation(projects.features.tabgroup.domain)
                 implementation(libs.jetbrains.material3.adaptive)
                 implementation(libs.jetbrains.navigationevent.compose)
+                implementation(libs.aboutlibraries.core)
+                implementation(libs.aboutlibraries.compose.m3)
             }
         }
 

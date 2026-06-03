@@ -15,4 +15,5 @@ plugins {
     alias(libs.plugins.room3) apply false
     alias(libs.plugins.koin.compiler) apply false
     alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.aboutlibraries) apply false
 }
