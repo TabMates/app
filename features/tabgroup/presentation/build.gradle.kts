@@ -18,6 +18,8 @@ kotlin {
                 implementation(projects.core.presentation)
                 implementation(projects.features.authentication.data)
                 implementation(projects.features.authentication.domain)
+                implementation(projects.features.notifications.data)
+                implementation(projects.features.notifications.domain)
                 implementation(projects.features.tabgroup.data)
                 implementation(projects.features.tabgroup.domain)
                 implementation(libs.jetbrains.material3.adaptive)

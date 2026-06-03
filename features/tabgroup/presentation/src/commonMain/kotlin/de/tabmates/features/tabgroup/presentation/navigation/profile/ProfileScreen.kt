@@ -19,6 +19,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
@@ -29,6 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
@@ -59,7 +62,9 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_fo
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_appearance
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_notifications
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_notifications
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_notifications_blocked
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_notifications_caption
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_open_settings
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_password_subtitle
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_account
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_appearance
@@ -85,6 +90,11 @@ fun ProfileRoot(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
+    // Re-check the OS permission whenever the screen resumes (user may grant it in settings).
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshNotificationPermission()
+    }
+
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
             // Session is cleared on sign-out; the app shell observes it and returns to Welcome.
@@ -99,6 +109,7 @@ fun ProfileRoot(
         onSectionSelected = viewModel::onSectionSelected,
         onThemeSelected = viewModel::onThemeSelected,
         onNotificationsToggle = viewModel::onNotificationsToggle,
+        onOpenNotificationSettings = viewModel::onOpenNotificationSettings,
         onEditUsername = onEditUsername,
         onChangePassword = onChangePassword,
         onSignOut = viewModel::onSignOut,
@@ -112,6 +123,7 @@ internal fun ProfileScreen(
     onSectionSelected: (SettingsSection) -> Unit,
     onThemeSelected: (ThemeMode) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
+    onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onSignOut: () -> Unit,
@@ -125,6 +137,7 @@ internal fun ProfileScreen(
             onSectionSelected = onSectionSelected,
             onThemeSelected = onThemeSelected,
             onNotificationsToggle = onNotificationsToggle,
+            onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
             onSignOut = onSignOut,
@@ -135,6 +148,7 @@ internal fun ProfileScreen(
             state = state,
             onThemeSelected = onThemeSelected,
             onNotificationsToggle = onNotificationsToggle,
+            onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
             onSignOut = onSignOut,
@@ -148,6 +162,7 @@ private fun ProfilePhonePane(
     state: ProfileState,
     onThemeSelected: (ThemeMode) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
+    onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onSignOut: () -> Unit,
@@ -174,6 +189,7 @@ private fun ProfilePhonePane(
             twoColumnAccount = false,
             onThemeSelected = onThemeSelected,
             onNotificationsToggle = onNotificationsToggle,
+            onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
         )
@@ -197,6 +213,7 @@ private fun SettingsTwoPane(
     onSectionSelected: (SettingsSection) -> Unit,
     onThemeSelected: (ThemeMode) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
+    onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onSignOut: () -> Unit,
@@ -237,6 +254,7 @@ private fun SettingsTwoPane(
                         twoColumnAccount = true,
                         onThemeSelected = onThemeSelected,
                         onNotificationsToggle = onNotificationsToggle,
+                        onOpenNotificationSettings = onOpenNotificationSettings,
                         onEditUsername = onEditUsername,
                         onChangePassword = onChangePassword,
                     )
@@ -251,7 +269,9 @@ private fun SettingsTwoPane(
                     SectionLabel(stringResource(Res.string.profile_section_appearance))
                     NotificationsCard(
                         enabled = state.notificationsEnabled,
+                        permissionBlocked = state.notificationsPermissionBlocked,
                         onToggle = onNotificationsToggle,
+                        onOpenSettings = onOpenNotificationSettings,
                     )
                 }
             }
@@ -341,6 +361,7 @@ private fun ProfileAccountAndAppearance(
     twoColumnAccount: Boolean,
     onThemeSelected: (ThemeMode) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
+    onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
 ) {
@@ -409,7 +430,12 @@ private fun ProfileAccountAndAppearance(
     VerticalSpacer(4.dp)
     SectionLabel(stringResource(Res.string.profile_section_appearance))
     ThemeCard(themeMode = state.themeMode, onThemeSelected = onThemeSelected)
-    NotificationsCard(enabled = state.notificationsEnabled, onToggle = onNotificationsToggle)
+    NotificationsCard(
+        enabled = state.notificationsEnabled,
+        permissionBlocked = state.notificationsPermissionBlocked,
+        onToggle = onNotificationsToggle,
+        onOpenSettings = onOpenNotificationSettings,
+    )
 }
 
 @Composable
@@ -624,41 +650,79 @@ private fun ThemePill(
 @Composable
 private fun NotificationsCard(
     enabled: Boolean,
+    permissionBlocked: Boolean,
     onToggle: (Boolean) -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_notifications),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(22.dp),
+                )
+                HorizontalSpacer(12.dp)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(Res.string.profile_notifications),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = stringResource(Res.string.profile_notifications_caption),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                HorizontalSpacer(8.dp)
+                Switch(
+                    // Permission denied -> show off and disabled; the banner explains why.
+                    checked = enabled && !permissionBlocked,
+                    onCheckedChange = onToggle,
+                    enabled = !permissionBlocked,
+                )
+            }
+        }
+        if (permissionBlocked) {
+            NotificationPermissionBanner(onOpenSettings = onOpenSettings)
+        }
+    }
+}
+
+@Composable
+private fun NotificationPermissionBanner(onOpenSettings: () -> Unit) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_notifications),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp),
+            Text(
+                text = stringResource(Res.string.profile_notifications_blocked),
+                style = MaterialTheme.typography.bodySmall,
             )
-            HorizontalSpacer(12.dp)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(Res.string.profile_notifications),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(Res.string.profile_notifications_caption),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            TextButton(
+                onClick = onOpenSettings,
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text(stringResource(Res.string.profile_open_settings))
             }
-            HorizontalSpacer(8.dp)
-            Switch(
-                checked = enabled,
-                onCheckedChange = onToggle,
-            )
         }
     }
 }
