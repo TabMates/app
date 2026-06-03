@@ -18,5 +18,7 @@ data class ProfileState(
     val isRegistered: Boolean = true,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val notificationsEnabled: Boolean = true,
+    // OS notification permission is denied -> disable the toggle and show a banner.
+    val notificationsPermissionBlocked: Boolean = false,
     val selectedSection: SettingsSection = SettingsSection.PROFILE,
 )

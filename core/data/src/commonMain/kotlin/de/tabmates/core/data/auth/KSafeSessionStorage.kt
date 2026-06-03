@@ -1,20 +1,18 @@
 package de.tabmates.core.data.auth
 
+import de.tabmates.core.data.security.SecureStore
 import de.tabmates.core.domain.auth.AuthInfo
 import de.tabmates.core.domain.auth.SessionStorage
-import eu.anifantakis.lib.ksafe.KSafe
-import eu.anifantakis.lib.ksafe.invoke
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @Single(binds = [SessionStorage::class])
 class KSafeSessionStorage(
-    @Named("vault") vault: KSafe,
+    secureStore: SecureStore,
 ) : SessionStorage {
-    private var authInfo by vault<AuthInfo?>(null, key = "authInfo")
+    private var authInfo by secureStore<AuthInfo?>(null, key = "authInfo")
     private val _authState = MutableStateFlow(authInfo)
 
     override val authState: StateFlow<AuthInfo?> = _authState.asStateFlow()

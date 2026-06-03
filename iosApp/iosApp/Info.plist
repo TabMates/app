@@ -4,6 +4,12 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Disable Firebase Analytics / telemetry (effective if the Analytics SDK is ever linked;
+	     do NOT add the FirebaseAnalytics pod — FirebaseMessaging alone collects no analytics). -->
+	<key>FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED</key>
+	<true/>
+	<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>
+	<false/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

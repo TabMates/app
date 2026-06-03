@@ -25,6 +25,7 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
 
@@ -54,6 +55,7 @@ kotlin {
         webMain {
             dependencies {
                 implementation(libs.ktor.client.js)
+                implementation(libs.kotlinx.browser)
             }
         }
     }

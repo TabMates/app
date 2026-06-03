@@ -28,6 +28,8 @@ kotlin {
             implementation(projects.features.authentication.data)
             implementation(projects.features.authentication.domain)
             implementation(projects.features.authentication.presentation)
+            implementation(projects.features.notifications.data)
+            implementation(projects.features.notifications.domain)
             implementation(projects.features.tabgroup.data)
             implementation(projects.features.tabgroup.database)
             implementation(projects.features.tabgroup.domain)
@@ -41,6 +43,10 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.ksafe)
             implementation(libs.jetbrains.material3.adaptive)
+        }
+        iosMain.dependencies {
+            // Exposes kmpnotifier extension functions to the iOS Swift AppDelegate bridge.
+            implementation(libs.kmpnotifier)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

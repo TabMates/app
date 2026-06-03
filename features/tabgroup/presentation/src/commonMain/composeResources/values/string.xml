@@ -259,8 +259,10 @@
     <string name="profile_theme_caption_dark">Always dark</string>
     <string name="profile_theme_caption_system">Follows your system setting</string>
     <string name="profile_notifications">Notifications</string>
-    <string name="profile_notifications_caption">Push · email digest</string>
+    <string name="profile_notifications_caption">Get notified about new expenses, members and settle-ups</string>
     <string name="profile_notifications_cd">Toggle notifications</string>
+    <string name="profile_notifications_blocked">Notifications are turned off for TabMates in your system settings. Enable them to receive push notifications.</string>
+    <string name="profile_open_settings">Open settings</string>
     <string name="profile_sign_out">Sign out</string>
     <string name="profile_nav_appearance">Appearance</string>
     <string name="profile_nav_notifications">Notifications</string>

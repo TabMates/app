@@ -41,6 +41,7 @@ import de.tabmates.composeapp.di.TabMatesKoinApp
 import de.tabmates.composeapp.navigation.ScreenTopBar
 import de.tabmates.composeapp.sync.CurrencySyncCoordinator
 import de.tabmates.composeapp.sync.GroupSyncCoordinator
+import de.tabmates.composeapp.sync.NotificationsSyncCoordinator
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.domain.preferences.ThemeMode
 import de.tabmates.core.presentation.navigation.FabAction
@@ -56,6 +57,7 @@ import de.tabmates.features.authentication.presentation.navigation.ResetPassword
 import de.tabmates.features.authentication.presentation.navigation.Welcome
 import de.tabmates.features.authentication.presentation.navigation.authGraph
 import de.tabmates.features.authentication.presentation.navigation.authSerializersModule
+import de.tabmates.features.notifications.domain.NotificationDeepLinkBus
 import de.tabmates.features.tabgroup.presentation.navigation.Activity
 import de.tabmates.features.tabgroup.presentation.navigation.AddExpense
 import de.tabmates.features.tabgroup.presentation.navigation.CreateGroup
@@ -123,6 +125,14 @@ fun App() {
                 withContext(Dispatchers.Default) {
                     koin.get<GroupSyncCoordinator>()
                     koin.get<CurrencySyncCoordinator>()
+                    koin.get<NotificationsSyncCoordinator>()
+                }
+            }
+
+            // Forward deep links from clicked notifications to the deep-link handler.
+            LaunchedEffect(Unit) {
+                koin.get<NotificationDeepLinkBus>().deepLinks.collect { uri ->
+                    DeepLinkHandler.onDeepLink(uri)
                 }
             }
 
@@ -155,7 +165,9 @@ fun App() {
                         backStack.add(navKey)
                     }
                 }
-                onDispose { DeepLinkHandler.listener = null }
+                onDispose {
+                    DeepLinkHandler.listener = null
+                }
             }
 
             val topLevelTabs = remember { listOf(Home, Activity, Group, Profile) }

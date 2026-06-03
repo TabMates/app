@@ -7,6 +7,8 @@ import de.tabmates.core.domain.auth.UserType
 import de.tabmates.core.domain.preferences.AppPreferencesRepository
 import de.tabmates.core.domain.preferences.ThemeMode
 import de.tabmates.features.authentication.domain.AuthService
+import de.tabmates.features.notifications.domain.NotificationPermissionController
+import de.tabmates.features.notifications.domain.NotificationPermissionStatus
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,6 +27,7 @@ class ProfileViewModel(
     private val sessionStorage: SessionStorage,
     private val appPreferencesRepository: AppPreferencesRepository,
     private val authService: AuthService,
+    private val notificationPermissionController: NotificationPermissionController,
 ) : ViewModel() {
     private val selectedSection = MutableStateFlow(SettingsSection.PROFILE)
 
@@ -34,7 +37,8 @@ class ProfileViewModel(
             appPreferencesRepository.themeMode(),
             appPreferencesRepository.notificationsEnabled(),
             selectedSection,
-        ) { auth, themeMode, notificationsEnabled, section ->
+            notificationPermissionController.status,
+        ) { auth, themeMode, notificationsEnabled, section, permissionStatus ->
             val user = auth?.user
             ProfileState(
                 isLoading = false,
@@ -49,6 +53,7 @@ class ProfileViewModel(
                 isRegistered = user?.userType == UserType.REGISTERED,
                 themeMode = themeMode,
                 notificationsEnabled = notificationsEnabled,
+                notificationsPermissionBlocked = permissionStatus == NotificationPermissionStatus.DENIED,
                 selectedSection = section,
             )
         }.stateIn(
@@ -56,6 +61,19 @@ class ProfileViewModel(
             started = SharingStarted.WhileSubscribed(5.seconds),
             initialValue = ProfileState(),
         )
+
+    init {
+        refreshNotificationPermission()
+    }
+
+    /** Re-read OS permission (call when the screen resumes — user may change it in settings). */
+    fun refreshNotificationPermission() {
+        viewModelScope.launch { notificationPermissionController.refresh() }
+    }
+
+    fun onOpenNotificationSettings() {
+        notificationPermissionController.openSettings()
+    }
 
     private val eventChannel = Channel<ProfileEvent>()
     val events = eventChannel.receiveAsFlow()
