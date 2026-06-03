@@ -1,0 +1,135 @@
+# :features:notifications
+
+Notifications across all targets, behind one `PushNotificationController` per platform.
+Delivery differs per platform because Firebase Cloud Messaging (FCM) push only works on
+Android + iOS:
+
+| Platform | Mechanism |
+|----------|-----------|
+| Android  | FCM push via [kmpnotifier](https://github.com/mirzemehdi/KMPNotifier) |
+| iOS      | FCM push via kmpnotifier (Swift AppDelegate bridges APNs into Firebase) |
+| Desktop  | No FCM client exists → backend WebSocket stream rendered as local notifications (kmpnotifier local notifier) |
+| Web      | Firebase **JS SDK** push (service worker + VAPID), not kmpnotifier |
+
+## Layout
+
+- **domain** — `NotificationService` (backend token registration), `PushNotificationController`
+  (platform entry point), `DevicePlatform`, `PushNotificationConstants`, `PushNotificationRouter`
+  (clicked-notification deep-link bridge).
+- **data** — `KtorNotificationService` (backend calls) and the per-platform
+  `PlatformNotificationsModule` Koin modules, each providing one controller:
+  - `MobilePushNotificationController` — `androidMain` + `iosMain` (FCM via kmpnotifier).
+  - `DesktopPushNotificationController` — `desktopMain` (Ktor WebSocket → kmpnotifier local notifier).
+  - `WebPushNotificationController` — `webMain` (Firebase JS SDK via `js()` glue).
+  - `NoOpPushNotificationController` — fallback, unused now.
+
+`NotificationsSyncCoordinator` (in `:composeApp`) starts the controller on login, unregisters
+on logout, and re-registers on in-app language change — mirrors `GroupSyncCoordinator`.
+
+> Note: the mobile controller lives in `androidMain` and `iosMain` separately (not a shared
+> `mobileMain`) because this project's AGP KMP android target is not part of the
+> `mobile` hierarchy group, so `mobileMain` does not reach the android compilation.
+
+## Backend contract (ASSUMED — confirm with backend)
+
+The bearer token on the shared `HttpClient` identifies the user; endpoints associate a
+device token with that user.
+
+- `POST /api/notifications/devices` — body `{ "token": String, "platform": "android"|"ios"|"desktop"|"web", "locale": String }`
+- `POST /api/notifications/devices/unregister` — body `{ "token": String }`
+
+`locale` is a BCP-47 tag (e.g. `"de"`, `"en-US"`). The backend should localize the push
+`notification` block (title/body) in that language — localizing client-side is unreliable
+because the OS renders pushes while the app is killed. The device re-registers automatically
+when the in-app language changes (`NotificationsSyncCoordinator`).
+
+Push payloads may include `deepLink` (routed via `PushNotificationRouter`) and `groupId`
+(see `PushNotificationConstants`). Adjust routes/DTOs if the backend differs.
+
+### In-app language
+
+Language resolves via `LocaleProvider`: the pinned `AppLanguage` (stored in
+`AppPreferencesRepository`) if set, else the device locale (`deviceLanguageTag()`). To add a
+language settings screen later, surface `AppLanguage` entries and call `setAppLanguage(...)`;
+notification re-registration and the `locale` field follow automatically. Actually applying
+the chosen language to the UI (Compose resources / per-app locales) is a separate step.
+
+## Config & secrets in a public repo
+
+Firebase **client** config (`google-services.json`, `GoogleService-Info.plist`, the web
+`apiKey`/`appId`) is **not secret** — it ships in every binary/page. Security comes from
+**Firebase Security Rules + App Check + API-key restrictions**, not from hiding these files.
+The only true secrets (never commit): the **FCM server key / service-account JSON** (backend
+only) and the **VAPID private key** (stays in Firebase).
+
+Handling per platform:
+- **Android** — `androidApp/google-services.json` is **committed with dummy values** so the repo
+  builds out of the box (the `google-services` Gradle plugin fails the build if the file is
+  missing). Replace it with the real file from Firebase Console for working push. It's not
+  secret, so committing dummy IDs is fine.
+- **iOS** — `GoogleService-Info.plist` is git-ignored (it's a runtime resource for the Xcode app
+  and doesn't block Gradle builds); each contributor adds their own to the Xcode target.
+- **Web** — config is served to the browser, so it can't be hidden — keep `REPLACE_ME`
+  placeholders and fill them at deploy/build; restrict the API key by HTTP referrer + App Check.
+
+## Telemetry
+
+Firebase Analytics / data collection is **disabled** — only Cloud Messaging is used:
+- Android: `firebase_analytics_collection_deactivated` + ad-id/ssaid flags in the app manifest.
+- iOS: `FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED` in `Info.plist`; do **not** link the
+  `FirebaseAnalytics` pod (FirebaseMessaging alone collects no analytics).
+- Web: only `firebase.messaging()` is initialized (never `getAnalytics()`), and
+  `automaticDataCollectionEnabled = false`.
+
+FCM message delivery metrics (BigQuery export) are off by default in the Firebase Console.
+
+## Manual setup still required
+
+These need a real Firebase project and the native toolchains and cannot be committed here.
+
+### Android
+1. Create a Firebase Android app (package `de.tabmates.androidapp`).
+2. Replace the committed **dummy** `androidApp/google-services.json` with the real one from
+   Firebase Console. (The dummy lets the repo build; push only works with the real file.)
+3. Replace the placeholder notification icon in
+   `PlatformNotificationsModule.android.kt` (`android.R.drawable.ic_dialog_info`) with a
+   branded monochrome icon.
+
+### Android notification categories (channels)
+`NotificationChannels` (in `:androidApp`) creates four channels on launch: `general` (default),
+`expenses`, `members`, `settle_ups`. To route a **background** push to a category, the backend
+sets `android.notification.channel_id` to one of those ids; with no id the manifest default
+(`general`) is used.
+
+Limitation: kmpnotifier owns **foreground** display and uses its own channel (it exposes no
+channel config), so categories apply to system-displayed background notifications, not foreground
+ones. iOS/Web have no equivalent channel concept here.
+
+### iOS
+1. Create a Firebase iOS app; add `GoogleService-Info.plist` to the Xcode `iosApp` target.
+2. Link the Firebase iOS SDK (FirebaseCore + FirebaseMessaging) via SPM/CocoaPods in
+   `iosApp.xcodeproj`. The `iOSApp.swift` AppDelegate already calls `FirebaseApp.configure()`
+   and forwards APNs/remote-notification callbacks into kmpnotifier.
+3. In the target's Signing & Capabilities, add **Push Notifications** and **Background Modes →
+   Remote notifications**.
+4. Upload the APNs auth key to Firebase Console.
+
+### Desktop (WebSocket → local notifications)
+No FCM on desktop. The app opens a WebSocket to `${BASE_URL_WS}/api/notifications/stream`
+(`DesktopPushNotificationController`) and renders each `NotificationEventDto`
+(`{ title, body, deepLink? }`) as a local notification.
+1. **Backend**: implement the authenticated WS endpoint pushing `NotificationEventDto` JSON
+   frames to the logged-in user.
+2. Set a real icon path in `DesktopPushNotificationController` (`notificationIconPath`,
+   currently `""`).
+
+### Web (Firebase JS SDK)
+Real browser push via the Firebase **JS** SDK — independent of kmpnotifier.
+1. Create a Firebase Web app; copy its config into **both**
+   `composeApp/src/wasmJsMain/resources/firebase-init.js` and `firebase-messaging-sw.js`
+   (replace the `REPLACE_ME` placeholders).
+2. Generate a **Web Push certificate (VAPID key)** in Firebase Console → Cloud Messaging →
+   Web configuration, and set `VAPID_KEY` in `firebase-init.js`.
+3. `firebase-messaging-sw.js` must be served from the web root (it already lives in
+   `wasmJsMain/resources`). `index.html` loads the Firebase compat SDK + `firebase-init.js`.
+4. Web push requires HTTPS (or `localhost`).
