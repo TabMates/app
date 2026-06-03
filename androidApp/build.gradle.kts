@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.tabmates.convention.android.application.compose)
+    alias(libs.plugins.google.services)
 }
 
 android {

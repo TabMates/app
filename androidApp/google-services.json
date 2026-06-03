@@ -1,0 +1,26 @@
+{
+  "_comment": "DUMMY config so the build passes out of the box. NOT a real Firebase project — push notifications will not work until you replace this with the real google-services.json from Firebase Console (Project settings -> Your apps -> Android, package de.tabmates.androidapp). This file is not a secret; the FCM server key / service account stays on the backend.",
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "tabmates-dummy",
+    "storage_bucket": "tabmates-dummy.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "android_client_info": {
+          "package_name": "de.tabmates.androidapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        { "current_key": "AIzaSyDUMMYDUMMYDUMMYDUMMYDUMMYDUMMY000" }
+      ],
+      "services": {
+        "appinvite_service": { "other_platform_oauth_client": [] }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
