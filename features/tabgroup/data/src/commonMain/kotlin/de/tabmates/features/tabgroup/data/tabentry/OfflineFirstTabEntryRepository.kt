@@ -95,6 +95,7 @@ class OfflineFirstTabEntryRepository(
             amount = amount,
             currencyCode = currencyCode,
             paidByUserId = paidByUserId,
+            createdAt = createdAt,
             splits = splits,
         )
         return Result.Success(expense)
@@ -147,6 +148,7 @@ class OfflineFirstTabEntryRepository(
             amount = amount,
             currencyCode = currencyCode,
             paidByUserId = paidByUserId,
+            createdAt = createdAt,
             splits = splits,
         )
         return Result.Success(expense)
@@ -193,6 +195,7 @@ class OfflineFirstTabEntryRepository(
             currencyCode = currencyCode,
             paidByUserId = paidByUserId,
             receivedByUserId = receivedByUserId,
+            createdAt = createdAt,
         )
         return Result.Success(settlement)
     }
