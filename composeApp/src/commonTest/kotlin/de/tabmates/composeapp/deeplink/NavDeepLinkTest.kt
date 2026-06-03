@@ -2,6 +2,7 @@ package de.tabmates.composeapp.deeplink
 
 import de.tabmates.features.authentication.presentation.navigation.ResetPassword
 import de.tabmates.features.authentication.presentation.navigation.EmailVerification
+import de.tabmates.features.tabgroup.presentation.navigation.GroupDetail
 import de.tabmates.features.tabgroup.presentation.navigation.JoinGroup
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -18,6 +19,7 @@ class NavDeepLinkTest {
             navDeepLink<EmailVerification>(basePath = "https://example.com/api/auth/verify"),
             navDeepLink<ResetPassword>(basePath = "https://example.com/api/auth/reset-password"),
             navDeepLink<JoinGroup>(basePath = "https://example.com/j", pathSuffixParam = "token"),
+            navDeepLink<GroupDetail>(basePath = "https://example.com/groups", pathSuffixParam = "groupId"),
         )
     }
 
@@ -35,6 +37,13 @@ class NavDeepLinkTest {
         val result = resolveDeepLink("https://example.com/api/auth/reset-password?token=xyz789", deepLinks)
 
         assertEquals(ResetPassword(token = "xyz789"), result)
+    }
+
+    @Test
+    fun resolveGroupDetailFromNotificationUrlReturnsCorrectNavKey() {
+        val result = resolveDeepLink("https://example.com/groups/grp-42", deepLinks)
+
+        assertEquals(GroupDetail(groupId = "grp-42"), result)
     }
 
     @Test

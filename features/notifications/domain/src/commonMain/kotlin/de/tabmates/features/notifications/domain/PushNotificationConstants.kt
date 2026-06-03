@@ -3,11 +3,10 @@ package de.tabmates.features.notifications.domain
 /** Keys the backend includes in a push notification's data payload. */
 object PushNotificationConstants {
     /**
-     * Optional deep-link URL in the payload. When a notification carrying this key is
-     * clicked, [PushNotificationRouter] forwards it to the app's deep-link handler.
+     * Deep-link URL the notification should open on tap. Forwarded to the app via
+     * [NotificationDeepLinkBus] and resolved to a destination. For a group notification
+     * (new expense, member joined, settle-up) the backend sends the group URL, e.g.
+     * `https://<host>/groups/<groupId>`, which opens the group detail screen.
      */
     const val KEY_DEEP_LINK = "deepLink"
-
-    /** Group a notification refers to (new expense, member joined, settle-up). */
-    const val KEY_GROUP_ID = "groupId"
 }
