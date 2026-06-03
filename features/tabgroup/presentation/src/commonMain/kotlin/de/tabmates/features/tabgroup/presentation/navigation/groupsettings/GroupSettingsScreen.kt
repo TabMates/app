@@ -3,6 +3,8 @@ package de.tabmates.features.tabgroup.presentation.navigation.groupsettings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,12 +37,16 @@ import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.presentation.util.ObserveAsEvents
+import de.tabmates.features.tabgroup.presentation.components.AddPlaceholderButton
+import de.tabmates.features.tabgroup.presentation.components.AddPlaceholderDialog
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
+import de.tabmates.features.tabgroup.presentation.components.PlaceholderChip
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_add_placeholder
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_danger_zone
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_default_currency
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_description_label
@@ -52,6 +58,12 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.group_sett
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_leave_group
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_left
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_name_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholder_dialog_cancel
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholder_dialog_confirm
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholder_dialog_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholder_name_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholders_caption
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholders_section
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_save
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_saved
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
@@ -139,6 +151,13 @@ private fun GroupSettingsScreen(
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         VerticalSpacer(8.dp)
+        PlaceholdersSection(
+            placeholders = state.placeholders,
+            isAdding = state.isAddingPlaceholder,
+            onAddClick = { onAction(GroupSettingsAction.AddPlaceholderClick) },
+            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
+        )
+        VerticalSpacer(8.dp)
         Text(
             text = stringResource(Res.string.group_settings_danger_zone),
             style = MaterialTheme.typography.labelLarge,
@@ -181,6 +200,58 @@ private fun GroupSettingsScreen(
                 }
             },
         )
+    }
+    if (state.isPlaceholderDialogVisible) {
+        AddPlaceholderDialog(
+            textState = state.newPlaceholderTextState,
+            title = stringResource(Res.string.group_settings_placeholder_dialog_title),
+            nameLabel = stringResource(Res.string.group_settings_placeholder_name_label),
+            confirmLabel = stringResource(Res.string.group_settings_placeholder_dialog_confirm),
+            cancelLabel = stringResource(Res.string.group_settings_placeholder_dialog_cancel),
+            confirmEnabled = !state.isAddingPlaceholder,
+            onConfirm = { onAction(GroupSettingsAction.PlaceholderDialogConfirm) },
+            onDismiss = { onAction(GroupSettingsAction.PlaceholderDialogDismiss) },
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PlaceholdersSection(
+    placeholders: List<GroupSettingsPlaceholder>,
+    isAdding: Boolean,
+    onAddClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(Res.string.group_settings_placeholders_section),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        VerticalSpacer(8.dp)
+        Text(
+            text = stringResource(Res.string.group_settings_placeholders_caption),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        VerticalSpacer(12.dp)
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            placeholders.forEach { placeholder ->
+                PlaceholderChip(name = placeholder.name, initial = placeholder.initial)
+            }
+            AddPlaceholderButton(
+                label = stringResource(Res.string.group_settings_add_placeholder),
+                onClick = onAddClick,
+                enabled = !isAdding,
+            )
+        }
     }
 }
 
