@@ -14,8 +14,8 @@ Android + iOS:
 ## Layout
 
 - **domain** — `NotificationService` (backend token registration), `PushNotificationController`
-  (platform entry point), `DevicePlatform`, `PushNotificationConstants`, `PushNotificationRouter`
-  (clicked-notification deep-link bridge).
+  (platform entry point), `DevicePlatform`, `PushNotificationConstants`, `NotificationDeepLinkBus`
+  (data publishes clicked-notification deep links, the app collects and navigates).
 - **data** — `KtorNotificationService` (backend calls) and the per-platform
   `PlatformNotificationsModule` Koin modules, each providing one controller:
   - `MobilePushNotificationController` — `androidMain` + `iosMain` (FCM via kmpnotifier).
@@ -43,8 +43,10 @@ device token with that user.
 because the OS renders pushes while the app is killed. The device re-registers automatically
 when the in-app language changes (`NotificationsSyncCoordinator`).
 
-Push payloads may include `deepLink` (routed via `PushNotificationRouter`) and `groupId`
-(see `PushNotificationConstants`). Adjust routes/DTOs if the backend differs.
+Push payloads may include `deepLink` (`PushNotificationConstants.KEY_DEEP_LINK`) — the URL the
+notification opens on tap. For a group event the backend sends `https://<host>/groups/<groupId>`,
+which resolves to the group detail screen (`App.kt` registers the deep-link route). Adjust
+routes/DTOs if the backend differs.
 
 ### In-app language
 

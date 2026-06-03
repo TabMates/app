@@ -62,6 +62,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.Activity
 import de.tabmates.features.tabgroup.presentation.navigation.AddExpense
 import de.tabmates.features.tabgroup.presentation.navigation.CreateGroup
 import de.tabmates.features.tabgroup.presentation.navigation.Group
+import de.tabmates.features.tabgroup.presentation.navigation.GroupDetail
 import de.tabmates.features.tabgroup.presentation.navigation.Home
 import de.tabmates.features.tabgroup.presentation.navigation.JoinGroup
 import de.tabmates.features.tabgroup.presentation.navigation.Profile
@@ -92,6 +93,7 @@ private val deepLinks = listOf(
     navDeepLink<EmailVerification>(basePath = "${BuildKonfig.BASE_URL_HTTP}/api/auth/verify"),
     navDeepLink<ResetPassword>(basePath = "${BuildKonfig.BASE_URL_HTTP}/api/auth/reset-password"),
     navDeepLink<JoinGroup>(basePath = "${BuildKonfig.BASE_URL_HTTP}/j", pathSuffixParam = "token"),
+    navDeepLink<GroupDetail>(basePath = "${BuildKonfig.BASE_URL_HTTP}/groups", pathSuffixParam = "groupId"),
 )
 
 @get:Composable
