@@ -48,6 +48,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_alternate_email
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_dark_mode
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_info
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_light_mode
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_lock
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_logout
@@ -59,13 +60,17 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_ac
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_password
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_username
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_footer
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_about
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_appearance
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_notifications
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_notifications
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_notifications_blocked
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_notifications_caption
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_open_settings
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_oss_licenses
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_oss_licenses_caption
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_password_subtitle
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_about
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_account
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_appearance
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_settings_title
@@ -85,6 +90,7 @@ fun ProfileRoot(
     snackbarHostState: SnackbarHostState,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onOpenOssLicenses: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = koinViewModel(),
 ) {
@@ -112,6 +118,7 @@ fun ProfileRoot(
         onOpenNotificationSettings = viewModel::onOpenNotificationSettings,
         onEditUsername = onEditUsername,
         onChangePassword = onChangePassword,
+        onOpenOssLicenses = onOpenOssLicenses,
         onSignOut = viewModel::onSignOut,
         modifier = modifier,
     )
@@ -126,6 +133,7 @@ internal fun ProfileScreen(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onOpenOssLicenses: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -140,6 +148,7 @@ internal fun ProfileScreen(
             onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
+            onOpenOssLicenses = onOpenOssLicenses,
             onSignOut = onSignOut,
             modifier = modifier,
         )
@@ -151,6 +160,7 @@ internal fun ProfileScreen(
             onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
+            onOpenOssLicenses = onOpenOssLicenses,
             onSignOut = onSignOut,
             modifier = modifier,
         )
@@ -165,6 +175,7 @@ private fun ProfilePhonePane(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onOpenOssLicenses: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -192,6 +203,7 @@ private fun ProfilePhonePane(
             onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
+            onOpenOssLicenses = onOpenOssLicenses,
         )
         VerticalSpacer(8.dp)
         SignOutButton(onClick = onSignOut)
@@ -216,6 +228,7 @@ private fun SettingsTwoPane(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onOpenOssLicenses: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -257,6 +270,7 @@ private fun SettingsTwoPane(
                         onOpenNotificationSettings = onOpenNotificationSettings,
                         onEditUsername = onEditUsername,
                         onChangePassword = onChangePassword,
+                        onOpenOssLicenses = onOpenOssLicenses,
                     )
                 }
 
@@ -272,6 +286,18 @@ private fun SettingsTwoPane(
                         permissionBlocked = state.notificationsPermissionBlocked,
                         onToggle = onNotificationsToggle,
                         onOpenSettings = onOpenNotificationSettings,
+                    )
+                }
+
+                SettingsSection.ABOUT -> {
+                    SectionLabel(stringResource(Res.string.profile_section_about))
+                    AccountRow(
+                        iconRes = Res.drawable.ic_info,
+                        title = stringResource(Res.string.profile_oss_licenses),
+                        subtitle = stringResource(Res.string.profile_oss_licenses_caption),
+                        onClick = onOpenOssLicenses,
+                        showChevron = true,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
@@ -317,6 +343,12 @@ private fun SettingsMaster(
             label = stringResource(Res.string.profile_nav_notifications),
             selected = state.selectedSection == SettingsSection.NOTIFICATIONS,
             onClick = { onSectionSelected(SettingsSection.NOTIFICATIONS) },
+        )
+        SettingsNavItem(
+            iconRes = Res.drawable.ic_info,
+            label = stringResource(Res.string.profile_nav_about),
+            selected = state.selectedSection == SettingsSection.ABOUT,
+            onClick = { onSectionSelected(SettingsSection.ABOUT) },
         )
         Box(modifier = Modifier.weight(1f))
         SignOutButton(onClick = onSignOut)
@@ -364,6 +396,7 @@ private fun ProfileAccountAndAppearance(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onOpenOssLicenses: () -> Unit,
 ) {
     SectionLabel(stringResource(Res.string.profile_section_account))
     if (twoColumnAccount) {
@@ -435,6 +468,16 @@ private fun ProfileAccountAndAppearance(
         permissionBlocked = state.notificationsPermissionBlocked,
         onToggle = onNotificationsToggle,
         onOpenSettings = onOpenNotificationSettings,
+    )
+    VerticalSpacer(4.dp)
+    SectionLabel(stringResource(Res.string.profile_section_about))
+    AccountRow(
+        iconRes = Res.drawable.ic_info,
+        title = stringResource(Res.string.profile_oss_licenses),
+        subtitle = stringResource(Res.string.profile_oss_licenses_caption),
+        onClick = onOpenOssLicenses,
+        showChevron = true,
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 
