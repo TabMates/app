@@ -1,0 +1,119 @@
+# TabMates
+
+Split shared expenses with friends, flatmates and travel groups — across Android, iOS, Desktop and Web from a single Kotlin codebase.
+
+![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin&logoColor=white)
+![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.11-4285F4?logo=jetpackcompose&logoColor=white)
+![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-lightgrey)
+![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
+
+TabMates is a Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) app for tracking who paid for what in a group and settling up. The UI, business logic and data layer are shared across all targets; only thin platform shells differ.
+
+## Features
+
+- **Groups** — create groups, invite members via share links, join by link.
+- **Expenses** — add, edit and view expenses with flexible splitting and **multiple currencies per expense**.
+- **Offline-first** — browse groups and expenses and keep working without a connection; changes sync once you're back online (local Room cache).
+- **Settle up** — see balances and who owes whom.
+- **Activity feed** — recent changes across your groups.
+- **Accounts** — register, log in, continue as guest, email verification and password reset.
+- **Push notifications** — group activity via Firebase Cloud Messaging (Android/iOS), a WebSocket-driven channel on Desktop, and the Firebase JS SDK on Web. See [`features/notifications/README.md`](features/notifications/README.md).
+- **Settings** — theme (light/dark/system), in-app language, notification toggle with permission handling, and an open-source licenses screen.
+
+## Platforms
+
+| Target | Shell |
+|--------|-------|
+| Android | `:androidApp` |
+| iOS | `iosApp` (SwiftUI host) |
+| Desktop (JVM) | `:composeApp` desktop entry |
+| Web (WasmJS) | `:composeApp` web entry |
+
+## Tech stack
+
+- **Kotlin Multiplatform** + **Compose Multiplatform** UI
+- **Clean Architecture** + **MVI/MVVM** presentation
+- **Koin** (annotations + compiler) for dependency injection
+- **Navigation 3** (type-safe routes)
+- **Ktor** client (ContentNegotiation + WebSockets) for networking
+- **Room** (KMP) for local persistence
+- **kotlinx.serialization**, **KSafe** (encrypted storage), **BuildKonfig** (build-time config)
+- **kmpnotifier** / Firebase for push, **AboutLibraries** for license attribution
+- Gradle **convention plugins** in `build-logic`, version catalog in `gradle/libs.versions.toml`
+
+## Architecture
+
+The project is modularized **by feature and by layer**. Dependencies point inward: `presentation → domain ← data`, with `core` shared by all features.
+
+- **`:core:domain`** — pure Kotlin: models, `Result<D, E>`, error types, logging.
+- **`:core:data`** — shared networking (`HttpClientFactory`), encrypted storage (`SecureStore`), preferences.
+- **`:core:presentation`** — shared UI utilities (`UiText`, `ObserveAsEvents`, navigation contracts).
+- **`:core:designsystem`** — theme, tokens and reusable Compose components.
+- **`:features:*`** — each feature split into `domain` (interfaces, models), `data` (implementations, DTOs, mappers), `presentation` (screens, ViewModels, routes), optional `database`/`testing`.
+- **`:composeApp`** — shared entry point: wires navigation and DI, hosts Desktop/Web `main` and the iOS `MainViewController`.
+- **`:androidApp`** — Android application shell.
+
+See [`AGENTS.md`](AGENTS.md) for detailed conventions.
+
+## Project structure
+
+```
+composeApp/                 Shared app entry (DI + navigation), desktop & web main, iOS controller
+androidApp/                 Android application
+iosApp/                     iOS SwiftUI host (Xcode project)
+core/
+  data/  domain/  presentation/  designsystem/
+features/
+  authentication/  data · domain · presentation · testing
+  notifications/   data · domain · testing
+  tabgroup/        data · domain · presentation · database · sqliteWasmWorker
+build-logic/                Gradle convention plugins
+gradle/libs.versions.toml   Version catalog
+```
+
+## Getting started
+
+### Prerequisites
+
+- JDK 17+
+- Android Studio (latest stable) / IntelliJ IDEA
+- Xcode (for iOS), on macOS
+
+### Configuration
+
+Build-time config is injected via BuildKonfig and **required** to build. Add these to a `local.properties` file in the repo root (git-ignored), or provide them as environment variables in CI:
+
+```properties
+API_KEY=your-api-key
+BASE_URL_HTTP=https://your-backend.example.com
+BASE_URL_WS=wss://your-backend.example.com
+```
+
+Push notifications additionally need Firebase config — see [`features/notifications/README.md`](features/notifications/README.md). A dummy `androidApp/google-services.json` is committed so the project builds out of the box; replace it with a real one for working push.
+
+### Run
+
+```bash
+# Android — install on a device/emulator (or just run :androidApp from the IDE)
+./gradlew :androidApp:installDebug
+
+# Desktop (JVM), hot-reload enabled
+./gradlew :composeApp:hotRunDesktop
+
+# Web (WasmJS) — dev server
+./gradlew :composeApp:wasmJsBrowserDevelopmentRun
+```
+
+iOS: open `iosApp/iosApp.xcodeproj` in Xcode and run, or use the KMP/AndroidStudio run configuration.
+
+### Build & test
+
+```bash
+./gradlew build          # build all targets
+./gradlew check          # run tests + lint (ktlint)
+./gradlew ktlintFormat   # auto-format
+```
+
+## License
+
+Licensed under the **GNU General Public License v3.0**. See [`LICENSE`](LICENSE).
