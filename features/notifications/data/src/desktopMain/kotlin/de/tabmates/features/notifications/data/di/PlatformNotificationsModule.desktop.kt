@@ -5,6 +5,7 @@ import de.tabmates.core.data.di.WS_BASE_URL
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.features.notifications.data.DesktopPushNotificationController
 import de.tabmates.features.notifications.data.UnsupportedNotificationPermissionController
+import de.tabmates.features.notifications.domain.NotificationDeepLinkBus
 import de.tabmates.features.notifications.domain.NotificationPermissionController
 import de.tabmates.features.notifications.domain.PushNotificationController
 import io.ktor.client.HttpClient
@@ -25,6 +26,7 @@ actual class PlatformNotificationsModule {
         @Named(WS_BASE_URL) wsBaseUrl: String,
         @Named(APPLICATION_SCOPE) scope: CoroutineScope,
         logger: TabMatesLogger,
+        deepLinkBus: NotificationDeepLinkBus,
     ): PushNotificationController =
         DesktopPushNotificationController(
             httpClient = httpClient,
@@ -32,6 +34,7 @@ actual class PlatformNotificationsModule {
             wsBaseUrl = wsBaseUrl,
             appScope = scope,
             logger = logger,
+            deepLinkBus = deepLinkBus,
         )
 
     @Single
