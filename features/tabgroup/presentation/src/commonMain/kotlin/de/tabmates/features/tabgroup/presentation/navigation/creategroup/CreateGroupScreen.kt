@@ -20,23 +20,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.InputChip
-import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,7 +43,10 @@ import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.util.ObserveAsEvents
+import de.tabmates.features.tabgroup.presentation.components.AddPlaceholderButton
+import de.tabmates.features.tabgroup.presentation.components.AddPlaceholderDialog
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
+import de.tabmates.features.tabgroup.presentation.components.PlaceholderChip
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -70,9 +66,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.create_gro
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholders_section
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_submit_action
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_down
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_close
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_edit
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
 
 @Composable
 fun CreateGroupRoot(
@@ -153,6 +147,10 @@ private fun CreateGroupScreen(
     if (state.isPlaceholderDialogVisible) {
         AddPlaceholderDialog(
             textState = state.newPlaceholderTextState,
+            title = stringResource(Res.string.create_group_placeholder_dialog_title),
+            nameLabel = stringResource(Res.string.create_group_placeholder_name_label),
+            confirmLabel = stringResource(Res.string.create_group_placeholder_dialog_confirm),
+            cancelLabel = stringResource(Res.string.create_group_placeholder_dialog_cancel),
             onConfirm = onPlaceholderDialogConfirm,
             onDismiss = onPlaceholderDialogDismiss,
         )
@@ -324,6 +322,7 @@ private fun PlaceholderChipsRow(
     onRemove: (String) -> Unit,
     onAddClick: () -> Unit,
 ) {
+    val removeContentDescription = stringResource(Res.string.create_group_placeholder_remove_cd)
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -331,97 +330,17 @@ private fun PlaceholderChipsRow(
     ) {
         placeholders.forEach { placeholder ->
             PlaceholderChip(
-                placeholder = placeholder,
+                name = placeholder.name,
+                initial = placeholder.initial,
                 onRemove = { onRemove(placeholder.id) },
+                removeContentDescription = removeContentDescription,
             )
         }
-        AddPlaceholderButton(onClick = onAddClick)
+        AddPlaceholderButton(
+            label = stringResource(Res.string.create_group_add_placeholder),
+            onClick = onAddClick,
+        )
     }
-}
-
-@Composable
-private fun PlaceholderChip(
-    placeholder: CreateGroupPlaceholder,
-    onRemove: () -> Unit,
-) {
-    InputChip(
-        selected = false,
-        onClick = onRemove,
-        label = { Text(placeholder.name) },
-        avatar = {
-            Box(
-                modifier =
-                    Modifier
-                        .size(InputChipDefaults.AvatarSize)
-                        .background(
-                            color = MaterialTheme.colorScheme.tertiaryContainer,
-                            shape = CircleShape,
-                        ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = placeholder.initial,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                )
-            }
-        },
-        trailingIcon = {
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_close),
-                contentDescription = stringResource(Res.string.create_group_placeholder_remove_cd),
-                modifier = Modifier.size(InputChipDefaults.IconSize),
-            )
-        },
-    )
-}
-
-@Composable
-private fun AddPlaceholderButton(onClick: () -> Unit) {
-    AssistChip(
-        onClick = onClick,
-        label = { Text(stringResource(Res.string.create_group_add_placeholder)) },
-        leadingIcon = {
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_person_add),
-                contentDescription = null,
-                modifier = Modifier.size(AssistChipDefaults.IconSize),
-            )
-        },
-    )
-}
-
-@Composable
-private fun AddPlaceholderDialog(
-    textState: TextFieldState,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.create_group_placeholder_dialog_title)) },
-        text = {
-            TabMatesTextField(
-                state = textState,
-                title = stringResource(Res.string.create_group_placeholder_name_label),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(
-                    text = stringResource(Res.string.create_group_placeholder_dialog_confirm),
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.create_group_placeholder_dialog_cancel))
-            }
-        },
-    )
 }
 
 private fun previewState(): CreateGroupState =
