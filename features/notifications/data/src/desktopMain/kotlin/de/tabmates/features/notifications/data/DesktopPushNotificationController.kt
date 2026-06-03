@@ -1,9 +1,13 @@
 package de.tabmates.features.notifications.data
 
 import com.mmk.kmpnotifier.notification.NotifierManager
+import com.mmk.kmpnotifier.notification.NotifierManager.Listener
+import com.mmk.kmpnotifier.notification.PayloadData
 import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.features.notifications.data.dto.NotificationEventDto
+import de.tabmates.features.notifications.domain.NotificationDeepLinkBus
+import de.tabmates.features.notifications.domain.PushNotificationConstants
 import de.tabmates.features.notifications.domain.PushNotificationController
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.webSocket
@@ -26,8 +30,21 @@ class DesktopPushNotificationController(
     private val wsBaseUrl: String,
     private val appScope: CoroutineScope,
     private val logger: TabMatesLogger,
+    private val deepLinkBus: NotificationDeepLinkBus,
 ) : PushNotificationController {
     private var streamJob: Job? = null
+    private var notificationId = 0
+
+    private val notifierManagerListener =
+        object : Listener {
+            override fun onNotificationClicked(data: PayloadData) {
+                val deepLink = data[PushNotificationConstants.KEY_DEEP_LINK] as? String
+                if (deepLink != null) {
+                    logger.debug(TAG, "Notification clicked, routing deep link")
+                    deepLinkBus.publish(deepLink)
+                }
+            }
+        }
 
     override fun start() {
         NotifierManager.initialize(
@@ -37,6 +54,7 @@ class DesktopPushNotificationController(
                 notificationIconPath = "",
             ),
         )
+        NotifierManager.addListener(notifierManagerListener)
         if (streamJob?.isActive == true) return
         streamJob =
             appScope.launch {
@@ -64,7 +82,13 @@ class DesktopPushNotificationController(
             for (frame in incoming) {
                 if (frame !is Frame.Text) continue
                 val event = json.decodeFromString<NotificationEventDto>(frame.readText())
-                NotifierManager.getLocalNotifier().notify(event.title, event.body)
+                NotifierManager.getLocalNotifier().notify {
+                    id = notificationId++
+                    title = event.title
+                    body = event.body
+                    // Carry the deep link so onNotificationClicked can route it.
+                    event.deepLink?.let { payloadData = mapOf(PushNotificationConstants.KEY_DEEP_LINK to it) }
+                }
             }
         }
     }
