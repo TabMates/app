@@ -1,5 +1,6 @@
 package de.tabmates.core.data.preferences
 
+import de.tabmates.core.domain.preferences.AppLanguage
 import de.tabmates.core.domain.preferences.AppPreferencesRepository
 import de.tabmates.core.domain.preferences.ThemeMode
 import eu.anifantakis.lib.ksafe.KSafe
@@ -28,8 +29,18 @@ class KSafeAppPreferencesRepository(
         prefs.put(KEY_NOTIFICATIONS, enabled, KSafeWriteMode.Plain)
     }
 
+    override fun appLanguage(): Flow<AppLanguage> =
+        prefs.getFlow(KEY_APP_LANGUAGE, AppLanguage.SYSTEM.name).map { stored ->
+            runCatching { AppLanguage.valueOf(stored) }.getOrDefault(AppLanguage.SYSTEM)
+        }
+
+    override suspend fun setAppLanguage(language: AppLanguage) {
+        prefs.put(KEY_APP_LANGUAGE, language.name, KSafeWriteMode.Plain)
+    }
+
     private companion object {
         private const val KEY_THEME_MODE = "themeMode"
         private const val KEY_NOTIFICATIONS = "notificationsEnabled"
+        private const val KEY_APP_LANGUAGE = "appLanguage"
     }
 }
