@@ -1,0 +1,4 @@
+# Scratch dirs — regenerated each run, not for version control
+intermediate/
+tmp/
+.trash-*/
