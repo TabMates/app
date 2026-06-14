@@ -28,3 +28,4 @@ KLIB resolver: The same 'unique_name=window-core_commonMain'
 KLIB resolver: The same 'unique_name=lifecycle-viewmodel-navigation3_commonMain'
 
 Deprecated Gradle Property 'kotlin.mpp.import.enableKgpDependencyResolution' Used
+w: ⚠️ Native task 'iosSimulatorArm64Test' is disabled
