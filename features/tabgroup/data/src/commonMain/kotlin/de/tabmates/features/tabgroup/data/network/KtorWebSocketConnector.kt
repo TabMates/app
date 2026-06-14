@@ -170,9 +170,7 @@ class KtorWebSocketConnector(
                             session.send(Frame.Pong(frame.data))
                         }
 
-                        else -> {
-                            Unit
-                        }
+                        else -> {}
                     }
                 }
 
