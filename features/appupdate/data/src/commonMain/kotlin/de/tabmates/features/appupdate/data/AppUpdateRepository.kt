@@ -18,7 +18,11 @@ class AppUpdateRepository(
     private val httpClient: HttpClient,
 ) {
     suspend fun check(): AppUpdateStatus {
-        if (appUpdatePlatform == WEB_PLATFORM) return AppUpdateStatus.UpToDate
+        // Web is always served fresh; desktop self-updates via Conveyor. Both manage updates
+        // outside this server-driven check.
+        if (appUpdatePlatform == WEB_PLATFORM || appUpdatePlatform == DESKTOP_PLATFORM) {
+            return AppUpdateStatus.UpToDate
+        }
 
         val dto =
             when (val result = httpClient.get<AppVersionDto>(ROUTE, mapOf("platform" to appUpdatePlatform))) {

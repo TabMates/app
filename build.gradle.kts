@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.compose.multiplatform) apply false
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.android.kmp.library) apply false
@@ -16,4 +17,5 @@ plugins {
     alias(libs.plugins.koin.compiler) apply false
     alias(libs.plugins.google.services) apply false
     alias(libs.plugins.aboutlibraries) apply false
+    alias(libs.plugins.conveyor) apply false
 }
