@@ -30,12 +30,20 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                             "or in local.properties.",
                     )
 
+            // App version exposed cross-platform for the in-app update check.
+            val appVersion: String =
+                System.getenv("APP_VERSION")
+                    ?: localProperties.getProperty("APP_VERSION")
+                    ?: findProperty("APP_VERSION")?.toString()
+                    ?: "1.0"
+
             extensions.configure<BuildKonfigExtension> {
                 packageName = target.pathToPackageName()
                 defaultConfigs {
                     buildConfigField(FieldSpec.Type.STRING, "API_KEY", requireProperty("API_KEY"))
                     buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", requireProperty("BASE_URL_HTTP"))
                     buildConfigField(FieldSpec.Type.STRING, "BASE_URL_WS", requireProperty("BASE_URL_WS"))
+                    buildConfigField(FieldSpec.Type.STRING, "APP_VERSION", appVersion)
                     buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "false")
                 }
                 targetConfigs {

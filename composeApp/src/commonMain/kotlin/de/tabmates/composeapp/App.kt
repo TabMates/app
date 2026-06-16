@@ -42,6 +42,7 @@ import de.tabmates.composeapp.navigation.ScreenTopBar
 import de.tabmates.composeapp.sync.CurrencySyncCoordinator
 import de.tabmates.composeapp.sync.GroupSyncCoordinator
 import de.tabmates.composeapp.sync.NotificationsSyncCoordinator
+import de.tabmates.composeapp.update.AppUpdateGate
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.domain.preferences.ThemeMode
 import de.tabmates.core.presentation.navigation.FabAction
@@ -118,6 +119,10 @@ fun App() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
         TabMatesTheme(darkTheme = darkTheme) {
+            // Checks for app updates on launch: native Play in-app update on eligible Android
+            // devices, store-redirect dialog everywhere else.
+            AppUpdateGate()
+
             val isLoggedIn by mainViewModel.isLoggedIn.collectAsStateWithLifecycle()
 
             // Start sync coordinators off the main thread, post-first-frame.
