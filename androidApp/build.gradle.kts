@@ -9,7 +9,7 @@ android {
     defaultConfig {
         applicationId = "de.tabmates.androidapp"
         versionCode = 1
-        versionName = "1.0"
+        versionName = providers.gradleProperty("APP_VERSION").get()
     }
 
     lint {

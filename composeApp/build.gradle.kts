@@ -25,6 +25,8 @@ kotlin {
             implementation(projects.core.designsystem)
             implementation(projects.core.domain)
             implementation(projects.core.presentation)
+            implementation(projects.features.appupdate.data)
+            implementation(projects.features.appupdate.domain)
             implementation(projects.features.authentication.data)
             implementation(projects.features.authentication.domain)
             implementation(projects.features.authentication.presentation)
@@ -43,6 +45,12 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.ksafe)
             implementation(libs.jetbrains.material3.adaptive)
+        }
+        androidMain.dependencies {
+            // Google Play in-app update flow (native, Play-installed devices only).
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.play.app.update)
+            implementation(libs.play.app.update.ktx)
         }
         iosMain.dependencies {
             // Exposes kmpnotifier extension functions to the iOS Swift AppDelegate bridge.
