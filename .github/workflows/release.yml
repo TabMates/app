@@ -1,0 +1,122 @@
+name: Release
+
+permissions:
+  contents: write        # create the GitHub prerelease
+
+on:
+  push:
+    tags:
+      - '*'
+
+env:
+  API_KEY: ${{ secrets.API_KEY }}
+  BASE_URL_HTTP: ${{ secrets.BASE_URL_HTTP }}
+  BASE_URL_WS: ${{ secrets.BASE_URL_WS }}
+
+jobs:
+  build-appbundle:
+    name: Build Signed AppBundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - id: get_version
+        uses: battila7/get-version-action@v2
+
+      - name: Decode Keystore
+        uses: timheuer/base64-to-file@v2
+        with:
+          fileName: 'upload_keystore.jks'
+          fileDir: 'androidApp/keystore/'
+          encodedString: ${{ secrets.KEYSTORE_PLAY_STORE }}
+
+      - name: Build AppBundle
+        run: ./gradlew :androidApp:bundleRelease --no-daemon --no-configuration-cache --no-build-cache -x test
+        env:
+          ORG_GRADLE_PROJECT_APP_VERSION: ${{ steps.get_version.outputs.version-without-v }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PLAY_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_PLAY_STORE_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PLAY_STORE_PASSWORD }}
+
+      - name: Upload AppBundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: appbundle
+          path: androidApp/build/outputs/bundle/release/androidApp-release.aab
+
+  release:
+    name: Release
+    needs: [build-appbundle]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download aab from build
+        uses: actions/download-artifact@v8
+        with:
+          name: appbundle
+
+      - name: Build Changelog
+        id: github_release
+        uses: mikepenz/release-changelog-builder-action@v6
+        with:
+          configurationJson: |
+            {
+              "categories": [
+                {
+                  "title": "## 🚀 New Features",
+                  "labels": [
+                    "feature"
+                  ]
+                },
+                {
+                  "title": "## 🐛 Bugs fixed",
+                  "labels": [
+                    "bug"
+                  ]
+                },
+                {
+                  "title": "## 🧪 Updated Translations",
+                  "labels": [
+                    "translations"
+                  ]
+                },
+                {
+                  "title": "## 💬 Minor Changes",
+                  "labels": [
+                    "cleanup / restructuring",
+                    "dependencies"
+                  ]
+                }
+              ],
+              "pr_template": "- #{{TITLE}} by @#{{AUTHOR}} in ##{{NUMBER}}"
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Prerelease
+        uses: mikepenz/action-gh-release@v3
+        with:
+          body: ${{ steps.github_release.outputs.changelog }}
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to Play Store Alpha
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
+          packageName: de.tabmates.androidapp
+          releaseFiles: androidApp-release.aab
+          track: alpha
