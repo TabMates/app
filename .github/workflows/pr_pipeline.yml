@@ -9,9 +9,9 @@ on:
       - main
 
 env:
-  API_KEY: ${{ secrets.API_KEY || 'dev-api-key' }}
-  BASE_URL_HTTP: ${{ secrets.BASE_URL_HTTP || '' }}
-  BASE_URL_WS: ${{ secrets.BASE_URL_WS || '' }}
+  API_KEY: ${{ 'dev-api-key' }}
+  BASE_URL_HTTP: ${{ '' }}
+  BASE_URL_WS: ${{ '' }}
 
 jobs:
   code_formatting:
