@@ -35,7 +35,7 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                 System.getenv("APP_VERSION")
                     ?: localProperties.getProperty("APP_VERSION")
                     ?: findProperty("APP_VERSION")?.toString()
-                    ?: "1.0"
+                    ?: "0.1.0"
 
             extensions.configure<BuildKonfigExtension> {
                 packageName = target.pathToPackageName()

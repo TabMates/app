@@ -21,3 +21,6 @@ kotlin-js-store/
 
 # Kotzilla SDK config — contains an API key, keep out of VCS
 kotzilla.json
+
+# Release upload keystore, decoded from a secret during CI — never commit it
+androidApp/keystore/
