@@ -304,4 +304,20 @@
     <string name="change_password_error_required">Enter your current and new password</string>
     <string name="change_password_error_too_short">New password must be at least 8 characters</string>
     <string name="account_saved">Saved</string>
+
+    <string name="profile_migrate_account">Create an account</string>
+    <string name="profile_migrate_account_subtitle">Add an email and password to secure your data</string>
+    <string name="migrate_account_title">Create account</string>
+    <string name="migrate_account_email_label">Email</string>
+    <string name="migrate_account_password_label">Password</string>
+    <string name="migrate_account_confirm_label">Confirm password</string>
+    <string name="migrate_account_success_title">Verify your email</string>
+    <string name="migrate_account_email_sent_to_x">We sent a verification link to %1$s. Tap it to confirm your email address.</string>
+    <string name="migrate_account_resend">Resend verification email</string>
+    <string name="migrate_account_resent">Verification email sent</string>
+    <string name="migrate_account_done">Done</string>
+    <string name="migrate_account_error_email_invalid">Enter a valid email address</string>
+    <string name="migrate_account_error_password_requirements">Password must be 8–40 characters and include a number or symbol</string>
+    <string name="migrate_account_error_password_mismatch">Passwords do not match</string>
+    <string name="migrate_account_error_email_unavailable">This email can\'t be used. Please try a different one.</string>
 </resources>

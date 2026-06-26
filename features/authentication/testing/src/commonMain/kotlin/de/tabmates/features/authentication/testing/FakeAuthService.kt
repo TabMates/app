@@ -21,10 +21,13 @@ open class FakeAuthService(
     var logoutResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var changeUsernameResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var changePasswordResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var migrateToRegisteredResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var migrateToRegisteredDelayMillis: Long = 0L,
 ) : AuthService {
     val logoutCalls: MutableList<String> = mutableListOf()
     val changeUsernameCalls: MutableList<String> = mutableListOf()
     val changePasswordCalls: MutableList<Pair<String, String>> = mutableListOf()
+    val migrateToRegisteredCalls: MutableList<Pair<String, String>> = mutableListOf()
     var registerCalls: Int = 0
         private set
 
@@ -118,5 +121,16 @@ open class FakeAuthService(
     ): EmptyResult<DataError.Remote> {
         changePasswordCalls += (oldPassword to newPassword)
         return changePasswordResult
+    }
+
+    override suspend fun migrateToRegistered(
+        email: String,
+        password: String,
+    ): EmptyResult<DataError.Remote> {
+        migrateToRegisteredCalls += (email to password)
+        if (migrateToRegisteredDelayMillis > 0L) {
+            delay(migrateToRegisteredDelayMillis)
+        }
+        return migrateToRegisteredResult
     }
 }

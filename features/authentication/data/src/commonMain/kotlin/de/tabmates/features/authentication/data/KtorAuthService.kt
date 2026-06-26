@@ -18,6 +18,7 @@ import de.tabmates.features.authentication.data.dto.requests.ChangeUsernameReque
 import de.tabmates.features.authentication.data.dto.requests.EmailRequest
 import de.tabmates.features.authentication.data.dto.requests.LoginAnonymousRequest
 import de.tabmates.features.authentication.data.dto.requests.LoginRequest
+import de.tabmates.features.authentication.data.dto.requests.MigrateToRegisteredRequest
 import de.tabmates.features.authentication.data.dto.requests.RegisterAnonymousRequest
 import de.tabmates.features.authentication.data.dto.requests.RegisterRequest
 import de.tabmates.features.authentication.data.dto.requests.ResetPasswordRequest
@@ -170,5 +171,25 @@ class KtorAuthService(
                     newPassword = newPassword,
                 ),
         )
+    }
+
+    override suspend fun migrateToRegistered(
+        email: String,
+        password: String,
+    ): EmptyResult<DataError.Remote> {
+        return httpClient
+            .post<MigrateToRegisteredRequest, UserSerializable>(
+                route = "/api/auth/migrate-to-registered",
+                body =
+                    MigrateToRegisteredRequest(
+                        email = email,
+                        password = password,
+                    ),
+            ).onSuccess { user ->
+                // Flip the cached account to registered so the Profile UI updates immediately.
+                sessionStorage.get()?.let { current ->
+                    sessionStorage.set(current.copy(user = user.toDomain()))
+                }
+            }.map { }
     }
 }

@@ -55,11 +55,14 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_logout
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_mail
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_notifications
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_palette
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_settings
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_email
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_password
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_username
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_footer
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_migrate_account
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_migrate_account_subtitle
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_about
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_appearance
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_notifications
@@ -90,6 +93,7 @@ fun ProfileRoot(
     snackbarHostState: SnackbarHostState,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onMigrateAccount: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = koinViewModel(),
@@ -118,6 +122,7 @@ fun ProfileRoot(
         onOpenNotificationSettings = viewModel::onOpenNotificationSettings,
         onEditUsername = onEditUsername,
         onChangePassword = onChangePassword,
+        onMigrateAccount = onMigrateAccount,
         onOpenOssLicenses = onOpenOssLicenses,
         onSignOut = viewModel::onSignOut,
         modifier = modifier,
@@ -133,6 +138,7 @@ internal fun ProfileScreen(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onMigrateAccount: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
@@ -148,6 +154,7 @@ internal fun ProfileScreen(
             onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
+            onMigrateAccount = onMigrateAccount,
             onOpenOssLicenses = onOpenOssLicenses,
             onSignOut = onSignOut,
             modifier = modifier,
@@ -160,6 +167,7 @@ internal fun ProfileScreen(
             onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
+            onMigrateAccount = onMigrateAccount,
             onOpenOssLicenses = onOpenOssLicenses,
             onSignOut = onSignOut,
             modifier = modifier,
@@ -175,6 +183,7 @@ private fun ProfilePhonePane(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onMigrateAccount: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
@@ -203,6 +212,7 @@ private fun ProfilePhonePane(
             onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
+            onMigrateAccount = onMigrateAccount,
             onOpenOssLicenses = onOpenOssLicenses,
         )
         VerticalSpacer(8.dp)
@@ -228,6 +238,7 @@ private fun SettingsTwoPane(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onMigrateAccount: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
@@ -270,6 +281,7 @@ private fun SettingsTwoPane(
                         onOpenNotificationSettings = onOpenNotificationSettings,
                         onEditUsername = onEditUsername,
                         onChangePassword = onChangePassword,
+                        onMigrateAccount = onMigrateAccount,
                         onOpenOssLicenses = onOpenOssLicenses,
                     )
                 }
@@ -396,9 +408,20 @@ private fun ProfileAccountAndAppearance(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onMigrateAccount: () -> Unit,
     onOpenOssLicenses: () -> Unit,
 ) {
     SectionLabel(stringResource(Res.string.profile_section_account))
+    if (!state.isRegistered) {
+        AccountRow(
+            iconRes = Res.drawable.ic_person_add,
+            title = stringResource(Res.string.profile_migrate_account),
+            subtitle = stringResource(Res.string.profile_migrate_account_subtitle),
+            onClick = onMigrateAccount,
+            showChevron = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
     if (twoColumnAccount) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             AccountRow(

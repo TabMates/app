@@ -43,4 +43,9 @@ interface AuthService {
         oldPassword: String,
         newPassword: String,
     ): EmptyResult<DataError.Remote>
+
+    suspend fun migrateToRegistered(
+        email: String,
+        password: String,
+    ): EmptyResult<DataError.Remote>
 }

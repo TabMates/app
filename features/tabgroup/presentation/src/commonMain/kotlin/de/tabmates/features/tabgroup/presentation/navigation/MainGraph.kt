@@ -16,6 +16,8 @@ import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ChangePasswordRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.EditUsernameRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.MigrateAccountRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.MigrateAccountSuccessRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.OssLicensesRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ProfileRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settleup.SettleUpRoot
@@ -41,6 +43,8 @@ val mainSerializersModule =
             subclass(EditUsername::class)
             subclass(ChangePassword::class)
             subclass(OssLicenses::class)
+            subclass(MigrateAccount::class)
+            subclass(MigrateAccountSuccess::class)
         }
     }
 
@@ -101,12 +105,32 @@ fun EntryProviderScope<NavKey>.mainGraph(
             snackbarHostState = snackbarHostState,
             onEditUsername = { backStack.add(EditUsername) },
             onChangePassword = { backStack.add(ChangePassword) },
+            onMigrateAccount = { backStack.add(MigrateAccount) },
             onOpenOssLicenses = { backStack.add(OssLicenses) },
         )
     }
 
     entry<OssLicenses> {
         OssLicensesRoot()
+    }
+
+    entry<MigrateAccount> { route ->
+        MigrateAccountRoot(
+            navKey = route,
+            snackbarHostState = snackbarHostState,
+            onMigrated = { email ->
+                backStack.remove(MigrateAccount)
+                backStack.add(MigrateAccountSuccess(email))
+            },
+        )
+    }
+
+    entry<MigrateAccountSuccess> { route ->
+        MigrateAccountSuccessRoot(
+            email = route.email,
+            snackbarHostState = snackbarHostState,
+            onDone = { backStack.removeAll { it is MigrateAccountSuccess } },
+        )
     }
 
     entry<EditUsername> { route ->
