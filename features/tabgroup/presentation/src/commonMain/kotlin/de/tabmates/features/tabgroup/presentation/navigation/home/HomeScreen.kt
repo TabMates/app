@@ -1,11 +1,20 @@
 package de.tabmates.features.tabgroup.presentation.navigation.home
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -17,20 +26,33 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import de.tabmates.core.designsystem.preview.PreviewThemes
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.designsystem.theme.extended
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.formatAmount
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
@@ -45,6 +67,9 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.home_subti
 import tabmatesapp.features.tabgroup.presentation.generated.resources.home_subtitle_settled
 import tabmatesapp.features.tabgroup.presentation.generated.resources.home_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.home_your_groups
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 @Composable
 fun HomeRoot(
@@ -118,13 +143,55 @@ private fun HomeTopBar() {
 @Composable
 private fun NetBalanceHero(state: HomeState) {
     val extended = MaterialTheme.colorScheme.extended
+    val showLoading = rememberMinimumLoading(state.isLoading)
     val balance = GroupBalance.fromNet(state.netAmount)
     val (container, content) =
-        when (balance) {
-            is GroupBalance.Owed -> extended.positiveContainer to extended.onPositiveContainer
-            is GroupBalance.Owe -> extended.negativeContainer to extended.onNegativeContainer
-            GroupBalance.Settled -> extended.settledContainer to extended.onSettledContainer
+        when {
+            showLoading -> extended.settledContainer to extended.onSettledContainer
+            balance is GroupBalance.Owed -> extended.positiveContainer to extended.onPositiveContainer
+            balance is GroupBalance.Owe -> extended.negativeContainer to extended.onNegativeContainer
+            else -> extended.settledContainer to extended.onSettledContainer
         }
+    Surface(
+        color = container,
+        contentColor = content,
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(text = stringResource(Res.string.home_net_balance), style = MaterialTheme.typography.bodyMedium)
+            if (showLoading) {
+                NetBalanceHeroPlaceholder(content = content)
+            } else {
+                NetBalanceHeroValue(balance = balance, state = state)
+            }
+        }
+    }
+}
+
+@Composable
+private fun rememberMinimumLoading(isLoading: Boolean): Boolean {
+    var show by remember { mutableStateOf(isLoading) }
+    var shownAt by remember { mutableStateOf<TimeSource.Monotonic.ValueTimeMark?>(null) }
+    LaunchedEffect(isLoading) {
+        if (isLoading) {
+            if (!show) shownAt = TimeSource.Monotonic.markNow()
+            show = true
+        } else if (show) {
+            val elapsed = shownAt?.elapsedNow() ?: Duration.ZERO
+            val remaining = SHIMMER_DURATION_MS.milliseconds - elapsed
+            if (remaining.isPositive()) delay(remaining)
+            show = false
+        }
+    }
+    return show
+}
+
+@Composable
+private fun NetBalanceHeroValue(
+    balance: GroupBalance,
+    state: HomeState,
+) {
     val value =
         when (balance) {
             is GroupBalance.Owed -> "+${formatAmount(balance.amount, state.displaySymbol, state.displayDecimals)}"
@@ -137,24 +204,80 @@ private fun NetBalanceHero(state: HomeState) {
             is GroupBalance.Owe -> stringResource(Res.string.home_subtitle_owe, state.contributingGroupCount)
             GroupBalance.Settled -> stringResource(Res.string.home_subtitle_settled)
         }
-    Surface(
-        color = container,
-        contentColor = content,
-        shape = RoundedCornerShape(20.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(text = stringResource(Res.string.home_net_balance), style = MaterialTheme.typography.bodyMedium)
-            VerticalSpacer(4.dp)
-            Text(
-                text = value,
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-            )
-            VerticalSpacer(4.dp)
-            Text(text = subtitle, style = MaterialTheme.typography.bodySmall)
+    VerticalSpacer(4.dp)
+    Text(
+        text = value,
+        style = MaterialTheme.typography.displaySmall,
+        fontWeight = FontWeight.Bold,
+    )
+    VerticalSpacer(4.dp)
+    Text(text = subtitle, style = MaterialTheme.typography.bodySmall)
+}
+
+@Composable
+private fun NetBalanceHeroPlaceholder(content: Color) {
+    val density = LocalDensity.current
+    val valueHeight =
+        with(density) {
+            MaterialTheme.typography.displaySmall.lineHeight
+                .toDp()
         }
-    }
+    val subtitleHeight =
+        with(density) {
+            MaterialTheme.typography.bodySmall.lineHeight
+                .toDp()
+        }
+    VerticalSpacer(4.dp)
+    PlaceholderBar(widthFraction = 0.45f, height = valueHeight, color = content)
+    VerticalSpacer(4.dp)
+    PlaceholderBar(widthFraction = 0.6f, height = subtitleHeight, color = content)
+}
+
+@Composable
+private fun PlaceholderBar(
+    widthFraction: Float,
+    height: Dp,
+    color: Color,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth(widthFraction)
+                .height(height)
+                .clip(RoundedCornerShape(percent = 30))
+                .background(shimmerBrush(color)),
+    )
+}
+
+private const val SHIMMER_DURATION_MS = 500
+private const val SHIMMER_BAND_PX = 250f
+private const val SHIMMER_SWEEP_PX = 600f
+
+@Composable
+private fun shimmerBrush(color: Color): Brush {
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = SHIMMER_DURATION_MS, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+        label = "shimmer-progress",
+    )
+    val band = SHIMMER_BAND_PX
+    val start = progress * (SHIMMER_SWEEP_PX + band) - band
+    return Brush.linearGradient(
+        colors =
+            listOf(
+                color.copy(alpha = 0.1f),
+                color.copy(alpha = 0.3f),
+                color.copy(alpha = 0.1f),
+            ),
+        start = Offset(start, 0f),
+        end = Offset(start + band, 0f),
+    )
 }
 
 @Composable
@@ -277,3 +400,15 @@ private fun memberCountText(count: Int): String =
     } else {
         stringResource(Res.string.groups_members_count, count)
     }
+
+@PreviewThemes
+@Composable
+private fun NetBalanceHeroLoadingPreview() {
+    TabMatesTheme {
+        Surface {
+            Box(modifier = Modifier.padding(16.dp)) {
+                NetBalanceHero(state = HomeState(isLoading = true))
+            }
+        }
+    }
+}
