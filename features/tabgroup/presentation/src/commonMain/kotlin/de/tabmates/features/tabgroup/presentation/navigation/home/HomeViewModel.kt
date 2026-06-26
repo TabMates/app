@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import org.koin.core.annotation.KoinViewModel
 import kotlin.time.Duration.Companion.seconds
@@ -47,9 +46,9 @@ class HomeViewModel(
 
     val state: StateFlow<HomeState> =
         combine(
-            groupRepository.getGroups().onStart { emit(emptyList()) },
-            currencyRepository.getCurrencies().onStart { emit(emptyList()) },
-            exchangeRateRepository.getExchangeRates().onStart { emit(emptyList()) },
+            groupRepository.getGroups(),
+            currencyRepository.getCurrencies(),
+            exchangeRateRepository.getExchangeRates(),
         ) { groups, currencies, rates -> Triple(groups, currencies, rates) }
             .flatMapLatest { (groups, currencies, rates) ->
                 if (groups.isEmpty()) {
@@ -59,7 +58,6 @@ class HomeViewModel(
                         groups.map { group ->
                             tabEntryRepository
                                 .getTabEntriesForGroup(group.id)
-                                .onStart { emit(emptyList()) }
                                 .map { entries -> group to entries }
                         },
                     ) { groupEntries -> buildState(groupEntries.toList(), currencies, rates) }

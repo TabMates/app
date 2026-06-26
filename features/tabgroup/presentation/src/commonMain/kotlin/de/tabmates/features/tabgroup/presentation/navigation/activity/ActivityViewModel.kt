@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import org.koin.core.annotation.KoinViewModel
 import kotlin.time.Clock
@@ -45,8 +44,8 @@ class ActivityViewModel(
 
     val state: StateFlow<ActivityState> =
         combine(
-            groupRepository.getGroups().onStart { emit(emptyList()) },
-            currencyRepository.getCurrencies().onStart { emit(emptyList()) },
+            groupRepository.getGroups(),
+            currencyRepository.getCurrencies(),
         ) { groups, currencies -> groups to currencies }
             .flatMapLatest { (groups, currencies) ->
                 if (groups.isEmpty()) {
@@ -56,7 +55,6 @@ class ActivityViewModel(
                         groups.map { group ->
                             tabEntryRepository
                                 .getTabEntriesForGroup(group.id)
-                                .onStart { emit(emptyList()) }
                                 .map { entries -> group to entries }
                         },
                     ) { groupEntries -> buildState(groupEntries.toList(), currencies) }
