@@ -61,14 +61,15 @@ class MigrateAccountViewModel(
                     _state.update { it.copy(isSubmitting = false) }
                     eventChannel.send(MigrateAccountEvent.Migrated(email))
                 }.onFailure { error ->
-                    // Use a neutral message for CONFLICT so we don't disclose whether an
-                    // account already exists for this email (avoids account enumeration).
                     val message =
                         when (error) {
-                            DataError.Remote.CONFLICT ->
+                            DataError.Remote.CONFLICT -> {
                                 UiText.Resource(Res.string.migrate_account_error_email_unavailable)
+                            }
 
-                            else -> error.toUiText()
+                            else -> {
+                                error.toUiText()
+                            }
                         }
                     _state.update { it.copy(isSubmitting = false) }
                     eventChannel.send(MigrateAccountEvent.Error(message))

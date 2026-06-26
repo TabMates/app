@@ -37,7 +37,9 @@ fun MigrateAccountRoot(
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            is MigrateAccountEvent.Migrated -> onMigrated(event.email)
+            is MigrateAccountEvent.Migrated -> {
+                onMigrated(event.email)
+            }
 
             is MigrateAccountEvent.Error -> {
                 snackbarHostState.showSnackbar(event.message.asStringAsync())
