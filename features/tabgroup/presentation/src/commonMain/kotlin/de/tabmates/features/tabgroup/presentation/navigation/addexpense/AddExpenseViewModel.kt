@@ -32,6 +32,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
@@ -163,7 +165,7 @@ class AddExpenseViewModel(
                     baseCurrencyDecimalDigits = baseCurrency?.decimalDigits ?: 2,
                     supportedCurrencies = currencies,
                     ratesByCurrency = rates.associate { it.currencyCode to it.rateToBase },
-                    createdAt = existing?.createdAt ?: it.createdAt,
+                    entryDate = existing?.entryDate ?: it.entryDate,
                     splitType = existing?.splits?.firstOrNull()?.splitType ?: it.splitType,
                     titleTextState = TextFieldState(existing?.title.orEmpty()),
                     descriptionTextState = TextFieldState(existing?.description.orEmpty()),
@@ -262,7 +264,7 @@ class AddExpenseViewModel(
     fun onDateSelected(epochMillis: Long) {
         _state.update {
             it.copy(
-                createdAt = Instant.fromEpochMilliseconds(epochMillis),
+                entryDate = Instant.fromEpochMilliseconds(epochMillis).toLocalDateTime(TimeZone.UTC).date,
                 isDatePickerVisible = false,
             )
         }
@@ -315,7 +317,7 @@ class AddExpenseViewModel(
                         amount = amount,
                         currencyCode = current.expenseCurrencyCode,
                         paidByUserId = current.paidByUserId,
-                        createdAt = current.createdAt,
+                        entryDate = current.entryDate,
                         splits = splits,
                     )
                 } else {
@@ -326,7 +328,7 @@ class AddExpenseViewModel(
                         amount = amount,
                         currencyCode = current.expenseCurrencyCode,
                         paidByUserId = current.paidByUserId,
-                        createdAt = current.createdAt,
+                        entryDate = current.entryDate,
                         splits = splits,
                     )
                 }

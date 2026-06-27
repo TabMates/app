@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.getString
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
@@ -86,7 +88,11 @@ class SettleUpViewModel(
                     currencyCode = current.currencyCode,
                     paidByUserId = currentUserId,
                     receivedByUserId = payment.toUserId,
-                    createdAt = Clock.System.now(),
+                    entryDate =
+                        Clock.System
+                            .now()
+                            .toLocalDateTime(TimeZone.UTC)
+                            .date,
                 ).onSuccess {
                     // The local insert re-emits the entries flow, which recomputes the plan and
                     // drops this now-settled payment.

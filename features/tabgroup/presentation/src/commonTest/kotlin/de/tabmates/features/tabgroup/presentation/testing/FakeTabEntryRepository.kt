@@ -10,6 +10,7 @@ import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -50,7 +51,7 @@ class FakeTabEntryRepository(
         amount: Double,
         currencyCode: String,
         paidByUserId: String,
-        createdAt: Instant,
+        entryDate: LocalDate,
         splits: List<NewExpenseSplit>,
     ): Result<TabEntry.Expense, DataError.Remote> {
         val id = "fake-${flowByGroupId.values.sumOf { it.value.size } + 1}"
@@ -64,7 +65,8 @@ class FakeTabEntryRepository(
                 currencyCode = currencyCode,
                 creatorId = paidByUserId,
                 paidByUserId = paidByUserId,
-                createdAt = createdAt,
+                entryDate = entryDate,
+                createdAt = Clock.System.now(),
                 lastModifiedAt = Clock.System.now(),
                 lastModifiedByUserId = paidByUserId,
                 version = 0,
@@ -95,7 +97,7 @@ class FakeTabEntryRepository(
         amount: Double,
         currencyCode: String,
         paidByUserId: String,
-        createdAt: Instant,
+        entryDate: LocalDate,
         splits: List<NewExpenseSplit>,
     ): Result<TabEntry.Expense, DataError.Remote> {
         val expense =
@@ -108,7 +110,8 @@ class FakeTabEntryRepository(
                 currencyCode = currencyCode,
                 creatorId = paidByUserId,
                 paidByUserId = paidByUserId,
-                createdAt = createdAt,
+                entryDate = entryDate,
+                createdAt = Clock.System.now(),
                 lastModifiedAt = Clock.System.now(),
                 lastModifiedByUserId = paidByUserId,
                 version = 0,
@@ -139,7 +142,7 @@ class FakeTabEntryRepository(
         currencyCode: String,
         paidByUserId: String,
         receivedByUserId: String,
-        createdAt: Instant,
+        entryDate: LocalDate,
     ): Result<TabEntry.Settlement, DataError.Remote> {
         val id = "fake-${flowByGroupId.values.sumOf { it.value.size } + 1}"
         val settlement =
@@ -152,7 +155,8 @@ class FakeTabEntryRepository(
                 currencyCode = currencyCode,
                 creatorId = paidByUserId,
                 paidByUserId = paidByUserId,
-                createdAt = createdAt,
+                entryDate = entryDate,
+                createdAt = Clock.System.now(),
                 lastModifiedAt = Clock.System.now(),
                 lastModifiedByUserId = paidByUserId,
                 version = 0,

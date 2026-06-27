@@ -6,6 +6,7 @@ import de.tabmates.features.tabgroup.domain.models.ParticipantType
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
+import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
 
 object Fixtures {
@@ -55,6 +56,7 @@ object Fixtures {
             currencyCode = "EUR",
             creatorId = paidByUserId,
             paidByUserId = paidByUserId,
+            entryDate = LocalDate.parse("1970-01-01"),
             createdAt = Instant.fromEpochMilliseconds(0),
             lastModifiedAt = Instant.fromEpochMilliseconds(0),
             lastModifiedByUserId = paidByUserId,

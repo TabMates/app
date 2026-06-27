@@ -85,7 +85,10 @@ class GroupDetailViewModel(
                 expenses =
                     visibleEntries
                         .filterIsInstance<TabEntry.Expense>()
-                        .sortedByDescending { it.createdAt },
+                        .sortedWith(
+                            compareByDescending<TabEntry.Expense> { it.entryDate }
+                                .thenByDescending { it.createdAt },
+                        ),
                 perPersonBalances =
                     PerPersonBalanceCalculator.computeByParticipant(visibleEntries, currentUserId, conversion),
                 currencyByCode = currencies.associateBy { it.code },
