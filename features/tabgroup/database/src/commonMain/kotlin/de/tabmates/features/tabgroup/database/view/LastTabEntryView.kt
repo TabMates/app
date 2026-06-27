@@ -8,13 +8,14 @@ import de.tabmates.features.tabgroup.database.entities.types.TabEntryTypeDatabas
     value = """
         SELECT te1.*
         FROM tabentryentity te1
-        JOIN (
-            SELECT groupId, MAX(createdAt) AS max_created_at
-            FROM tabentryentity
-            WHERE deletedAt IS NULL
-            GROUP BY groupId
-        ) te2 ON te1.groupId = te2.groupId AND te1.createdAt = te2.max_created_at
         WHERE te1.deletedAt IS NULL
+          AND te1.createdAt = (
+              SELECT te2.createdAt
+              FROM tabentryentity te2
+              WHERE te2.groupId = te1.groupId AND te2.deletedAt IS NULL
+              ORDER BY te2.entryDate DESC, te2.createdAt DESC
+              LIMIT 1
+          )
     """,
 )
 data class LastTabEntryView(
@@ -28,6 +29,7 @@ data class LastTabEntryView(
     val creatorId: String,
     val paidByUserId: String,
     val receivedByUserId: String?,
+    val entryDate: String,
     val createdAt: Long,
     val lastModifiedAt: Long,
     val lastModifiedByUserId: String,

@@ -5,6 +5,7 @@ import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
 
 interface TabEntryRepository {
@@ -25,7 +26,7 @@ interface TabEntryRepository {
         amount: Double,
         currencyCode: String,
         paidByUserId: String,
-        createdAt: Instant,
+        entryDate: LocalDate,
         splits: List<NewExpenseSplit>,
     ): Result<TabEntry.Expense, DataError.Remote>
 
@@ -37,7 +38,7 @@ interface TabEntryRepository {
         amount: Double,
         currencyCode: String,
         paidByUserId: String,
-        createdAt: Instant,
+        entryDate: LocalDate,
         splits: List<NewExpenseSplit>,
     ): Result<TabEntry.Expense, DataError.Remote>
 
@@ -49,7 +50,7 @@ interface TabEntryRepository {
         currencyCode: String,
         paidByUserId: String,
         receivedByUserId: String,
-        createdAt: Instant,
+        entryDate: LocalDate,
     ): Result<TabEntry.Settlement, DataError.Remote>
 
     suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote>

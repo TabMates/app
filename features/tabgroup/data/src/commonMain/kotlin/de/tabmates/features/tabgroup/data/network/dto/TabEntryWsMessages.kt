@@ -1,10 +1,10 @@
 package de.tabmates.features.tabgroup.data.network.dto
 
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
-import kotlin.time.Instant
 
 /**
  * Envelope/payload types match the server contract in
@@ -53,7 +53,7 @@ sealed class NewTabEntryWsPayload {
         override val description: String,
         override val amount: Double,
         override val currency: String,
-        val createdAt: Instant? = null,
+        val entryDate: LocalDate,
         val splits: List<NewTabEntrySplitWsPayload>,
     ) : NewTabEntryWsPayload()
 
@@ -67,7 +67,7 @@ sealed class NewTabEntryWsPayload {
         override val description: String,
         override val amount: Double,
         override val currency: String,
-        val createdAt: Instant? = null,
+        val entryDate: LocalDate,
         val splits: List<NewTabEntrySplitWsPayload>,
     ) : NewTabEntryWsPayload()
 
@@ -81,7 +81,7 @@ sealed class NewTabEntryWsPayload {
         override val description: String,
         override val amount: Double,
         override val currency: String,
-        val createdAt: Instant? = null,
+        val entryDate: LocalDate,
         val receivedByUserId: String,
     ) : NewTabEntryWsPayload()
 }

@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.data.dto
 
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -18,6 +19,7 @@ sealed class TabEntryDto {
     abstract val description: String
     abstract val amount: Double
     abstract val currency: String
+    abstract val entryDate: LocalDate
     abstract val createdAt: Instant
     abstract val lastModifiedAt: Instant
     abstract val lastModifiedBy: GroupParticipantDto
@@ -37,6 +39,7 @@ sealed class TabEntryDto {
         override val amount: Double,
         override val currency: String,
         val splits: List<TabEntrySplitDto>,
+        override val entryDate: LocalDate,
         override val createdAt: Instant,
         override val lastModifiedAt: Instant,
         override val lastModifiedBy: GroupParticipantDto,
@@ -57,6 +60,7 @@ sealed class TabEntryDto {
         override val amount: Double,
         override val currency: String,
         val splits: List<TabEntrySplitDto>,
+        override val entryDate: LocalDate,
         override val createdAt: Instant,
         override val lastModifiedAt: Instant,
         override val lastModifiedBy: GroupParticipantDto,
@@ -77,6 +81,7 @@ sealed class TabEntryDto {
         override val amount: Double,
         override val currency: String,
         val receivedBy: GroupParticipantDto,
+        override val entryDate: LocalDate,
         override val createdAt: Instant,
         override val lastModifiedAt: Instant,
         override val lastModifiedBy: GroupParticipantDto,

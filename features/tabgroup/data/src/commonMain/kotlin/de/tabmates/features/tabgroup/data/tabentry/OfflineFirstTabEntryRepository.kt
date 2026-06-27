@@ -16,6 +16,7 @@ import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.LocalDate
 import org.koin.core.annotation.Single
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -61,7 +62,7 @@ class OfflineFirstTabEntryRepository(
         amount: Double,
         currencyCode: String,
         paidByUserId: String,
-        createdAt: Instant,
+        entryDate: LocalDate,
         splits: List<NewExpenseSplit>,
     ): Result<TabEntry.Expense, DataError.Remote> {
         val localId = generateLocalId()
@@ -77,7 +78,8 @@ class OfflineFirstTabEntryRepository(
                 currencyCode = currencyCode,
                 creatorId = paidByUserId,
                 paidByUserId = paidByUserId,
-                createdAt = createdAt,
+                entryDate = entryDate,
+                createdAt = now,
                 lastModifiedAt = now,
                 lastModifiedByUserId = paidByUserId,
                 version = 0,
@@ -95,7 +97,7 @@ class OfflineFirstTabEntryRepository(
             amount = amount,
             currencyCode = currencyCode,
             paidByUserId = paidByUserId,
-            createdAt = createdAt,
+            entryDate = entryDate,
             splits = splits,
         )
         return Result.Success(expense)
@@ -109,7 +111,7 @@ class OfflineFirstTabEntryRepository(
         amount: Double,
         currencyCode: String,
         paidByUserId: String,
-        createdAt: Instant,
+        entryDate: LocalDate,
         splits: List<NewExpenseSplit>,
     ): Result<TabEntry.Expense, DataError.Remote> {
         // Preserve server-owned fields from the existing row; the server reconciles the rest on echo.
@@ -126,7 +128,8 @@ class OfflineFirstTabEntryRepository(
                 currencyCode = currencyCode,
                 creatorId = existing?.creatorId ?: paidByUserId,
                 paidByUserId = paidByUserId,
-                createdAt = createdAt,
+                entryDate = entryDate,
+                createdAt = now,
                 lastModifiedAt = now,
                 lastModifiedByUserId = paidByUserId,
                 version = existing?.version ?: 0,
@@ -148,7 +151,7 @@ class OfflineFirstTabEntryRepository(
             amount = amount,
             currencyCode = currencyCode,
             paidByUserId = paidByUserId,
-            createdAt = createdAt,
+            entryDate = entryDate,
             splits = splits,
         )
         return Result.Success(expense)
@@ -162,7 +165,7 @@ class OfflineFirstTabEntryRepository(
         currencyCode: String,
         paidByUserId: String,
         receivedByUserId: String,
-        createdAt: Instant,
+        entryDate: LocalDate,
     ): Result<TabEntry.Settlement, DataError.Remote> {
         val localId = generateLocalId()
         val now = Clock.System.now()
@@ -176,7 +179,8 @@ class OfflineFirstTabEntryRepository(
                 currencyCode = currencyCode,
                 creatorId = paidByUserId,
                 paidByUserId = paidByUserId,
-                createdAt = createdAt,
+                entryDate = entryDate,
+                createdAt = now,
                 lastModifiedAt = now,
                 lastModifiedByUserId = paidByUserId,
                 version = 0,
@@ -195,7 +199,7 @@ class OfflineFirstTabEntryRepository(
             currencyCode = currencyCode,
             paidByUserId = paidByUserId,
             receivedByUserId = receivedByUserId,
-            createdAt = createdAt,
+            entryDate = entryDate,
         )
         return Result.Success(settlement)
     }

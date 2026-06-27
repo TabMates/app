@@ -4,6 +4,7 @@ import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Instant
@@ -79,6 +80,7 @@ class UserBalanceCalculatorTest {
             currencyCode = currency,
             creatorId = paidBy,
             paidByUserId = paidBy,
+            entryDate = LocalDate.parse("1970-01-01"),
             createdAt = timestamp,
             lastModifiedAt = timestamp,
             lastModifiedByUserId = paidBy,

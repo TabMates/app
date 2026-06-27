@@ -30,6 +30,9 @@ data class TabEntryEntity(
     val creatorId: String,
     val paidByUserId: String,
     val receivedByUserId: String?,
+    /** Calendar date the entry happened, ISO-8601 ("YYYY-MM-DD"). Distinct from [createdAt]. */
+    @ColumnInfo(defaultValue = "1970-01-01")
+    val entryDate: String,
     val createdAt: Long,
     val lastModifiedAt: Long,
     val lastModifiedByUserId: String,

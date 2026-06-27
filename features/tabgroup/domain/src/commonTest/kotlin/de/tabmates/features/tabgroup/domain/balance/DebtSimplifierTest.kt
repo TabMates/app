@@ -3,6 +3,7 @@ package de.tabmates.features.tabgroup.domain.balance
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
+import kotlinx.datetime.LocalDate
 import kotlin.math.abs
 import kotlin.random.Random
 import kotlin.test.Test
@@ -317,6 +318,7 @@ class DebtSimplifierTest {
             currencyCode = "EUR",
             creatorId = paidBy,
             paidByUserId = paidBy,
+            entryDate = LocalDate.parse("1970-01-01"),
             createdAt = timestamp,
             lastModifiedAt = timestamp,
             lastModifiedByUserId = paidBy,
