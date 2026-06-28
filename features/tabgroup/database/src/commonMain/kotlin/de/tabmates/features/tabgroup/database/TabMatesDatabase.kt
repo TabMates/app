@@ -20,6 +20,7 @@ import de.tabmates.features.tabgroup.database.entities.GroupParticipantEntity
 import de.tabmates.features.tabgroup.database.entities.PendingOutboxEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntryEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntrySplitEntity
+import de.tabmates.features.tabgroup.database.migrations.TabEntryEntryDateBackfill
 import de.tabmates.features.tabgroup.database.view.LastTabEntryView
 
 @Database(
@@ -36,9 +37,12 @@ import de.tabmates.features.tabgroup.database.view.LastTabEntryView
     views = [
         LastTabEntryView::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 2, to = 3)],
+    autoMigrations = [
+        AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4, spec = TabEntryEntryDateBackfill::class),
+    ],
 )
 @ConstructedBy(TabMatesDatabaseConstructor::class)
 abstract class TabMatesDatabase : RoomDatabase() {

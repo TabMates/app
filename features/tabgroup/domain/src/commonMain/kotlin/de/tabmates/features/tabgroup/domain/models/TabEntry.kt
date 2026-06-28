@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.domain.models
 
+import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
 
 sealed class TabEntry {
@@ -11,6 +12,9 @@ sealed class TabEntry {
     abstract val currencyCode: String
     abstract val creatorId: String
     abstract val paidByUserId: String
+
+    /** Calendar date the entry actually happened (client-chosen), distinct from [createdAt]. */
+    abstract val entryDate: LocalDate
     abstract val createdAt: Instant
     abstract val lastModifiedAt: Instant
     abstract val lastModifiedByUserId: String
@@ -30,6 +34,7 @@ sealed class TabEntry {
         override val currencyCode: String,
         override val creatorId: String,
         override val paidByUserId: String,
+        override val entryDate: LocalDate,
         override val createdAt: Instant,
         override val lastModifiedAt: Instant,
         override val lastModifiedByUserId: String,
@@ -48,6 +53,7 @@ sealed class TabEntry {
         override val currencyCode: String,
         override val creatorId: String,
         override val paidByUserId: String,
+        override val entryDate: LocalDate,
         override val createdAt: Instant,
         override val lastModifiedAt: Instant,
         override val lastModifiedByUserId: String,
@@ -66,6 +72,7 @@ sealed class TabEntry {
         override val currencyCode: String,
         override val creatorId: String,
         override val paidByUserId: String,
+        override val entryDate: LocalDate,
         override val createdAt: Instant,
         override val lastModifiedAt: Instant,
         override val lastModifiedByUserId: String,

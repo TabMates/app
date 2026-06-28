@@ -145,7 +145,7 @@ private fun ExpenseDetailScreen(
                     expense.amount,
                     state.groupCurrencyDecimalDigits,
                 ),
-            dateText = formatExpenseDate(expense.createdAt, monthLabels),
+            dateText = formatExpenseDate(expense.entryDate, monthLabels),
             description = expense.description,
         )
         VerticalSpacer(24.dp)

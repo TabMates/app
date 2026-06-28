@@ -4,8 +4,10 @@ import androidx.compose.foundation.text.input.TextFieldState
 import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.SplitType
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
-import kotlin.time.Instant
 
 data class AddExpenseState(
     val groupId: String = "",
@@ -33,7 +35,11 @@ data class AddExpenseState(
     val paidByUserId: String = "",
     val splitType: SplitType = SplitType.EQUAL,
     val splitInputs: List<ParticipantSplitInput> = emptyList(),
-    val createdAt: Instant = Clock.System.now(),
+    val entryDate: LocalDate =
+        Clock.System
+            .now()
+            .toLocalDateTime(TimeZone.UTC)
+            .date,
     val isPaidByPickerVisible: Boolean = false,
     val isSplitEditorVisible: Boolean = false,
     val isDatePickerVisible: Boolean = false,

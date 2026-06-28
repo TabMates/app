@@ -3,7 +3,8 @@ package de.tabmates.features.tabgroup.presentation.navigation.addexpense
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import de.tabmates.features.tabgroup.presentation.util.platformShortMonthNames
-import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 
 internal fun parseAmount(input: String): Double? {
     if (input.isBlank()) return null
@@ -15,15 +16,9 @@ internal fun parseAmount(input: String): Double? {
 internal fun rememberMonthAbbreviations(): List<String> = remember { platformShortMonthNames() }
 
 internal fun formatExpenseDate(
-    instant: Instant,
+    date: LocalDate,
     monthAbbreviations: List<String>,
 ): String {
-    val iso = instant.toString()
-    val datePart = iso.substringBefore('T')
-    val pieces = datePart.split('-')
-    if (pieces.size < 3) return datePart
-    val month = pieces[1].toIntOrNull() ?: return datePart
-    val day = pieces[2].toIntOrNull() ?: return datePart
-    val name = monthAbbreviations.getOrNull(month - 1) ?: return datePart
-    return "$name $day"
+    val name = monthAbbreviations.getOrNull(date.month.number - 1) ?: return date.toString()
+    return "$name ${date.day}"
 }

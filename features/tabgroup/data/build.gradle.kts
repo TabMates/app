@@ -22,6 +22,7 @@ kotlin {
                 implementation(libs.androidx.room3.runtime)
                 implementation(libs.bundles.ktor.common)
                 implementation(libs.koin.core)
+                implementation(libs.kotlinx.datetime)
             }
         }
 

@@ -14,6 +14,7 @@ kotlin {
                 implementation(projects.core.domain)
 
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlinx.datetime)
             }
         }
 

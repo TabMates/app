@@ -74,6 +74,8 @@ import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerBottomSheet
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -262,7 +264,7 @@ internal fun AddExpenseScreen(
             )
             FieldRow(
                 label = stringResource(Res.string.add_expense_date_label),
-                value = formatExpenseDate(state.createdAt, monthLabels),
+                value = formatExpenseDate(state.entryDate, monthLabels),
                 onClick = onDateClick,
                 leadingIcon = Res.drawable.ic_calendar,
             )
@@ -282,7 +284,7 @@ internal fun AddExpenseScreen(
 
     if (state.isDatePickerVisible) {
         DatePickerSheet(
-            initialEpochMillis = state.createdAt.toEpochMilliseconds(),
+            initialEpochMillis = state.entryDate.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds(),
             onDismiss = onDatePickerDismiss,
             onConfirm = onDateSelected,
         )

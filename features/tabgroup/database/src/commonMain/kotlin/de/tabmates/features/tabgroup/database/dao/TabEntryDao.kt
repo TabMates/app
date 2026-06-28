@@ -24,10 +24,12 @@ interface TabEntryDao {
     suspend fun deleteTabEntriesById(tabEntryIds: List<String>)
 
     @Transaction
-    @Query("SELECT * FROM tabentryentity WHERE groupId = :groupId ORDER BY createdAt DESC")
+    @Query("SELECT * FROM tabentryentity WHERE groupId = :groupId ORDER BY entryDate DESC, createdAt DESC")
     fun getTabEntriesByGroupId(groupId: String): Flow<List<TabEntryWithSplits>>
 
-    @Query("SELECT * FROM tabentryentity WHERE groupId = :groupId ORDER BY createdAt DESC LIMIT :limit")
+    @Query(
+        "SELECT * FROM tabentryentity WHERE groupId = :groupId ORDER BY entryDate DESC, createdAt DESC LIMIT :limit",
+    )
     suspend fun getTabEntriesByGroupIdLimited(
         groupId: String,
         limit: Int,

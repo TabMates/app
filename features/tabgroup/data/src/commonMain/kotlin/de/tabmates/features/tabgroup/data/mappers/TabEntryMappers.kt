@@ -6,6 +6,7 @@ import de.tabmates.features.tabgroup.database.entities.TabEntryEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntryWithSplits
 import de.tabmates.features.tabgroup.database.entities.types.TabEntryTypeDatabase
 import de.tabmates.features.tabgroup.domain.models.TabEntry
+import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
 
 fun TabEntryDto.toDomain(): TabEntry =
@@ -20,6 +21,7 @@ fun TabEntryDto.toDomain(): TabEntry =
                 currencyCode = currency,
                 creatorId = creator.userId,
                 paidByUserId = paidBy.userId,
+                entryDate = entryDate,
                 createdAt = createdAt,
                 lastModifiedAt = lastModifiedAt,
                 lastModifiedByUserId = lastModifiedBy.userId,
@@ -40,6 +42,7 @@ fun TabEntryDto.toDomain(): TabEntry =
                 currencyCode = currency,
                 creatorId = creator.userId,
                 paidByUserId = paidBy.userId,
+                entryDate = entryDate,
                 createdAt = createdAt,
                 lastModifiedAt = lastModifiedAt,
                 lastModifiedByUserId = lastModifiedBy.userId,
@@ -60,6 +63,7 @@ fun TabEntryDto.toDomain(): TabEntry =
                 currencyCode = currency,
                 creatorId = creator.userId,
                 paidByUserId = paidBy.userId,
+                entryDate = entryDate,
                 createdAt = createdAt,
                 lastModifiedAt = lastModifiedAt,
                 lastModifiedByUserId = lastModifiedBy.userId,
@@ -83,6 +87,7 @@ fun TabEntry.toEntity(pendingSync: Boolean = false): TabEntryEntity =
         creatorId = creatorId,
         paidByUserId = paidByUserId,
         receivedByUserId = (this as? TabEntry.Settlement)?.receivedByUserId,
+        entryDate = entryDate.toString(),
         createdAt = createdAt.toEpochMilliseconds(),
         lastModifiedAt = lastModifiedAt.toEpochMilliseconds(),
         lastModifiedByUserId = lastModifiedByUserId,
@@ -104,6 +109,7 @@ fun TabEntryWithSplits.toDomain(): TabEntry =
                 currencyCode = tabEntry.currencyCode,
                 creatorId = tabEntry.creatorId,
                 paidByUserId = tabEntry.paidByUserId,
+                entryDate = LocalDate.parse(tabEntry.entryDate),
                 createdAt = Instant.fromEpochMilliseconds(tabEntry.createdAt),
                 lastModifiedAt = Instant.fromEpochMilliseconds(tabEntry.lastModifiedAt),
                 lastModifiedByUserId = tabEntry.lastModifiedByUserId,
@@ -124,6 +130,7 @@ fun TabEntryWithSplits.toDomain(): TabEntry =
                 currencyCode = tabEntry.currencyCode,
                 creatorId = tabEntry.creatorId,
                 paidByUserId = tabEntry.paidByUserId,
+                entryDate = LocalDate.parse(tabEntry.entryDate),
                 createdAt = Instant.fromEpochMilliseconds(tabEntry.createdAt),
                 lastModifiedAt = Instant.fromEpochMilliseconds(tabEntry.lastModifiedAt),
                 lastModifiedByUserId = tabEntry.lastModifiedByUserId,
@@ -144,6 +151,7 @@ fun TabEntryWithSplits.toDomain(): TabEntry =
                 currencyCode = tabEntry.currencyCode,
                 creatorId = tabEntry.creatorId,
                 paidByUserId = tabEntry.paidByUserId,
+                entryDate = LocalDate.parse(tabEntry.entryDate),
                 createdAt = Instant.fromEpochMilliseconds(tabEntry.createdAt),
                 lastModifiedAt = Instant.fromEpochMilliseconds(tabEntry.lastModifiedAt),
                 lastModifiedByUserId = tabEntry.lastModifiedByUserId,
@@ -170,6 +178,7 @@ fun LastTabEntryWithSplits.toDomain(): TabEntry =
                 currencyCode = lastTabEntry.currencyCode,
                 creatorId = lastTabEntry.creatorId,
                 paidByUserId = lastTabEntry.paidByUserId,
+                entryDate = LocalDate.parse(lastTabEntry.entryDate),
                 createdAt = Instant.fromEpochMilliseconds(lastTabEntry.createdAt),
                 lastModifiedAt = Instant.fromEpochMilliseconds(lastTabEntry.lastModifiedAt),
                 lastModifiedByUserId = lastTabEntry.lastModifiedByUserId,
@@ -190,6 +199,7 @@ fun LastTabEntryWithSplits.toDomain(): TabEntry =
                 currencyCode = lastTabEntry.currencyCode,
                 creatorId = lastTabEntry.creatorId,
                 paidByUserId = lastTabEntry.paidByUserId,
+                entryDate = LocalDate.parse(lastTabEntry.entryDate),
                 createdAt = Instant.fromEpochMilliseconds(lastTabEntry.createdAt),
                 lastModifiedAt = Instant.fromEpochMilliseconds(lastTabEntry.lastModifiedAt),
                 lastModifiedByUserId = lastTabEntry.lastModifiedByUserId,
@@ -210,6 +220,7 @@ fun LastTabEntryWithSplits.toDomain(): TabEntry =
                 currencyCode = lastTabEntry.currencyCode,
                 creatorId = lastTabEntry.creatorId,
                 paidByUserId = lastTabEntry.paidByUserId,
+                entryDate = LocalDate.parse(lastTabEntry.entryDate),
                 createdAt = Instant.fromEpochMilliseconds(lastTabEntry.createdAt),
                 lastModifiedAt = Instant.fromEpochMilliseconds(lastTabEntry.lastModifiedAt),
                 lastModifiedByUserId = lastTabEntry.lastModifiedByUserId,
