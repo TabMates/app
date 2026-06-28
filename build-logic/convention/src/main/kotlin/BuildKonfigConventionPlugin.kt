@@ -22,9 +22,11 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                 gradleLocalProperties(rootDir, rootProject.providers)
             }
 
+            fun String?.cleaned(): String? = this?.trim()?.ifBlank { null }
+
             fun requireProperty(key: String): String =
-                System.getenv(key)
-                    ?: localProperties.getProperty(key)
+                System.getenv(key).cleaned()
+                    ?: localProperties.getProperty(key).cleaned()
                     ?: throw IllegalStateException(
                         "Missing \"$key\". Define it as an environment variable " +
                             "or in local.properties.",
@@ -32,9 +34,9 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
 
             // App version exposed cross-platform for the in-app update check.
             val appVersion: String =
-                System.getenv("APP_VERSION")
-                    ?: localProperties.getProperty("APP_VERSION")
-                    ?: findProperty("APP_VERSION")?.toString()
+                System.getenv("APP_VERSION").cleaned()
+                    ?: localProperties.getProperty("APP_VERSION").cleaned()
+                    ?: findProperty("APP_VERSION")?.toString().cleaned()
                     ?: "0.1.0"
 
             extensions.configure<BuildKonfigExtension> {
