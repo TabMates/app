@@ -180,6 +180,28 @@ class TabEntryOutbox(
         applicationScope.launch { drain() }
     }
 
+    /**
+     * Cancels a not-yet-dispatched create for [tabEntryId] (and any queued update for it).
+     * Returns `true` when a pending **create** row was present, meaning the entry never reached
+     * the server, so the caller can skip enqueuing a remote delete that would only 404 — and,
+     * worse, could race the create's own echo back onto the server. Runs under [mutex] so it is
+     * atomic against [drain]: if the create has already been dispatched its row is gone and this
+     * returns `false`, letting the caller fall back to a normal remote delete.
+     */
+    suspend fun cancelPendingCreate(tabEntryId: String): Boolean =
+        mutex.withLock {
+            val pending = database.pendingOutboxDao.getAll()
+            val createRow =
+                pending.firstOrNull { it.id == tabEntryId && it.type == OUTBOX_TYPE_NEW_TAB_ENTRY }
+                    ?: return@withLock false
+            database.pendingOutboxDao.deleteById(createRow.id)
+            sessionAttempts.remove(createRow.id)
+            val updateId = "$UPDATE_ID_PREFIX$tabEntryId"
+            database.pendingOutboxDao.deleteById(updateId)
+            sessionAttempts.remove(updateId)
+            true
+        }
+
     suspend fun enqueueDeleteTabEntry(tabEntryId: String) {
         database.pendingOutboxDao.upsert(
             PendingOutboxEntity(
