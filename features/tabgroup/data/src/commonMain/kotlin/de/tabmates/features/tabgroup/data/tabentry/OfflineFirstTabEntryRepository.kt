@@ -35,9 +35,9 @@ class OfflineFirstTabEntryRepository(
             .map { rows -> rows.map { it.toDomain() } }
 
     override fun getTabEntryById(tabEntryId: String): Flow<TabEntry?> =
-        database.tabEntrySplitDao
-            .getSplitsByTabEntryId(tabEntryId)
-            .map { _ -> database.tabEntryDao.getTabEntryById(tabEntryId)?.toDomain() }
+        database.tabEntryDao
+            .observeTabEntryById(tabEntryId)
+            .map { it?.toDomain() }
 
     override suspend fun fetchTabEntries(
         groupId: String,
@@ -205,9 +205,14 @@ class OfflineFirstTabEntryRepository(
     }
 
     override suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote> {
-        // Persist intent first so a crash between enqueue and local delete still drives the
-        // remote delete on next drain. Outbox upsert by id is idempotent.
-        outbox.enqueueDeleteTabEntry(tabEntryId)
+        // If the entry's create never made it to the server, cancel it outright. Enqueuing a
+        // remote delete here would only 404 — and could race the still-pending create's echo,
+        // resurrecting the entry on the server after it's gone locally.
+        if (!outbox.cancelPendingCreate(tabEntryId)) {
+            // Persist intent first so a crash between enqueue and local delete still drives the
+            // remote delete on next drain. Outbox upsert by id is idempotent.
+            outbox.enqueueDeleteTabEntry(tabEntryId)
+        }
         database.tabEntryDao.deleteTabEntryAndSplits(
             tabEntryId = tabEntryId,
             splitDao = database.tabEntrySplitDao,

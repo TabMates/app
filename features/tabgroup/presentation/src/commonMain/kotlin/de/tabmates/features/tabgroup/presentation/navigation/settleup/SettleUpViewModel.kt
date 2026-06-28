@@ -91,7 +91,7 @@ class SettleUpViewModel(
                     entryDate =
                         Clock.System
                             .now()
-                            .toLocalDateTime(TimeZone.UTC)
+                            .toLocalDateTime(TimeZone.currentSystemDefault())
                             .date,
                 ).onSuccess {
                     // The local insert re-emits the entries flow, which recomputes the plan and

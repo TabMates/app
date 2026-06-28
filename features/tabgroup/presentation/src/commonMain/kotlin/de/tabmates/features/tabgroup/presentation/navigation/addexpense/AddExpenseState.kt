@@ -38,7 +38,7 @@ data class AddExpenseState(
     val entryDate: LocalDate =
         Clock.System
             .now()
-            .toLocalDateTime(TimeZone.UTC)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
             .date,
     val isPaidByPickerVisible: Boolean = false,
     val isSplitEditorVisible: Boolean = false,

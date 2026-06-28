@@ -40,6 +40,15 @@ interface TabEntryDao {
     suspend fun getTabEntryById(tabEntryId: String): TabEntryWithSplits?
 
     /**
+     * Observes a single entry plus its splits. The `@Transaction` + `@Relation` makes Room
+     * re-emit on changes to either the entry row itself or its splits, so edits to entries with
+     * no splits (e.g. settlements) are reflected too.
+     */
+    @Transaction
+    @Query("SELECT * FROM tabentryentity WHERE tabEntryId = :tabEntryId")
+    fun observeTabEntryById(tabEntryId: String): Flow<TabEntryWithSplits?>
+
+    /**
      * Atomically replaces a tab-entry plus its full set of splits. Used by the realtime sync to
      * apply server echoes: prevents leaving the row with stale/orphaned splits if the call is
      * interrupted between the delete and the upsert.
