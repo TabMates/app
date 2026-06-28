@@ -129,7 +129,7 @@ class OfflineFirstTabEntryRepository(
                 creatorId = existing?.creatorId ?: paidByUserId,
                 paidByUserId = paidByUserId,
                 entryDate = entryDate,
-                createdAt = now,
+                createdAt = existing?.createdAt ?: now,
                 lastModifiedAt = now,
                 lastModifiedByUserId = paidByUserId,
                 version = existing?.version ?: 0,
