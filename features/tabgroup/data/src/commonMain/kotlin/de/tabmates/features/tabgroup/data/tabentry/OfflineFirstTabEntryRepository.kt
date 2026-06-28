@@ -35,9 +35,9 @@ class OfflineFirstTabEntryRepository(
             .map { rows -> rows.map { it.toDomain() } }
 
     override fun getTabEntryById(tabEntryId: String): Flow<TabEntry?> =
-        database.tabEntrySplitDao
-            .getSplitsByTabEntryId(tabEntryId)
-            .map { _ -> database.tabEntryDao.getTabEntryById(tabEntryId)?.toDomain() }
+        database.tabEntryDao
+            .observeTabEntryById(tabEntryId)
+            .map { it?.toDomain() }
 
     override suspend fun fetchTabEntries(
         groupId: String,
