@@ -24,6 +24,10 @@
         "/com\\.pinterest\\.ktlint/",
         "/org\\.jlleitschuh\\.gradle\\.ktlint/"
       ]
+    },
+    {
+      "matchPackageNames": ["org.jetbrains.kotlinx:kotlinx-datetime"],
+      "allowedVersions": "!/-compat$/"
     }
   ]
 }
