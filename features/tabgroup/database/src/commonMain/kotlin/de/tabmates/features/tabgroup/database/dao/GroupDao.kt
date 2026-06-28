@@ -31,7 +31,9 @@ interface GroupDao {
             FROM tabentryentity
             GROUP BY groupId
         ) lm ON g.groupId = lm.groupId
-        ORDER BY lm.lastEntryDate DESC, lm.lastCreatedAt DESC, g.lastModifiedAt DESC
+        ORDER BY
+            COALESCE(lm.lastEntryDate, date(g.lastModifiedAt / 1000, 'unixepoch')) DESC,
+            COALESCE(lm.lastCreatedAt, g.lastModifiedAt) DESC
     """,
     )
     fun getGroupsWithParticipants(): Flow<List<GroupWithParticipants>>
