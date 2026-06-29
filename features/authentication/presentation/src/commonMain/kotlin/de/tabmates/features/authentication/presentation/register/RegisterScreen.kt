@@ -17,6 +17,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -111,6 +114,7 @@ private fun RegisterScreen(
     onConfirmPasswordFocusChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -128,8 +132,10 @@ private fun RegisterScreen(
             supportingText = state.usernameError?.asString().orEmpty(),
             isError = state.usernameError != null,
             singleLine = true,
+            imeAction = ImeAction.Next,
             onFocusChanged = onUsernameFocusChanged,
             contentType = ContentType.Username,
+            onKeyboardAction = { focusManager.moveFocus(FocusDirection.Next) },
         )
         state.usernameError?.let {
             VerticalSpacer(16.dp)
@@ -142,8 +148,10 @@ private fun RegisterScreen(
             isError = state.emailError != null,
             singleLine = true,
             keyboardType = KeyboardType.Email,
+            imeAction = ImeAction.Next,
             onFocusChanged = onEmailFocusChanged,
             contentType = ContentType.EmailAddress,
+            onKeyboardAction = { focusManager.moveFocus(FocusDirection.Next) },
         )
         state.emailError?.let {
             VerticalSpacer(16.dp)
@@ -157,7 +165,9 @@ private fun RegisterScreen(
             isError = state.passwordError != null,
             onToggleVisibilityClick = togglePasswordVisibility,
             isPasswordVisible = state.isPasswordVisible,
+            imeAction = ImeAction.Next,
             onFocusChanged = onPasswordFocusChanged,
+            onKeyboardAction = { focusManager.moveFocus(FocusDirection.Next) },
         )
         state.passwordError?.let {
             VerticalSpacer(16.dp)
@@ -170,7 +180,14 @@ private fun RegisterScreen(
             isError = state.confirmPasswordError != null,
             onToggleVisibilityClick = toggleConfirmPasswordVisibility,
             isPasswordVisible = state.isConfirmPasswordVisible,
+            imeAction = ImeAction.Done,
             onFocusChanged = onConfirmPasswordFocusChanged,
+            onKeyboardAction = {
+                if (!state.isRegistering) {
+                    focusManager.clearFocus()
+                    onCreateAccountClick()
+                }
+            },
         )
         VerticalSpacer(16.dp)
         TabMatesButton(

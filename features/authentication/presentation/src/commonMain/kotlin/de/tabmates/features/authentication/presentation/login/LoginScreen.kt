@@ -19,6 +19,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -106,6 +109,7 @@ private fun LoginScreen(
     onCreateAccountClick: () -> Unit,
     onContinueAsGuestClick: () -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
     Column(
         modifier =
             Modifier
@@ -128,7 +132,9 @@ private fun LoginScreen(
             state = emailTextFieldState,
             placeholder = stringResource(Res.string.register_email_hint),
             keyboardType = KeyboardType.Email,
+            imeAction = ImeAction.Next,
             contentType = ContentType.EmailAddress,
+            onKeyboardAction = { focusManager.moveFocus(FocusDirection.Next) },
         )
         TabMatesPasswordTextField(
             modifier = Modifier.widthIn(max = 300.dp).fillMaxWidth(),
@@ -136,6 +142,13 @@ private fun LoginScreen(
             placeholder = stringResource(Res.string.register_password_hint),
             isPasswordVisible = isPasswordVisible,
             onToggleVisibilityClick = onTogglePasswordVisibility,
+            imeAction = ImeAction.Go,
+            onKeyboardAction = {
+                if (canLogin) {
+                    focusManager.clearFocus()
+                    onLoginClick()
+                }
+            },
         )
         TabMatesInlineLinkText(
             modifier = Modifier.widthIn(max = 300.dp).fillMaxWidth(),

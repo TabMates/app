@@ -18,6 +18,7 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tabmates.core.designsystem.preview.PreviewThemes
@@ -38,8 +39,10 @@ import de.tabmates.core.designsystem.theme.TabMatesTheme
  * @param singleLine When `true`, the field is restricted to a single line of input.
  * @param enabled When `false`, the field is non-editable and visually dimmed.
  * @param keyboardType The [KeyboardType] to use for the software keyboard.
+ * @param imeAction The [ImeAction] shown on the software-keyboard action button.
  * @param contentType The [ContentType] for autofill support.
  * @param onFocusChanged Callback invoked when the field's focus state changes.
+ * @param onKeyboardAction Callback invoked when the IME action button is pressed.
  */
 @Composable
 fun TabMatesTextField(
@@ -52,8 +55,10 @@ fun TabMatesTextField(
     singleLine: Boolean = false,
     enabled: Boolean = true,
     keyboardType: KeyboardType = KeyboardType.Text,
+    imeAction: ImeAction = ImeAction.Default,
     contentType: ContentType? = null,
     onFocusChanged: (Boolean) -> Unit = {},
+    onKeyboardAction: () -> Unit = {},
 ) {
     TabMatesTextFieldLayout(
         isError = isError,
@@ -88,7 +93,9 @@ fun TabMatesTextField(
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType = keyboardType,
+                    imeAction = imeAction,
                 ),
+            onKeyboardAction = { onKeyboardAction() },
             interactionSource = interactionSource,
             placeholder =
                 if (state.text.isEmpty() && placeholder != null) {

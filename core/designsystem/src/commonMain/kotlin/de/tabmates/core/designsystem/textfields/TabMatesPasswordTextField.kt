@@ -24,6 +24,7 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.tabmates.core.designsystem.preview.PreviewThemes
@@ -52,8 +53,10 @@ import tabmatesapp.core.designsystem.generated.resources.show_password
  * @param supportingText Optional helper or error message displayed below the text field.
  * @param isError When `true`, the field is styled to indicate a validation error.
  * @param enabled When `false`, the field is non-editable and visually dimmed.
+ * @param imeAction The [ImeAction] shown on the software-keyboard action button.
  * @param contentType The content type for the text field, used for autofill purposes.
  * @param onFocusChanged Callback invoked when the field's focus state changes.
+ * @param onKeyboardAction Callback invoked when the IME action button is pressed.
  */
 @Composable
 fun TabMatesPasswordTextField(
@@ -66,8 +69,10 @@ fun TabMatesPasswordTextField(
     supportingText: String? = null,
     isError: Boolean = false,
     enabled: Boolean = true,
+    imeAction: ImeAction = ImeAction.Default,
     contentType: ContentType? = ContentType.Password,
     onFocusChanged: (Boolean) -> Unit = {},
+    onKeyboardAction: () -> Unit = {},
 ) {
     TabMatesTextFieldLayout(
         isError = isError,
@@ -101,7 +106,9 @@ fun TabMatesPasswordTextField(
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType = KeyboardType.Password,
+                    imeAction = imeAction,
                 ),
+            onKeyboardAction = { onKeyboardAction() },
             textStyle =
                 MaterialTheme.typography.bodyMedium.copy(
                     color =
