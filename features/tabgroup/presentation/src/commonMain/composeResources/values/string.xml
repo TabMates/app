@@ -129,6 +129,8 @@
     <string name="groups_detail_member_count_pending">%1$d members · %2$d pending</string>
     <string name="groups_detail_pending_badge">Pending</string>
     <string name="groups_detail_pending_not_claimed">Hasn't claimed invite</string>
+    <string name="sync_status_pending_badge">Not synced</string>
+    <string name="sync_status_pending_cd">Not yet synced to the server</string>
     <string name="groups_detail_invite_share_cd">Share invite</string>
     <string name="groups_detail_invite_link_title">Invite link</string>
     <string name="groups_detail_invite_copy">Copy</string>

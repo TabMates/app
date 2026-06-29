@@ -39,6 +39,7 @@ import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
 import de.tabmates.features.tabgroup.presentation.components.SectionLabel
+import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatExpenseDate
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.rememberMonthAbbreviations
@@ -147,6 +148,7 @@ private fun ExpenseDetailScreen(
                 ),
             dateText = formatExpenseDate(expense.entryDate, monthLabels),
             description = expense.description,
+            isPendingSync = expense.isPendingSync,
         )
         VerticalSpacer(24.dp)
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -193,6 +195,7 @@ private fun HeroSection(
     amountFormatted: String,
     dateText: String,
     description: String,
+    isPendingSync: Boolean,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -221,6 +224,9 @@ private fun HeroSection(
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
         )
+        if (isPendingSync) {
+            SyncStatusChip()
+        }
         Text(
             text = amountFormatted,
             style = MaterialTheme.typography.displaySmall,

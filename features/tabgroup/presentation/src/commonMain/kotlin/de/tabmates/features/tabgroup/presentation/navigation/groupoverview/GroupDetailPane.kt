@@ -53,6 +53,7 @@ import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.ParticipantType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
+import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.buildInviteUrl
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.shortInviteUrl
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
@@ -366,13 +367,20 @@ private fun ExpenseRow(
         ExpenseIcon()
         HorizontalSpacer(12.dp)
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = expense.title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = expense.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (expense.isPendingSync) {
+                    HorizontalSpacer(8.dp)
+                    SyncStatusChip()
+                }
+            }
             val subtitle =
                 if (expense.paidByUserId == currentUserId) {
                     stringResource(Res.string.groups_detail_paid_by_you)

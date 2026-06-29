@@ -33,4 +33,6 @@ data class GroupOverviewItem(
     val lastActivityAt: Instant,
     val inviteToken: String = "",
     val creatorUserId: String = "",
+    /** True when the group has at least one local expense not yet confirmed by the server. */
+    val hasPendingSync: Boolean = false,
 )

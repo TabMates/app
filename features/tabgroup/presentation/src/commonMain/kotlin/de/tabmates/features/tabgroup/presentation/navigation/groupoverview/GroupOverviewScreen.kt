@@ -61,6 +61,7 @@ import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.designsystem.theme.extended
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
+import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.GroupDetailRoot
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -424,13 +425,20 @@ private fun GroupCard(
             GroupAvatar(iconKey = item.iconKey, colorKey = item.colorKey)
             HorizontalSpacer(12.dp)
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (item.hasPendingSync) {
+                        HorizontalSpacer(8.dp)
+                        SyncStatusChip()
+                    }
+                }
                 Text(
                     text = membersAndExpensesText(item.memberCount, item.expenseCount),
                     style = MaterialTheme.typography.bodySmall,

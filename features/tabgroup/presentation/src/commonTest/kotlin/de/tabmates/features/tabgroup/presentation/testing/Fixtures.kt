@@ -46,6 +46,7 @@ object Fixtures {
         amount: Double = 100.0,
         paidByUserId: String = "user-1",
         splits: List<TabEntrySplit> = emptyList(),
+        isPendingSync: Boolean = false,
     ): TabEntry.Expense =
         TabEntry.Expense(
             tabEntryId = id,
@@ -64,6 +65,7 @@ object Fixtures {
             deletedAt = null,
             deletedByUserId = null,
             splits = splits,
+            isPendingSync = isPendingSync,
         )
 
     fun split(

@@ -23,4 +23,6 @@ data class HomeGroup(
     val currencySymbol: String,
     val currencyDecimals: Int,
     val memberInitials: List<String>,
+    /** True when the group has at least one local expense not yet confirmed by the server. */
+    val hasPendingSync: Boolean = false,
 )

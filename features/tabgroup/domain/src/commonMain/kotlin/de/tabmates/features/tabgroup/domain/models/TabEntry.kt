@@ -22,6 +22,9 @@ sealed class TabEntry {
     abstract val deletedAt: Instant?
     abstract val deletedByUserId: String?
 
+    /** True while this entry is a local optimistic write not yet confirmed by the server. */
+    abstract val isPendingSync: Boolean
+
     val isDeleted: Boolean
         get() = deletedAt != null
 
@@ -42,6 +45,7 @@ sealed class TabEntry {
         override val deletedAt: Instant?,
         override val deletedByUserId: String?,
         val splits: List<TabEntrySplit>,
+        override val isPendingSync: Boolean = false,
     ) : TabEntry()
 
     data class Income(
@@ -61,6 +65,7 @@ sealed class TabEntry {
         override val deletedAt: Instant?,
         override val deletedByUserId: String?,
         val splits: List<TabEntrySplit>,
+        override val isPendingSync: Boolean = false,
     ) : TabEntry()
 
     data class Settlement(
@@ -80,5 +85,6 @@ sealed class TabEntry {
         override val deletedAt: Instant?,
         override val deletedByUserId: String?,
         val receivedByUserId: String,
+        override val isPendingSync: Boolean = false,
     ) : TabEntry()
 }

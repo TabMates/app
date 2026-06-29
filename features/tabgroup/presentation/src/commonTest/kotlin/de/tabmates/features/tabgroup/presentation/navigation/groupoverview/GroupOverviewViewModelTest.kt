@@ -194,6 +194,51 @@ class GroupOverviewViewModelTest {
         }
 
     @Test
+    fun groupWithPendingExpenseExposesHasPendingSync() =
+        runTest(testDispatcher) {
+            val groupRepo =
+                FakeGroupRepository(
+                    initialGroups =
+                        listOf(
+                            Fixtures.group(id = "g1", title = "Pending"),
+                            Fixtures.group(id = "g2", title = "Synced"),
+                        ),
+                )
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit(
+                groupId = "g1",
+                entries = listOf(Fixtures.expense(id = "e1", groupId = "g1", isPendingSync = true)),
+            )
+            tabEntryRepo.emit(
+                groupId = "g2",
+                entries = listOf(Fixtures.expense(id = "e2", groupId = "g2", isPendingSync = false)),
+            )
+            val viewModel =
+                createViewModel(groupRepository = groupRepo, tabEntryRepository = tabEntryRepo)
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            val items =
+                viewModel.state.value.allItems
+                    .associateBy { it.title }
+            assertTrue(items.getValue("Pending").hasPendingSync)
+            assertTrue(!items.getValue("Synced").hasPendingSync)
+
+            // Server echo clears the flag; the group must follow.
+            tabEntryRepo.emit(
+                groupId = "g1",
+                entries = listOf(Fixtures.expense(id = "e1", groupId = "g1", isPendingSync = false)),
+            )
+            advanceUntilIdle()
+
+            assertTrue(
+                !viewModel.state.value.allItems
+                    .first { it.title == "Pending" }
+                    .hasPendingSync,
+            )
+        }
+
+    @Test
     fun onGroupSelectedUpdatesSelectedGroupId() =
         runTest(testDispatcher) {
             val groupRepo =

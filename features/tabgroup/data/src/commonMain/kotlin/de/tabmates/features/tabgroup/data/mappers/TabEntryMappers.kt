@@ -117,6 +117,7 @@ fun TabEntryWithSplits.toDomain(): TabEntry =
                 deletedAt = tabEntry.deletedAt?.let { Instant.fromEpochMilliseconds(it) },
                 deletedByUserId = tabEntry.deletedByUserId,
                 splits = splits.map { it.toDomain() },
+                isPendingSync = tabEntry.pendingSync,
             )
         }
 
@@ -138,6 +139,7 @@ fun TabEntryWithSplits.toDomain(): TabEntry =
                 deletedAt = tabEntry.deletedAt?.let { Instant.fromEpochMilliseconds(it) },
                 deletedByUserId = tabEntry.deletedByUserId,
                 splits = splits.map { it.toDomain() },
+                isPendingSync = tabEntry.pendingSync,
             )
         }
 
@@ -162,6 +164,7 @@ fun TabEntryWithSplits.toDomain(): TabEntry =
                     requireNotNull(tabEntry.receivedByUserId) {
                         "Settlement TabEntry ${tabEntry.tabEntryId} has null receivedByUserId"
                     },
+                isPendingSync = tabEntry.pendingSync,
             )
         }
     }
