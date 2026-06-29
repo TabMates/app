@@ -45,5 +45,6 @@ internal fun GroupOverviewItem.withStats(
         expenseCount = expenseCount,
         totalSpent = totalSpent,
         balance = GroupBalance.fromNet(net),
+        hasPendingSync = entries.any { it.isPendingSync },
     )
 }

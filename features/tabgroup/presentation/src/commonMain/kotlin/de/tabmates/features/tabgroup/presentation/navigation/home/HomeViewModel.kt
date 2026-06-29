@@ -134,6 +134,7 @@ class HomeViewModel(
                             currencySymbol = item.currencySymbol,
                             currencyDecimals = item.currencyDecimalDigits,
                             memberInitials = group.participants.take(MAX_AVATARS).map { it.initials },
+                            hasPendingSync = item.hasPendingSync,
                         )
                     },
         )

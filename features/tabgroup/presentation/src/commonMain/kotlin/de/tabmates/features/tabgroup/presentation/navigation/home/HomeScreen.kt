@@ -50,6 +50,7 @@ import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.designsystem.theme.extended
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
+import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.formatAmount
 import kotlinx.coroutines.delay
@@ -319,13 +320,20 @@ private fun GroupRow(
             GroupAvatar(iconKey = group.iconKey, colorKey = group.colorKey, size = 44.dp)
             HorizontalSpacer(12.dp)
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = group.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = group.title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (group.hasPendingSync) {
+                        HorizontalSpacer(8.dp)
+                        SyncStatusChip()
+                    }
+                }
                 VerticalSpacer(2.dp)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (group.memberInitials.isNotEmpty()) {

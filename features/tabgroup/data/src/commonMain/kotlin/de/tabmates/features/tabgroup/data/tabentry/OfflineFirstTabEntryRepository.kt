@@ -86,6 +86,7 @@ class OfflineFirstTabEntryRepository(
                 deletedAt = null,
                 deletedByUserId = null,
                 splits = resolvedSplits,
+                isPendingSync = true,
             )
 
         insertLocal(expense)
@@ -136,6 +137,7 @@ class OfflineFirstTabEntryRepository(
                 deletedAt = null,
                 deletedByUserId = null,
                 splits = resolvedSplits,
+                isPendingSync = true,
             )
 
         database.tabEntryDao.replaceTabEntryWithSplits(
@@ -187,6 +189,7 @@ class OfflineFirstTabEntryRepository(
                 deletedAt = null,
                 deletedByUserId = null,
                 receivedByUserId = receivedByUserId,
+                isPendingSync = true,
             )
 
         database.tabEntryDao.upsertTabEntry(settlement.toEntity(pendingSync = true))
