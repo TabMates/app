@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
-import kotlin.time.Instant
 
 class FakeTabEntryRepository(
     initialEntries: Map<String, List<TabEntry>> = emptyMap(),
@@ -37,12 +36,6 @@ class FakeTabEntryRepository(
             .firstOrNull { flow -> flow.value.any { it.tabEntryId == tabEntryId } }
             ?.map { entries -> entries.firstOrNull { it.tabEntryId == tabEntryId } }
             ?: MutableStateFlow<TabEntry?>(null)
-
-    override suspend fun fetchTabEntries(
-        groupId: String,
-        before: Instant?,
-        pageSize: Int,
-    ): Result<List<TabEntry>, DataError.Remote> = Result.Success(flowByGroupId[groupId]?.value.orEmpty())
 
     override suspend fun createExpense(
         groupId: String,

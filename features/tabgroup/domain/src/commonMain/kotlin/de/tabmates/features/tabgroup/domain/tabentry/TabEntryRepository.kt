@@ -6,18 +6,11 @@ import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
-import kotlin.time.Instant
 
 interface TabEntryRepository {
     fun getTabEntriesForGroup(groupId: String): Flow<List<TabEntry>>
 
     fun getTabEntryById(tabEntryId: String): Flow<TabEntry?>
-
-    suspend fun fetchTabEntries(
-        groupId: String,
-        before: Instant? = null,
-        pageSize: Int = DEFAULT_PAGE_SIZE,
-    ): Result<List<TabEntry>, DataError.Remote>
 
     suspend fun createExpense(
         groupId: String,
@@ -54,8 +47,4 @@ interface TabEntryRepository {
     ): Result<TabEntry.Settlement, DataError.Remote>
 
     suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote>
-
-    companion object {
-        const val DEFAULT_PAGE_SIZE = 20
-    }
 }

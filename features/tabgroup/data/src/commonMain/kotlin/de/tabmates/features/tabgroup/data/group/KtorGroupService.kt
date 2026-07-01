@@ -27,15 +27,6 @@ import org.koin.core.annotation.Single
 class KtorGroupService(
     private val httpClient: HttpClient,
 ) : GroupService {
-    override suspend fun getGroups(): Result<List<Group>, DataError.Remote> {
-        return httpClient
-            .get<List<GroupDto>>(
-                route = "/api/group",
-            ).map { groupDtos ->
-                groupDtos.map { it.toDomain() }
-            }
-    }
-
     override suspend fun getGroupById(groupId: String): Result<Group, DataError.Remote> {
         return httpClient
             .get<GroupDto>(

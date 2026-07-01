@@ -3,29 +3,24 @@ package de.tabmates.features.tabgroup.data.tabentry
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
-import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.data.mappers.toEntity
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
-import de.tabmates.features.tabgroup.database.entities.TabEntrySplitEntity
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
 import de.tabmates.features.tabgroup.domain.tabentry.NewExpenseSplit
 import de.tabmates.features.tabgroup.domain.tabentry.SplitResolver
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
-import de.tabmates.features.tabgroup.domain.tabentry.TabEntryService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import org.koin.core.annotation.Single
 import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @Single(binds = [TabEntryRepository::class])
 class OfflineFirstTabEntryRepository(
-    private val service: TabEntryService,
     private val database: TabMatesDatabase,
     private val outbox: TabEntryOutbox,
 ) : TabEntryRepository {
@@ -38,22 +33,6 @@ class OfflineFirstTabEntryRepository(
         database.tabEntryDao
             .observeTabEntryById(tabEntryId)
             .map { it?.toDomain() }
-
-    override suspend fun fetchTabEntries(
-        groupId: String,
-        before: Instant?,
-        pageSize: Int,
-    ): Result<List<TabEntry>, DataError.Remote> =
-        service
-            .getTabEntriesForGroup(groupId, before, pageSize)
-            .onSuccess { entries ->
-                persist(
-                    entries = entries,
-                    groupId = groupId,
-                    shouldSync = before == null,
-                    pageSize = pageSize,
-                )
-            }
 
     override suspend fun createExpense(
         groupId: String,
@@ -247,33 +226,6 @@ class OfflineFirstTabEntryRepository(
                 resolvedAmount = resolvedAmounts[index],
             )
         }
-    }
-
-    private suspend fun persist(
-        entries: List<TabEntry>,
-        groupId: String,
-        shouldSync: Boolean,
-        pageSize: Int,
-    ) {
-        val entryEntities = entries.map { it.toEntity() }
-        val splitsByEntryId =
-            entries.associate { entry ->
-                entry.tabEntryId to
-                    when (entry) {
-                        is TabEntry.Expense -> entry.splits.map { it.toEntity() }
-                        is TabEntry.Income -> entry.splits.map { it.toEntity() }
-                        is TabEntry.Settlement -> emptyList<TabEntrySplitEntity>()
-                    }
-            }
-
-        database.tabEntryDao.upsertTabEntriesAndSyncIfNecessary(
-            groupId = groupId,
-            entries = entryEntities,
-            splitsByEntryId = splitsByEntryId,
-            splitDao = database.tabEntrySplitDao,
-            pageSize = pageSize,
-            shouldSync = shouldSync,
-        )
     }
 
     @OptIn(ExperimentalUuidApi::class)

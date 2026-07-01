@@ -58,27 +58,6 @@ class OfflineFirstGroupRepository(
             }
     }
 
-    override suspend fun fetchGroups(): Result<List<Group>, DataError.Remote> {
-        return groupService
-            .getGroups()
-            .onSuccess { groups ->
-                val groupsWithParticipants =
-                    groups.map { group ->
-                        GroupWithParticipants(
-                            group = group.toEntity(),
-                            participants = group.participants.map { it.toEntity() },
-                            lastTabEntry = null,
-                        )
-                    }
-
-                database.groupDao.upsertGroupsWithParticipantsAndCrossRefs(
-                    groups = groupsWithParticipants,
-                    participantDao = database.groupParticipantDao,
-                    crossRefDao = database.groupParticipantCrossRefDao,
-                )
-            }
-    }
-
     override suspend fun fetchGroupById(groupId: String): EmptyResult<DataError.Remote> {
         return groupService
             .getGroupById(groupId)
