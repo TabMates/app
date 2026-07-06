@@ -1,7 +1,7 @@
 ---
 name: android-compose-ui
 description: |
-  Compose UI patterns for Android/KMP - stability, recomposition, side effects, lazy lists, animations, previews, accessibility, modifier extensions, and design system composables. Use this skill whenever writing or reviewing composables, optimizing recomposition, adding animations, creating previews, writing custom modifiers, structuring a design system, or making any Compose UI decision beyond the MVI/ViewModel layer. Trigger on phrases like "composable", "recomposition", "LaunchedEffect", "Modifier", "LazyColumn", "preview", "animation", "design system", "stability", "contentDescription", "graphicsLayer", "slot API", or "Compose performance".
+  Compose UI patterns for TabMates KMP/CMP - stability, recomposition, side effects, lazy lists, animations, multi-preview annotations (@PreviewThemes), accessibility with Compose Resources, modifier extensions, and :core:designsystem components. Use this skill whenever writing or reviewing composables, optimizing recomposition, adding animations, creating previews, writing custom modifiers, or making any Compose UI decision beyond the ViewModel layer. Trigger on phrases like "composable", "recomposition", "LaunchedEffect", "Modifier", "LazyColumn", "preview", "animation", "design system", "stability", "contentDescription", "graphicsLayer", "slot API", or "Compose performance".
 ---
 
 # Android / KMP Compose UI Patterns
@@ -21,15 +21,14 @@ Only annotate a state data class with `@Stable` when it contains fields the Comp
 ```kotlin
 // Needs @Stable — contains a List (unstable by default)
 @Stable
-data class NoteListState(
-    val notes: List<NoteUi> = emptyList(),
+data class GroupOverviewState(
+    val groups: List<GroupUi> = emptyList(),
     val isLoading: Boolean = false
 )
 
 // No annotation needed — all fields are stable
-data class NoteDetailState(
+data class SettleUpState(
     val title: String = "",
-    val body: String = "",
     val isSaving: Boolean = false
 )
 ```
@@ -86,7 +85,7 @@ fun ObserveLifecycle(onStart: () -> Unit, onStop: () -> Unit) {
 }
 ```
 
-`LaunchedEffect` is acceptable when genuinely needed, but question whether the work belongs in the ViewModel first. Do not use custom `CompositionLocal`s.
+`LaunchedEffect` is acceptable when genuinely needed, but question whether the work belongs in the ViewModel first. Avoid new custom `CompositionLocal`s — the only sanctioned one is `LocalTopBarActionsController` (`core:presentation` navigation chrome).
 
 ---
 
@@ -97,10 +96,10 @@ Add `key` to lazy list items when there is an obvious unique identifier availabl
 ```kotlin
 LazyColumn {
     items(
-        items = state.notes,
+        items = state.groups,
         key = { it.id }  // id is clearly unique
-    ) { note ->
-        NoteItem(note = note, onClick = { onAction(OnNoteClick(note.id)) })
+    ) { group ->
+        GroupItem(group = group, onClick = { onGroupClick(group.id) })
     }
 }
 ```
@@ -162,7 +161,7 @@ fun Modifier.roundedBackground(color: Color, radius: Dp) =
 
 ## Design System & Slot APIs
 
-The design system lives in `:core:design-system` and contains reusable Compose components, colors, theme, and typography.
+The design system lives in `:core:designsystem` (`TabMatesTheme`, tokens, `TabMatesButton`, `TabMatesTextFieldLayout`, spacers, preview annotations). Reuse these atoms before writing new ones; use `MaterialTheme.colorScheme` / theme tokens, never hardcoded colors.
 
 Use slot APIs (passing `@Composable` lambdas) primarily for design system components that need flexible content areas:
 
@@ -187,45 +186,41 @@ Feature-level composables should prefer typed parameters over slots for clarity.
 
 ## Previews
 
-Every Screen composable should have at least one meaningful `@Preview` that shows a realistic state:
+Use the multi-preview annotations from `:core:designsystem` (`core/designsystem/.../preview/DevicePreviews.kt`) instead of raw `@Preview`:
+
+- **`@PreviewThemes`** — light + dark. Preferred for most components.
+- **`@PreviewPhones`** — phone portrait + landscape.
+- **`@PreviewScreenSizes`** — phone, foldable, tablet, desktop, web.
+- **`@PreviewAll`** — every theme+size combo (14 previews). Use sparingly.
+
+Wrap in `TabMatesTheme` (+ `Surface` if a background is needed), with realistic sample data:
 
 ```kotlin
-@Preview
+@PreviewThemes
 @Composable
-private fun NoteListScreenPreview() {
-    AppTheme {
-        NoteListScreen(
-            state = NoteListState(
-                notes = listOf(
-                    NoteUi("1", "Meeting notes", "Mar 15"),
-                    NoteUi("2", "Shopping list", "Mar 14")
-                )
-            ),
-            onAction = {}
-        )
+private fun GroupDetailScreenPreview() {
+    TabMatesTheme {
+        Surface {
+            GroupDetailScreen(state = GroupDetailState(/* realistic data */), ...)
+        }
     }
 }
 ```
-
-Wrap previews in the app theme so they reflect real appearance. Use realistic sample data, not empty states (unless previewing the empty state specifically).
 
 ---
 
 ## Accessibility
 
-Use meaningful `contentDescription` on all interactive or informational visual elements. Always use string resources to allow localization:
+Use meaningful `contentDescription` on all interactive or informational visual elements. Always use Compose Resources (`Res.string.*` via `org.jetbrains.compose.resources.stringResource` — there is no `R.string` in this project):
 
 ```kotlin
 Icon(
-    imageVector = Icons.Default.Delete,
-    contentDescription = stringResource(R.string.cd_delete_note)
-)
-
-Image(
-    painter = painterResource(R.drawable.profile),
-    contentDescription = stringResource(R.string.cd_profile_picture)
+    imageVector = vectorResource(Res.drawable.ic_add),
+    contentDescription = stringResource(Res.string.create_group)
 )
 ```
+
+Strings live in each module's `composeResources/values/strings.xml`.
 
 For decorative elements that convey no information, set `contentDescription = null`.
 
@@ -233,14 +228,14 @@ For decorative elements that convey no information, set `contentDescription = nu
 
 ## TextField
 
-Text input state lives in the ViewModel. Every keystroke dispatches an Action:
+Text input uses Compose `TextFieldState` held inside the ViewModel's state — NOT `value`/`onValueChange` with per-keystroke actions:
 
 ```kotlin
-// In the Screen composable
-TextField(
-    value = state.title,
-    onValueChange = { onAction(NoteEditorAction.OnTitleChange(it)) }
-)
+// State
+data class LoginState(val emailTextFieldState: TextFieldState = TextFieldState(), ...)
+
+// Screen composable — prefer the designsystem wrapper
+TabMatesTextFieldLayout(state = state.emailTextFieldState, ...)
 ```
 
-The ViewModel updates state (and optionally persists to `SavedStateHandle`) in response to the Action — see the **android-presentation-mvi** skill for the full pattern.
+The ViewModel derives validation with `snapshotFlow { state.value.emailTextFieldState.text }` — see the **android-presentation-mvi** skill for the full pattern.

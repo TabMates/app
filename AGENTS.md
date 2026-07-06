@@ -29,7 +29,10 @@ Each feature split into:
 - **`:domain`**: Interfaces (`Service`, `Repository`), business models, validators.
 - **`:data`**: Domain interface impls, DTOs, mappers, API services.
 - **`:presentation`**: Compose UI (Screens, Components), ViewModels, navigation routes.
-- **`:database`** (Optional): Room entity definitions and DAOs.
+- **`:database`** (Optional): Room database, entities, DAOs, migrations (e.g. `:features:tabgroup:database`).
+- **`:testing`** (Optional): Shared fakes for tests (e.g. `FakeAuthService` in `:features:authentication:testing`).
+
+Not all features have all layers (`:features:appupdate` = domain + data only). Special: `:features:tabgroup:sqliteWasmWorker` (web SQLite worker).
 
 ### Application Modules
 - **`:composeApp`**: Main entry point for shared UI. Aggregates all features, wires Navigation/DI.
@@ -52,9 +55,11 @@ Each feature split into:
 
 ### Presentation Layer (Compose Multiplatform)
 - **ViewModels:**
-    - Use `StateFlow` for UI state (e.g., `state: StateFlow<LoginState>`).
-    - Use `Channel` and `Flow` for one-time events (e.g., `events: Flow<LoginEvent>`).
-    - Inherit from `androidx.lifecycle.ViewModel`.
+    - Use `StateFlow` for UI state (e.g., `state: StateFlow<LoginState>`). Pattern: `stateIn(viewModelScope, WhileSubscribed(5_000), initial)` with `onStart { }` + `hasLoadedInitialData` guard.
+    - Use `Channel` + `receiveAsFlow()` for one-time events (e.g., `events: Flow<LoginEvent>`).
+    - Text input: hold Compose `TextFieldState` inside state; validate via `snapshotFlow { textFieldState.text }`. No per-keystroke actions.
+    - User intents: direct public functions (dominant style, e.g. `submitForgotPasswordRequest()`); two screens use sealed `Action` + `onAction()` (GroupSettings, JoinGroup). Match the style of the feature you touch.
+    - Annotate with `@KoinViewModel`. Inherit from `androidx.lifecycle.ViewModel`.
 - **UI Components:**
     - `Root` composables (e.g., `LoginRoot`) handle ViewModel interaction and event observation.
     - Screen composables (e.g., `LoginScreen`) stateless, take data/callbacks.
@@ -71,11 +76,14 @@ Each feature split into:
 
 ---
 
-## 5. Dependency Injection (Koin)
+## 5. Dependency Injection (Koin Annotations + KSP)
 
-- Each module defines `val moduleName = module { ... }`.
-- Feature modules aggregated in `composeApp/src/commonMain/kotlin/de/tabmates/composeapp/App.kt`.
-- Use `koinViewModel()` in Composables.
+**No Koin DSL** (`module { }`, `singleOf`, `viewModelOf`) — project uses Koin Annotations:
+- Per layer: `@Module @Configuration @ComponentScan("<package>") class FeatureLayerModule` (see `features/authentication/data/.../di/AuthenticationDataModule.kt`).
+- Bindings: `@Single` (add `binds = [Interface::class]` when impl name ≠ interface), `@KoinViewModel` on ViewModels.
+- Platform deps: `expect class PlatformXyzModule()` in commonMain + `actual` per source set (see `core/data/.../di/PlatformCoreDataModule.kt` + `.android/.desktop/.native/.web` variants).
+- Assembly: `@KoinApplication class TabMatesKoinApp` in `composeApp/.../di/AppModule.kt`; started in `App()` via `KoinApplication(configuration = koinConfiguration<TabMatesKoinApp>())`.
+- Use `koinViewModel()` in Root composables.
 
 ---
 
@@ -116,12 +124,19 @@ private fun MyComponentPreview() {
 
 ## 8. Convention Plugins (build-logic)
 
-**NEVER** configure KMP manually. Use:
-- `tabmates.convention.kmp.library`: Standard KMP library.
-- `tabmates.convention.cmp.library`: CMP library with Compose dependencies.
-- `tabmates.convention.cmp.feature`: Feature presentation module (includes VM, Lifecycle, Core Presentation).
-- `tabmates.convention.room`: Enables Room with KSP.
-- `tabmates.convention.buildkonfig`: BuildConfig-like constants.
+**NEVER** configure KMP manually. Plugin IDs (prefix `de.tabmates.convention.`):
+- `kmp.library`: Standard KMP library (domain/data modules).
+- `cmp.library`: CMP library with Compose dependencies.
+- `cmp.feature`: Feature presentation module (includes VM, Lifecycle, Core Presentation).
+- `cmp.application`: `:composeApp` shared-UI application.
+- `cmp.resources`: Compose Resources generation.
+- `android.application` / `android.application.compose`: `:androidApp`.
+- `room`: Room with KSP.
+- `koin`: Koin Annotations + KSP compiler.
+- `ktlint`: ktlint checks.
+- `buildkonfig`: BuildConfig-like constants (`BuildKonfig`).
+
+Registrations: `build-logic/convention/build.gradle.kts`.
 
 ---
 
@@ -144,22 +159,27 @@ common
 ### Naming
 - **Composables:** PascalCase. Root composables end in `Root`.
 - **ViewModels:** `FeatureViewModel`.
-- **DI Modules:** `featureDataModule`, `featurePresentationModule`.
+- **DI Modules:** `<Feature><Layer>Module` classes (e.g. `AuthenticationDataModule`, `AuthPresentationModule`).
 
 ### Patterns
-- **Error Handling:** Always use `Result` type. Convert `DataError` to `UiText` via `asUiText()`.
+- **Error Handling:** Always use `Result<D, E>` (`Success`/`Failure`, NOT `Error`). Convert `DataError` to `UiText` via `toUiText()` (`core/presentation/.../util/DataErrorToUiText.kt`).
 - **Async Work:** `viewModelScope.launch` in ViewModels. `Dispatchers.IO` for heavy/blocking calls (Ktor/Room non-blocking).
 - **Immutability:** Prefer `val` and `data class` with `copy()`.
 
 ### Testing
-- **commonMain:** Use **Mokkery** for mocking interfaces.
-- **androidMain / jvmMain:** Use **Mockk**.
+- **Stack:** kotlin-test (`@BeforeTest`, `assertEquals`, `assertIs`) + Turbine (`flow.test { }`) + hand-written fakes. **No mocking library.**
+- Shared fakes in `:features:<name>:testing` modules; screen-local fakes next to the test.
+- ViewModel tests: `Dispatchers.setMain(UnconfinedTestDispatcher())` in `@BeforeTest`, `resetMain()` in `@AfterTest`, `runTest(testDispatcher)`. After editing a `TextFieldState`: `Snapshot.sendApplyNotifications()` + `advanceUntilIdle()`.
+- Tests live in `commonTest`; Room/repo tests may live in `desktopTest` (e.g. `OfflineFirstSyncRepositoryTest`).
 - Target unit tests for domain logic and ViewModels.
 
 ---
 
 ## 11. Critical Workflows
-- **Sync:** `./gradlew help` (triggers sync).
-- **Format:** `./gradlew ktlintFormat`.
-- **Build:** `./gradlew assembleDebug`.
+- **Format:** `./gradlew ktlintFormat`. CI runs `ktlintCheck :build-logic:convention:ktlintCheck`.
+- **Fast verify:** compile only touched modules, e.g. `./gradlew :features:tabgroup:domain:compileKotlinJvm`. Full Android build: `./gradlew :androidApp:assembleDebug`.
+- **Tests:** `./gradlew allTests` (all targets) or narrower, e.g. `:androidApp:testDebugUnitTest`.
+- **Compiler warnings:** CI checks build log against `.github/compiler-warnings-baseline.txt` via `.github/check-compiler-warnings.sh` — new warnings fail the PR pipeline. Don't introduce any.
+- **CI parity:** `.github/workflows/pr_pipeline.yml` = ktlint + `:androidApp:assembleDebug lintDebug testDebugUnitTest` + `:composeApp:desktopJar` + wasm distribution + `allTests`.
 - **Local Config:** `local.properties` must have `API_KEY`.
+- **Sync:** `./gradlew help` (triggers sync).

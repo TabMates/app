@@ -1,233 +1,101 @@
 ---
 name: android-testing
 description: |
-  Testing patterns for Android/KMP - ViewModel unit tests with JUnit5, Turbine, AssertK, UnconfinedTestDispatcher, fake repositories, SavedStateHandle, and Compose UI tests. Use this skill whenever writing or reviewing tests for ViewModels, repositories, use cases, or Compose screens. Trigger on phrases like "write a test", "unit test the ViewModel", "test a repository", "Turbine", "fake repository", "UnconfinedTestDispatcher", "runTest", "ComposeTestRule", or "JUnit5".
+  TabMates testing patterns - kotlin-test + Turbine + hand-written fakes (no mocking library), UnconfinedTestDispatcher setup, TextFieldState snapshot flushing, shared fakes in :features:*:testing modules. Use this skill whenever writing or reviewing tests for ViewModels, repositories, or domain logic. Trigger on phrases like "write a test", "unit test", "test the ViewModel", "Turbine", "fake repository", "runTest", "UnconfinedTestDispatcher", or "kotlin-test".
 ---
- 
-# Android / KMP Testing
- 
+
+# TabMates Testing
+
 ## Stack
- 
+
 | Concern | Library |
 |---|---|
-| Test framework | JUnit5 |
-| Assertions | AssertK |
-| Flow / StateFlow testing | Turbine |
-| Coroutine testing | `kotlinx-coroutines-test` + `UnconfinedTestDispatcher` |
-| UI testing | `ComposeTestRule` |
- 
----
- 
-## ViewModel Unit Tests
- 
-### Setup
- 
+| Framework/assertions | **kotlin-test** (`@Test`, `@BeforeTest`, `@AfterTest`, `assertEquals`, `assertTrue`, `assertIs`, `assertNull`) |
+| Flow/StateFlow | **Turbine** (`flow.test { }`) |
+| Coroutines | `kotlinx-coroutines-test` (`runTest`, `UnconfinedTestDispatcher`, `advanceUntilIdle`) |
+| Doubles | **hand-written fakes** — NO mocking library (no Mockk/Mokkery/JUnit5/AssertK in this project) |
+
+Tests live in `commonTest`. Room/repository tests may live in `desktopTest` (e.g. `features/tabgroup/data/src/desktopTest/.../OfflineFirstSyncRepositoryTest.kt`). Android-specific tests in `androidApp/src/test`.
+
+## ViewModel Test Setup (real pattern — `ForgotPasswordViewModelTest.kt`)
+
 ```kotlin
-class NoteListViewModelTest {
+@OptIn(ExperimentalCoroutinesApi::class)
+class ForgotPasswordViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
- 
-    @BeforeEach
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-    }
- 
-    @AfterEach
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
-}
-```
- 
-### Testing State with Turbine
- 
-```kotlin
-@Test
-fun `loading notes emits notes in state`() = runTest {
-    val repo = FakeNoteRepository()
-    val viewModel = NoteListViewModel(repo)
- 
-    viewModel.state.test {
-        viewModel.onAction(NoteListAction.OnRefreshClick)
-        assertThat(awaitItem().isLoading).isTrue()
-        assertThat(awaitItem().notes).isNotEmpty()
-    }
-}
-```
- 
-### Testing Events (one-time side effects)
- 
-```kotlin
-@Test
-fun `clicking note sends NavigateToDetail event`() = runTest {
-    val viewModel = NoteListViewModel(FakeNoteRepository())
- 
-    viewModel.events.test {
-        viewModel.onAction(NoteListAction.OnNoteClick("123"))
-        assertThat(awaitItem()).isEqualTo(NoteListEvent.NavigateToDetail("123"))
-    }
-}
-```
- 
----
- 
-## Fake Repositories
- 
-Prefer **fakes** (not mocks) for repository dependencies. A fake is a simple in-memory implementation:
- 
-```kotlin
-class FakeNoteRepository : NoteRepository {
-    private val notes = mutableListOf<Note>()
-    var shouldReturnError = false
- 
-    override suspend fun getNotes(): Result<List<Note>, DataError.Local> {
-        return if (shouldReturnError) Result.Error(DataError.Local.UNKNOWN)
-        else Result.Success(notes.toList())
-    }
- 
-    override suspend fun insertNote(note: Note): EmptyResult<DataError.Local> {
-        notes.add(note)
-        return Result.Success(Unit)
-    }
-}
-```
- 
----
- 
-## SavedStateHandle in Tests
- 
-Instantiate it directly — no mocking needed:
- 
-```kotlin
-val savedStateHandle = SavedStateHandle(mapOf("noteId" to "123"))
-val viewModel = NoteEditorViewModel(savedStateHandle, FakeNoteRepository())
-```
- 
----
- 
-## When to Inject Dispatchers
- 
-Only inject `CoroutineDispatcher` into a class when:
-1. It dispatches to a non-main dispatcher (e.g., `IO`), AND
-2. That class is directly unit-tested.
- 
-ViewModels that only use `viewModelScope` do not need injected dispatchers. Use `Dispatchers.setMain()` in tests instead.
- 
-If a non-ViewModel class uses `withContext(Dispatchers.IO)` and is unit-tested, inject the dispatcher:
- 
-```kotlin
-class ImageCompressor(private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO) {
-    suspend fun compress(bytes: ByteArray): ByteArray = withContext(ioDispatcher) { ... }
-}
- 
-// In test:
-val compressor = ImageCompressor(ioDispatcher = UnconfinedTestDispatcher())
-```
- 
----
- 
-## Integration and E2E Tests
 
-Write integration tests where database/network interactions are non-trivial. Write E2E tests for complex user flows using `ComposeTestRule`:
+    @BeforeTest
+    fun setUp() { Dispatchers.setMain(testDispatcher) }
 
-```kotlin
-@get:Rule
-val composeTestRule = createComposeRule()
+    @AfterTest
+    fun tearDown() { Dispatchers.resetMain() }
 
-@Test
-fun noteList_displaysNotes_afterLoad() {
-    composeTestRule.setContent {
-        NoteListScreen(
-            state = NoteListState(notes = listOf(NoteUi("1", "Hello", "Mar 15"))),
-            onAction = {}
-        )
-    }
-    composeTestRule.onNodeWithText("Hello").assertIsDisplayed()
-}
-```
-
----
-
-## Robot Pattern (Complex UI / E2E Tests)
-
-For complex end-to-end or multi-step UI tests, use the **Robot Pattern** to separate test intent from Compose interactions. A robot encapsulates all `composeTestRule` interactions for a screen, keeping tests readable and DRY.
-
-### Structure
-
-Every robot function returns `this` so calls can be chained like a builder:
-
-```kotlin
-// Robot class — owns all UI interactions for the screen
-class NoteListRobot(private val composeTestRule: ComposeContentTestRule) {
-
-    fun setContent(
-        state: NoteListState,
-        onAction: (NoteListAction) -> Unit = {}
-    ) = apply {
-        composeTestRule.setContent {
-            NoteListScreen(state = state, onAction = onAction)
+    @Test
+    fun initialStateIsCorrect() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            viewModel.state.test {
+                val state = awaitItem()
+                assertFalse(state.canSubmit)
+                assertNull(state.errorText)
+                cancelAndConsumeRemainingEvents()
+            }
         }
-    }
-
-    fun assertNoteVisible(title: String) = apply {
-        composeTestRule.onNodeWithText(title).assertIsDisplayed()
-    }
-
-    fun clickNote(title: String) = apply {
-        composeTestRule.onNodeWithText(title).performClick()
-    }
-
-    fun assertEmptyState() = apply {
-        composeTestRule.onNodeWithTag("empty_state").assertIsDisplayed()
-    }
 }
 ```
 
-### Usage in Tests
+Turbine idioms used in the repo: `awaitItem()`, `expectMostRecentItem()`, always end with `cancelAndConsumeRemainingEvents()`.
+
+## Testing TextFieldState Input
+
+State holds Compose `TextFieldState`; after editing it in a test you must flush the snapshot before assertions:
 
 ```kotlin
-class NoteListScreenTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+viewModel.state.value.emailTextFieldState.edit { replace(0, length, "test@example.com") }
+Snapshot.sendApplyNotifications()   // flush snapshotFlow-driven validation
+advanceUntilIdle()
 
-    private val robot by lazy { NoteListRobot(composeTestRule) }
-
-    @Test
-    fun displaysNotes_afterLoad() {
-        robot
-            .setContent(NoteListState(notes = listOf(NoteUi("1", "Hello", "Mar 15"))))
-            .assertNoteVisible("Hello")
-    }
-
-    @Test
-    fun showsEmptyState_whenNoNotes() {
-        robot
-            .setContent(NoteListState(notes = emptyList()))
-            .assertEmptyState()
-    }
-
-    @Test
-    fun clickingNote_triggersAction() {
-        var clickedId: String? = null
-        robot
-            .setContent(
-                state = NoteListState(notes = listOf(NoteUi("1", "Hello", "Mar 15"))),
-                onAction = { if (it is NoteListAction.OnNoteClick) clickedId = it.noteId }
-            )
-            .assertNoteVisible("Hello")
-            .clickNote("Hello")
-    }
+viewModel.state.test {
+    assertTrue(expectMostRecentItem().canSubmit)
+    cancelAndConsumeRemainingEvents()
 }
 ```
 
-**When to use:** Apply the robot pattern when a screen has 3+ UI test cases, when multiple tests share the same setup/assertion sequences, or when testing complex multi-step user flows (e.g., fill form → submit → assert result).
- 
----
- 
+## Fakes
+
+Prefer fakes over mocks — simple in-memory implementations of domain interfaces with failure toggles:
+
+- **Shared across modules** → `:features:<name>:testing` module (e.g. `features/authentication/testing/.../FakeAuthService.kt`, `FakeNotificationService`).
+- **Screen-local** → next to the test in `commonTest` (e.g. `FakeGroupRepository`, `FakeSessionStorage` under `features/tabgroup/presentation/src/commonTest/.../testing/`).
+
+```kotlin
+class FakeGroupRepository : GroupRepository {
+    var shouldReturnError = false
+    private val groups = mutableListOf<Group>()
+
+    override suspend fun getGroups(): Result<List<Group>, DataError> =
+        if (shouldReturnError) Result.Failure(DataError.Remote.UNKNOWN)
+        else Result.Success(groups.toList())
+}
+```
+
+Note: `Result.Failure`, not `Result.Error` (see android-data-layer skill).
+
+## SavedStateHandle
+
+Instantiate directly, no mocking: `SavedStateHandle(mapOf("groupId" to "123"))`.
+
+## Dispatcher Injection
+
+Only inject a `CoroutineDispatcher` when the class dispatches to a non-main dispatcher AND is directly unit-tested. ViewModels using only `viewModelScope` need `Dispatchers.setMain()` in tests, nothing more.
+
+## Running
+
+- All targets: `./gradlew allTests` (what CI runs). Narrower: `:features:<name>:presentation:desktopTest` or `:androidApp:testDebugUnitTest`.
+- Fast compile check of touched test sources: `./gradlew :features:<name>:<layer>:compileAndroidHostTest` or `compileKotlinJvm`.
+
 ## What to Test
- 
-- Unit-test every ViewModel and any non-trivial domain/data logic.
-- Unit-test any logic that is likely to change.
-- Use fakes over mocks where possible — fakes are simpler and catch more real bugs.
-- Write integration tests where DB/network interactions are non-trivial.
-- Write E2E Compose tests for critical user flows.
-- Use the robot pattern for complex UI/E2E tests with multiple test cases or shared interaction sequences.
+
+- Every ViewModel: initial state, intent functions (success + failure via fake toggles), validation flows, event emission.
+- Non-trivial domain logic (validators, `CurrencyConverter`-style) and sync/merge logic in repositories.
+- Reuse shared fakes before writing new ones.
