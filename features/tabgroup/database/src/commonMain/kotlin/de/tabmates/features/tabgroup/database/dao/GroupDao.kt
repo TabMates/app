@@ -127,4 +127,47 @@ interface GroupDao {
 
         deleteGroupsByIds(staleGroupIds)
     }
+
+    /**
+     * Merges the groups returned by a delta sync. Unlike [upsertGroupsWithParticipantsAndCrossRefs],
+     * which reconciles against the full server list, [groups] here holds only the groups that changed
+     * since the sync cursor, so pruning is driven by [activeGroupIds] — the complete current set of
+     * the user's group ids. Any local group whose id is absent from [activeGroupIds] (left, removed,
+     * or deleted) is dropped.
+     */
+    @Transaction
+    suspend fun syncChangedGroups(
+        groups: List<GroupWithParticipants>,
+        activeGroupIds: List<String>,
+        participantDao: GroupParticipantDao,
+        crossRefDao: GroupParticipantCrossRefDao,
+    ) {
+        upsertGroups(groups.map { it.group })
+
+        val allParticipants = groups.flatMap { it.participants }
+        participantDao.upsertParticipants(allParticipants)
+
+        val allCrossRefs =
+            groups.flatMap { groupWithParticipants ->
+                groupWithParticipants.participants.map { participant ->
+                    GroupParticipantCrossRef(
+                        groupId = groupWithParticipants.group.groupId,
+                        userId = participant.userId,
+                        isActive = true,
+                    )
+                }
+            }
+        crossRefDao.upsertCrossRefs(allCrossRefs)
+
+        groups.forEach { groupWithParticipant ->
+            crossRefDao.syncGroupParticipants(
+                groupId = groupWithParticipant.group.groupId,
+                participants = groupWithParticipant.participants,
+            )
+        }
+
+        val activeIds = activeGroupIds.toSet()
+        val staleGroupIds = getAllGroupIds().filterNot { it in activeIds }
+        deleteGroupsByIds(staleGroupIds)
+    }
 }

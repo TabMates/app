@@ -13,8 +13,6 @@ interface GroupRepository {
 
     fun getActiveParticipantsByGroupId(groupId: String): Flow<List<GroupParticipant>>
 
-    suspend fun fetchGroups(): Result<List<Group>, DataError.Remote>
-
     suspend fun fetchGroupById(groupId: String): EmptyResult<DataError.Remote>
 
     suspend fun createGroup(

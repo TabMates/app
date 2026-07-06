@@ -1,0 +1,111 @@
+package de.tabmates.features.tabgroup.data.sync
+
+import androidx.room3.Room
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import de.tabmates.core.domain.sync.SyncCursorStore
+import de.tabmates.core.domain.util.DataError
+import de.tabmates.core.domain.util.Result
+import de.tabmates.features.tabgroup.database.TabMatesDatabase
+import de.tabmates.features.tabgroup.database.TabMatesDatabaseConstructor
+import de.tabmates.features.tabgroup.domain.models.Group
+import de.tabmates.features.tabgroup.domain.models.GroupParticipant
+import de.tabmates.features.tabgroup.domain.models.ParticipantType
+import de.tabmates.features.tabgroup.domain.models.SyncSnapshot
+import de.tabmates.features.tabgroup.domain.models.TabEntry
+import de.tabmates.features.tabgroup.domain.sync.SyncService
+import kotlinx.datetime.LocalDate
+import kotlin.time.Instant
+
+/** Fresh in-memory Room database, isolated per test. */
+fun createInMemoryDatabase(): TabMatesDatabase =
+    Room
+        .inMemoryDatabaseBuilder<TabMatesDatabase> { TabMatesDatabaseConstructor.initialize() }
+        .setDriver(BundledSQLiteDriver())
+        .build()
+
+class FakeSyncService(
+    var result: Result<SyncSnapshot, DataError.Remote>,
+) : SyncService {
+    val receivedSince: MutableList<Instant?> = mutableListOf()
+
+    override suspend fun sync(since: Instant?): Result<SyncSnapshot, DataError.Remote> {
+        receivedSince += since
+        return result
+    }
+}
+
+class FakeSyncCursorStore(
+    private var cursor: Instant? = null,
+) : SyncCursorStore {
+    override fun get(): Instant? = cursor
+
+    override fun set(cursor: Instant) {
+        this.cursor = cursor
+    }
+
+    override fun clear() {
+        cursor = null
+    }
+}
+
+fun instant(epochMillis: Long): Instant = Instant.fromEpochMilliseconds(epochMillis)
+
+fun participant(id: String): GroupParticipant =
+    GroupParticipant(userId = id, username = "user-$id", participantType = ParticipantType.REGISTERED)
+
+fun group(
+    id: String,
+    participantIds: List<String> = listOf("u1"),
+): Group =
+    Group(
+        id = id,
+        title = "Group $id",
+        description = null,
+        defaultCurrencyCode = "EUR",
+        participants = participantIds.map { participant(it) }.toSet(),
+        creator = participant(participantIds.first()),
+        inviteToken = "token-$id",
+        lastActivityAt = instant(0),
+        lastTabEntry = null,
+        createdAt = instant(0),
+    )
+
+fun expense(
+    id: String,
+    groupId: String,
+    amount: Double = 10.0,
+    deletedAt: Instant? = null,
+    pendingSync: Boolean = false,
+): TabEntry.Expense =
+    TabEntry.Expense(
+        tabEntryId = id,
+        groupId = groupId,
+        title = "Expense $id",
+        description = "",
+        amount = amount,
+        currencyCode = "EUR",
+        creatorId = "u1",
+        paidByUserId = "u1",
+        entryDate = LocalDate(2026, 1, 1),
+        createdAt = instant(0),
+        lastModifiedAt = instant(0),
+        lastModifiedByUserId = "u1",
+        version = 0,
+        deletedAt = deletedAt,
+        deletedByUserId = deletedAt?.let { "u1" },
+        splits = emptyList(),
+        isPendingSync = pendingSync,
+    )
+
+fun snapshot(
+    serverTime: Instant,
+    groups: List<Group> = emptyList(),
+    activeGroupIds: List<String> = groups.map { it.id },
+    tabEntries: List<TabEntry> = emptyList(),
+): SyncSnapshot =
+    SyncSnapshot(
+        serverTime = serverTime,
+        groups = groups,
+        activeGroupIds = activeGroupIds,
+        tabEntries = tabEntries,
+    )

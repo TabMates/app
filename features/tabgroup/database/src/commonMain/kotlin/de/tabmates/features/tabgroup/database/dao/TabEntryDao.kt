@@ -27,13 +27,11 @@ interface TabEntryDao {
     @Query("SELECT * FROM tabentryentity WHERE groupId = :groupId ORDER BY entryDate DESC, createdAt DESC")
     fun getTabEntriesByGroupId(groupId: String): Flow<List<TabEntryWithSplits>>
 
-    @Query(
-        "SELECT * FROM tabentryentity WHERE groupId = :groupId ORDER BY entryDate DESC, createdAt DESC LIMIT :limit",
-    )
-    suspend fun getTabEntriesByGroupIdLimited(
-        groupId: String,
-        limit: Int,
-    ): List<TabEntryEntity>
+    @Query("SELECT tabEntryId FROM tabentryentity")
+    suspend fun getAllTabEntryIds(): List<String>
+
+    @Query("SELECT tabEntryId FROM tabentryentity WHERE pendingSync = 1")
+    suspend fun getPendingSyncIds(): List<String>
 
     @Transaction
     @Query("SELECT * FROM tabentryentity WHERE tabEntryId = :tabEntryId")
@@ -76,35 +74,48 @@ interface TabEntryDao {
         deleteTabEntryById(tabEntryId)
     }
 
+    /**
+     * Applies a batch of tab entries from `/api/sync`. [aliveEntries] are entries the server still
+     * reports as present (upserted with their canonical split sets); [deletedIds] are entries the
+     * server soft-deleted (hard-deleted locally). Rows with a pending optimistic local write are
+     * never touched — the WebSocket echo / outbox owns those.
+     *
+     * On a full sync [allServerIds] is the complete set of ids the payload reported (alive + deleted);
+     * local non-pending entries absent from it are pruned. On a delta sync pass `null` to skip pruning.
+     */
     @Transaction
-    suspend fun upsertTabEntriesAndSyncIfNecessary(
-        groupId: String,
-        entries: List<TabEntryEntity>,
+    suspend fun applySyncedTabEntries(
+        aliveEntries: List<TabEntryEntity>,
         splitsByEntryId: Map<String, List<TabEntrySplitEntity>>,
+        deletedIds: List<String>,
+        allServerIds: Set<String>?,
         splitDao: TabEntrySplitDao,
-        pageSize: Int,
-        shouldSync: Boolean = false,
     ) {
-        val localEntries = getTabEntriesByGroupIdLimited(groupId, pageSize)
+        val pendingIds = getPendingSyncIds().toSet()
 
-        upsertTabEntries(entries)
-        if (entries.isNotEmpty()) {
-            splitDao.deleteSplitsByTabEntryIds(entries.map { it.tabEntryId })
+        val applicableAlive = aliveEntries.filter { it.tabEntryId !in pendingIds }
+        if (applicableAlive.isNotEmpty()) {
+            upsertTabEntries(applicableAlive)
+            val aliveIds = applicableAlive.map { it.tabEntryId }
+            splitDao.deleteSplitsByTabEntryIds(aliveIds)
+            val splits = aliveIds.flatMap { splitsByEntryId[it].orEmpty() }
+            if (splits.isNotEmpty()) {
+                splitDao.upsertSplits(splits)
+            }
         }
-        val allSplits = splitsByEntryId.values.flatten()
-        if (allSplits.isNotEmpty()) {
-            splitDao.upsertSplits(allSplits)
+
+        val applicableDeleted = deletedIds.filter { it !in pendingIds }
+        if (applicableDeleted.isNotEmpty()) {
+            splitDao.deleteSplitsByTabEntryIds(applicableDeleted)
+            deleteTabEntriesById(applicableDeleted)
         }
 
-        if (!shouldSync) return
-
-        val serverIds = entries.map { it.tabEntryId }.toSet()
-        val staleIds =
-            localEntries
-                .filter { it.tabEntryId !in serverIds && !it.pendingSync }
-                .map { it.tabEntryId }
-        if (staleIds.isNotEmpty()) {
-            deleteTabEntriesById(staleIds)
+        if (allServerIds != null) {
+            val staleIds = getAllTabEntryIds().filter { it !in allServerIds && it !in pendingIds }
+            if (staleIds.isNotEmpty()) {
+                splitDao.deleteSplitsByTabEntryIds(staleIds)
+                deleteTabEntriesById(staleIds)
+            }
         }
     }
 }

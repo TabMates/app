@@ -25,8 +25,6 @@ class FakeGroupRepository(
     )
 
     val createGroupCalls: MutableList<CreateGroupCall> = mutableListOf()
-    var fetchGroupsCalls: Int = 0
-        private set
 
     private val groupsFlow = MutableStateFlow(initialGroups)
 
@@ -38,11 +36,6 @@ class FakeGroupRepository(
 
     override fun getActiveParticipantsByGroupId(groupId: String): Flow<List<GroupParticipant>> =
         flowOf(emptyList())
-
-    override suspend fun fetchGroups(): Result<List<Group>, DataError.Remote> {
-        fetchGroupsCalls += 1
-        return Result.Success(groupsFlow.value)
-    }
 
     override suspend fun fetchGroupById(groupId: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
 

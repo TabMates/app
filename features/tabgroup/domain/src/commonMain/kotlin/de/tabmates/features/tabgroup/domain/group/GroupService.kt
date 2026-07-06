@@ -7,8 +7,6 @@ import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupInvitePreview
 
 interface GroupService {
-    suspend fun getGroups(): Result<List<Group>, DataError.Remote>
-
     suspend fun getGroupById(groupId: String): Result<Group, DataError.Remote>
 
     suspend fun createGroup(
