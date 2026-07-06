@@ -1,176 +1,98 @@
 ---
 name: android-data-layer
 description: |
-  Data layer patterns for Android/KMP - data sources, repositories, DTOs, mappers, Room entities, Ktor HttpClient, safe call helpers, token storage, and offline-first. Use this skill whenever writing or reviewing a data source or repository, creating DTOs or Room entities, writing mappers, setting up the Ktor HttpClient, handling network errors, or implementing token refresh. Trigger on phrases like "create a repository", "create a data source", "add a DAO", "Ktor client", "write a mapper", "DTO", "Room entity", "network call", "token storage", or "offline-first".
----
- 
-# Android / KMP Data Layer
- 
-## Error Handling
-
-This skill uses `Result<T, E>`, `DataError`, and the extension helpers defined in the **android-error-handling** skill. Refer to that skill for the full `Result` wrapper, `DataError` sealed interface, and `map`/`onSuccess`/`onFailure`/`asEmptyResult` extensions.
-
+  TabMates data layer + error handling - Result<D,E> with Success/Failure, DataError (Remote/Local/Connection), Ktor HttpClientExt safe-call helpers, services/repositories, DTOs, mappers, Room, offline-first, UiText error mapping. Use this skill whenever writing or reviewing a service/repository/data source, creating DTOs or Room entities, writing mappers, making network calls, or handling errors with typed Results. Trigger on phrases like "repository", "service", "DAO", "Ktor", "mapper", "DTO", "Room entity", "network call", "Result wrapper", "DataError", "onSuccess", "onFailure", "error handling", or "offline-first".
 ---
 
-## Data Source vs Repository
+# TabMates Data Layer & Error Handling
 
-- **Data source** — accesses a single data source (local DB, remote API, file system). Most classes in the data layer are data sources.
-- **Repository** — combines multiple data sources (e.g., a remote API + a local DB for offline-first). Only use the term "repository" when the class genuinely coordinates multiple sources.
+## Result Wrapper (`core/domain/.../util/Result.kt`)
 
 ```kotlin
-// Single source → data source
-interface NoteLocalDataSource {
-    suspend fun getNotes(): Result<List<Note>, DataError.Local>
-    suspend fun insertNote(note: Note): EmptyResult<DataError.Local>
+sealed interface Result<out D, out E : Error> {
+    data class Success<out D>(val data: D) : Result<D, Nothing>
+    data class Failure<out E : Error>(val error: E) : Result<Nothing, E>  // NOTE: Failure, not Error!
 }
+typealias EmptyResult<E> = Result<Unit, E>
+```
 
-interface NoteRemoteDataSource {
-    suspend fun fetchNotes(): Result<List<Note>, DataError.Network>
-}
+Helpers (same file, all chainable): `map`, `onSuccess`, `onFailure`, `asEmptyResult`.
 
-// Multiple sources → repository
-interface NoteRepository {
-    suspend fun getNotes(): Result<List<Note>, DataError>
-    suspend fun sync(): EmptyResult<DataError>
+```kotlin
+authService.forgotPassword(email)
+    .onSuccess { _state.update { it.copy(isEmailSentSuccessfully = true) } }
+    .onFailure { error -> _state.update { it.copy(errorText = error.toUiText()) } }
+```
+
+Never throw for expected failures — return `Result.Failure`. Catch exceptions in the layer that owns them (network → data layer, business rule → domain) and convert to a typed error. `CancellationException` must always be rethrown.
+
+## Error Types (`core/domain/.../util/DataError.kt`)
+
+```kotlin
+sealed interface DataError : Error {
+    enum class Remote : DataError { BAD_REQUEST, REQUEST_TIMEOUT, UNAUTHORIZED, FORBIDDEN, NOT_FOUND,
+        CONFLICT, TOO_MANY_REQUESTS, NO_INTERNET, PAYLOAD_TOO_LARGE, SERVER_ERROR, SERVICE_UNAVAILABLE,
+        SERIALIZATION, UNKNOWN }
+    enum class Local : DataError { DISK_FULL, NOT_FOUND, UNKNOWN }
+    enum class Connection : DataError { NOT_CONNECTED, MESSAGE_SEND_FAILED }  // websocket/sync
 }
 ```
 
-## Domain Layer Contracts
+It is `DataError.Remote` — NOT `DataError.Network`. Feature-specific errors implement `Error` (e.g. validation enums) and return single errors, not lists.
 
-- Pure Kotlin — no Android/framework imports.
-- Contains: domain models, data source/repository **interfaces**, error types.
-- **Every data source or repository used by a ViewModel must have an interface in `domain`** — enforces that `presentation` never depends on `data`, and enables testing.
- 
----
- 
-## DTOs and Domain Models
- 
-- Always separate: DTOs (data layer) ↔ Domain Models (domain layer).
-- Domain models never go directly into Room entities or Ktor request/response bodies.
-- Mappers are simple extension functions living in the data layer alongside the DTO:
- 
-```kotlin
-fun NoteDto.toNote(): Note = Note(id = id, title = title, ...)
-fun Note.toNoteDto(): NoteDto = NoteDto(id = id, title = title, ...)
-fun NoteEntity.toNote(): Note = ...
-fun Note.toNoteEntity(): NoteEntity = ...
-```
- 
----
- 
-## Implementations
+| Scenario | Error type |
+|---|---|
+| HTTP call | `DataError.Remote` |
+| DB access | `DataError.Local` |
+| Websocket/sync | `DataError.Connection` |
+| Multi-source repository | `DataError` supertype |
+| Domain validation | custom `enum : Error` |
 
-Name implementations for what makes them unique — never suffix with `Impl`.
+## Mapping Errors to UI
 
-### Data source (single source)
+`DataError.toUiText()` lives in `core/presentation/.../util/DataErrorToUiText.kt` and returns `UiText.Resource(Res.string.…)` (Compose Resources — no `R.string`). Feature-specific error mappers live in the feature's `presentation` module (often private in the ViewModel). Internal-only errors need no mapping.
+
+## Ktor Helpers (`core/data/.../networking/HttpClientExt.kt`)
+
+Typed extensions `HttpClient.get/post/put/patch/delete(route, queryParams, builder)` return `Result<Response, DataError.Remote>`. They wrap `safeCall` (exception → `DataError.Remote`) with an `expect platformSafeCall` for platform quirks, and `constructRoute` prefixes `BuildKonfig.BASE_URL` (NOT `BuildConfig`). Don't reimplement — call site is one line:
 
 ```kotlin
-class RoomNoteDataSource(private val dao: NoteDao) : NoteLocalDataSource {
-    override suspend fun getNotes(): Result<List<Note>, DataError.Local> {
-        return try {
-            Result.Success(dao.getAllNotes().map { it.toNote() })
-        } catch (e: Exception) {
-            Result.Error(DataError.Local.UNKNOWN)
-        }
+@Single(binds = [AuthService::class])
+class KtorAuthService(
+    private val httpClient: HttpClient,
+    private val sessionStorage: SessionStorage,
+) : AuthService {
+    override suspend fun register(email: String, username: String, password: String): EmptyResult<DataError.Remote> {
+        return httpClient.post(
+            route = "/api/auth/register",
+            body = RegisterRequest(email = email, username = username, password = password),
+        )
     }
 }
 ```
 
-### Repository (multiple sources)
+`HttpClientFactory` (`core:data`) configures ContentNegotiation/Auth once; tokens live in `SessionStorage`, 401 refresh handled by the Ktor Auth plugin.
 
-```kotlin
-class OfflineFirstNoteRepository(
-    private val localDataSource: NoteLocalDataSource,
-    private val remoteDataSource: NoteRemoteDataSource
-) : NoteRepository {
-    override suspend fun getNotes(): Result<List<Note>, DataError> {
-        return remoteDataSource.fetchNotes()
-            .onSuccess { notes -> localDataSource.insertAll(notes) }
-            .onFailure { localDataSource.getNotes() }
-    }
-}
-```
+## Interfaces, Impls, Naming
 
-Use names like `RoomNoteDataSource`, `KtorNoteDataSource`, `OfflineFirstNoteRepository`. The name should tell you what the class wraps or how it behaves.
- 
----
- 
-## Ktor — HttpClient Factory (`core:data`)
- 
-Configure the client once. Accept the engine externally so tests can swap in a mock engine:
- 
-```kotlin
-object HttpClientFactory {
-    fun create(engine: HttpClientEngine): HttpClient = HttpClient(engine) {
-        install(ContentNegotiation) { json() }
-        install(Auth) {
-            bearer {
-                loadTokens { /* load from DataStore */ }
-                refreshTokens { /* call refresh endpoint, save new tokens */ }
-            }
-        }
-        install(Logging) { logger = Logger.DEFAULT; level = LogLevel.ALL }
-        defaultRequest { contentType(ContentType.Application.Json) }
-    }
-}
-```
- 
-Inject `HttpClient` via Koin. For KMP, use the platform default engine.
- 
----
- 
-## Ktor — Safe Call Helpers (`core:data`)
+- Interface in feature `domain`: `AuthService`, `GroupRepository`. Every dependency a ViewModel uses must have a domain interface.
+- Impl in feature `data`, named for what makes it unique — never `Impl` suffix: `KtorAuthService`, `OfflineFirstGroupRepository`, `OfflineFirstCurrencyRepository`.
+- Bind via `@Single(binds = [Interface::class])`.
 
-Use `safeCall` / `responseToResult` helpers and typed extension functions (`HttpClient.get`, `HttpClient.post`, `HttpClient.delete`) to keep data source call sites clean and uniform. See the **android-error-handling** skill for the full implementation of these helpers.
+## DTOs, Mappers, Room
 
-```kotlin
-suspend fun getNotes(): Result<List<NoteDto>, DataError.Network> {
-    return httpClient.get(route = "/notes")
-}
-```
- 
----
- 
-## Token Storage
- 
-Store tokens in DataStore (in `core:data` or a dedicated `:core:auth` / `:feature:auth:data` module). The Ktor `Auth` plugin reads/writes tokens and handles 401 refresh automatically.
- 
----
- 
-## Room Migrations
- 
-Prefer `@Database(autoMigrations = [AutoMigration(from = 1, to = 2)])`. Use manual `Migration` objects when the schema change is too complex for auto-migration.
- 
----
- 
-## Offline-First (when applicable)
- 
-Follow **Room as single source of truth**: fetch from network → persist to Room → expose DB `Flow` to the ViewModel. The ViewModel never observes network responses directly.
- 
-This pattern is optional — apply it when the project requires offline support.
- 
----
- 
-## Naming Conventions
- 
-| Thing | Convention | Example |
-|---|---|---|
-| Data source interface | `<Entity><Local/Remote>DataSource` | `NoteLocalDataSource`, `NoteRemoteDataSource` |
-| Data source impl | describe what makes it unique | `RoomNoteDataSource`, `KtorNoteDataSource` |
-| Repository interface | `<Entity>Repository` (multi-source only) | `NoteRepository` |
-| Repository impl | describe what makes it unique | `OfflineFirstNoteRepository` |
-| DTO | `<Model>Dto` | `NoteDto` |
-| Room entity | `<Model>Entity` | `NoteEntity` |
-| Mapper | extension fun on source type | `fun NoteDto.toNote()` |
- 
----
- 
-## Checklist: Adding a New Data Source or Repository
+- DTOs live in `data` (`dto/requests/`), suffix `Request`/`Response`; shared serializable models in `core:data` use `Serializable` suffix (`UserSerializable`). Domain models never go over the wire or into Room directly.
+- Mappers = extension functions in `data`, `toDomain()` direction (see `core/data/.../mappers/`).
+- Room lives in the feature's `:database` module (`features/tabgroup/database`: `TabMatesDatabase.kt`, `entities/`, `dao/`, `migrations/`). Entities suffix `Entity`.
 
-- [ ] Define domain model(s) in `feature:domain`
-- [ ] Define data source or repository interface in `feature:domain`
-- [ ] Define feature-specific error type(s) in `feature:domain` (implement `Error`) — see **android-error-handling** skill
-- [ ] Define DTOs and Room entities in `feature:data`
-- [ ] Write mappers as extension functions in `feature:data`
-- [ ] Implement data source (single source) or repository (multi-source) in `feature:data`, named for what makes it unique
- 
+## Offline-First (tabgroup)
+
+Room is the single source of truth: network fetch → persist to Room → ViewModel observes DB `Flow`. See `OfflineFirstGroupRepository` and `features/tabgroup/data/.../sync/` (delta sync via `/api/sync` cursor). ViewModels never observe network responses directly.
+
+## Checklist: New Service/Repository
+
+- [ ] Domain model + interface + error type in `features:<name>:domain`
+- [ ] DTOs (`Request`/`Response`) + mappers (`toDomain()`) in `features:<name>:data`
+- [ ] Impl named for uniqueness (`Ktor…`/`OfflineFirst…`), `@Single(binds = [...])`
+- [ ] Return `Result<D, DataError.…>` / `EmptyResult<…>` from every operation
+- [ ] User-facing errors have a `toUiText()` mapping in presentation

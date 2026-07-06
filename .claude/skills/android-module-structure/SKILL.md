@@ -1,95 +1,108 @@
 ---
 name: android-module-structure
-description: Module layout, dependency rules, and Gradle convention plugins for Android and Kotlin Multiplatform (KMP) projects. Use this skill whenever setting up a new Android/KMP project, deciding where a new module should live, asking "how should I structure this", creating a new feature module, adding a core submodule, configuring Gradle convention plugins, working with version catalogs, or making any decision about project-level architecture. Trigger on phrases like "set up the project", "add a module", "create a feature", "how should I structure", "project structure", "convention plugin", "build-logic", or "where does X live".
+description: |
+  TabMates KMP/CMP module layout, dependency rules, Gradle convention plugins, source-set hierarchy, and Koin Annotations DI wiring. Use this skill whenever adding a module, deciding where code lives, creating a feature, configuring Gradle/convention plugins, or setting up dependency injection. Trigger on phrases like "add a module", "create a feature", "project structure", "convention plugin", "build-logic", "where does X live", "Koin", "DI module", "inject", or "@Single".
 ---
- 
-# Android / KMP Module Structure
- 
-## Core Philosophy
- 
-- **Feature-layered modularization**: split by feature first, then by layer within each feature.
-- **Clean Architecture layers**: `presentation` → `domain` ← `data`. Domain is innermost and depends on nothing.
-- **Code lives in a feature module unless it is needed by more than one feature** — then it moves to the appropriate `core` submodule.
-- Features **never depend on each other**. Cross-feature shared data belongs in `core:domain` (domain models) or `core:presentation` (shared composables/UI logic), not in the owning feature.
- 
----
- 
-## Module Layout
- 
-```
-:app
-:build-logic                    ← Gradle convention plugins
-:core:domain                    ← Shared domain models, repository interfaces, error types, Result
-:core:data                      ← Shared data logic, Ktor HttpClient factory, shared DB schemas/DAOs
-:core:presentation              ← Shared UI utilities (ObserveAsEvents, UiText, etc.)
-:core:design-system             ← Reusable Compose components, colors, theme, typography
-:feature:<name>:domain          ← Feature-specific domain models, repo interfaces, error types
-:feature:<name>:data            ← Repo implementations, DTOs, mappers, Room DAOs
-:feature:<name>:presentation    ← ViewModel, screen composables, state, actions, events
-```
- 
-For standalone, self-contained concerns that involve meaningful complexity (multiple classes, configuration, or a non-trivial API surface), create a dedicated module under `:core` (e.g., `:core:location`, `:core:analytics`). Do not create a separate module for a single class or a trivial utility — that belongs in an existing `core` module instead.
 
-A shared Room database is a good candidate for a dedicated `:core:database` module. It contains the `@Database` class, all entity definitions, all DAOs, and migrations. Feature modules that need DB access depend on `:core:database` directly, while features that don't need it remain decoupled.
- 
----
- 
+# TabMates Module Structure & DI
+
+## Core Philosophy
+
+- Split by feature first, then by layer. Clean Architecture: `presentation` → `domain` ← `data`; domain depends on nothing.
+- Code lives in a feature module unless needed by 2+ features — then it moves to the matching `core` submodule.
+- Features never depend on each other. Cross-feature sharing goes through `core:*`.
+- Use **typesafe project accessors** (`projects.core.domain`), never string paths.
+
+## Module Layout (real tree — see `settings.gradle.kts`)
+
+```
+:androidApp                          ← Android app shell, depends only on :composeApp
+:composeApp                          ← shared-UI entry point; wires NavDisplay + Koin
+:build-logic                         ← convention plugins (included build)
+:core:domain                         ← pure Kotlin: models, Result, Error, DataError, loggers
+:core:data                           ← HttpClientFactory, Ktor helpers (HttpClientExt.kt), shared DTOs/mappers
+:core:presentation                   ← UiText, ObserveAsEvents, navigation contracts (TopLevelTab, ScreenWithTopBar, …)
+:core:designsystem                   ← TabMatesTheme, tokens, atomic components, preview annotations
+:features:<name>:domain              ← interfaces (Service/Repository), models, validators
+:features:<name>:data                ← impls, DTOs, mappers, DI module
+:features:<name>:presentation        ← ViewModels, screens, NavKeys, feature graph
+:features:<name>:database   (opt)    ← Room DB/entities/DAOs/migrations (tabgroup only)
+:features:<name>:testing    (opt)    ← shared fakes (authentication, notifications)
+```
+
+Features: `appupdate` (domain+data only), `authentication`, `notifications`, `tabgroup` (+ `sqliteWasmWorker` for web SQLite). Not every feature needs every layer.
+
 ## Dependency Rules
- 
+
 | Layer | May depend on |
 |---|---|
-| `presentation` | `domain` (own feature), `core:domain`, `core:presentation`, `core:design-system` |
-| `data` | `domain` (own feature), `core:domain`, `core:data` |
-| `domain` | `core:domain` only — never `data` or `presentation` |
-| `:app` | everything (wires all modules) |
+| `presentation` | own `domain`, `core:domain`, `core:presentation`, `core:designsystem` |
+| `data` | own `domain` (+ own `database`), `core:domain`, `core:data` |
+| `domain` | `core:domain` only |
+| `:composeApp` | everything (aggregates graphs + DI) |
+| `:androidApp` | `:composeApp` only |
 
-**Every** layer and module may access `core:domain`.
- 
----
- 
-## Convention Plugins (`:build-logic`)
- 
-Define a convention plugin for every non-trivial Gradle config:
- 
+## Convention Plugins (`build-logic`)
+
+**NEVER configure KMP/Android manually.** IDs prefixed `de.tabmates.convention.` — registrations in `build-logic/convention/build.gradle.kts`:
+
 | Plugin | Purpose |
 |---|---|
-| `android-application` | App module config (applicationId, versionCode, etc.) |
-| `android-library` | Base Android library config |
-| `android-feature` | Android library + Compose + Koin + shared feature deps bundled |
-| `domain-module` | Pure Kotlin/KMP module, no Android deps |
-| `compose` | Compose compiler + BOM |
-| `koin` | Koin dependency block |
-| `ktor` | Ktor client + serialization |
-| `room` | Room + KSP config |
-| `kotlinx-serialization` | KotlinX Serialization plugin + dep |
- 
-Use **version catalogs** (`libs.versions.toml`) for all dependency and version management. No hardcoded versions in build files.
- 
----
- 
+| `kmp.library` | standard KMP library (domain/data) |
+| `cmp.library` | CMP library with Compose deps |
+| `cmp.feature` | feature presentation module (VM, Lifecycle, core presentation bundled) |
+| `cmp.application` | `:composeApp` |
+| `cmp.resources` | Compose Resources generation |
+| `android.application` / `android.application.compose` | `:androidApp` |
+| `room` | Room + KSP |
+| `koin` | Koin Annotations + KSP compiler |
+| `ktlint` | ktlint checks |
+| `buildkonfig` | `BuildKonfig` constants |
+
+All versions via `gradle/libs.versions.toml` — no hardcoded versions.
+
+## Source-Set Hierarchy (`build-logic` `HierarchyTemplate.kt`)
+
+```
+common ─ mobile (android + ios) │ web (wasmJs) │ native (ios + macos, apple) │ desktop (jvm)
+```
+Ktor engines: `okhttp` (android), `darwin` (native), `js` (web), `apache5` (desktop). Prefer commonMain interfaces + platform impls via DI over expect/actual.
+
+## Dependency Injection (Koin Annotations + KSP — no DSL)
+
+Do NOT write `module { }` / `singleOf` / `viewModelOf`. Pattern:
+
+```kotlin
+// features/<name>/<layer>/.../di/<Feature><Layer>Module.kt
+@Module
+@Configuration
+@ComponentScan("de.tabmates.features.authentication.data")
+class AuthenticationDataModule
+```
+
+- Bindings: `@Single` on impls (`@Single(binds = [AuthService::class])` when needed), `@KoinViewModel` on ViewModels, `@Single(createdAtStart = true)` for eager singletons.
+- Platform-specific: `expect class PlatformCoreDataModule()` in commonMain, `actual` per source set (`core/data/src/*Main/.../di/`).
+- Assembly: `@KoinApplication class TabMatesKoinApp` (`composeApp/.../di/AppModule.kt`), started in `App()` with `KoinApplication(configuration = koinConfiguration<TabMatesKoinApp>())`. The Koin compiler plugin auto-aggregates all `@Configuration` modules — no manual `modules(...)` list.
+- In Root composables: `koinViewModel()`.
+
 ## Key Libraries
- 
+
 | Concern | Library |
 |---|---|
-| DI | Koin |
+| DI | Koin Annotations (KSP) |
 | Networking | Ktor Client |
-| Local DB | Room |
-| Preferences | DataStore |
-| Navigation | Compose Navigation (type-safe) |
-| Serialization | KotlinX Serialization (Ktor + Nav routes) |
-| Image loading | Coil |
+| DB | Room (KMP) |
+| Navigation | Navigation 3 (`NavKey`/`NavDisplay`) |
+| Serialization | KotlinX Serialization |
+| Strings/images | Compose Resources (`Res.string.*`) |
 | Logging | Kermit |
-| Async | Coroutines + Flow |
-| Background tasks | WorkManager |
-| Secrets | `local.properties` + `BuildConfig` (Android); `BuildKonfig` (KMP) |
-| Testing | JUnit5, Turbine, AssertK, `kotlinx-coroutines-test` |
-| UI testing | `ComposeTestRule` |
- 
----
- 
-## Checklist: Adding a New Feature Module
- 
-- [ ] Create `:feature:<name>:domain`, `:feature:<name>:data`, `:feature:<name>:presentation` modules
-- [ ] Apply appropriate convention plugins to each module (`domain-module`, `android-library`/`android-feature`)
-- [ ] Verify no cross-feature dependencies are introduced
-- [ ] If logic is shared across 2+ features, extract to the appropriate `core` submodule
+| Testing | kotlin-test + Turbine + fakes |
+| Secrets | `local.properties` → `BuildKonfig` |
+
+## Checklist: New Feature Module
+
+- [ ] Create `:features:<name>:domain|data|presentation` (+ `database`/`testing` if needed); add each to `settings.gradle.kts`
+- [ ] Apply convention plugins (`kmp.library` for domain/data, `cmp.feature` for presentation, `koin` where DI needed)
+- [ ] Add `@Module @Configuration @ComponentScan` class per layer (auto-aggregated by the Koin compiler)
+- [ ] Register feature graph + `SerializersModule` in `composeApp/App.kt` (see android-navigation skill)
+- [ ] No cross-feature dependencies; shared logic → `core:*`
