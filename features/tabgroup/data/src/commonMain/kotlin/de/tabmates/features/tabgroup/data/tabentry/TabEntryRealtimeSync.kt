@@ -69,6 +69,7 @@ class TabEntryRealtimeSync(
     private suspend fun handleUpsert(payload: String) {
         val dto = json.decodeFromString(TabEntryDto.serializer(), payload)
         val entry = dto.toDomain()
+        logger.debug(TAG, "WS echo received id=${entry.tabEntryId}")
         // Optimistic local splits have client-generated ids; server returns its own ids on echo,
         // so the entry + canonical split set must be applied atomically to avoid orphaned rows.
         val splits =
