@@ -74,6 +74,7 @@ class TabEntryOutbox(
         entryDate: LocalDate,
         splits: List<NewExpenseSplit>,
     ) {
+        logger.debug(TAG, "Outbox enqueue create id=$clientRequestId")
         val payload =
             NewTabEntryWsPayload.Expense(
                 id = clientRequestId,
@@ -232,7 +233,13 @@ class TabEntryOutbox(
 
     private suspend fun drain() {
         // No connection → nothing to attempt. Drain will re-run on next CONNECTED edge.
-        if (webSocketConnector.connectionState.value != ConnectionState.CONNECTED) return
+        if (webSocketConnector.connectionState.value != ConnectionState.CONNECTED) {
+            logger.debug(
+                TAG,
+                "Outbox drain skipped: not connected (state=${webSocketConnector.connectionState.value})",
+            )
+            return
+        }
 
         mutex.withLock {
             val pending = database.pendingOutboxDao.getAll()
@@ -244,6 +251,10 @@ class TabEntryOutbox(
                 }
                 when (val result = dispatch(item)) {
                     is DispatchResult.Success -> {
+                        logger.debug(
+                            TAG,
+                            "Outbox dispatched id=${item.id} (sent, awaiting echo); deleting row",
+                        )
                         database.pendingOutboxDao.deleteById(item.id)
                         sessionAttempts.remove(item.id)
                     }
