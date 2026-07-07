@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -62,6 +63,7 @@ fun EditUsernameRoot(
             state = viewModel.usernameState,
             title = stringResource(Res.string.edit_username_label),
             singleLine = true,
+            capitalization = KeyboardCapitalization.Words,
             modifier = Modifier.fillMaxWidth(),
         )
     }

@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -90,6 +91,7 @@ private fun RegisterGuestScreen(
             isError = usernameError != null,
             supportingText = usernameError?.asString(),
             singleLine = true,
+            capitalization = KeyboardCapitalization.Words,
         )
         VerticalSpacer(16.dp)
         TabMatesButton(

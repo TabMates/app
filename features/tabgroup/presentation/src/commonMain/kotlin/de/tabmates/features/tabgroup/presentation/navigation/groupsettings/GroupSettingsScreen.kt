@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
@@ -136,11 +137,13 @@ private fun GroupSettingsScreen(
             state = state.nameTextState,
             title = stringResource(Res.string.group_settings_name_label),
             singleLine = true,
+            capitalization = KeyboardCapitalization.Words,
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         TabMatesTextField(
             state = state.descriptionTextState,
             title = stringResource(Res.string.group_settings_description_label),
+            capitalization = KeyboardCapitalization.Words,
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         CurrencyRow(

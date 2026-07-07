@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
@@ -110,6 +111,7 @@ fun AddPlaceholderDialog(
                 state = textState,
                 title = nameLabel,
                 singleLine = true,
+                capitalization = KeyboardCapitalization.Words,
                 modifier = Modifier.fillMaxWidth(),
             )
         },

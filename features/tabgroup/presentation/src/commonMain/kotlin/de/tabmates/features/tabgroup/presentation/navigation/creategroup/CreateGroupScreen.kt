@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -183,6 +184,7 @@ private fun CreateGroupScreen(
             title = stringResource(Res.string.create_group_name_label),
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
             singleLine = true,
+            capitalization = KeyboardCapitalization.Words,
         )
         VerticalSpacer(12.dp)
         TabMatesTextField(
@@ -190,6 +192,7 @@ private fun CreateGroupScreen(
             title = stringResource(Res.string.create_group_description_placeholder),
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
             singleLine = true,
+            capitalization = KeyboardCapitalization.Words,
         )
         VerticalSpacer(12.dp)
         CurrencyRow(

@@ -20,6 +20,7 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -132,6 +133,7 @@ private fun RegisterScreen(
             supportingText = state.usernameError?.asString().orEmpty(),
             isError = state.usernameError != null,
             singleLine = true,
+            capitalization = KeyboardCapitalization.Words,
             imeAction = ImeAction.Next,
             onFocusChanged = onUsernameFocusChanged,
             contentType = ContentType.Username,
