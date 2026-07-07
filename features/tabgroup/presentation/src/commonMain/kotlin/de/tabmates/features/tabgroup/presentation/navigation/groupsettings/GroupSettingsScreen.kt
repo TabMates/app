@@ -56,7 +56,6 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.group_sett
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_leave_dialog_message
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_leave_dialog_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_leave_group
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_left
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_name_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholder_dialog_cancel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholder_dialog_confirm
@@ -83,7 +82,6 @@ fun GroupSettingsRoot(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val savedMessage = stringResource(Res.string.group_settings_saved)
-    val leftMessage = stringResource(Res.string.group_settings_left)
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
             GroupSettingsEvent.Saved -> {
@@ -91,7 +89,6 @@ fun GroupSettingsRoot(
             }
 
             GroupSettingsEvent.Left -> {
-                snackbarHostState.showSnackbar(leftMessage)
                 onLeft()
             }
 

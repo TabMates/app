@@ -19,9 +19,14 @@ import de.tabmates.features.tabgroup.presentation.navigation.profile.EditUsernam
 import de.tabmates.features.tabgroup.presentation.navigation.profile.OssLicensesRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ProfileRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settleup.SettleUpRoot
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
+import org.jetbrains.compose.resources.stringResource
+import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_left
 
 val mainSerializersModule =
     SerializersModule {
@@ -47,6 +52,7 @@ val mainSerializersModule =
 fun EntryProviderScope<NavKey>.mainGraph(
     backStack: NavBackStack<NavKey>,
     snackbarHostState: SnackbarHostState,
+    appScope: CoroutineScope,
 ) {
     entry<Home> {
         HomeRoot(
@@ -77,6 +83,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
     }
 
     entry<GroupDetail> { route ->
+        val leftMessage = stringResource(Res.string.group_settings_left)
         GroupDetailRoot(
             groupId = route.groupId,
             snackbarHostState = snackbarHostState,
@@ -85,6 +92,13 @@ fun EntryProviderScope<NavKey>.mainGraph(
             onSettleUpClick = { backStack.add(SettleUp(route.groupId)) },
             onExpenseClick = { expenseId ->
                 backStack.add(ExpenseDetail(expenseId = expenseId, groupId = route.groupId))
+            },
+            onLeaveGroup = {
+                backStack.removeAll {
+                    (it is GroupDetail && it.groupId == route.groupId) ||
+                        (it is GroupSettings && it.groupId == route.groupId)
+                }
+                appScope.launch { snackbarHostState.showSnackbar(leftMessage) }
             },
         )
     }
@@ -176,10 +190,12 @@ fun EntryProviderScope<NavKey>.mainGraph(
     }
 
     entry<GroupSettings> { route ->
+        val leftMessage = stringResource(Res.string.group_settings_left)
         GroupSettingsRoot(
             groupId = route.groupId,
             onLeft = {
                 backStack.removeAll { it is GroupSettings || (it is GroupDetail && it.groupId == route.groupId) }
+                appScope.launch { snackbarHostState.showSnackbar(leftMessage) }
             },
             snackbarHostState = snackbarHostState,
         )
