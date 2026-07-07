@@ -23,6 +23,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -179,6 +180,7 @@ fun App() {
 
             val topLevelTabs = remember { listOf(Home, Activity, Group, Profile) }
             val snackbarHostState = remember { SnackbarHostState() }
+            val appScope = rememberCoroutineScope()
 
             if (currentKey is LoggedIn) {
                 val topBarActions = remember { TopBarActionsController() }
@@ -256,6 +258,7 @@ fun App() {
                                     mainGraph(
                                         backStack = backStack,
                                         snackbarHostState = snackbarHostState,
+                                        appScope = appScope,
                                     )
                                 },
                             )

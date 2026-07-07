@@ -116,6 +116,7 @@ internal fun GroupDetailPane(
     onAddExpenseClick: () -> Unit = {},
     onSettleUpClick: () -> Unit = {},
     onExpenseClick: (String) -> Unit = {},
+    onLeaveGroup: () -> Unit = {},
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -206,7 +207,7 @@ internal fun GroupDetailPane(
             DetailTab.SETTINGS -> {
                 GroupSettingsRoot(
                     groupId = item.id,
-                    onLeft = {},
+                    onLeft = onLeaveGroup,
                     snackbarHostState = snackbarHostState,
                 )
             }
