@@ -89,6 +89,25 @@ BASE_URL_HTTP=https://your-backend.example.com
 BASE_URL_WS=wss://your-backend.example.com
 ```
 
+Optional per-target overrides let every target run against a local backend at the same time.
+The Android emulator reaches the host via `10.0.2.2`, and the browser must stay same-origin
+(the backend has no CORS config), so `composeApp/webpack.config.d/proxy.js` forwards `/api`
+and `/ws` from the dev server to the backend. iOS simulator and desktop use the defaults above
+(`http://localhost:8080` locally) directly:
+
+```properties
+BASE_URL_HTTP_ANDROID=http://10.0.2.2:8080
+BASE_URL_WS_ANDROID=ws://10.0.2.2:8080/ws
+BASE_URL_HTTP_WEB=http://localhost:8081
+BASE_URL_WS_WEB=ws://localhost:8081/ws
+```
+
+The proxy target follows the active `BASE_URL_HTTP`, so switching it (e.g. to
+`https://dev.tabmates.de`) points the web dev build at that environment too — keep
+`BASE_URL_HTTP_WEB` on the dev server and restart `wasmJsBrowserDevelopmentRun`. The web app
+must always go through the proxy; the backend serves no CORS headers, so the browser cannot
+call it cross-origin directly.
+
 Push notifications additionally need Firebase config — see [`features/notifications/README.md`](features/notifications/README.md). A dummy `androidApp/google-services.json` is committed so the project builds out of the box; replace it with a real one for working push.
 
 ### Run
@@ -100,11 +119,71 @@ Push notifications additionally need Firebase config — see [`features/notifica
 # Desktop (JVM), hot-reload enabled
 ./gradlew :composeApp:hotRunDesktop
 
-# Web (WasmJS) — dev server
+# Web (WasmJS) — dev server on http://localhost:8081 (8080 is the backend dev server)
 ./gradlew :composeApp:wasmJsBrowserDevelopmentRun
 ```
 
 iOS: open `iosApp/iosApp.xcodeproj` in Xcode and run, or use the KMP/AndroidStudio run configuration.
+
+### Web hosting requirements
+
+The web app stores its Room database in the browser's Origin Private File System, which
+requires a cross-origin-isolated context. Whatever serves the production web build must send
+these headers on **every** response (the dev server already does, see
+`composeApp/webpack.config.d/headers.js`):
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+Without them `crossOriginIsolated` is false, the SQLite worker cannot initialize OPFS, and the
+app runs without local persistence. HTTPS is also required (secure context). The Firebase
+scripts loaded from gstatic.com are compatible with these headers (verified: they are served
+with `Cross-Origin-Resource-Policy: cross-origin`, so `require-corp` is fine — if a future
+gstatic change drops that header, switch the production COEP to `credentialless` or self-host
+the scripts); any *new* cross-origin `<script>`/`<img>`/font added to `index.html` must likewise
+send CORP or be loaded with CORS, or the browser will block it under COEP.
+
+#### Content-Security-Policy
+
+The web session/tokens live in `localStorage` (KSafe), which any script on the origin can read,
+so a CSP is the main defense against token exfiltration via XSS. Serve it as an **HTTP header**
+from the production host (not a `<meta>` tag) because `connect-src` must name the deployment's
+API/WS origin, which is environment-specific. Baseline:
+
+```
+default-src 'self';
+script-src 'self' 'wasm-unsafe-eval' https://www.gstatic.com;   # wasm-unsafe-eval is REQUIRED for Compose/WasmJS
+worker-src 'self' blob:;                                        # the SQLite web worker
+connect-src 'self' https://<api-host> wss://<api-host>;         # this environment's API http + ws origins
+img-src 'self' data:;
+style-src 'self' 'unsafe-inline';
+frame-ancestors 'none';
+```
+
+Omitting `wasm-unsafe-eval` prevents the WasmJS bundle from loading at all; omitting the API
+origin from `connect-src` breaks every API/websocket call. Verify no CSP violations appear in
+the console after deploying.
+
+#### CORS, websocket origin & the API key in production
+
+The hosted web app calls the backend **cross-origin**, so its origin must be listed in **both**
+server settings: `TABMATES_CORS_ALLOWED_ORIGINS` (HTTP) and — because the websocket handshake
+carries the page origin — the websocket allowed-origin list (production reuses
+`TABMATES_CORS_ALLOWED_ORIGINS` for this). Missing either one fails silently: HTTP is blocked by
+CORS, or the `wss` upgrade is rejected 403.
+
+Local dev never exercises this — it goes same-origin through the webpack proxy — so **smoke-test
+from a real cross-origin build before launch**: serve the web app from an origin different from
+the API and confirm the preflight `OPTIONS` returns the `Access-Control-Allow-Origin` header, an
+authenticated request succeeds, and the `wss` `/ws/group` upgrade connects. The production web
+build must set `BASE_URL_HTTP_WEB` / `BASE_URL_WS_WEB` to the real API origin (there is no proxy
+in production).
+
+The `API_KEY` is compiled into the JS bundle, so on web it is **public** — treat it as a client
+identifier, not a secret. Real authorization is the JWT; the api-key only shields the public
+auth/register endpoints, so no endpoint may rely on it alone.
 
 ### Build & test
 

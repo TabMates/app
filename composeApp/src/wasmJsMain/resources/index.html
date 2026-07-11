@@ -15,6 +15,10 @@
                           repeatCount="indefinite"/>
     </circle>
 </svg>
+<!-- Cross-origin scripts: OK under COEP require-corp only because gstatic sends
+     Cross-Origin-Resource-Policy: cross-origin, and must be allow-listed in script-src if a
+     Content-Security-Policy is served. Any new cross-origin resource needs the same. See the
+     "Web hosting requirements" section in README.md before adding one. -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 <script src="firebase-init.js"></script>
