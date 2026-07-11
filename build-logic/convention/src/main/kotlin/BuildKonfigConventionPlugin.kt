@@ -30,6 +30,8 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                             "or in local.properties.",
                     )
 
+            fun optionalProperty(key: String): String? = System.getenv(key) ?: localProperties.getProperty(key)
+
             // App version exposed cross-platform for the in-app update check.
             val appVersion: String =
                 System.getenv("APP_VERSION")
@@ -49,6 +51,27 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                 targetConfigs {
                     create("debug") {
                         buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "true")
+                    }
+                    // Optional per-target base URLs so all targets can run against a local
+                    // backend at the same time: the Android emulator reaches the host via
+                    // 10.0.2.2, the browser must go same-origin through the dev server proxy
+                    // (the backend has no CORS config), and iOS simulator/desktop use the
+                    // BASE_URL_HTTP/BASE_URL_WS defaults directly.
+                    create("android") {
+                        optionalProperty("BASE_URL_HTTP_ANDROID")?.let {
+                            buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", it)
+                        }
+                        optionalProperty("BASE_URL_WS_ANDROID")?.let {
+                            buildConfigField(FieldSpec.Type.STRING, "BASE_URL_WS", it)
+                        }
+                    }
+                    create("wasmJs") {
+                        optionalProperty("BASE_URL_HTTP_WEB")?.let {
+                            buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", it)
+                        }
+                        optionalProperty("BASE_URL_WS_WEB")?.let {
+                            buildConfigField(FieldSpec.Type.STRING, "BASE_URL_WS", it)
+                        }
                     }
                 }
             }
