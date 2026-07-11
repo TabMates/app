@@ -120,8 +120,8 @@
     <string name="groups_detail_you_owe">You owe</string>
     <string name="groups_detail_total_spent">Total spent</string>
     <string name="groups_detail_across_people">across %1$d people</string>
-    <string name="groups_detail_owes_you">owes you</string>
-    <string name="groups_detail_you_owe_them">you owe</string>
+    <string name="groups_detail_gets_back">gets back</string>
+    <string name="groups_detail_owes">owes</string>
     <string name="groups_detail_empty_expenses">No expenses yet</string>
     <string name="groups_detail_paid_by_you">You paid</string>
     <string name="groups_detail_paid_by">%1$s paid</string>
@@ -236,13 +236,25 @@
 
     <string name="settle_up_title">Settle up</string>
     <string name="settle_up_action">Settle up</string>
-    <string name="settle_up_subtitle">Smart payments that clear your share with the fewest transfers.</string>
+    <string name="settle_up_subtitle">Smart payments that clear the group's debts with the fewest transfers.</string>
     <string name="settle_up_pay_to">Pay %1$s</string>
     <string name="settle_up_record_action">Settle</string>
     <string name="settle_up_recorded">Recorded payment to %1$s</string>
-    <string name="settle_up_all_settled_title">You're all settled up</string>
-    <string name="settle_up_all_settled_caption">You don't owe anyone in this group.</string>
+    <string name="settle_up_all_settled_title">All settled up</string>
+    <string name="settle_up_all_settled_caption">No one owes anything in this group.</string>
     <string name="settle_up_default_title">Settlement</string>
+    <string name="settle_up_your_payments_header">Your payments</string>
+    <string name="settle_up_other_members_header">Other members</string>
+    <string name="settle_up_owes">%1$s owes %2$s</string>
+    <string name="settle_up_amount_dialog_title">Record payment</string>
+    <string name="settle_up_amount_dialog_subtitle">%1$s pays %2$s</string>
+    <string name="settle_up_amount_label">Amount</string>
+    <string name="settle_up_amount_dialog_confirm">Record</string>
+    <string name="settle_up_amount_dialog_cancel">Cancel</string>
+    <string name="settle_up_amount_error_required">Enter an amount</string>
+    <string name="settle_up_amount_error_too_high">Can't be more than %1$s</string>
+    <string name="settle_up_amount_error_invalid">That payment can't be recorded anymore. Check the updated balances.</string>
+    <string name="settle_up_recorded_other">Recorded %1$s's payment to %2$s</string>
 
     <string name="profile_title">Profile</string>
     <string name="profile_settings_title">Settings</string>

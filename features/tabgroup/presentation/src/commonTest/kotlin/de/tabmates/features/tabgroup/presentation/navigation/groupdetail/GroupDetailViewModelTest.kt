@@ -20,9 +20,11 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupDetailViewModelTest {
@@ -103,6 +105,72 @@ class GroupDetailViewModelTest {
             assertEquals(150.0, item.totalSpent)
             // user-1 paid 100 + 50 = 150, owed share 40 + 50 = 90 → owed 60
             assertEquals(GroupBalance.Owed(60.0), item.balance)
+        }
+
+    @Test
+    fun memberNetBalancesCoverDebtsBetweenOtherMembers() =
+        runTest(testDispatcher) {
+            // Current user is user-1; the only debt is user-3 → user-2.
+            val groupRepo =
+                FakeGroupRepository(
+                    initialGroups =
+                        listOf(
+                            Fixtures.group(
+                                id = "g1",
+                                participants =
+                                    setOf(
+                                        Fixtures.participant("user-1", "Alice"),
+                                        Fixtures.participant("user-2", "Bob"),
+                                        Fixtures.participant("user-3", "Cara"),
+                                    ),
+                            ),
+                        ),
+                )
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit(
+                groupId = "g1",
+                entries =
+                    listOf(
+                        Fixtures.expense(
+                            id = "e1",
+                            groupId = "g1",
+                            amount = 20.0,
+                            paidByUserId = "user-2",
+                            splits =
+                                listOf(
+                                    Fixtures.split(participantId = "user-2", resolvedAmount = 10.0),
+                                    Fixtures.split(participantId = "user-3", resolvedAmount = 10.0),
+                                ),
+                        ),
+                    ),
+            )
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    groupRepository = groupRepo,
+                    tabEntryRepository = tabEntryRepo,
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            // The current user is uninvolved, but the group still has open debts.
+            assertEquals(0.0, state.memberNetBalances["user-1"])
+            assertEquals(10.0, state.memberNetBalances["user-2"])
+            assertEquals(-10.0, state.memberNetBalances["user-3"])
+            assertTrue(state.hasOutstandingDebts)
+        }
+
+    @Test
+    fun settledGroupHasNoOutstandingDebts() =
+        runTest(testDispatcher) {
+            val groupRepo =
+                FakeGroupRepository(initialGroups = listOf(Fixtures.group(id = "g1")))
+            val viewModel = createViewModel(groupId = "g1", groupRepository = groupRepo)
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.state.value.hasOutstandingDebts)
         }
 
     @Test

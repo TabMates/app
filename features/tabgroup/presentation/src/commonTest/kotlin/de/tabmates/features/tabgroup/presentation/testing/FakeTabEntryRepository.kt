@@ -7,6 +7,7 @@ import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
 import de.tabmates.features.tabgroup.domain.tabentry.NewExpenseSplit
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -18,6 +19,12 @@ class FakeTabEntryRepository(
 ) : TabEntryRepository {
     private val flowByGroupId: MutableMap<String, MutableStateFlow<List<TabEntry>>> =
         initialEntries.mapValues { MutableStateFlow(it.value) }.toMutableMap()
+
+    /** When set, [createSettlement] fails with this error instead of inserting. */
+    var settlementError: DataError.Remote? = null
+
+    /** When set, [createSettlement] suspends until the deferred completes (for in-flight tests). */
+    var settlementGate: CompletableDeferred<Unit>? = null
 
     fun emit(
         groupId: String,
@@ -137,6 +144,8 @@ class FakeTabEntryRepository(
         receivedByUserId: String,
         entryDate: LocalDate,
     ): Result<TabEntry.Settlement, DataError.Remote> {
+        settlementGate?.await()
+        settlementError?.let { return Result.Failure(it) }
         val id = "fake-${flowByGroupId.values.sumOf { it.value.size } + 1}"
         val settlement =
             TabEntry.Settlement(

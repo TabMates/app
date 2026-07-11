@@ -66,6 +66,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.group_sett
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_across_people
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_add_expense
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_empty_expenses
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_gets_back
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_copied
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_copy
@@ -73,7 +74,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_rotate_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_share
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_share_cd
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_owes_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_owes
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_owner_badge
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_paid_by
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_paid_by_you
@@ -85,11 +86,11 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_settings
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_total_spent
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_you_owe
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_you_owe_them
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_youre_owed
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_member_count_singular
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_members_count
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_status_settled
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_content_copy
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_link
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
@@ -109,6 +110,8 @@ internal fun GroupDetailPane(
     members: List<GroupParticipant>,
     expenses: List<TabEntry.Expense>,
     perPersonBalances: Map<String, Double>,
+    memberNetBalances: Map<String, Double>,
+    hasOutstandingDebts: Boolean,
     currencyByCode: Map<String, Currency>,
     ratesByCurrency: Map<String, Double>,
     onRotateInvite: () -> Unit,
@@ -186,7 +189,9 @@ internal fun GroupDetailPane(
                 BalancesTab(
                     item = item,
                     members = members,
-                    perPersonBalances = perPersonBalances,
+                    currentUserId = currentUserId,
+                    memberNetBalances = memberNetBalances,
+                    hasOutstandingDebts = hasOutstandingDebts,
                     onSettleUpClick = onSettleUpClick,
                 )
             }
@@ -452,10 +457,11 @@ private fun ExpenseIcon() {
 private fun BalancesTab(
     item: GroupOverviewItem,
     members: List<GroupParticipant>,
-    perPersonBalances: Map<String, Double>,
+    currentUserId: String,
+    memberNetBalances: Map<String, Double>,
+    hasOutstandingDebts: Boolean,
     onSettleUpClick: () -> Unit,
 ) {
-    val owesSomeone = perPersonBalances.values.any { it < 0 }
     Column(
         modifier =
             Modifier
@@ -465,7 +471,7 @@ private fun BalancesTab(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BalanceHero(item = item)
-        if (owesSomeone) {
+        if (hasOutstandingDebts) {
             Button(
                 onClick = onSettleUpClick,
                 modifier = Modifier.fillMaxWidth(),
@@ -473,17 +479,18 @@ private fun BalancesTab(
                 Text(stringResource(Res.string.settle_up_action))
             }
         }
-        if (perPersonBalances.isEmpty()) {
+        val otherMembers = members.filter { it.userId != currentUserId }
+        if (!hasOutstandingDebts && otherMembers.isEmpty()) {
             EmptyTabHint(text = stringResource(Res.string.groups_status_settled))
         } else {
-            members
-                .filter { it.userId in perPersonBalances.keys }
+            otherMembers
+                .sortedBy { memberNetBalances[it.userId] ?: 0.0 }
                 .forEach { participant ->
-                    val net = perPersonBalances[participant.userId] ?: 0.0
                     PerPersonRow(
                         participant = participant,
-                        net = net,
+                        balance = GroupBalance.fromNet(memberNetBalances[participant.userId] ?: 0.0),
                         item = item,
+                        onClick = onSettleUpClick,
                     )
                 }
         }
@@ -558,25 +565,30 @@ private data class HeroPalette(
 @Composable
 private fun PerPersonRow(
     participant: GroupParticipant,
-    net: Double,
+    balance: GroupBalance,
     item: GroupOverviewItem,
+    onClick: () -> Unit,
 ) {
-    val isPositive = net >= 0
-    val (verb, sign, color) =
-        if (isPositive) {
-            Triple(
-                stringResource(Res.string.groups_detail_owes_you),
-                "+",
-                MaterialTheme.colorScheme.extended.positive,
-            )
-        } else {
-            Triple(
-                stringResource(Res.string.groups_detail_you_owe_them),
-                "−",
-                MaterialTheme.colorScheme.extended.negative,
-            )
+    val verb =
+        when (balance) {
+            is GroupBalance.Owed -> stringResource(Res.string.groups_detail_gets_back)
+            is GroupBalance.Owe -> stringResource(Res.string.groups_detail_owes)
+            GroupBalance.Settled -> stringResource(Res.string.groups_status_settled)
+        }
+    val amountText =
+        when (balance) {
+            is GroupBalance.Owed -> "+${formatAmount(item, balance.amount)}"
+            is GroupBalance.Owe -> "−${formatAmount(item, balance.amount)}"
+            GroupBalance.Settled -> null
+        }
+    val amountColor =
+        when (balance) {
+            is GroupBalance.Owed -> MaterialTheme.colorScheme.extended.positive
+            is GroupBalance.Owe -> MaterialTheme.colorScheme.extended.negative
+            GroupBalance.Settled -> MaterialTheme.colorScheme.onSurfaceVariant
         }
     Card(
+        onClick = onClick,
         shape = RoundedCornerShape(14.dp),
         colors =
             CardDefaults.cardColors(
@@ -602,11 +614,20 @@ private fun PerPersonRow(
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            Text(
-                text = "$sign${formatAmount(item, abs(net))}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = color,
+            if (amountText != null) {
+                Text(
+                    text = amountText,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = amountColor,
+                )
+            }
+            HorizontalSpacer(8.dp)
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_chevron_right),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
             )
         }
     }
