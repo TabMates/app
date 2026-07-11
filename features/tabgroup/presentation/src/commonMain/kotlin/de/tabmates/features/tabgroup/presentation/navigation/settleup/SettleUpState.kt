@@ -10,8 +10,11 @@ data class SettleUpState(
     val payments: List<SettleUpPayment> = emptyList(),
 )
 
-/** One suggested outgoing payment from the current user, after smart debt simplification. */
+/** One suggested payment between two group members, after smart debt simplification. */
 data class SettleUpPayment(
+    val fromUserId: String,
+    val fromName: String,
+    val fromInitials: String,
     val toUserId: String,
     val toName: String,
     val toInitials: String,

@@ -55,6 +55,8 @@ fun GroupDetailRoot(
             members = state.members,
             expenses = state.expenses,
             perPersonBalances = state.perPersonBalances,
+            memberNetBalances = state.memberNetBalances,
+            hasOutstandingDebts = state.hasOutstandingDebts,
             currencyByCode = state.currencyByCode,
             ratesByCurrency = state.ratesByCurrency,
             onRotateInvite = viewModel::rotateInvite,

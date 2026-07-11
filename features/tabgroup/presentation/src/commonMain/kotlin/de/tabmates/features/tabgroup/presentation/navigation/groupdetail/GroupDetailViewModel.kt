@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.features.tabgroup.domain.balance.PerPersonBalanceCalculator
+import de.tabmates.features.tabgroup.domain.balance.UserBalanceCalculator
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.Currency
+import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
@@ -35,6 +37,10 @@ data class GroupDetailState(
     val members: List<GroupParticipant> = emptyList(),
     val expenses: List<TabEntry.Expense> = emptyList(),
     val perPersonBalances: Map<String, Double> = emptyMap(),
+    /** Each member's overall net in the group (positive = gets money back, negative = owes). */
+    val memberNetBalances: Map<String, Double> = emptyMap(),
+    /** True while any member's overall net is not settled — gates the Settle Up entry point. */
+    val hasOutstandingDebts: Boolean = false,
     val currencyByCode: Map<String, Currency> = emptyMap(),
     val ratesByCurrency: Map<String, Double> = emptyMap(),
 )
@@ -66,6 +72,11 @@ class GroupDetailViewModel(
         ) { group, currencies, entries, rates ->
             val visibleEntries = entries.filterNot { it.isDeleted }
             val conversion = group?.let { CurrencyConversion.from(it.defaultCurrencyCode, rates) }
+            val memberNetBalances =
+                group?.participants.orEmpty().associate { participant ->
+                    participant.userId to
+                        UserBalanceCalculator.computeNet(visibleEntries, participant.userId, conversion)
+                }
             val item =
                 group?.let {
                     val currency = currencies.firstOrNull { c -> c.code == it.defaultCurrencyCode }
@@ -84,6 +95,9 @@ class GroupDetailViewModel(
                         ),
                 perPersonBalances =
                     PerPersonBalanceCalculator.computeByParticipant(visibleEntries, currentUserId, conversion),
+                memberNetBalances = memberNetBalances,
+                hasOutstandingDebts =
+                    memberNetBalances.values.any { GroupBalance.fromNet(it) != GroupBalance.Settled },
                 currencyByCode = currencies.associateBy { it.code },
                 ratesByCurrency = rates.associate { it.currencyCode to it.rateToBase },
             )
