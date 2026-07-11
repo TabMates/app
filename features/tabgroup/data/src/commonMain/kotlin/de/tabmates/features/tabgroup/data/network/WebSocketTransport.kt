@@ -6,6 +6,7 @@ import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.header
+import io.ktor.http.URLBuilder
 import io.ktor.websocket.WebSocketSession
 import kotlinx.coroutines.ensureActive
 import kotlinx.serialization.json.Json
@@ -24,7 +25,14 @@ class WebSocketTransport(
 ) {
     suspend fun openSession(accessToken: String): WebSocketSession =
         httpClient.webSocketSession(
-            urlString = "${BuildKonfig.BASE_URL_WS}/group",
+            urlString =
+                URLBuilder("${BuildKonfig.BASE_URL_WS}/group")
+                    .apply {
+                        // Browser WebSockets cannot carry custom headers, so the credentials
+                        // also travel as query parameters; the server accepts either.
+                        parameters.append("access_token", accessToken)
+                        parameters.append("api_key", BuildKonfig.API_KEY)
+                    }.buildString(),
         ) {
             header("Authorization", "Bearer $accessToken")
             header("x-api-key", BuildKonfig.API_KEY)

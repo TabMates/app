@@ -2,7 +2,7 @@ package de.tabmates.features.tabgroup.database.migrations
 
 import androidx.room3.migration.AutoMigrationSpec
 import androidx.sqlite.SQLiteConnection
-import androidx.sqlite.execSQL
+import androidx.sqlite.async.executeSQL
 
 /**
  * Backfills the new `entryDate` column (added in DB v4) from the existing `createdAt`
@@ -12,7 +12,7 @@ import androidx.sqlite.execSQL
  */
 class TabEntryEntryDateBackfill : AutoMigrationSpec {
     override suspend fun onPostMigrate(connection: SQLiteConnection) {
-        connection.execSQL(
+        connection.executeSQL(
             "UPDATE TabEntryEntity SET entryDate = date(createdAt / 1000, 'unixepoch')",
         )
     }

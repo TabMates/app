@@ -1,5 +1,6 @@
 package de.tabmates.core.data.di
 
+import de.tabmates.core.data.security.WebKSafeInstances
 import eu.anifantakis.lib.ksafe.KSafe
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.js.Js
@@ -14,14 +15,13 @@ actual class PlatformCoreDataModule {
     @Single
     fun provideHttpClientEngine(): HttpClientEngine = Js.create()
 
+    // The instances pre-warmed by awaitSecureStorageReady() at startup — see
+    // WebSecureStorage.kt for why web must not construct KSafe lazily here.
     @Single
     @Named("prefs")
-    fun providePrefsKSafe(): KSafe =
-        KSafe(
-            fileName = "prefs",
-        )
+    fun providePrefsKSafe(): KSafe = WebKSafeInstances.prefs
 
     @Single
     @Named("vault")
-    fun provideVaultKSafe(): KSafe = KSafe(fileName = "vault")
+    fun provideVaultKSafe(): KSafe = WebKSafeInstances.vault
 }

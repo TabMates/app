@@ -1,5 +1,6 @@
 // Service worker for background web push (Firebase Cloud Messaging).
-// Must be served from the web root as /firebase-messaging-sw.js.
+// Registered by firebase-init.js under the ./firebase-cloud-messaging-push-scope scope;
+// the root scope belongs to coi-serviceworker.js (COOP/COEP injection).
 // TODO: keep firebaseConfig in sync with firebase-init.js.
 
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js");

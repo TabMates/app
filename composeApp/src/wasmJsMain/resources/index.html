@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Must be the first element: on hosts that cannot set response headers (e.g. GitHub Pages)
+         it registers a service worker that injects the COOP/COEP headers required for OPFS,
+         reloading once on first visit. No-ops when the server already sends them (local dev).
+         See the "Web hosting requirements" section in README.md. -->
+    <script src="coi-serviceworker.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TabMates</title>
@@ -15,6 +20,10 @@
                           repeatCount="indefinite"/>
     </circle>
 </svg>
+<!-- Cross-origin scripts: OK under COEP require-corp only because gstatic sends
+     Cross-Origin-Resource-Policy: cross-origin, and must be allow-listed in script-src if a
+     Content-Security-Policy is served. Any new cross-origin resource needs the same. See the
+     "Web hosting requirements" section in README.md before adding one. -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 <script src="firebase-init.js"></script>
