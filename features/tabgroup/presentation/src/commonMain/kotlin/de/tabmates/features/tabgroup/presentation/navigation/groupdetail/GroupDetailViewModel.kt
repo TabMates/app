@@ -35,7 +35,8 @@ data class GroupDetailState(
     val item: GroupOverviewItem? = null,
     val currentUserId: String = "",
     val members: List<GroupParticipant> = emptyList(),
-    val expenses: List<TabEntry.Expense> = emptyList(),
+    /** Entries shown in the transaction list: expenses and settlements, newest first. */
+    val entries: List<TabEntry> = emptyList(),
     val perPersonBalances: Map<String, Double> = emptyMap(),
     /** Each member's overall net in the group (positive = gets money back, negative = owes). */
     val memberNetBalances: Map<String, Double> = emptyMap(),
@@ -86,11 +87,11 @@ class GroupDetailViewModel(
                 item = item,
                 currentUserId = currentUserId,
                 members = group?.participants?.toList().orEmpty(),
-                expenses =
+                entries =
                     visibleEntries
-                        .filterIsInstance<TabEntry.Expense>()
+                        .filter { it is TabEntry.Expense || it is TabEntry.Settlement }
                         .sortedWith(
-                            compareByDescending<TabEntry.Expense> { it.entryDate }
+                            compareByDescending<TabEntry> { it.entryDate }
                                 .thenByDescending { it.createdAt },
                         ),
                 perPersonBalances =

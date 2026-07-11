@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -105,6 +106,48 @@ class GroupDetailViewModelTest {
             assertEquals(150.0, item.totalSpent)
             // user-1 paid 100 + 50 = 150, owed share 40 + 50 = 90 → owed 60
             assertEquals(GroupBalance.Owed(60.0), item.balance)
+        }
+
+    @Test
+    fun entriesIncludeSettlementsSortedWithExpenses() =
+        runTest(testDispatcher) {
+            val groupRepo =
+                FakeGroupRepository(initialGroups = listOf(Fixtures.group(id = "g1")))
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit(
+                groupId = "g1",
+                entries =
+                    listOf(
+                        Fixtures.settlement(
+                            id = "s1",
+                            groupId = "g1",
+                            amount = 25.0,
+                            entryDate = LocalDate.parse("2024-01-01"),
+                        ),
+                        Fixtures.expense(
+                            id = "e1",
+                            groupId = "g1",
+                            amount = 100.0,
+                            splits = listOf(Fixtures.split(participantId = "user-1", resolvedAmount = 100.0)),
+                            entryDate = LocalDate.parse("2024-01-02"),
+                        ),
+                    ),
+            )
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    groupRepository = groupRepo,
+                    tabEntryRepository = tabEntryRepo,
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            assertEquals(listOf("e1", "s1"), state.entries.map { it.tabEntryId })
+            // Settlements never count toward the expense stat cards.
+            val item = state.item!!
+            assertEquals(1, item.expenseCount)
+            assertEquals(100.0, item.totalSpent)
         }
 
     @Test

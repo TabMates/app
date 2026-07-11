@@ -484,7 +484,7 @@ private fun ConvertedAmountHint(state: AddExpenseState) {
 }
 
 @Composable
-private fun FieldRow(
+internal fun FieldRow(
     label: String,
     value: String,
     onClick: () -> Unit,
@@ -640,7 +640,7 @@ private fun PaidByRow(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DatePickerSheet(
+internal fun DatePickerSheet(
     initialEpochMillis: Long,
     onDismiss: () -> Unit,
     onConfirm: (Long) -> Unit,

@@ -181,6 +181,45 @@ class TabEntryOutbox(
         applicationScope.launch { drain() }
     }
 
+    suspend fun enqueueUpdateSettlement(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        receivedByUserId: String,
+        entryDate: LocalDate,
+    ) {
+        val payload =
+            NewTabEntryWsPayload.Settlement(
+                id = tabEntryId,
+                groupId = groupId,
+                paidByUserId = paidByUserId,
+                title = title,
+                description = description,
+                amount = amount,
+                currency = currencyCode,
+                entryDate = entryDate,
+                receivedByUserId = receivedByUserId,
+            )
+        val envelope =
+            WebSocketMessageDto(
+                type = WsMessageType.UPDATED_TAB_ENTRY,
+                payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
+            )
+        database.pendingOutboxDao.upsert(
+            PendingOutboxEntity(
+                id = "$UPDATE_ID_PREFIX$tabEntryId",
+                type = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
+                payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
+                createdAt = Clock.System.now().toEpochMilliseconds(),
+            ),
+        )
+        applicationScope.launch { drain() }
+    }
+
     /**
      * Cancels a not-yet-dispatched create for [tabEntryId] (and any queued update for it).
      * Returns `true` when a pending **create** row was present, meaning the entry never reached

@@ -25,6 +25,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expens
 import tabmatesapp.features.tabgroup.presentation.generated.resources.change_password_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_expense_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_settlement_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_username_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_title
@@ -121,6 +122,24 @@ data class ExpenseDetail(
 ) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.DynamicString("")
     override val topBarAction: TopBarAction get() = TopBarAction.Back
+}
+
+@Serializable
+data class SettlementDetail(
+    val settlementId: String,
+    val groupId: String,
+) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.DynamicString("")
+    override val topBarAction: TopBarAction get() = TopBarAction.Back
+}
+
+@Serializable
+data class EditSettlement(
+    val groupId: String,
+    val settlementId: String,
+) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.edit_settlement_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
 
 @Serializable
