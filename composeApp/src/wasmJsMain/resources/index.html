@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Must be the first element: on hosts that cannot set response headers (e.g. GitHub Pages)
+         it registers a service worker that injects the COOP/COEP headers required for OPFS,
+         reloading once on first visit. No-ops when the server already sends them (local dev).
+         See the "Web hosting requirements" section in README.md. -->
+    <script src="coi-serviceworker.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TabMates</title>

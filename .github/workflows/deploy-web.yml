@@ -1,0 +1,93 @@
+name: Deploy Web
+
+# Publishes the wasmJs production bundle to GitHub Pages (custom domain, see CNAME step).
+# The backend it talks to is baked in at build time from the *_WEB secrets; COOP/COEP headers
+# come from coi-serviceworker.js at runtime because Pages cannot set response headers, and the
+# CSP is injected below as a <meta> tag for the same reason. See "Web hosting requirements"
+# in README.md.
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  # BuildKonfig requires all three defaults even though the *_WEB overrides
+  # replace the URLs in the web bundle.
+  API_KEY: ${{ secrets.API_KEY }}
+  BASE_URL_HTTP: ${{ secrets.BASE_URL_HTTP }}
+  BASE_URL_WS: ${{ secrets.BASE_URL_WS }}
+  BASE_URL_HTTP_WEB: ${{ secrets.BASE_URL_HTTP_WEB }}
+  BASE_URL_WS_WEB: ${{ secrets.BASE_URL_WS_WEB }}
+  WEB_DOMAIN: app.tabmates.de
+
+jobs:
+  build:
+    name: Build Web Distribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Build wasmJs production distribution
+        run: ./gradlew :composeApp:wasmJsBrowserDistribution --stacktrace
+
+      - name: Inject Content-Security-Policy meta tag
+        # Pages cannot serve a CSP header; a <meta> tag covers everything except
+        # frame-ancestors. Injected only into the deployed bundle so the dev server
+        # (different WS scheme, same-origin proxy) is unaffected. connect-src needs
+        # origins, not URLs with paths, hence the sed strip.
+        run: |
+          DIST=composeApp/build/dist/wasmJs/productionExecutable
+          HTTP_ORIGIN=$(echo "$BASE_URL_HTTP_WEB" | sed -E 's#^([a-z]+://[^/]+).*#\1#')
+          WS_ORIGIN=$(echo "$BASE_URL_WS_WEB" | sed -E 's#^([a-z]+://[^/]+).*#\1#')
+          CSP="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://www.gstatic.com; worker-src 'self' blob:; connect-src 'self' $HTTP_ORIGIN $WS_ORIGIN; img-src 'self' data:; style-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'"
+          sed -i "s#<head>#<head><meta http-equiv=\"Content-Security-Policy\" content=\"$CSP\">#" "$DIST/index.html"
+          grep -q "Content-Security-Policy" "$DIST/index.html"
+
+      - name: Add CNAME for custom domain
+        # Actions-sourced Pages deployments replace the whole artifact, so the CNAME
+        # file must be part of every deploy or GitHub drops the domain association.
+        run: echo "$WEB_DOMAIN" > composeApp/build/dist/wasmJs/productionExecutable/CNAME
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: composeApp/build/dist/wasmJs/productionExecutable
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

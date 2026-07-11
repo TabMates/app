@@ -34,8 +34,10 @@ window.tabmatesFcmInit = function () {
 
 // Requests notification permission and returns the FCM web token (or null). Returns a Promise.
 window.tabmatesFcmRequestToken = function () {
+  // Explicit non-root scope: the root scope belongs to coi-serviceworker.js (COOP/COEP
+  // injection); registering here without a scope would silently replace it.
   return navigator.serviceWorker
-    .register("firebase-messaging-sw.js")
+    .register("firebase-messaging-sw.js", { scope: "./firebase-cloud-messaging-push-scope" })
     .then(function (registration) {
       return Notification.requestPermission().then(function (permission) {
         if (permission !== "granted") return null;
