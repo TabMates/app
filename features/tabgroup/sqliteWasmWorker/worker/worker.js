@@ -76,32 +76,34 @@ function stepRequest(id, requestData) {
     }
 }
 
+// 'close' is a one-way command: the driver does not await a response, and any
+// unsolicited error message would fail all in-flight requests. Log instead.
 function closeRequest(id, requestData) {
-    if (requestData.statementId) {
+    if (requestData.statementId != null) {
         const statement = statements.get(requestData.statementId);
         if (!statement) {
-            postMessage({'id': id, error: "Invalid statement ID: " + requestData.statementId});
+            console.error("Invalid statement ID: " + requestData.statementId);
             return;
         }
         try {
             statement.finalize();
             statements.delete(requestData.statementId);
         } catch (error) {
-            postMessage({'id': id, error: error.message});
+            console.error(error.message);
         }
     }
 
-    if (requestData.databaseId) {
+    if (requestData.databaseId != null) {
         const database = databases.get(requestData.databaseId);
         if (!database) {
-            postMessage({'id': id, error: "Invalid database ID: " + requestData.databaseId});
+            console.error("Invalid database ID: " + requestData.databaseId);
             return;
         }
         try {
             database.close();
             databases.delete(requestData.databaseId);
         } catch (error) {
-            postMessage({'id': id, error: error.message});
+            console.error(error.message);
         }
     }
 }
@@ -116,14 +118,13 @@ const commandMap = {
 
 function handleMessage(e) {
     const requestMsg = e.data;
-    console.log("handleMessage: " + JSON.stringify(requestMsg));
-    if (!Object.hasOwn(requestMsg, 'data') && requestMsg.data == null) {
+    if (!Object.hasOwn(requestMsg, 'data') || requestMsg.data == null) {
         postMessage(
             {'id': requestMsg.id, 'error': "Invalid request, missing 'data'."}
         );
         return;
     }
-    if (!Object.hasOwn(requestMsg.data, 'cmd') && requestMsg.data.cmd == null) {
+    if (!Object.hasOwn(requestMsg.data, 'cmd') || requestMsg.data.cmd == null) {
         postMessage(
             {'id': requestMsg.id, 'error': "Invalid request, missing 'cmd'."}
         );
