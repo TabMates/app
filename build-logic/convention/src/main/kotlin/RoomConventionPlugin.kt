@@ -20,6 +20,7 @@ class RoomConventionPlugin : Plugin<Project> {
 
             dependencies {
                 "commonMainImplementation"(libs.findLibrary("androidx-room3-runtime").get())
+                "commonMainImplementation"(libs.findLibrary("androidx-sqlite-async").get())
 
                 "kspAndroid"(libs.findLibrary("androidx-room3-compiler").get())
                 "kspIosSimulatorArm64"(libs.findLibrary("androidx-room3-compiler").get())
