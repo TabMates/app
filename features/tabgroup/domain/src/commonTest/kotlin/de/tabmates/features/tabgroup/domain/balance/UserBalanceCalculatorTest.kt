@@ -62,6 +62,32 @@ class UserBalanceCalculatorTest {
         )
     }
 
+    @Test
+    fun entryNetForPayerWithOwnSplit() {
+        // a pays 100, split equally with b -> a gets back 50.
+        val entry = equalExpense(paidBy = "a", amount = 100.0, members = listOf("a", "b"), currency = "EUR")
+        assertEquals(50.0, UserBalanceCalculator.entryNet(entry, "a"), absoluteTolerance = 1e-9)
+    }
+
+    @Test
+    fun entryNetForNonPayerWithSplit() {
+        val entry = equalExpense(paidBy = "a", amount = 100.0, members = listOf("a", "b"), currency = "EUR")
+        assertEquals(-50.0, UserBalanceCalculator.entryNet(entry, "b"), absoluteTolerance = 1e-9)
+    }
+
+    @Test
+    fun entryNetForUninvolvedUserIsZero() {
+        val entry = equalExpense(paidBy = "a", amount = 100.0, members = listOf("a", "b"), currency = "EUR")
+        assertEquals(0.0, UserBalanceCalculator.entryNet(entry, "c"), absoluteTolerance = 1e-9)
+    }
+
+    @Test
+    fun entryNetForPayerWithoutOwnSplitIsFullAmount() {
+        // c pays 100 for a and b, keeps no share -> c gets back the full amount.
+        val entry = equalExpense(paidBy = "c", amount = 100.0, members = listOf("a", "b"), currency = "EUR")
+        assertEquals(100.0, UserBalanceCalculator.entryNet(entry, "c"), absoluteTolerance = 1e-9)
+    }
+
     private fun equalExpense(
         paidBy: String,
         amount: Double,
