@@ -4,6 +4,7 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import de.tabmates.core.domain.preferences.DeviceCurrencyProvider
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.core.presentation.util.UiText
@@ -37,6 +38,7 @@ import kotlin.time.Duration.Companion.seconds
 class CreateGroupViewModel(
     private val groupRepository: GroupRepository,
     private val currencyRepository: CurrencyRepository,
+    private val deviceCurrencyProvider: DeviceCurrencyProvider,
 ) : ViewModel() {
     private val _state = MutableStateFlow(CreateGroupState())
     private var hasLoadedInitialData = false
@@ -58,7 +60,18 @@ class CreateGroupViewModel(
         currencyRepository
             .getCurrencies()
             .onEach { currencies ->
-                _state.update { it.copy(supportedCurrencies = currencies) }
+                _state.update { current ->
+                    val deviceCode = deviceCurrencyProvider.currentCurrencyCode()
+                    val prefill =
+                        deviceCode.takeIf {
+                            current.defaultCurrencyCode.isBlank() &&
+                                currencies.any { currency -> currency.code == deviceCode }
+                        }
+                    current.copy(
+                        supportedCurrencies = currencies,
+                        defaultCurrencyCode = prefill ?: current.defaultCurrencyCode,
+                    )
+                }
             }.launchIn(viewModelScope)
         viewModelScope.launch {
             currencyRepository
