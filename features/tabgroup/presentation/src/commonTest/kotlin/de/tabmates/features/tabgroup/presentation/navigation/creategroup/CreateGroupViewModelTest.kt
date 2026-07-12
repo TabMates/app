@@ -69,6 +69,60 @@ class CreateGroupViewModelTest {
         }
 
     @Test
+    fun defaultCurrencyIsPrefilledFromDeviceWhenSupported() =
+        runTest(testDispatcher) {
+            val viewModel =
+                createViewModel(
+                    deviceCurrencyProvider = FakeDeviceCurrencyProvider(code = "USD"),
+                )
+
+            assertEquals("USD", viewModel.state.value.defaultCurrencyCode)
+        }
+
+    @Test
+    fun defaultCurrencyIsNotPrefilledWhenDeviceCurrencyUnsupported() =
+        runTest(testDispatcher) {
+            val viewModel =
+                createViewModel(
+                    deviceCurrencyProvider = FakeDeviceCurrencyProvider(code = "XYZ"),
+                )
+
+            assertEquals("", viewModel.state.value.defaultCurrencyCode)
+        }
+
+    @Test
+    fun manualCurrencySelectionIsNotOverwrittenByDevicePrefill() =
+        runTest(testDispatcher) {
+            val currencyRepository = FakeCurrencyRepository()
+            val viewModel =
+                createViewModel(
+                    currencyRepository = currencyRepository,
+                    deviceCurrencyProvider = FakeDeviceCurrencyProvider(code = "USD"),
+                )
+
+            viewModel.onCurrencySelected("GBP")
+            currencyRepository.emit(FakeCurrencyRepository.DEFAULT_CURRENCIES.reversed())
+            advanceUntilIdle()
+
+            assertEquals("GBP", viewModel.state.value.defaultCurrencyCode)
+        }
+
+    @Test
+    fun devicePrefillIsNotAddedToRecentCurrencyCodes() =
+        runTest(testDispatcher) {
+            val viewModel =
+                createViewModel(
+                    deviceCurrencyProvider = FakeDeviceCurrencyProvider(code = "USD"),
+                )
+
+            assertEquals("USD", viewModel.state.value.defaultCurrencyCode)
+            assertTrue(
+                viewModel.state.value.recentCurrencyCodes
+                    .isEmpty(),
+            )
+        }
+
+    @Test
     fun onCreateClickPassesTitleDescriptionAndCurrency() =
         runTest(testDispatcher) {
             val groupRepository = FakeGroupRepository()
@@ -436,11 +490,13 @@ class CreateGroupViewModelTest {
     private fun TestScope.createViewModel(
         groupRepository: FakeGroupRepository = FakeGroupRepository(),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
+        deviceCurrencyProvider: FakeDeviceCurrencyProvider = FakeDeviceCurrencyProvider(),
     ): CreateGroupViewModel {
         val viewModel =
             CreateGroupViewModel(
                 groupRepository = groupRepository,
                 currencyRepository = currencyRepository,
+                deviceCurrencyProvider = deviceCurrencyProvider,
             )
         activateState(viewModel)
         return viewModel
