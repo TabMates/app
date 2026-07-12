@@ -46,6 +46,7 @@ import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.theme.extended
 import de.tabmates.core.presentation.share.LinkShareResult
 import de.tabmates.core.presentation.share.rememberLinkSharer
+import de.tabmates.features.tabgroup.domain.balance.UserBalanceCalculator
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
@@ -81,6 +82,10 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_paid_by_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_badge
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_not_claimed
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_row_no_balance
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_row_not_involved
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_row_you_borrowed
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_row_you_lent
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_paid_other
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_paid_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_you_paid
@@ -414,11 +419,12 @@ private fun ExpenseRow(
                     SyncStatusChip()
                 }
             }
+            val amountLabel = entryAmountLabel(expense, item, currency, ratesByCurrency)
             val subtitle =
                 if (expense.paidByUserId == currentUserId) {
-                    stringResource(Res.string.groups_detail_paid_by_you)
+                    stringResource(Res.string.groups_detail_paid_by_you, amountLabel)
                 } else {
-                    stringResource(Res.string.groups_detail_paid_by, payerName.ifEmpty { "?" })
+                    stringResource(Res.string.groups_detail_paid_by, payerName.ifEmpty { "?" }, amountLabel)
                 }
             Text(
                 text = subtitle,
@@ -427,11 +433,56 @@ private fun ExpenseRow(
             )
         }
         HorizontalSpacer(8.dp)
-        Text(
-            text = entryAmountLabel(expense, item, currency, ratesByCurrency),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
+        Column(horizontalAlignment = Alignment.End) {
+            val involved =
+                expense.paidByUserId == currentUserId ||
+                    expense.splits.any { it.participantId == currentUserId }
+            val net = UserBalanceCalculator.entryNet(expense, currentUserId)
+            when {
+                !involved -> {
+                    Text(
+                        text = stringResource(Res.string.groups_detail_row_not_involved),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                net == 0.0 -> {
+                    Text(
+                        text = stringResource(Res.string.groups_detail_row_no_balance),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                else -> {
+                    val netColor =
+                        if (net > 0) {
+                            MaterialTheme.colorScheme.extended.positive
+                        } else {
+                            MaterialTheme.colorScheme.extended.negative
+                        }
+                    Text(
+                        text =
+                            stringResource(
+                                if (net > 0) {
+                                    Res.string.groups_detail_row_you_lent
+                                } else {
+                                    Res.string.groups_detail_row_you_borrowed
+                                },
+                            ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = netColor,
+                    )
+                    Text(
+                        text = shareAmountLabel(abs(net), expense, item, currency, ratesByCurrency),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = netColor,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -558,6 +609,31 @@ private fun entryAmountLabel(
             rates = ratesByCurrency,
         ) ?: return original
     return "${formatAmount(item, converted)} ≈ ($original)"
+}
+
+/**
+ * Like [entryAmountLabel] but for an arbitrary share [amount] in the entry's currency: converted
+ * into the group's base currency when they differ (no bracketed original), falling back to the
+ * entry's own currency when no rate is available.
+ */
+private fun shareAmountLabel(
+    amount: Double,
+    entry: TabEntry,
+    item: GroupOverviewItem,
+    currency: Currency?,
+    ratesByCurrency: Map<String, Double>,
+): String {
+    val originalSymbol = currency?.nativeSymbol ?: entry.currencyCode
+    val originalDecimals = currency?.decimalDigits ?: item.currencyDecimalDigits
+    if (entry.currencyCode == item.currencyCode) return formatAmount(amount, originalSymbol, originalDecimals)
+    val converted =
+        CurrencyConverter.convert(
+            amount = amount,
+            from = entry.currencyCode,
+            to = item.currencyCode,
+            rates = ratesByCurrency,
+        ) ?: return formatAmount(amount, originalSymbol, originalDecimals)
+    return formatAmount(item, converted)
 }
 
 @Composable
