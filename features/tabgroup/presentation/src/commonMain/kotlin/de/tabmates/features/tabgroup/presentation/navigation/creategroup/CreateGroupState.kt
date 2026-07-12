@@ -2,6 +2,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.creategroup
 
 import androidx.compose.foundation.text.input.TextFieldState
 import de.tabmates.features.tabgroup.domain.models.Currency
+import kotlin.time.Instant
 
 data class CreateGroupState(
     val nameTextState: TextFieldState = TextFieldState(),
@@ -32,6 +33,10 @@ data class CurrencyPickerUiState(
     val results: List<Currency> = emptyList(),
     val showSections: Boolean = true,
     val selectedCode: String = "",
+    // Base currency for per-row exchange rates; empty when unknown (create-group flow) — hides all rate UI.
+    val baseCurrencyCode: String = "",
+    val ratesByCurrency: Map<String, Double> = emptyMap(),
+    val ratesLastUpdatedAt: Instant? = null,
 )
 
 data class IconPickerUiState(

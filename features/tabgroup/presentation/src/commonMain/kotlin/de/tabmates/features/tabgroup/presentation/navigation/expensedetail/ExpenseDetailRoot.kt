@@ -37,10 +37,13 @@ import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
 import de.tabmates.features.tabgroup.presentation.components.SectionLabel
 import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
+import de.tabmates.features.tabgroup.presentation.components.formatRate
+import de.tabmates.features.tabgroup.presentation.components.rateUpdatedLabel
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatExpenseDate
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.rememberMonthAbbreviations
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
@@ -50,6 +53,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_unavailable
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_dialog_cancel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_dialog_confirm
@@ -142,14 +147,18 @@ private fun ExpenseDetailScreen(
             title = expense.title,
             amountFormatted =
                 formatMoney(
-                    state.groupCurrencySymbol,
+                    state.expenseCurrencySymbol,
                     expense.amount,
-                    state.groupCurrencyDecimalDigits,
+                    state.expenseCurrencyDecimalDigits,
                 ),
             dateText = formatExpenseDate(expense.entryDate, monthLabels),
             description = expense.description,
             isPendingSync = expense.isPendingSync,
         )
+        if (state.isForeignCurrency) {
+            VerticalSpacer(4.dp)
+            ForeignCurrencyDetails(state = state)
+        }
         VerticalSpacer(24.dp)
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             SectionLabel(
@@ -168,7 +177,7 @@ private fun ExpenseDetailScreen(
                 initials = payer?.initials ?: "?",
                 primary = payerName,
                 trailingValue =
-                    formatMoney(state.groupCurrencySymbol, expense.amount, state.groupCurrencyDecimalDigits),
+                    formatMoney(state.expenseCurrencySymbol, expense.amount, state.expenseCurrencyDecimalDigits),
                 isRemoved = payer == null,
             )
             VerticalSpacer(20.dp)
@@ -249,6 +258,63 @@ private fun HeroSection(
 }
 
 @Composable
+private fun ForeignCurrencyDetails(state: ExpenseDetailState) {
+    val expense = state.expense ?: return
+    val converted =
+        CurrencyConverter.convert(
+            amount = expense.amount,
+            from = state.expenseCurrencyCode,
+            to = state.groupCurrencyCode,
+            rates = state.ratesByCurrency,
+        )
+    val rateText =
+        CurrencyConverter
+            .convert(
+                amount = 1.0,
+                from = state.expenseCurrencyCode,
+                to = state.groupCurrencyCode,
+                rates = state.ratesByCurrency,
+            )?.let { formatRate(it) }
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        if (converted != null && rateText != null) {
+            Text(
+                text = "≈ ${formatMoney(state.groupCurrencySymbol, converted, state.groupCurrencyDecimalDigits)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text =
+                    stringResource(
+                        Res.string.currency_rate_label,
+                        state.expenseCurrencyCode,
+                        rateText,
+                        state.groupCurrencyCode,
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            state.ratesLastUpdatedAt?.let { lastUpdatedAt ->
+                Text(
+                    text = rateUpdatedLabel(lastUpdatedAt),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            Text(
+                text = stringResource(Res.string.currency_rate_unavailable),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 private fun DetailRow(
     initials: String,
     primary: String,
@@ -298,7 +364,7 @@ private fun SplitRow(
         initials = member?.initials ?: "?",
         primary = name,
         trailingValue =
-            formatMoney(state.groupCurrencySymbol, split.resolvedAmount, state.groupCurrencyDecimalDigits),
+            formatMoney(state.expenseCurrencySymbol, split.resolvedAmount, state.expenseCurrencyDecimalDigits),
         isRemoved = member == null,
     )
 }

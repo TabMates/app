@@ -100,6 +100,9 @@ class AddExpenseViewModel(
                 recentCodes = listOfNotNull(current.baseCurrencyCode.ifEmpty { null }),
                 selectedCode = current.expenseCurrencyCode,
                 query = query,
+                baseCurrencyCode = current.baseCurrencyCode,
+                ratesByCurrency = current.ratesByCurrency,
+                ratesLastUpdatedAt = current.ratesLastUpdatedAt,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -165,6 +168,7 @@ class AddExpenseViewModel(
                     baseCurrencyDecimalDigits = baseCurrency?.decimalDigits ?: 2,
                     supportedCurrencies = currencies,
                     ratesByCurrency = rates.associate { it.currencyCode to it.rateToBase },
+                    ratesLastUpdatedAt = rates.maxOfOrNull { rate -> rate.lastUpdatedAt },
                     entryDate = existing?.entryDate ?: it.entryDate,
                     splitType = existing?.splits?.firstOrNull()?.splitType ?: it.splitType,
                     titleTextState = TextFieldState(existing?.title.orEmpty()),

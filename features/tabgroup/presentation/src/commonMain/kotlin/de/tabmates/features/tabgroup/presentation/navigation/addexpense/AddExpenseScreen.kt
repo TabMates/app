@@ -72,6 +72,8 @@ import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
+import de.tabmates.features.tabgroup.presentation.components.formatRate
+import de.tabmates.features.tabgroup.presentation.components.rateUpdatedLabel
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerBottomSheet
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
@@ -104,6 +106,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expens
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_percentage
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_shares
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_title_placeholder
+import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_calendar
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_pie_chart
@@ -446,7 +449,39 @@ private fun CurrencySelector(
         if (state.isForeignCurrency) {
             VerticalSpacer(4.dp)
             ConvertedAmountHint(state = state)
+            ExchangeRateHint(state = state)
         }
+    }
+}
+
+@Composable
+private fun ExchangeRateHint(state: AddExpenseState) {
+    val rate =
+        CurrencyConverter.convert(
+            amount = 1.0,
+            from = state.expenseCurrencyCode,
+            to = state.baseCurrencyCode,
+            rates = state.ratesByCurrency,
+        )
+    // Missing-rate messaging is owned by ConvertedAmountHint; render nothing here.
+    val rateText = rate?.let { formatRate(it) } ?: return
+    Text(
+        text =
+            stringResource(
+                Res.string.currency_rate_label,
+                state.expenseCurrencyCode,
+                rateText,
+                state.baseCurrencyCode,
+            ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    state.ratesLastUpdatedAt?.let { lastUpdatedAt ->
+        Text(
+            text = rateUpdatedLabel(lastUpdatedAt),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

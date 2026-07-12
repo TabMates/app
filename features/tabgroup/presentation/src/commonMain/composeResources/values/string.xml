@@ -93,6 +93,13 @@
     <string name="create_group_error_description_too_long">Description is too long (max 1000 characters)</string>
     <string name="create_group_error_currency_required">Pick a default currency</string>
 
+    <string name="currency_rate_label">1 %1$s = %2$s %3$s</string>
+    <string name="currency_rate_unavailable">Exchange rate unavailable</string>
+    <string name="currency_rate_updated_now">Updated just now</string>
+    <string name="currency_rate_updated_minutes">Updated %1$d min ago</string>
+    <string name="currency_rate_updated_hours">Updated %1$d h ago</string>
+    <string name="currency_rate_updated_days">Updated %1$d d ago</string>
+
     <string name="groups_title">Groups</string>
     <string name="groups_filter_all">All</string>
     <string name="groups_filter_active">Active</string>
