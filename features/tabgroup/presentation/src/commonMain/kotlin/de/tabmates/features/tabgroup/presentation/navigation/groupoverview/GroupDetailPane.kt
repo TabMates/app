@@ -58,6 +58,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.buildIn
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.shortInviteUrl
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -80,6 +81,9 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_paid_by_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_badge
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_not_claimed
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_paid_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_paid_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_you_paid
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_balances
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_expenses
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_members
@@ -98,6 +102,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_refresh
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_restaurant
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_send
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_settings
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_swap_horiz
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_action
 import kotlin.math.abs
 
@@ -108,7 +113,7 @@ internal fun GroupDetailPane(
     item: GroupOverviewItem,
     currentUserId: String,
     members: List<GroupParticipant>,
-    expenses: List<TabEntry.Expense>,
+    entries: List<TabEntry>,
     perPersonBalances: Map<String, Double>,
     memberNetBalances: Map<String, Double>,
     hasOutstandingDebts: Boolean,
@@ -119,6 +124,7 @@ internal fun GroupDetailPane(
     onAddExpenseClick: () -> Unit = {},
     onSettleUpClick: () -> Unit = {},
     onExpenseClick: (String) -> Unit = {},
+    onSettlementClick: (String) -> Unit = {},
     onLeaveGroup: () -> Unit = {},
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
@@ -178,10 +184,11 @@ internal fun GroupDetailPane(
                     item = item,
                     currentUserId = currentUserId,
                     members = members,
-                    expenses = expenses,
+                    entries = entries,
                     currencyByCode = currencyByCode,
                     ratesByCurrency = ratesByCurrency,
                     onExpenseClick = onExpenseClick,
+                    onSettlementClick = onSettlementClick,
                 )
             }
 
@@ -320,10 +327,11 @@ private fun ExpensesTab(
     item: GroupOverviewItem,
     currentUserId: String,
     members: List<GroupParticipant>,
-    expenses: List<TabEntry.Expense>,
+    entries: List<TabEntry>,
     currencyByCode: Map<String, Currency>,
     ratesByCurrency: Map<String, Double>,
     onExpenseClick: (String) -> Unit,
+    onSettlementClick: (String) -> Unit,
 ) {
     val payerById = remember(members) { members.associateBy { it.userId } }
     Column(
@@ -335,19 +343,38 @@ private fun ExpensesTab(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         StatCardsRow(item = item)
-        if (expenses.isEmpty()) {
+        if (entries.isEmpty()) {
             EmptyTabHint(text = stringResource(Res.string.groups_detail_empty_expenses))
         } else {
-            expenses.forEach { expense ->
-                ExpenseRow(
-                    expense = expense,
-                    currentUserId = currentUserId,
-                    payerName = payerById[expense.paidByUserId]?.username.orEmpty(),
-                    item = item,
-                    currency = currencyByCode[expense.currencyCode],
-                    ratesByCurrency = ratesByCurrency,
-                    onClick = { onExpenseClick(expense.tabEntryId) },
-                )
+            entries.forEach { entry ->
+                when (entry) {
+                    is TabEntry.Expense -> {
+                        ExpenseRow(
+                            expense = entry,
+                            currentUserId = currentUserId,
+                            payerName = payerById[entry.paidByUserId]?.username.orEmpty(),
+                            item = item,
+                            currency = currencyByCode[entry.currencyCode],
+                            ratesByCurrency = ratesByCurrency,
+                            onClick = { onExpenseClick(entry.tabEntryId) },
+                        )
+                    }
+
+                    is TabEntry.Settlement -> {
+                        SettlementRow(
+                            settlement = entry,
+                            currentUserId = currentUserId,
+                            payerName = payerById[entry.paidByUserId]?.username.orEmpty(),
+                            recipientName = payerById[entry.receivedByUserId]?.username.orEmpty(),
+                            item = item,
+                            currency = currencyByCode[entry.currencyCode],
+                            ratesByCurrency = ratesByCurrency,
+                            onClick = { onSettlementClick(entry.tabEntryId) },
+                        )
+                    }
+
+                    is TabEntry.Income -> {}
+                }
             }
         }
     }
@@ -370,7 +397,7 @@ private fun ExpenseRow(
                 .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ExpenseIcon()
+        EntryIcon(Res.drawable.ic_restaurant)
         HorizontalSpacer(12.dp)
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -401,34 +428,132 @@ private fun ExpenseRow(
         }
         HorizontalSpacer(8.dp)
         Text(
-            text = expenseAmountLabel(expense, item, currency, ratesByCurrency),
+            text = entryAmountLabel(expense, item, currency, ratesByCurrency),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
         )
     }
 }
 
+@Composable
+private fun SettlementRow(
+    settlement: TabEntry.Settlement,
+    currentUserId: String,
+    payerName: String,
+    recipientName: String,
+    item: GroupOverviewItem,
+    currency: Currency?,
+    ratesByCurrency: Map<String, Double>,
+    onClick: () -> Unit,
+) {
+    val extended = MaterialTheme.colorScheme.extended
+    // Direction colors mirror the balance stat card: money in = positive, money out = negative,
+    // settlements between other members = neutral settled.
+    val subtitle: String
+    val iconContainerColor: Color
+    val iconContentColor: Color
+    val amountColor: Color
+    when (currentUserId) {
+        settlement.paidByUserId -> {
+            subtitle =
+                stringResource(
+                    Res.string.groups_detail_settlement_you_paid,
+                    recipientName.ifEmpty { "?" },
+                )
+            iconContainerColor = extended.negativeContainer
+            iconContentColor = extended.onNegativeContainer
+            amountColor = extended.negative
+        }
+
+        settlement.receivedByUserId -> {
+            subtitle =
+                stringResource(
+                    Res.string.groups_detail_settlement_paid_you,
+                    payerName.ifEmpty { "?" },
+                )
+            iconContainerColor = extended.positiveContainer
+            iconContentColor = extended.onPositiveContainer
+            amountColor = extended.positive
+        }
+
+        else -> {
+            subtitle =
+                stringResource(
+                    Res.string.groups_detail_settlement_paid_other,
+                    payerName.ifEmpty { "?" },
+                    recipientName.ifEmpty { "?" },
+                )
+            iconContainerColor = extended.settledContainer
+            iconContentColor = extended.onSettledContainer
+            amountColor = MaterialTheme.colorScheme.onSurface
+        }
+    }
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        EntryIcon(
+            icon = Res.drawable.ic_swap_horiz,
+            containerColor = iconContainerColor,
+            contentColor = iconContentColor,
+        )
+        HorizontalSpacer(12.dp)
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = settlement.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = amountColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (settlement.isPendingSync) {
+                    HorizontalSpacer(8.dp)
+                    SyncStatusChip()
+                }
+            }
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        HorizontalSpacer(8.dp)
+        Text(
+            text = entryAmountLabel(settlement, item, currency, ratesByCurrency),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = amountColor,
+        )
+    }
+}
+
 /**
- * Amount shown on an expense row. For a foreign-currency expense, the converted amount in the
+ * Amount shown on a transaction row. For a foreign-currency entry, the converted amount in the
  * group's base currency leads, followed by the original amount in brackets
- * (e.g. `€18.40 - ($20.00)`). Same-currency expenses just show the single amount, and if no rate
+ * (e.g. `€18.40 - ($20.00)`). Same-currency entries just show the single amount, and if no rate
  * is available the original amount is shown on its own.
  */
-private fun expenseAmountLabel(
-    expense: TabEntry.Expense,
+private fun entryAmountLabel(
+    entry: TabEntry,
     item: GroupOverviewItem,
     currency: Currency?,
     ratesByCurrency: Map<String, Double>,
 ): String {
-    val originalSymbol = currency?.nativeSymbol ?: expense.currencyCode
+    val originalSymbol = currency?.nativeSymbol ?: entry.currencyCode
     val originalDecimals = currency?.decimalDigits ?: item.currencyDecimalDigits
-    val original = formatAmount(expense.amount, originalSymbol, originalDecimals)
-    if (expense.currencyCode == item.currencyCode) return original
+    val original = formatAmount(entry.amount, originalSymbol, originalDecimals)
+    if (entry.currencyCode == item.currencyCode) return original
 
     val converted =
         CurrencyConverter.convert(
-            amount = expense.amount,
-            from = expense.currencyCode,
+            amount = entry.amount,
+            from = entry.currencyCode,
             to = item.currencyCode,
             rates = ratesByCurrency,
         ) ?: return original
@@ -436,18 +561,22 @@ private fun expenseAmountLabel(
 }
 
 @Composable
-private fun ExpenseIcon() {
+private fun EntryIcon(
+    icon: DrawableResource,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    contentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+) {
     Box(
         modifier =
             Modifier
                 .size(40.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp)),
+                .background(containerColor, RoundedCornerShape(10.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = vectorResource(Res.drawable.ic_restaurant),
+            imageVector = vectorResource(icon),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = contentColor,
             modifier = Modifier.size(20.dp),
         )
     }

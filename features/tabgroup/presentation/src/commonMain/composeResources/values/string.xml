@@ -125,6 +125,9 @@
     <string name="groups_detail_empty_expenses">No expenses yet</string>
     <string name="groups_detail_paid_by_you">You paid</string>
     <string name="groups_detail_paid_by">%1$s paid</string>
+    <string name="groups_detail_settlement_you_paid">You paid %1$s</string>
+    <string name="groups_detail_settlement_paid_you">%1$s paid you</string>
+    <string name="groups_detail_settlement_paid_other">%1$s paid %2$s</string>
     <string name="groups_detail_owner_badge">Owner</string>
     <string name="groups_detail_member_count_pending">%1$d members · %2$d pending</string>
     <string name="groups_detail_pending_badge">Pending</string>
@@ -233,6 +236,11 @@
     <string name="expense_detail_delete_dialog_message">This expense will be removed from the group. This cannot be undone.</string>
     <string name="expense_detail_delete_dialog_confirm">Delete</string>
     <string name="expense_detail_delete_dialog_cancel">Cancel</string>
+
+    <string name="settlement_detail_received_by_section">RECEIVED BY</string>
+    <string name="settlement_detail_delete_dialog_title">Delete settlement?</string>
+    <string name="settlement_detail_delete_dialog_message">This settlement will be removed from the group. This cannot be undone.</string>
+    <string name="edit_settlement_title">Edit settlement</string>
 
     <string name="settle_up_title">Settle up</string>
     <string name="settle_up_action">Settle up</string>

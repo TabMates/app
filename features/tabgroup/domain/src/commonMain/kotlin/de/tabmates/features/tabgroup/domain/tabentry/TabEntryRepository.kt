@@ -46,5 +46,17 @@ interface TabEntryRepository {
         entryDate: LocalDate,
     ): Result<TabEntry.Settlement, DataError.Remote>
 
+    suspend fun updateSettlement(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        receivedByUserId: String,
+        entryDate: LocalDate,
+    ): Result<TabEntry.Settlement, DataError.Remote>
+
     suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote>
 }

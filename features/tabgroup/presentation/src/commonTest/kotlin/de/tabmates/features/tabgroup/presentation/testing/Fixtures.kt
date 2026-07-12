@@ -46,6 +46,7 @@ object Fixtures {
         amount: Double = 100.0,
         paidByUserId: String = "user-1",
         splits: List<TabEntrySplit> = emptyList(),
+        entryDate: LocalDate = LocalDate.parse("1970-01-01"),
         isPendingSync: Boolean = false,
     ): TabEntry.Expense =
         TabEntry.Expense(
@@ -57,7 +58,7 @@ object Fixtures {
             currencyCode = "EUR",
             creatorId = paidByUserId,
             paidByUserId = paidByUserId,
-            entryDate = LocalDate.parse("1970-01-01"),
+            entryDate = entryDate,
             createdAt = Instant.fromEpochMilliseconds(0),
             lastModifiedAt = Instant.fromEpochMilliseconds(0),
             lastModifiedByUserId = paidByUserId,
@@ -65,6 +66,35 @@ object Fixtures {
             deletedAt = null,
             deletedByUserId = null,
             splits = splits,
+            isPendingSync = isPendingSync,
+        )
+
+    fun settlement(
+        id: String = "s1",
+        groupId: String = "g1",
+        amount: Double = 100.0,
+        paidByUserId: String = "user-1",
+        receivedByUserId: String = "user-2",
+        entryDate: LocalDate = LocalDate.parse("1970-01-01"),
+        isPendingSync: Boolean = false,
+    ): TabEntry.Settlement =
+        TabEntry.Settlement(
+            tabEntryId = id,
+            groupId = groupId,
+            title = "Settlement",
+            description = "",
+            amount = amount,
+            currencyCode = "EUR",
+            creatorId = paidByUserId,
+            paidByUserId = paidByUserId,
+            entryDate = entryDate,
+            createdAt = Instant.fromEpochMilliseconds(0),
+            lastModifiedAt = Instant.fromEpochMilliseconds(0),
+            lastModifiedByUserId = paidByUserId,
+            version = 1,
+            deletedAt = null,
+            deletedByUserId = null,
+            receivedByUserId = receivedByUserId,
             isPendingSync = isPendingSync,
         )
 

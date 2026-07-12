@@ -8,6 +8,7 @@ import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivityRoot
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.AddExpenseRoot
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CreateGroupRoot
+import de.tabmates.features.tabgroup.presentation.navigation.editsettlement.EditSettlementRoot
 import de.tabmates.features.tabgroup.presentation.navigation.expensedetail.ExpenseDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.GroupDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.GroupOverviewRoot
@@ -18,6 +19,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.profile.ChangePassw
 import de.tabmates.features.tabgroup.presentation.navigation.profile.EditUsernameRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.OssLicensesRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ProfileRoot
+import de.tabmates.features.tabgroup.presentation.navigation.settlementdetail.SettlementDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settleup.SettleUpRoot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -38,6 +40,8 @@ val mainSerializersModule =
             subclass(AddExpense::class)
             subclass(EditExpense::class)
             subclass(ExpenseDetail::class)
+            subclass(SettlementDetail::class)
+            subclass(EditSettlement::class)
             subclass(CreateGroup::class)
             subclass(GroupDetail::class)
             subclass(SettleUp::class)
@@ -92,6 +96,9 @@ fun EntryProviderScope<NavKey>.mainGraph(
             onSettleUpClick = { backStack.add(SettleUp(route.groupId)) },
             onExpenseClick = { expenseId ->
                 backStack.add(ExpenseDetail(expenseId = expenseId, groupId = route.groupId))
+            },
+            onSettlementClick = { settlementId ->
+                backStack.add(SettlementDetail(settlementId = settlementId, groupId = route.groupId))
             },
             onLeaveGroup = {
                 backStack.removeAll {
@@ -168,6 +175,29 @@ fun EntryProviderScope<NavKey>.mainGraph(
             onEdit = {
                 backStack.add(EditExpense(groupId = route.groupId, expenseId = route.expenseId))
             },
+        )
+    }
+
+    entry<SettlementDetail> { route ->
+        SettlementDetailRoot(
+            settlementId = route.settlementId,
+            groupId = route.groupId,
+            navKey = route,
+            snackbarHostState = snackbarHostState,
+            onBack = { backStack.removeLastOrNull() },
+            onEdit = {
+                backStack.add(EditSettlement(groupId = route.groupId, settlementId = route.settlementId))
+            },
+        )
+    }
+
+    entry<EditSettlement> { route ->
+        EditSettlementRoot(
+            groupId = route.groupId,
+            settlementId = route.settlementId,
+            navKey = route,
+            snackbarHostState = snackbarHostState,
+            onSaved = { backStack.removeAll { it is EditSettlement } },
         )
     }
 

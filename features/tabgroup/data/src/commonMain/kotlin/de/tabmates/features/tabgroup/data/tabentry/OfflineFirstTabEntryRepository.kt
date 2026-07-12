@@ -186,6 +186,56 @@ class OfflineFirstTabEntryRepository(
         return Result.Success(settlement)
     }
 
+    override suspend fun updateSettlement(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        receivedByUserId: String,
+        entryDate: LocalDate,
+    ): Result<TabEntry.Settlement, DataError.Remote> {
+        // Preserve server-owned fields from the existing row; the server reconciles the rest on echo.
+        val existing = database.tabEntryDao.getTabEntryById(tabEntryId)?.toDomain() as? TabEntry.Settlement
+        val now = Clock.System.now()
+        val settlement =
+            TabEntry.Settlement(
+                tabEntryId = tabEntryId,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currencyCode,
+                creatorId = existing?.creatorId ?: paidByUserId,
+                paidByUserId = paidByUserId,
+                entryDate = entryDate,
+                createdAt = existing?.createdAt ?: now,
+                lastModifiedAt = now,
+                lastModifiedByUserId = paidByUserId,
+                version = existing?.version ?: 0,
+                deletedAt = null,
+                deletedByUserId = null,
+                receivedByUserId = receivedByUserId,
+                isPendingSync = true,
+            )
+
+        database.tabEntryDao.upsertTabEntry(settlement.toEntity(pendingSync = true))
+        outbox.enqueueUpdateSettlement(
+            tabEntryId = tabEntryId,
+            groupId = groupId,
+            title = title,
+            description = description,
+            amount = amount,
+            currencyCode = currencyCode,
+            paidByUserId = paidByUserId,
+            receivedByUserId = receivedByUserId,
+            entryDate = entryDate,
+        )
+        return Result.Success(settlement)
+    }
+
     override suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote> {
         // If the entry's create never made it to the server, cancel it outright. Enqueuing a
         // remote delete here would only 404 — and could race the still-pending create's echo,

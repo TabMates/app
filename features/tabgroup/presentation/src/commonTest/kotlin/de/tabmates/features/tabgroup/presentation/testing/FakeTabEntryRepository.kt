@@ -20,7 +20,7 @@ class FakeTabEntryRepository(
     private val flowByGroupId: MutableMap<String, MutableStateFlow<List<TabEntry>>> =
         initialEntries.mapValues { MutableStateFlow(it.value) }.toMutableMap()
 
-    /** When set, [createSettlement] fails with this error instead of inserting. */
+    /** When set, [createSettlement]/[updateSettlement] fail with this error instead of writing. */
     var settlementError: DataError.Remote? = null
 
     /** When set, [createSettlement] suspends until the deferred completes (for in-flight tests). */
@@ -168,6 +168,42 @@ class FakeTabEntryRepository(
             )
         val flow = flowByGroupId.getOrPut(groupId) { MutableStateFlow(emptyList()) }
         flow.value = flow.value + settlement
+        return Result.Success(settlement)
+    }
+
+    override suspend fun updateSettlement(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        paidByUserId: String,
+        receivedByUserId: String,
+        entryDate: LocalDate,
+    ): Result<TabEntry.Settlement, DataError.Remote> {
+        settlementError?.let { return Result.Failure(it) }
+        val settlement =
+            TabEntry.Settlement(
+                tabEntryId = tabEntryId,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currencyCode,
+                creatorId = paidByUserId,
+                paidByUserId = paidByUserId,
+                entryDate = entryDate,
+                createdAt = Clock.System.now(),
+                lastModifiedAt = Clock.System.now(),
+                lastModifiedByUserId = paidByUserId,
+                version = 0,
+                deletedAt = null,
+                deletedByUserId = null,
+                receivedByUserId = receivedByUserId,
+            )
+        val flow = flowByGroupId.getOrPut(groupId) { MutableStateFlow(emptyList()) }
+        flow.value = flow.value.map { if (it.tabEntryId == tabEntryId) settlement else it }
         return Result.Success(settlement)
     }
 
