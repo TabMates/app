@@ -1,6 +1,7 @@
 package de.tabmates.features.tabgroup.presentation.navigation.addexpense
 
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import de.tabmates.features.tabgroup.domain.models.ExchangeRate
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
@@ -26,6 +27,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddExpenseViewModelTest {
@@ -183,6 +185,34 @@ class AddExpenseViewModelTest {
             assertEquals("e1", expense.tabEntryId)
             assertEquals("New title", expense.title)
             assertEquals(AddExpenseEvent.ExpenseCreated, events.last())
+        }
+
+    // endregion
+
+    // region exchange rates
+
+    @Test
+    fun ratesTimestampAndPickerRatesAreExposed() =
+        runTest(testDispatcher) {
+            val lastUpdatedAt = Instant.fromEpochMilliseconds(1_752_000_000_000)
+            val exchangeRateRepo =
+                FakeExchangeRateRepository(
+                    initialRates =
+                        listOf(
+                            ExchangeRate("USD", 1.0, "USD", lastUpdatedAt),
+                            ExchangeRate("EUR", 0.92, "USD", lastUpdatedAt),
+                        ),
+                )
+            val viewModel = createViewModel(groupId = "g1", exchangeRateRepository = exchangeRateRepo)
+            activateState(viewModel)
+            backgroundScope.launch { viewModel.currencyPickerState.collect {} }
+            advanceUntilIdle()
+
+            assertEquals(lastUpdatedAt, viewModel.state.value.ratesLastUpdatedAt)
+            val pickerState = viewModel.currencyPickerState.value
+            assertEquals("EUR", pickerState.baseCurrencyCode)
+            assertEquals(mapOf("USD" to 1.0, "EUR" to 0.92), pickerState.ratesByCurrency)
+            assertEquals(lastUpdatedAt, pickerState.ratesLastUpdatedAt)
         }
 
     // endregion

@@ -8,6 +8,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 data class AddExpenseState(
     val groupId: String = "",
@@ -25,6 +26,7 @@ data class AddExpenseState(
     val baseCurrencyDecimalDigits: Int = 2,
     val supportedCurrencies: List<Currency> = emptyList(),
     val ratesByCurrency: Map<String, Double> = emptyMap(),
+    val ratesLastUpdatedAt: Instant? = null,
     val currencyQueryState: TextFieldState = TextFieldState(),
     val isCurrencyPickerVisible: Boolean = false,
     val members: List<GroupParticipant> = emptyList(),

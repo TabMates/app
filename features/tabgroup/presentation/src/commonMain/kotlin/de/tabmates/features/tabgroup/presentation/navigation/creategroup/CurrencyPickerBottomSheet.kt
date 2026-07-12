@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,8 +35,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.presentation.components.SectionLabel
+import de.tabmates.features.tabgroup.presentation.components.formatRate
+import de.tabmates.features.tabgroup.presentation.components.rateUpdatedLabel
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
@@ -47,9 +49,11 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.create_gro
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_currency_recent_section
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_currency_search_placeholder
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_currency_selected_cd
+import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_check_circle
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_close
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_search
+import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,7 +77,7 @@ fun CurrencyPickerBottomSheet(
                     .fillMaxHeight(0.9f)
                     .imePadding(),
         ) {
-            PickerHeader()
+            PickerHeader(state = state)
             SearchField(state = queryState)
             CurrencyList(
                 state = state,
@@ -104,6 +108,8 @@ private fun CurrencyList(
                     CurrencyRow(
                         currency = currency,
                         isSelected = currency.code == state.selectedCode,
+                        baseCurrencyCode = state.baseCurrencyCode,
+                        ratesByCurrency = state.ratesByCurrency,
                         onClick = { onCurrencySelected(currency.code) },
                     )
                 }
@@ -120,6 +126,8 @@ private fun CurrencyList(
                 CurrencyRow(
                     currency = currency,
                     isSelected = currency.code == state.selectedCode,
+                    baseCurrencyCode = state.baseCurrencyCode,
+                    ratesByCurrency = state.ratesByCurrency,
                     onClick = { onCurrencySelected(currency.code) },
                 )
             }
@@ -128,6 +136,8 @@ private fun CurrencyList(
                 CurrencyRow(
                     currency = currency,
                     isSelected = currency.code == state.selectedCode,
+                    baseCurrencyCode = state.baseCurrencyCode,
+                    ratesByCurrency = state.ratesByCurrency,
                     onClick = { onCurrencySelected(currency.code) },
                 )
             }
@@ -136,20 +146,27 @@ private fun CurrencyList(
 }
 
 @Composable
-private fun PickerHeader() {
-    Row(
+private fun PickerHeader(state: CurrencyPickerUiState) {
+    Column(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = stringResource(Res.string.create_group_currency_picker_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.weight(1f),
         )
+        if (state.baseCurrencyCode.isNotEmpty()) {
+            state.ratesLastUpdatedAt?.let { lastUpdatedAt ->
+                Text(
+                    text = rateUpdatedLabel(lastUpdatedAt),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 
@@ -198,6 +215,8 @@ private fun SearchField(state: TextFieldState) {
 private fun CurrencyRow(
     currency: Currency,
     isSelected: Boolean,
+    baseCurrencyCode: String,
+    ratesByCurrency: Map<String, Double>,
     onClick: () -> Unit,
 ) {
     val background =
@@ -221,10 +240,37 @@ private fun CurrencyRow(
             )
         },
         supportingContent = {
-            Text(
-                text = currency.name,
-                style = MaterialTheme.typography.bodySmall,
-            )
+            val rateText =
+                if (baseCurrencyCode.isNotEmpty() && currency.code != baseCurrencyCode) {
+                    CurrencyConverter
+                        .convert(
+                            amount = 1.0,
+                            from = currency.code,
+                            to = baseCurrencyCode,
+                            rates = ratesByCurrency,
+                        )?.let { formatRate(it) }
+                } else {
+                    null
+                }
+            Column {
+                Text(
+                    text = currency.name,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                if (rateText != null) {
+                    Text(
+                        text =
+                            stringResource(
+                                Res.string.currency_rate_label,
+                                currency.code,
+                                rateText,
+                                baseCurrencyCode,
+                            ),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         },
         leadingContent = { CurrencyAvatar(currency = currency) },
         trailingContent =
@@ -294,6 +340,9 @@ internal fun buildCurrencyPickerState(
     recentCodes: List<String>,
     selectedCode: String,
     query: String,
+    baseCurrencyCode: String = "",
+    ratesByCurrency: Map<String, Double> = emptyMap(),
+    ratesLastUpdatedAt: Instant? = null,
 ): CurrencyPickerUiState {
     val recents = recentCodes.mapNotNull { code -> currencies.firstOrNull { it.code == code } }
     val showSections = query.isBlank()
@@ -309,5 +358,8 @@ internal fun buildCurrencyPickerState(
         results = results,
         showSections = showSections,
         selectedCode = selectedCode,
+        baseCurrencyCode = baseCurrencyCode,
+        ratesByCurrency = ratesByCurrency,
+        ratesLastUpdatedAt = ratesLastUpdatedAt,
     )
 }

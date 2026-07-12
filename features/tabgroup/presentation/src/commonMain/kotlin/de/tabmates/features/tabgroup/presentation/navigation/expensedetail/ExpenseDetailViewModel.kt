@@ -7,6 +7,7 @@ import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
+import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
@@ -32,6 +33,7 @@ class ExpenseDetailViewModel(
     private val tabEntryRepository: TabEntryRepository,
     groupRepository: GroupRepository,
     currencyRepository: CurrencyRepository,
+    exchangeRateRepository: ExchangeRateRepository,
     sessionStorage: SessionStorage,
 ) : ViewModel() {
     private val currentUserId =
@@ -47,20 +49,29 @@ class ExpenseDetailViewModel(
             tabEntryRepository.getTabEntryById(expenseId).onStart { emit(null) },
             groupRepository.getGroups().onStart { emit(emptyList()) },
             currencyRepository.getCurrencies().onStart { emit(emptyList()) },
+            exchangeRateRepository.getExchangeRates().onStart { emit(emptyList()) },
             isDeleting,
-        ) { entry, groups, currencies, deleting ->
+        ) { entry, groups, currencies, rates, deleting ->
             val group = groups.firstOrNull { it.id == groupId }
             val expense = entry as? TabEntry.Expense
-            val currencyCode = expense?.currencyCode ?: group?.defaultCurrencyCode.orEmpty()
-            val currency = currencies.firstOrNull { it.code == currencyCode }
+            val expenseCurrencyCode = expense?.currencyCode ?: group?.defaultCurrencyCode.orEmpty()
+            val expenseCurrency = currencies.firstOrNull { it.code == expenseCurrencyCode }
+            val groupCurrencyCode = group?.defaultCurrencyCode.orEmpty()
+            val groupCurrency = currencies.firstOrNull { it.code == groupCurrencyCode }
             ExpenseDetailState(
                 expenseId = expenseId,
                 isLoading = entry == null,
                 isDeleting = deleting,
                 expense = expense,
                 currentUserId = currentUserId,
-                groupCurrencySymbol = currency?.nativeSymbol ?: currencyCode,
-                groupCurrencyDecimalDigits = currency?.decimalDigits ?: 2,
+                expenseCurrencyCode = expenseCurrencyCode,
+                expenseCurrencySymbol = expenseCurrency?.nativeSymbol ?: expenseCurrencyCode,
+                expenseCurrencyDecimalDigits = expenseCurrency?.decimalDigits ?: 2,
+                groupCurrencyCode = groupCurrencyCode,
+                groupCurrencySymbol = groupCurrency?.nativeSymbol ?: groupCurrencyCode,
+                groupCurrencyDecimalDigits = groupCurrency?.decimalDigits ?: 2,
+                ratesByCurrency = rates.associate { it.currencyCode to it.rateToBase },
+                ratesLastUpdatedAt = rates.maxOfOrNull { it.lastUpdatedAt },
                 membersById =
                     group?.participants?.associateBy { it.userId }
                         ?: emptyMap(),
