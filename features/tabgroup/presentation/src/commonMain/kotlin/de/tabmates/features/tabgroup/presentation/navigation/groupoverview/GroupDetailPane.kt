@@ -96,6 +96,8 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_total_spent
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_you_owe
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_youre_owed
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_expense_count
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_expense_count_singular
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_member_count_singular
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_members_count
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_status_settled
@@ -1211,7 +1213,7 @@ private fun memberCountText(count: Int): String =
 @Composable
 private fun expenseCaption(count: Int): String =
     if (count == 1) {
-        "1 expense"
+        stringResource(Res.string.groups_expense_count_singular)
     } else {
-        "$count expenses"
+        stringResource(Res.string.groups_expense_count, count)
     }
