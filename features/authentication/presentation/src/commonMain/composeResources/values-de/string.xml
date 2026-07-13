@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <!-- Welcome Screen -->
+    <string name="welcome_title">Willkommen bei TabMates</string>
+    <string name="welcome_button_register">Registrieren</string>
+    <string name="welcome_button_guest">Als Gast fortfahren</string>
+
+    <!-- Register Screen -->
+    <string name="register_title">Konto erstellen</string>
+    <string name="register_username_hint">Benutzername</string>
+    <string name="register_email_hint">E-Mail</string>
+    <string name="register_password_hint">Passwort</string>
+    <string name="register_confirm_password_hint">Passwort bestätigen</string>
+    <string name="register_button">Konto erstellen</string>
+    <string name="register_already_have_account_prefix">Du hast bereits ein Konto? </string>
+    <string name="register_login_action">Anmelden</string>
+    <string name="register_email_invalid">Bitte gib eine gültige E-Mail-Adresse ein.</string>
+    <string name="register_password_mismatch">Die Passwörter stimmen nicht überein.</string>
+    <string name="register_password_requirements">Das Passwort muss mindestens 8 Zeichen lang sein und mindestens eine Zahl, einen Großbuchstaben und ein Sonderzeichen enthalten</string>
+    <string name="error_account_exists">Es existiert bereits ein Konto mit dieser E-Mail-Adresse</string>
+    <string name="error_username_invalid">Der Benutzername muss zwischen 3 und 20 Zeichen lang sein.</string>
+
+    <!-- Register Success Screen -->
+    <string name="account_successfully_created">TabMates-Konto erfolgreich erstellt!</string>
+    <string name="verification_email_sent_to_x">Wir haben eine Bestätigungs-E-Mail an %1$s gesendet</string>
+    <string name="resend_verification_email">Bestätigungs-E-Mail erneut senden</string>
+    <string name="resent_verification_email">Bestätigungs-E-Mail erfolgreich erneut gesendet</string>
+
+    <!-- General Strings -->
+    <string name="login">Anmelden</string>
+    <string name="close">Schließen</string>
+
+    <!-- Email Verification -->
+    <string name="verifying_account">Konto wird verifiziert …</string>
+    <string name="email_verified_successfully">E-Mail erfolgreich verifiziert!</string>
+    <string name="email_verified_failed">E-Mail-Verifizierung fehlgeschlagen</string>
+    <string name="email_verified_successfully_desc">Deine E-Mail wurde verifiziert. Du kannst dich jetzt mit deinen Zugangsdaten anmelden.</string>
+    <string name="email_verified_failed_desc">Deine E-Mail konnte nicht verifiziert werden. Möglicherweise ist der Link ungültig oder abgelaufen.</string>
+
+    <!-- Login -->
+    <string name="login_title">Willkommen zurück</string>
+    <string name="login_title_desc">Melde dich bei deinem TabMates-Konto an</string>
+    <string name="login_create_account">Du hast noch kein Konto? </string>
+    <string name="login_forgot_password">Passwort vergessen?</string>
+    <string name="login_sign_up">Konto erstellen</string>
+    <string name="error_invalid_credentials">E-Mail-Adresse oder Passwort ist falsch</string>
+    <string name="error_email_not_verified">Anmeldung nicht möglich, da deine E-Mail-Adresse nicht verifiziert ist</string>
+
+    <!-- Forgot Password -->
+    <string name="forgot_password">Passwort vergessen?</string>
+    <string name="forgot_password_email_sent_successfully">Wir haben dir erfolgreich einen Link zum Zurücksetzen deines Passworts per E-Mail gesendet</string>
+    <string name="submit">Absenden</string>
+
+    <!-- Reset Password -->
+    <string name="set_new_password">Neues Passwort festlegen</string>
+    <string name="new_password">Neues Passwort</string>
+    <string name="error_reset_password_token_invalid">Der Link zum Zurücksetzen des Passworts scheint ungültig oder abgelaufen zu sein. Bitte fordere eine neue E-Mail an.</string>
+    <string name="reset_password_successfully">Dein Passwort wurde erfolgreich geändert. Du kannst dich jetzt mit deinem neuen Passwort anmelden.</string>
+    <string name="error_same_password">Das neue Passwort darf nicht mit dem alten übereinstimmen</string>
+
+    <!-- Guest Register -->
+    <string name="register_guest_desc">Die Nutzung als Gast hat einige Einschränkungen. Wenn du dich abmeldest oder das Gerät wechselst, verlierst du den Zugriff auf deine Gruppen. Du kannst aber jederzeit später ein Konto erstellen.</string>
+</resources>
