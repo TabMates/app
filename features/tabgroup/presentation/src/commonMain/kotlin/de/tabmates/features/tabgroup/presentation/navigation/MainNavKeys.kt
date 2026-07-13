@@ -22,6 +22,7 @@ import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.change_email_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.change_password_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_expense_title
@@ -94,6 +95,12 @@ data object EditUsername : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
 @Serializable
 data object ChangePassword : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.change_password_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Close
+}
+
+@Serializable
+data object ChangeEmail : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.change_email_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
 

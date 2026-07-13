@@ -27,11 +27,19 @@ class ChangePasswordViewModel(
     val currentPasswordState = TextFieldState()
     val newPasswordState = TextFieldState()
 
-    private val _state = MutableStateFlow(AccountEditState())
-    val state: StateFlow<AccountEditState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(ChangePasswordState())
+    val state: StateFlow<ChangePasswordState> = _state.asStateFlow()
 
     private val eventChannel = Channel<AccountEditEvent>()
     val events = eventChannel.receiveAsFlow()
+
+    fun onToggleCurrentPasswordVisibility() {
+        _state.update { it.copy(isCurrentPasswordVisible = !it.isCurrentPasswordVisible) }
+    }
+
+    fun onToggleNewPasswordVisibility() {
+        _state.update { it.copy(isNewPasswordVisible = !it.isNewPasswordVisible) }
+    }
 
     fun onSave() {
         if (_state.value.isSubmitting) return

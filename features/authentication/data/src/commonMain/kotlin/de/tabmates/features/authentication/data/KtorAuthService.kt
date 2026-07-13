@@ -13,6 +13,7 @@ import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.core.domain.util.map
 import de.tabmates.core.domain.util.onSuccess
+import de.tabmates.features.authentication.data.dto.requests.ChangeEmailRequest
 import de.tabmates.features.authentication.data.dto.requests.ChangePasswordRequest
 import de.tabmates.features.authentication.data.dto.requests.ChangeUsernameRequest
 import de.tabmates.features.authentication.data.dto.requests.EmailRequest
@@ -168,6 +169,22 @@ class KtorAuthService(
                 ChangePasswordRequest(
                     oldPassword = oldPassword,
                     newPassword = newPassword,
+                ),
+        )
+    }
+
+    override suspend fun changeEmail(
+        newEmail: String,
+        password: String,
+    ): EmptyResult<DataError.Remote> {
+        // The server only stores a pending email and sends a verification link;
+        // the cached session keeps the old address until the user confirms.
+        return httpClient.post(
+            route = "/api/auth/change-email",
+            body =
+                ChangeEmailRequest(
+                    newEmail = newEmail,
+                    password = password,
                 ),
         )
     }

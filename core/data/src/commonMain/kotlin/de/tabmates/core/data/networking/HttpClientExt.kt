@@ -148,6 +148,10 @@ suspend inline fun <reified T> responseToResult(response: HttpResponse): Result<
             Result.Failure(DataError.Remote.REQUEST_TIMEOUT)
         }
 
+        409 -> {
+            Result.Failure(DataError.Remote.CONFLICT)
+        }
+
         413 -> {
             Result.Failure(DataError.Remote.PAYLOAD_TOO_LARGE)
         }

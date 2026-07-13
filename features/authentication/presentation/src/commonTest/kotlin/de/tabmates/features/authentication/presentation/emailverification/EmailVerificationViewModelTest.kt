@@ -1,9 +1,13 @@
 package de.tabmates.features.authentication.presentation.emailverification
 
+import de.tabmates.core.domain.auth.AuthInfo
+import de.tabmates.core.domain.auth.User
+import de.tabmates.core.domain.auth.UserType
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.authentication.testing.FakeAuthService
+import de.tabmates.features.authentication.testing.FakeSessionStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -18,6 +22,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EmailVerificationViewModelTest {
@@ -81,11 +86,55 @@ class EmailVerificationViewModelTest {
         advanceUntilIdle()
     }
 
+    @Test
+    fun `successful verification clears the cached session`() =
+        runTest(testDispatcher) {
+            val sessionStorage = FakeSessionStorage(initial = authInfo())
+            createViewModel(
+                authService = FakeAuthService(verifyEmailResult = Result.Success(Unit)),
+                sessionStorage = sessionStorage,
+            )
+
+            assertNull(sessionStorage.get())
+        }
+
+    @Test
+    fun `failed verification keeps the cached session`() =
+        runTest(testDispatcher) {
+            val sessionStorage = FakeSessionStorage(initial = authInfo())
+            createViewModel(
+                authService = FakeAuthService(verifyEmailResult = Result.Failure(DataError.Remote.SERVER_ERROR)),
+                sessionStorage = sessionStorage,
+            )
+
+            assertEquals(authInfo(), sessionStorage.get())
+        }
+
+    private fun authInfo(): AuthInfo =
+        AuthInfo(
+            accessToken = "access",
+            refreshToken = "refresh",
+            user =
+                User(
+                    id = "user-1",
+                    email = "user@test.com",
+                    username = "alice",
+                    hasVerifiedEmail = true,
+                    userType = UserType.REGISTERED,
+                ),
+        )
+
     private fun TestScope.createViewModel(
         authService: FakeAuthService = FakeAuthService(),
+        sessionStorage: FakeSessionStorage = FakeSessionStorage(),
         token: String = "test-token",
     ): EmailVerificationViewModel {
-        val viewModel = EmailVerificationViewModel(authService = authService, token = token)
+        val viewModel =
+            EmailVerificationViewModel(
+                authService = authService,
+                sessionStorage = sessionStorage,
+                token = token,
+            )
         activateState(viewModel)
         return viewModel
     }

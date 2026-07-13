@@ -6,6 +6,12 @@ data class AccountEditState(
     val isSubmitting: Boolean = false,
 )
 
+data class ChangePasswordState(
+    val isSubmitting: Boolean = false,
+    val isCurrentPasswordVisible: Boolean = false,
+    val isNewPasswordVisible: Boolean = false,
+)
+
 sealed interface AccountEditEvent {
     data object Saved : AccountEditEvent
 

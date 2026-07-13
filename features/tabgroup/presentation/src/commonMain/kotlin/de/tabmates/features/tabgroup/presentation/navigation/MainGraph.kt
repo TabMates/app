@@ -15,6 +15,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.Group
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.ChangeEmailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ChangePasswordRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.EditUsernameRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.OssLicensesRoot
@@ -49,6 +50,7 @@ val mainSerializersModule =
             subclass(JoinGroup::class)
             subclass(EditUsername::class)
             subclass(ChangePassword::class)
+            subclass(ChangeEmail::class)
             subclass(OssLicenses::class)
         }
     }
@@ -122,6 +124,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
             snackbarHostState = snackbarHostState,
             onEditUsername = { backStack.add(EditUsername) },
             onChangePassword = { backStack.add(ChangePassword) },
+            onChangeEmail = { backStack.add(ChangeEmail) },
             onOpenOssLicenses = { backStack.add(OssLicenses) },
         )
     }
@@ -140,6 +143,14 @@ fun EntryProviderScope<NavKey>.mainGraph(
 
     entry<ChangePassword> { route ->
         ChangePasswordRoot(
+            navKey = route,
+            snackbarHostState = snackbarHostState,
+            onSaved = { backStack.removeLastOrNull() },
+        )
+    }
+
+    entry<ChangeEmail> { route ->
+        ChangeEmailRoot(
             navKey = route,
             snackbarHostState = snackbarHostState,
             onSaved = { backStack.removeLastOrNull() },

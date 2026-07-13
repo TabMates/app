@@ -2,6 +2,7 @@ package de.tabmates.features.authentication.presentation.emailverification
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.authentication.domain.AuthService
@@ -19,6 +20,7 @@ import kotlin.time.Duration.Companion.seconds
 @KoinViewModel
 class EmailVerificationViewModel(
     private val authService: AuthService,
+    private val sessionStorage: SessionStorage,
     @InjectedParam private val token: String,
 ) : ViewModel() {
     private var hasLoadedInitialData = false
@@ -46,6 +48,9 @@ class EmailVerificationViewModel(
             authService
                 .verifyEmail(token)
                 .onSuccess {
+                    // Confirming an email change revokes all refresh tokens server-side,
+                    // so clear any cached session and force a fresh login.
+                    sessionStorage.set(null)
                     _state.update {
                         it.copy(isVerifying = false, isVerified = true)
                     }
