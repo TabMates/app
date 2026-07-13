@@ -3,7 +3,9 @@
     android:height="24dp"
     android:viewportWidth="960"
     android:viewportHeight="960">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M340,800L340,700L480,600L480,420L80,540L80,460L480,200L480,120Q480,95 497.5,77.5Q515,60 540,60Q565,60 582.5,77.5Q600,95 600,120L600,200L1000,460L1000,540L600,420L600,600L740,700L740,800L520,740L300,800L340,800Z" />
+    <group android:translateY="960">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M340-80v-60l80-60v-220L80-320v-80l340-200v-220q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v220l340 200v80L540-420v220l80 60v60l-140-40-140 40Z" />
+    </group>
 </vector>

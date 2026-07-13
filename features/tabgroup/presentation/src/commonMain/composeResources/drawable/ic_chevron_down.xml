@@ -3,7 +3,9 @@
     android:height="24dp"
     android:viewportWidth="960"
     android:viewportHeight="960">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M480,624L240,384L296,328L480,512L664,328L720,384L480,624Z" />
+    <group android:translateY="960">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z" />
+    </group>
 </vector>
