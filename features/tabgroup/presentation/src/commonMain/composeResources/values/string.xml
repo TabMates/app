@@ -337,5 +337,14 @@
     <string name="change_password_new_label">New password</string>
     <string name="change_password_error_required">Enter your current and new password</string>
     <string name="change_password_error_too_short">New password must be at least 8 characters</string>
+    <string name="change_email_title">Email</string>
+    <string name="change_email_new_label">New email</string>
+    <string name="change_email_password_label">Current password</string>
+    <string name="change_email_error_invalid">Enter a valid email address</string>
+    <string name="change_email_error_same">This is already your email address</string>
+    <string name="change_email_error_password_required">Enter your password</string>
+    <string name="change_email_error_in_use">That email is already in use</string>
+    <string name="change_email_error_wrong_password">Incorrect password</string>
+    <string name="change_email_verification_sent">Verification email sent to %1$s. Confirm it to complete the change.</string>
     <string name="account_saved">Saved</string>
 </resources>

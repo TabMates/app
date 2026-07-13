@@ -90,6 +90,7 @@ fun ProfileRoot(
     snackbarHostState: SnackbarHostState,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onChangeEmail: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = koinViewModel(),
@@ -118,6 +119,7 @@ fun ProfileRoot(
         onOpenNotificationSettings = viewModel::onOpenNotificationSettings,
         onEditUsername = onEditUsername,
         onChangePassword = onChangePassword,
+        onChangeEmail = onChangeEmail,
         onOpenOssLicenses = onOpenOssLicenses,
         onSignOut = viewModel::onSignOut,
         modifier = modifier,
@@ -133,6 +135,7 @@ internal fun ProfileScreen(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onChangeEmail: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
@@ -148,6 +151,7 @@ internal fun ProfileScreen(
             onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
+            onChangeEmail = onChangeEmail,
             onOpenOssLicenses = onOpenOssLicenses,
             onSignOut = onSignOut,
             modifier = modifier,
@@ -160,6 +164,7 @@ internal fun ProfileScreen(
             onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
+            onChangeEmail = onChangeEmail,
             onOpenOssLicenses = onOpenOssLicenses,
             onSignOut = onSignOut,
             modifier = modifier,
@@ -175,6 +180,7 @@ private fun ProfilePhonePane(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onChangeEmail: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
@@ -203,6 +209,7 @@ private fun ProfilePhonePane(
             onOpenNotificationSettings = onOpenNotificationSettings,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
+            onChangeEmail = onChangeEmail,
             onOpenOssLicenses = onOpenOssLicenses,
         )
         VerticalSpacer(8.dp)
@@ -228,6 +235,7 @@ private fun SettingsTwoPane(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onChangeEmail: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
@@ -270,6 +278,7 @@ private fun SettingsTwoPane(
                         onOpenNotificationSettings = onOpenNotificationSettings,
                         onEditUsername = onEditUsername,
                         onChangePassword = onChangePassword,
+                        onChangeEmail = onChangeEmail,
                         onOpenOssLicenses = onOpenOssLicenses,
                     )
                 }
@@ -396,6 +405,7 @@ private fun ProfileAccountAndAppearance(
     onOpenNotificationSettings: () -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
+    onChangeEmail: () -> Unit,
     onOpenOssLicenses: () -> Unit,
 ) {
     SectionLabel(stringResource(Res.string.profile_section_account))
@@ -414,8 +424,8 @@ private fun ProfileAccountAndAppearance(
                     iconRes = Res.drawable.ic_mail,
                     title = stringResource(Res.string.profile_account_email),
                     subtitle = state.email,
-                    onClick = null,
-                    showChevron = false,
+                    onClick = onChangeEmail,
+                    showChevron = true,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -444,8 +454,8 @@ private fun ProfileAccountAndAppearance(
                 iconRes = Res.drawable.ic_mail,
                 title = stringResource(Res.string.profile_account_email),
                 subtitle = state.email,
-                onClick = null,
-                showChevron = false,
+                onClick = onChangeEmail,
+                showChevron = true,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
