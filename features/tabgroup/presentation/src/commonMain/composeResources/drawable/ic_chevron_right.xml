@@ -4,7 +4,9 @@
     android:autoMirrored="true"
     android:viewportWidth="960"
     android:viewportHeight="960">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M504,480L320,296L376,240L616,480L376,720L320,664L504,480Z" />
+    <group android:translateY="960">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" />
+    </group>
 </vector>
