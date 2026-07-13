@@ -119,6 +119,9 @@ fun App() {
                 ThemeMode.DARK -> true
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
+        // Re-apply status/navigation bar appearance on every theme change so the bars follow
+        // the in-app `ThemeMode` override (Light/Dark/System) instead of the OS dark-mode flag.
+        ApplySystemBars(darkTheme = darkTheme)
         TabMatesTheme(darkTheme = darkTheme) {
             // Checks for app updates on launch: native Play in-app update on eligible Android
             // devices, store-redirect dialog everywhere else.
