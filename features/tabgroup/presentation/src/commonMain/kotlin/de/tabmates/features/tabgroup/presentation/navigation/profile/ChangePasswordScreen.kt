@@ -8,12 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
-import de.tabmates.core.designsystem.textfields.TabMatesTextField
+import de.tabmates.core.designsystem.textfields.TabMatesPasswordTextField
 import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import org.jetbrains.compose.resources.getString
@@ -55,19 +54,19 @@ fun ChangePasswordRoot(
     }
 
     AccountFieldColumn(modifier = modifier) {
-        TabMatesTextField(
+        TabMatesPasswordTextField(
             state = viewModel.currentPasswordState,
             title = stringResource(Res.string.change_password_current_label),
-            singleLine = true,
-            keyboardType = KeyboardType.Password,
+            isPasswordVisible = state.isCurrentPasswordVisible,
+            onToggleVisibilityClick = viewModel::onToggleCurrentPasswordVisibility,
             modifier = Modifier.fillMaxWidth(),
         )
         VerticalSpacer(16.dp)
-        TabMatesTextField(
+        TabMatesPasswordTextField(
             state = viewModel.newPasswordState,
             title = stringResource(Res.string.change_password_new_label),
-            singleLine = true,
-            keyboardType = KeyboardType.Password,
+            isPasswordVisible = state.isNewPasswordVisible,
+            onToggleVisibilityClick = viewModel::onToggleNewPasswordVisibility,
             modifier = Modifier.fillMaxWidth(),
         )
     }
