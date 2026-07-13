@@ -209,7 +209,6 @@ fun App() {
                         (currentKey as? ScreenWithFab)?.let { screen ->
                             FloatingActionButton(
                                 modifier = Modifier.padding(start = 16.dp),
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
                                 onClick = {
                                     when (val action = screen.fabAction) {
                                         FabAction.CreateGroup -> backStack.add(CreateGroup)
