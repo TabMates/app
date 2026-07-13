@@ -70,6 +70,7 @@ class TabEntryOutbox(
         description: String,
         amount: Double,
         currencyCode: String,
+        exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
         splits: List<NewExpenseSplit>,
@@ -84,6 +85,7 @@ class TabEntryOutbox(
                 description = description,
                 amount = amount,
                 currency = currencyCode,
+                exchangeRate = exchangeRate,
                 entryDate = entryDate,
                 splits = buildSplitPayloads(splits, amount),
             )
@@ -110,6 +112,7 @@ class TabEntryOutbox(
         description: String,
         amount: Double,
         currencyCode: String,
+        exchangeRate: Double?,
         paidByUserId: String,
         receivedByUserId: String,
         entryDate: LocalDate,
@@ -123,6 +126,7 @@ class TabEntryOutbox(
                 description = description,
                 amount = amount,
                 currency = currencyCode,
+                exchangeRate = exchangeRate,
                 entryDate = entryDate,
                 receivedByUserId = receivedByUserId,
             )
@@ -149,6 +153,7 @@ class TabEntryOutbox(
         description: String,
         amount: Double,
         currencyCode: String,
+        exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
         splits: List<NewExpenseSplit>,
@@ -162,6 +167,7 @@ class TabEntryOutbox(
                 description = description,
                 amount = amount,
                 currency = currencyCode,
+                exchangeRate = exchangeRate,
                 entryDate = entryDate,
                 splits = buildSplitPayloads(splits, amount),
             )
@@ -188,6 +194,7 @@ class TabEntryOutbox(
         description: String,
         amount: Double,
         currencyCode: String,
+        exchangeRate: Double?,
         paidByUserId: String,
         receivedByUserId: String,
         entryDate: LocalDate,
@@ -201,6 +208,7 @@ class TabEntryOutbox(
                 description = description,
                 amount = amount,
                 currency = currencyCode,
+                exchangeRate = exchangeRate,
                 entryDate = entryDate,
                 receivedByUserId = receivedByUserId,
             )

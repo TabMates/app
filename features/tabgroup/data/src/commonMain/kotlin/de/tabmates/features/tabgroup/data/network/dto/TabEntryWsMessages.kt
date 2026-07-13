@@ -43,6 +43,12 @@ sealed class NewTabEntryWsPayload {
     abstract val amount: Double
     abstract val currency: String
 
+    /**
+     * Rate locked in for this entry (group default currency per 1 unit of [currency]); null =
+     * same currency / no rate available. Optional on the server side, so older servers ignore it.
+     */
+    abstract val exchangeRate: Double?
+
     @Serializable
     @SerialName("EXPENSE")
     data class Expense(
@@ -53,6 +59,7 @@ sealed class NewTabEntryWsPayload {
         override val description: String,
         override val amount: Double,
         override val currency: String,
+        override val exchangeRate: Double? = null,
         val entryDate: LocalDate,
         val splits: List<NewTabEntrySplitWsPayload>,
     ) : NewTabEntryWsPayload()
@@ -67,6 +74,7 @@ sealed class NewTabEntryWsPayload {
         override val description: String,
         override val amount: Double,
         override val currency: String,
+        override val exchangeRate: Double? = null,
         val entryDate: LocalDate,
         val splits: List<NewTabEntrySplitWsPayload>,
     ) : NewTabEntryWsPayload()
@@ -81,6 +89,7 @@ sealed class NewTabEntryWsPayload {
         override val description: String,
         override val amount: Double,
         override val currency: String,
+        override val exchangeRate: Double? = null,
         val entryDate: LocalDate,
         val receivedByUserId: String,
     ) : NewTabEntryWsPayload()

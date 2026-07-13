@@ -24,6 +24,7 @@ data class LastTabEntryView(
     val description: String,
     val amount: Double,
     val currencyCode: String,
+    val exchangeRate: Double?,
     val entryType: TabEntryTypeDatabase,
     val groupId: String,
     val creatorId: String,

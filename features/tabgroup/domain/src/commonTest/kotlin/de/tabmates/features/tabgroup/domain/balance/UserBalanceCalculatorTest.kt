@@ -48,6 +48,35 @@ class UserBalanceCalculatorTest {
     }
 
     @Test
+    fun lockedExchangeRateWinsOverLiveRates() {
+        // a pays 100 USD, split equally with b, locked at 1 USD = 0.80 EUR when created.
+        // Live rates have since moved to 1 USD = 0.92 EUR — the locked rate must still apply.
+        val entry =
+            equalExpense(paidBy = "a", amount = 100.0, members = listOf("a", "b"), currency = "USD")
+                .copy(exchangeRate = 0.80)
+        val conversion = CurrencyConversion(baseCurrency = "EUR", rates = mapOf("USD" to 1.0, "EUR" to 0.92))
+        assertEquals(
+            -40.0,
+            UserBalanceCalculator.computeNet(listOf(entry), "b", conversion),
+            absoluteTolerance = 1e-9,
+        )
+    }
+
+    @Test
+    fun lockedExchangeRateConvertsEntryWithUnknownLiveRate() {
+        // No live rate for JPY, but the entry locked one in at creation, so it still counts.
+        val entry =
+            equalExpense(paidBy = "a", amount = 1000.0, members = listOf("a", "b"), currency = "JPY")
+                .copy(exchangeRate = 0.006)
+        val conversion = CurrencyConversion(baseCurrency = "EUR", rates = mapOf("USD" to 1.0, "EUR" to 0.92))
+        assertEquals(
+            -3.0,
+            UserBalanceCalculator.computeNet(listOf(entry), "b", conversion),
+            absoluteTolerance = 1e-9,
+        )
+    }
+
+    @Test
     fun mixesBaseAndForeignEntries() {
         val eur =
             equalExpense(paidBy = "a", amount = 100.0, members = listOf("a", "b"), currency = "EUR", id = "e1")

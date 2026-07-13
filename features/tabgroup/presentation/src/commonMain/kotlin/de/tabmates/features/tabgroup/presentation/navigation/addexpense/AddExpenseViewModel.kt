@@ -10,6 +10,7 @@ import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
@@ -169,6 +170,8 @@ class AddExpenseViewModel(
                     supportedCurrencies = currencies,
                     ratesByCurrency = rates.associate { it.currencyCode to it.rateToBase },
                     ratesLastUpdatedAt = rates.maxOfOrNull { rate -> rate.lastUpdatedAt },
+                    originalCurrencyCode = existing?.currencyCode.orEmpty(),
+                    originalExchangeRate = existing?.exchangeRate,
                     entryDate = existing?.entryDate ?: it.entryDate,
                     splitType = existing?.splits?.firstOrNull()?.splitType ?: it.splitType,
                     titleTextState = TextFieldState(existing?.title.orEmpty()),
@@ -308,6 +311,7 @@ class AddExpenseViewModel(
             return
         }
         val splits = buildSplits(current, amount) ?: return
+        val exchangeRate = resolveExchangeRate(current)
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true) }
@@ -320,6 +324,7 @@ class AddExpenseViewModel(
                         description = description,
                         amount = amount,
                         currencyCode = current.expenseCurrencyCode,
+                        exchangeRate = exchangeRate,
                         paidByUserId = current.paidByUserId,
                         entryDate = current.entryDate,
                         splits = splits,
@@ -331,6 +336,7 @@ class AddExpenseViewModel(
                         description = description,
                         amount = amount,
                         currencyCode = current.expenseCurrencyCode,
+                        exchangeRate = exchangeRate,
                         paidByUserId = current.paidByUserId,
                         entryDate = current.entryDate,
                         splits = splits,
@@ -345,6 +351,25 @@ class AddExpenseViewModel(
                     eventChannel.send(AddExpenseEvent.Error(error.toUiText()))
                 }
         }
+    }
+
+    /**
+     * The rate locked onto the expense at save time (group base currency per 1 unit of the
+     * expense currency) — the same value the rate hint on screen shows, so what the user sees is
+     * what gets locked. Editing keeps the originally locked rate unless the currency changed;
+     * same-currency expenses and missing rates yield null (consumers fall back to live rates).
+     */
+    private fun resolveExchangeRate(state: AddExpenseState): Double? {
+        if (isEditing && state.expenseCurrencyCode == state.originalCurrencyCode) {
+            return state.originalExchangeRate
+        }
+        if (state.expenseCurrencyCode == state.baseCurrencyCode) return null
+        return CurrencyConverter.convert(
+            amount = 1.0,
+            from = state.expenseCurrencyCode,
+            to = state.baseCurrencyCode,
+            rates = state.ratesByCurrency,
+        )
     }
 
     private fun buildSplits(

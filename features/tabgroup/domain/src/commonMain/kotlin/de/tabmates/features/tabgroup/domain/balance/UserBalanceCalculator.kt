@@ -1,6 +1,7 @@
 package de.tabmates.features.tabgroup.domain.balance
 
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
+import de.tabmates.features.tabgroup.domain.currency.factorFor
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 
 /**
@@ -23,7 +24,7 @@ object UserBalanceCalculator {
         if (userId.isEmpty()) return 0.0
         var net = 0.0
         entries.forEach { entry ->
-            val factor = conversionFactor(conversion, entry.currencyCode) ?: return@forEach
+            val factor = conversion.factorFor(entry) ?: return@forEach
             net += factor * entryNet(entry, userId)
         }
         return net
@@ -58,12 +59,3 @@ object UserBalanceCalculator {
         }
     }
 }
-
-/**
- * Multiplier to convert [currencyCode] into the conversion's base, `1.0` when no conversion is
- * requested, or `null` when the rate is unknown (so the caller can skip the entry).
- */
-internal fun conversionFactor(
-    conversion: CurrencyConversion?,
-    currencyCode: String,
-): Double? = if (conversion == null) 1.0 else conversion.factorToBase(currencyCode)

@@ -24,6 +24,7 @@ data class EditSettlementState(
     val currencyCode: String = "",
     val currencySymbol: String = "",
     val currencyDecimalDigits: Int = 2,
+    val exchangeRate: Double? = null,
     val paidByUserId: String = "",
     val receivedByUserId: String = "",
     val currentUserId: String = "",
