@@ -54,6 +54,7 @@ import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_locked_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_unavailable
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_dialog_cancel
@@ -260,21 +261,19 @@ private fun HeroSection(
 @Composable
 private fun ForeignCurrencyDetails(state: ExpenseDetailState) {
     val expense = state.expense ?: return
-    val converted =
-        CurrencyConverter.convert(
-            amount = expense.amount,
-            from = state.expenseCurrencyCode,
-            to = state.groupCurrencyCode,
-            rates = state.ratesByCurrency,
-        )
-    val rateText =
-        CurrencyConverter
-            .convert(
+    // The rate locked in when the expense was added wins over the live table; only legacy
+    // entries without a snapshot fall back to live rates (and show when those were updated).
+    val lockedRate = expense.exchangeRate
+    val effectiveRate =
+        lockedRate
+            ?: CurrencyConverter.convert(
                 amount = 1.0,
                 from = state.expenseCurrencyCode,
                 to = state.groupCurrencyCode,
                 rates = state.ratesByCurrency,
-            )?.let { formatRate(it) }
+            )
+    val converted = effectiveRate?.let { expense.amount * it }
+    val rateText = effectiveRate?.let { formatRate(it) }
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -297,12 +296,20 @@ private fun ForeignCurrencyDetails(state: ExpenseDetailState) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            state.ratesLastUpdatedAt?.let { lastUpdatedAt ->
+            if (lockedRate != null) {
                 Text(
-                    text = rateUpdatedLabel(lastUpdatedAt),
+                    text = stringResource(Res.string.currency_rate_locked_label),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            } else {
+                state.ratesLastUpdatedAt?.let { lastUpdatedAt ->
+                    Text(
+                        text = rateUpdatedLabel(lastUpdatedAt),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         } else {
             Text(

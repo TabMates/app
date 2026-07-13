@@ -10,6 +10,15 @@ sealed class TabEntry {
     abstract val description: String
     abstract val amount: Double
     abstract val currencyCode: String
+
+    /**
+     * Exchange rate locked in when the entry was created (or its currency last changed): units
+     * of the group's default currency per 1 unit of [currencyCode], so
+     * `converted amount = amount * exchangeRate`. Null when the entry is in the group's own
+     * currency, no rate was available at creation, or the entry predates this field — consumers
+     * must fall back to live rates then.
+     */
+    abstract val exchangeRate: Double?
     abstract val creatorId: String
     abstract val paidByUserId: String
 
@@ -35,6 +44,7 @@ sealed class TabEntry {
         override val description: String,
         override val amount: Double,
         override val currencyCode: String,
+        override val exchangeRate: Double? = null,
         override val creatorId: String,
         override val paidByUserId: String,
         override val entryDate: LocalDate,
@@ -55,6 +65,7 @@ sealed class TabEntry {
         override val description: String,
         override val amount: Double,
         override val currencyCode: String,
+        override val exchangeRate: Double? = null,
         override val creatorId: String,
         override val paidByUserId: String,
         override val entryDate: LocalDate,
@@ -75,6 +86,7 @@ sealed class TabEntry {
         override val description: String,
         override val amount: Double,
         override val currencyCode: String,
+        override val exchangeRate: Double? = null,
         override val creatorId: String,
         override val paidByUserId: String,
         override val entryDate: LocalDate,

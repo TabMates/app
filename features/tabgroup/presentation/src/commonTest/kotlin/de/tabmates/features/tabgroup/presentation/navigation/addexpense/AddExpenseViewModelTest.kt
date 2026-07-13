@@ -26,6 +26,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 
@@ -215,7 +216,144 @@ class AddExpenseViewModelTest {
             assertEquals(lastUpdatedAt, pickerState.ratesLastUpdatedAt)
         }
 
+    @Test
+    fun creatingForeignCurrencyExpenseLocksDisplayedRate() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    tabEntryRepository = tabEntryRepo,
+                    exchangeRateRepository = usdEurRates(),
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            viewModel.onCurrencySelected("USD")
+            viewModel.state.value.titleTextState
+                .setTextAndPlaceCursorAtEnd("Lunch")
+            viewModel.state.value.amountTextState
+                .setTextAndPlaceCursorAtEnd("20")
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+
+            val expense = assertIs<TabEntry.Expense>(tabEntryRepo.getTabEntriesForGroup("g1").first().single())
+            // Group base EUR, 1 USD = 0.92 EUR — exactly the rate the hint showed at save time.
+            assertEquals(0.92, expense.exchangeRate!!, absoluteTolerance = 1e-9)
+        }
+
+    @Test
+    fun creatingSameCurrencyExpenseHasNullExchangeRate() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    tabEntryRepository = tabEntryRepo,
+                    exchangeRateRepository = usdEurRates(),
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            viewModel.state.value.titleTextState
+                .setTextAndPlaceCursorAtEnd("Lunch")
+            viewModel.state.value.amountTextState
+                .setTextAndPlaceCursorAtEnd("20")
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+
+            val expense = assertIs<TabEntry.Expense>(tabEntryRepo.getTabEntriesForGroup("g1").first().single())
+            assertNull(expense.exchangeRate)
+        }
+
+    @Test
+    fun creatingWithoutLoadedRatesLeavesExchangeRateNull() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            val viewModel = createViewModel(groupId = "g1", tabEntryRepository = tabEntryRepo)
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            viewModel.onCurrencySelected("USD")
+            viewModel.state.value.titleTextState
+                .setTextAndPlaceCursorAtEnd("Lunch")
+            viewModel.state.value.amountTextState
+                .setTextAndPlaceCursorAtEnd("20")
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+
+            val expense = assertIs<TabEntry.Expense>(tabEntryRepo.getTabEntriesForGroup("g1").first().single())
+            assertNull(expense.exchangeRate)
+        }
+
+    @Test
+    fun editingWithoutCurrencyChangeKeepsOriginalLockedRate() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            // Locked at 0.90 when created; live rates have since moved to 0.92.
+            tabEntryRepo.emit(
+                "g1",
+                listOf(existingExpense().copy(currencyCode = "USD", exchangeRate = 0.90)),
+            )
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    expenseId = "e1",
+                    tabEntryRepository = tabEntryRepo,
+                    exchangeRateRepository = usdEurRates(),
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            viewModel.state.value.titleTextState
+                .setTextAndPlaceCursorAtEnd("New title")
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+
+            val expense = assertIs<TabEntry.Expense>(tabEntryRepo.getTabEntriesForGroup("g1").first().single())
+            assertEquals(0.90, expense.exchangeRate!!, absoluteTolerance = 1e-9)
+        }
+
+    @Test
+    fun editingCurrencyReSnapshotsRateFromLiveRates() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit(
+                "g1",
+                listOf(existingExpense().copy(currencyCode = "USD", exchangeRate = 0.90)),
+            )
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    expenseId = "e1",
+                    tabEntryRepository = tabEntryRepo,
+                    exchangeRateRepository = usdEurRates(),
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            viewModel.onCurrencySelected("GBP")
+            viewModel.state.value.titleTextState
+                .setTextAndPlaceCursorAtEnd("New title")
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+
+            val expense = assertIs<TabEntry.Expense>(tabEntryRepo.getTabEntriesForGroup("g1").first().single())
+            // 1 GBP -> (1/0.80) USD -> * 0.92 = 1.15 EUR; the stale 0.90 snapshot is replaced.
+            assertEquals(1.15, expense.exchangeRate!!, absoluteTolerance = 1e-9)
+        }
+
     // endregion
+
+    private fun usdEurRates(): FakeExchangeRateRepository =
+        FakeExchangeRateRepository(
+            initialRates =
+                listOf(
+                    ExchangeRate("USD", 1.0, "USD", Instant.fromEpochMilliseconds(0)),
+                    ExchangeRate("EUR", 0.92, "USD", Instant.fromEpochMilliseconds(0)),
+                    ExchangeRate("GBP", 0.80, "USD", Instant.fromEpochMilliseconds(0)),
+                ),
+        )
 
     private fun existingExpense(): TabEntry.Expense =
         Fixtures

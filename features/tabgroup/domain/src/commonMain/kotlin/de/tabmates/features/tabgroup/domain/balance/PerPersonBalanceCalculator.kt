@@ -1,6 +1,7 @@
 package de.tabmates.features.tabgroup.domain.balance
 
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
+import de.tabmates.features.tabgroup.domain.currency.factorFor
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 
 /**
@@ -22,7 +23,7 @@ object PerPersonBalanceCalculator {
         if (currentUserId.isEmpty()) return emptyMap()
         val net = mutableMapOf<String, Double>()
         entries.forEach { entry ->
-            val factor = conversionFactor(conversion, entry.currencyCode) ?: return@forEach
+            val factor = conversion.factorFor(entry) ?: return@forEach
             when (entry) {
                 is TabEntry.Expense -> {
                     entry.splits.forEach { split ->

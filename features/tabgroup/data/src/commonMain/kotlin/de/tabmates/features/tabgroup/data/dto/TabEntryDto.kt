@@ -19,6 +19,13 @@ sealed class TabEntryDto {
     abstract val description: String
     abstract val amount: Double
     abstract val currency: String
+
+    /**
+     * Rate locked in at creation (group default currency per 1 unit of [currency]); null = no
+     * snapshot. Defaults to null so responses from a server that predates the field still parse
+     * (ignoreUnknownKeys only covers extra fields, not missing ones).
+     */
+    abstract val exchangeRate: Double?
     abstract val entryDate: LocalDate
     abstract val createdAt: Instant
     abstract val lastModifiedAt: Instant
@@ -38,6 +45,7 @@ sealed class TabEntryDto {
         override val description: String,
         override val amount: Double,
         override val currency: String,
+        override val exchangeRate: Double? = null,
         val splits: List<TabEntrySplitDto>,
         override val entryDate: LocalDate,
         override val createdAt: Instant,
@@ -59,6 +67,7 @@ sealed class TabEntryDto {
         override val description: String,
         override val amount: Double,
         override val currency: String,
+        override val exchangeRate: Double? = null,
         val splits: List<TabEntrySplitDto>,
         override val entryDate: LocalDate,
         override val createdAt: Instant,
@@ -80,6 +89,7 @@ sealed class TabEntryDto {
         override val description: String,
         override val amount: Double,
         override val currency: String,
+        override val exchangeRate: Double? = null,
         val receivedBy: GroupParticipantDto,
         override val entryDate: LocalDate,
         override val createdAt: Instant,

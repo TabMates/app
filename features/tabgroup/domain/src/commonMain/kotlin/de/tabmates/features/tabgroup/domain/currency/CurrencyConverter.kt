@@ -1,6 +1,7 @@
 package de.tabmates.features.tabgroup.domain.currency
 
 import de.tabmates.features.tabgroup.domain.models.ExchangeRate
+import de.tabmates.features.tabgroup.domain.models.TabEntry
 
 /**
  * Converts amounts between currencies using exchange rates.
@@ -53,3 +54,19 @@ class CurrencyConversion(
             )
     }
 }
+
+/**
+ * Multiplier that converts 1 unit of [entry]'s currency into this conversion's base currency, or
+ * `1.0` when `this` is null (single-currency mode). Prefers the rate locked onto the entry when
+ * it was created ([TabEntry.exchangeRate]) over the live rate table, so an entry's contribution
+ * to a balance doesn't drift as rates change after the fact — and a settled amount stays settled.
+ * Falls back to the live [CurrencyConversion.factorToBase] for entries without a snapshot;
+ * returns `null` only when that fallback is needed and the entry's currency has no known rate
+ * (callers skip the entry until rates sync).
+ */
+fun CurrencyConversion?.factorFor(entry: TabEntry): Double? =
+    when {
+        this == null -> 1.0
+        entry.exchangeRate != null -> entry.exchangeRate
+        else -> factorToBase(entry.currencyCode)
+    }

@@ -25,6 +25,11 @@ data class TabEntryEntity(
     val description: String,
     val amount: Double,
     val currencyCode: String,
+    /**
+     * Rate locked in at creation (group default currency per 1 unit of [currencyCode]);
+     * null = no snapshot, convert with live rates.
+     */
+    val exchangeRate: Double? = null,
     val entryType: TabEntryTypeDatabase,
     val groupId: String,
     val creatorId: String,

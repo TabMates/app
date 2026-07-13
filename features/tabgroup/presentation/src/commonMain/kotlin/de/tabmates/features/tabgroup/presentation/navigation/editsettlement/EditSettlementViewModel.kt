@@ -91,6 +91,7 @@ class EditSettlementViewModel(
                     currencyCode = currencyCode,
                     currencySymbol = currency?.nativeSymbol ?: currencyCode,
                     currencyDecimalDigits = decimals,
+                    exchangeRate = settlement?.exchangeRate,
                     paidByUserId = settlement?.paidByUserId.orEmpty(),
                     receivedByUserId = settlement?.receivedByUserId.orEmpty(),
                     membersById =
@@ -141,6 +142,8 @@ class EditSettlementViewModel(
                     description = current.description,
                     amount = amount,
                     currencyCode = current.currencyCode,
+                    // Currency is not editable here, so the originally locked rate always stays.
+                    exchangeRate = current.exchangeRate,
                     paidByUserId = current.paidByUserId,
                     receivedByUserId = current.receivedByUserId,
                     entryDate = current.entryDate,

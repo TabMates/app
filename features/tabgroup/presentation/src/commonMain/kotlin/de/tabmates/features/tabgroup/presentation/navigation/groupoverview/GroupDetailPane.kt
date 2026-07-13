@@ -588,7 +588,8 @@ private fun SettlementRow(
  * Amount shown on a transaction row. For a foreign-currency entry, the converted amount in the
  * group's base currency leads, followed by the original amount in brackets
  * (e.g. `€18.40 - ($20.00)`). Same-currency entries just show the single amount, and if no rate
- * is available the original amount is shown on its own.
+ * is available the original amount is shown on its own. The entry's locked-in rate wins over the
+ * live rate table, so displayed values match the balance math and don't drift with rate updates.
  */
 private fun entryAmountLabel(
     entry: TabEntry,
@@ -601,13 +602,7 @@ private fun entryAmountLabel(
     val original = formatAmount(entry.amount, originalSymbol, originalDecimals)
     if (entry.currencyCode == item.currencyCode) return original
 
-    val converted =
-        CurrencyConverter.convert(
-            amount = entry.amount,
-            from = entry.currencyCode,
-            to = item.currencyCode,
-            rates = ratesByCurrency,
-        ) ?: return original
+    val converted = convertEntryAmount(entry.amount, entry, item, ratesByCurrency) ?: return original
     return "${formatAmount(item, converted)} ≈ ($original)"
 }
 
@@ -627,14 +622,25 @@ private fun shareAmountLabel(
     val originalDecimals = currency?.decimalDigits ?: item.currencyDecimalDigits
     if (entry.currencyCode == item.currencyCode) return formatAmount(amount, originalSymbol, originalDecimals)
     val converted =
-        CurrencyConverter.convert(
+        convertEntryAmount(amount, entry, item, ratesByCurrency)
+            ?: return formatAmount(amount, originalSymbol, originalDecimals)
+    return formatAmount(item, converted)
+}
+
+/** [amount] converted into the group currency, preferring [TabEntry.exchangeRate] over live rates. */
+private fun convertEntryAmount(
+    amount: Double,
+    entry: TabEntry,
+    item: GroupOverviewItem,
+    ratesByCurrency: Map<String, Double>,
+): Double? =
+    entry.exchangeRate?.let { amount * it }
+        ?: CurrencyConverter.convert(
             amount = amount,
             from = entry.currencyCode,
             to = item.currencyCode,
             rates = ratesByCurrency,
-        ) ?: return formatAmount(amount, originalSymbol, originalDecimals)
-    return formatAmount(item, converted)
-}
+        )
 
 @Composable
 private fun EntryIcon(

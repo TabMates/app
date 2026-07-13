@@ -136,7 +136,10 @@ class SettleUpViewModel(
                     title = title,
                     description = "",
                     amount = amount,
+                    // Settle-up amounts are always in the group's default currency, so there is
+                    // no rate to lock in.
                     currencyCode = current.currencyCode,
+                    exchangeRate = null,
                     paidByUserId = pending.fromUserId,
                     receivedByUserId = pending.toUserId,
                     entryDate =

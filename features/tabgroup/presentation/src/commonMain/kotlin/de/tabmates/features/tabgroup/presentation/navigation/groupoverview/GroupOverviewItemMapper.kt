@@ -2,6 +2,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.groupoverview
 
 import de.tabmates.features.tabgroup.domain.balance.UserBalanceCalculator
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
+import de.tabmates.features.tabgroup.domain.currency.factorFor
 import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
@@ -37,8 +38,7 @@ internal fun GroupOverviewItem.withStats(
     val expenseCount = visibleEntries.count { it is TabEntry.Expense }
     val totalSpent =
         visibleEntries.filterIsInstance<TabEntry.Expense>().sumOf { expense ->
-            val factor = if (conversion == null) 1.0 else conversion.factorToBase(expense.currencyCode) ?: 0.0
-            expense.amount * factor
+            expense.amount * (conversion.factorFor(expense) ?: 0.0)
         }
     val net = UserBalanceCalculator.computeNet(visibleEntries, currentUserId, conversion)
     return copy(

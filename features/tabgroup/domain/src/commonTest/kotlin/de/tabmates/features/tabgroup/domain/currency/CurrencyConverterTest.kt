@@ -1,8 +1,11 @@
 package de.tabmates.features.tabgroup.domain.currency
 
+import de.tabmates.features.tabgroup.domain.models.TabEntry
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.time.Instant
 
 class CurrencyConverterTest {
     // rate value = units of that currency per 1 USD (provider base is USD).
@@ -48,4 +51,52 @@ class CurrencyConverterTest {
         assertEquals(1.0, conversion.factorToBase("EUR")!!, absoluteTolerance = 1e-9)
         assertNull(conversion.factorToBase("JPY"))
     }
+
+    @Test
+    fun factorForPrefersLockedRateOverLiveRates() {
+        val conversion = CurrencyConversion(baseCurrency = "EUR", rates = rates)
+        // Live table says 1 USD = 0.92 EUR, but the entry locked 0.85 at creation.
+        val entry = usdExpense(exchangeRate = 0.85)
+        assertEquals(0.85, conversion.factorFor(entry)!!, absoluteTolerance = 1e-9)
+    }
+
+    @Test
+    fun factorForFallsBackToLiveRateWithoutLockedRate() {
+        val conversion = CurrencyConversion(baseCurrency = "EUR", rates = rates)
+        assertEquals(0.92, conversion.factorFor(usdExpense(exchangeRate = null))!!, absoluteTolerance = 1e-9)
+    }
+
+    @Test
+    fun factorForNullWhenNoLockedRateAndUnknownCurrency() {
+        val conversion = CurrencyConversion(baseCurrency = "EUR", rates = mapOf("EUR" to 0.92))
+        assertNull(conversion.factorFor(usdExpense(exchangeRate = null)))
+    }
+
+    @Test
+    fun factorForNullConversionIsOneEvenWithLockedRate() {
+        // Single-currency mode ignores rates entirely, locked or live.
+        val conversion: CurrencyConversion? = null
+        assertEquals(1.0, conversion.factorFor(usdExpense(exchangeRate = 0.85)))
+    }
+
+    private fun usdExpense(exchangeRate: Double?): TabEntry.Expense =
+        TabEntry.Expense(
+            tabEntryId = "e1",
+            groupId = "g",
+            title = "",
+            description = "",
+            amount = 100.0,
+            currencyCode = "USD",
+            exchangeRate = exchangeRate,
+            creatorId = "a",
+            paidByUserId = "a",
+            entryDate = LocalDate.parse("1970-01-01"),
+            createdAt = Instant.fromEpochMilliseconds(0),
+            lastModifiedAt = Instant.fromEpochMilliseconds(0),
+            lastModifiedByUserId = "a",
+            version = 0,
+            deletedAt = null,
+            deletedByUserId = null,
+            splits = emptyList(),
+        )
 }

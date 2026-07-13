@@ -27,6 +27,10 @@ data class AddExpenseState(
     val supportedCurrencies: List<Currency> = emptyList(),
     val ratesByCurrency: Map<String, Double> = emptyMap(),
     val ratesLastUpdatedAt: Instant? = null,
+    // Edit mode only: currency + locked-in rate as the expense was loaded. A save keeps the
+    // original rate unless the currency changed, in which case the current rate is re-snapshotted.
+    val originalCurrencyCode: String = "",
+    val originalExchangeRate: Double? = null,
     val currencyQueryState: TextFieldState = TextFieldState(),
     val isCurrencyPickerVisible: Boolean = false,
     val members: List<GroupParticipant> = emptyList(),
