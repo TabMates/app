@@ -64,6 +64,7 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_open_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_across_people
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_add_expense
@@ -1042,7 +1043,7 @@ private fun MemberRow(
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = if (isCurrentUser) "You" else participant.username,
+                    text = if (isCurrentUser) stringResource(Res.string.activity_you) else participant.username,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                 )
