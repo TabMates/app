@@ -6,4 +6,8 @@ sealed interface LoginEvent {
     data object LoginSuccess : LoginEvent
 
     data class LoginFailure(val error: UiText) : LoginEvent
+
+    data object ResendVerificationEmailSuccess : LoginEvent
+
+    data object ResendVerificationEmailError : LoginEvent
 }

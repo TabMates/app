@@ -212,6 +212,91 @@ class LoginViewModelTest {
             assertEquals(1, authService.loginCalls)
         }
 
+    @Test
+    fun loginFailureWithForbiddenSetsEmailNotVerified() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService(loginResult = Result.Failure(DataError.Remote.FORBIDDEN))
+            val viewModel = createViewModel(authService = authService)
+            fillValidCredentials(viewModel)
+
+            viewModel.onLogin()
+            advanceUntilIdle()
+
+            assertTrue(viewModel.state.value.isEmailNotVerified)
+        }
+
+    @Test
+    fun retryingLoginResetsEmailNotVerified() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService(loginResult = Result.Failure(DataError.Remote.FORBIDDEN))
+            val viewModel = createViewModel(authService = authService)
+            fillValidCredentials(viewModel)
+
+            viewModel.onLogin()
+            advanceUntilIdle()
+            assertTrue(viewModel.state.value.isEmailNotVerified)
+
+            authService.loginResult = Result.Failure(DataError.Remote.UNAUTHORIZED)
+            viewModel.onLogin()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.state.value.isEmailNotVerified)
+        }
+
+    @Test
+    fun resendVerificationSuccessEmitsEventAndResetsLoading() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService(loginResult = Result.Failure(DataError.Remote.FORBIDDEN))
+            val viewModel = createViewModel(authService = authService)
+            fillValidCredentials(viewModel)
+
+            viewModel.events.test {
+                viewModel.resendVerification()
+                assertIs<LoginEvent.ResendVerificationEmailSuccess>(awaitItem())
+                cancelAndConsumeRemainingEvents()
+            }
+
+            assertEquals(1, authService.resendVerificationEmailCalls)
+            assertFalse(viewModel.state.value.isResendingVerificationEmail)
+        }
+
+    @Test
+    fun resendVerificationFailureEmitsErrorAndSetsErrorState() =
+        runTest(testDispatcher) {
+            val authService =
+                FakeAuthService(
+                    loginResult = Result.Failure(DataError.Remote.FORBIDDEN),
+                    resendVerificationEmailResult = Result.Failure(DataError.Remote.SERVER_ERROR),
+                )
+            val viewModel = createViewModel(authService = authService)
+            fillValidCredentials(viewModel)
+
+            viewModel.events.test {
+                viewModel.resendVerification()
+                assertIs<LoginEvent.ResendVerificationEmailError>(awaitItem())
+                cancelAndConsumeRemainingEvents()
+            }
+
+            assertEquals(1, authService.resendVerificationEmailCalls)
+            assertFalse(viewModel.state.value.isResendingVerificationEmail)
+            assertIs<UiText.Resource>(viewModel.state.value.resendVerificationError)
+        }
+
+    @Test
+    fun resendVerificationIgnoresDuplicateCallsWhileInProgress() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService(resendVerificationEmailDelayMillis = 1_000L)
+            val viewModel = createViewModel(authService = authService)
+
+            viewModel.resendVerification()
+            viewModel.resendVerification()
+
+            assertEquals(1, authService.resendVerificationEmailCalls)
+
+            advanceUntilIdle()
+            assertFalse(viewModel.state.value.isResendingVerificationEmail)
+        }
+
     private fun TestScope.activateState(viewModel: LoginViewModel) {
         backgroundScope.launch {
             viewModel.state.collect { }

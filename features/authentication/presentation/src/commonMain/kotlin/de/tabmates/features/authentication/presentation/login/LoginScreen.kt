@@ -40,6 +40,7 @@ import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.authentication.presentation.navigation.ForgotPassword
 import de.tabmates.features.authentication.presentation.navigation.Register
 import de.tabmates.features.authentication.presentation.navigation.RegisterGuest
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import tabmatesapp.features.authentication.presentation.generated.resources.Res
@@ -51,6 +52,8 @@ import tabmatesapp.features.authentication.presentation.generated.resources.logi
 import tabmatesapp.features.authentication.presentation.generated.resources.login_title_desc
 import tabmatesapp.features.authentication.presentation.generated.resources.register_email_hint
 import tabmatesapp.features.authentication.presentation.generated.resources.register_password_hint
+import tabmatesapp.features.authentication.presentation.generated.resources.resend_verification_email
+import tabmatesapp.features.authentication.presentation.generated.resources.resent_verification_email
 import tabmatesapp.features.authentication.presentation.generated.resources.welcome_button_guest
 
 @Composable
@@ -73,6 +76,14 @@ fun LoginRoot(
             LoginEvent.LoginSuccess -> {
                 onLoginSuccess()
             }
+
+            LoginEvent.ResendVerificationEmailSuccess -> {
+                snackbarHostState.showSnackbar(getString(Res.string.resent_verification_email))
+            }
+
+            LoginEvent.ResendVerificationEmailError -> {
+                snackbarHostState.showSnackbar(state.resendVerificationError?.asStringAsync().orEmpty())
+            }
         }
     }
 
@@ -82,11 +93,14 @@ fun LoginRoot(
         isPasswordVisible = state.isPasswordVisible,
         canLogin = state.canLogin,
         isLoggingIn = state.isLoggingIn,
+        isEmailNotVerified = state.isEmailNotVerified,
+        isResendingVerificationEmail = state.isResendingVerificationEmail,
         onTogglePasswordVisibility = loginViewModel::onTogglePasswordVisibility,
         onForgotPasswordClick = {
             backStack.add(ForgotPassword)
         },
         onLoginClick = loginViewModel::onLogin,
+        onResendVerificationClick = loginViewModel::resendVerification,
         onCreateAccountClick = {
             backStack.add(Register)
         },
@@ -103,9 +117,12 @@ private fun LoginScreen(
     isPasswordVisible: Boolean,
     canLogin: Boolean,
     isLoggingIn: Boolean,
+    isEmailNotVerified: Boolean,
+    isResendingVerificationEmail: Boolean,
     onTogglePasswordVisibility: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     onLoginClick: () -> Unit,
+    onResendVerificationClick: () -> Unit,
     onCreateAccountClick: () -> Unit,
     onContinueAsGuestClick: () -> Unit,
 ) {
@@ -165,6 +182,16 @@ private fun LoginScreen(
             enabled = canLogin,
             isLoading = isLoggingIn,
         )
+        if (isEmailNotVerified) {
+            TabMatesButton(
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
+                text = stringResource(Res.string.resend_verification_email),
+                onClick = onResendVerificationClick,
+                enabled = !isResendingVerificationEmail,
+                isLoading = isResendingVerificationEmail,
+                style = TabMatesButtonStyle.Secondary,
+            )
+        }
         HorizontalDivider()
         VerticalSpacer(4.dp)
         TabMatesInlineLinkText(
@@ -193,9 +220,36 @@ private fun LoginScreenPreview() {
                 isPasswordVisible = false,
                 canLogin = false,
                 isLoggingIn = false,
+                isEmailNotVerified = false,
+                isResendingVerificationEmail = false,
                 onTogglePasswordVisibility = { },
                 onForgotPasswordClick = { },
                 onLoginClick = { },
+                onResendVerificationClick = { },
+                onCreateAccountClick = { },
+                onContinueAsGuestClick = { },
+            )
+        }
+    }
+}
+
+@PreviewThemes
+@Composable
+private fun LoginScreenEmailNotVerifiedPreview() {
+    TabMatesTheme {
+        Surface {
+            LoginScreen(
+                emailTextFieldState = TextFieldState("test@test.com"),
+                passwordTextFieldState = TextFieldState("password123"),
+                isPasswordVisible = false,
+                canLogin = true,
+                isLoggingIn = false,
+                isEmailNotVerified = true,
+                isResendingVerificationEmail = false,
+                onTogglePasswordVisibility = { },
+                onForgotPasswordClick = { },
+                onLoginClick = { },
+                onResendVerificationClick = { },
                 onCreateAccountClick = { },
                 onContinueAsGuestClick = { },
             )

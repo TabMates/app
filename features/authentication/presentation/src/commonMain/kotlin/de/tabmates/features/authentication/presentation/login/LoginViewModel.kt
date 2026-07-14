@@ -95,6 +95,7 @@ class LoginViewModel(
             _state.update {
                 it.copy(
                     isLoggingIn = true,
+                    isEmailNotVerified = false,
                 )
             }
 
@@ -128,9 +129,48 @@ class LoginViewModel(
                     _state.update {
                         it.copy(
                             isLoggingIn = false,
+                            isEmailNotVerified = error == DataError.Remote.FORBIDDEN,
                         )
                     }
                     eventChannel.send(LoginEvent.LoginFailure(errorMessage))
+                }
+        }
+    }
+
+    fun resendVerification() {
+        if (_state.value.isResendingVerificationEmail) {
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isResendingVerificationEmail = true,
+                )
+            }
+
+            val email =
+                state.value.emailTextFieldState.text
+                    .toString()
+                    .trim()
+
+            authService
+                .resendVerificationEmail(email)
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            isResendingVerificationEmail = false,
+                        )
+                    }
+                    eventChannel.send(LoginEvent.ResendVerificationEmailSuccess)
+                }.onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isResendingVerificationEmail = false,
+                            resendVerificationError = error.toUiText(),
+                        )
+                    }
+                    eventChannel.send(LoginEvent.ResendVerificationEmailError)
                 }
         }
     }
