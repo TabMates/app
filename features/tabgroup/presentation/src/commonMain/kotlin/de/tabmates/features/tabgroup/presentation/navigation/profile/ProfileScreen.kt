@@ -59,6 +59,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_setting
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_email
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_password
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_username
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_delete_account
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_footer
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_about
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_appearance
@@ -92,6 +93,7 @@ fun ProfileRoot(
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
     onOpenOssLicenses: () -> Unit,
+    onDeleteAccount: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = koinViewModel(),
 ) {
@@ -121,6 +123,7 @@ fun ProfileRoot(
         onChangePassword = onChangePassword,
         onChangeEmail = onChangeEmail,
         onOpenOssLicenses = onOpenOssLicenses,
+        onDeleteAccount = onDeleteAccount,
         onSignOut = viewModel::onSignOut,
         modifier = modifier,
     )
@@ -137,6 +140,7 @@ internal fun ProfileScreen(
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
     onOpenOssLicenses: () -> Unit,
+    onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -153,6 +157,7 @@ internal fun ProfileScreen(
             onChangePassword = onChangePassword,
             onChangeEmail = onChangeEmail,
             onOpenOssLicenses = onOpenOssLicenses,
+            onDeleteAccount = onDeleteAccount,
             onSignOut = onSignOut,
             modifier = modifier,
         )
@@ -166,6 +171,7 @@ internal fun ProfileScreen(
             onChangePassword = onChangePassword,
             onChangeEmail = onChangeEmail,
             onOpenOssLicenses = onOpenOssLicenses,
+            onDeleteAccount = onDeleteAccount,
             onSignOut = onSignOut,
             modifier = modifier,
         )
@@ -182,6 +188,7 @@ private fun ProfilePhonePane(
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
     onOpenOssLicenses: () -> Unit,
+    onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -214,6 +221,7 @@ private fun ProfilePhonePane(
         )
         VerticalSpacer(8.dp)
         SignOutButton(onClick = onSignOut)
+        DeleteAccountButton(onClick = onDeleteAccount)
         VerticalSpacer(8.dp)
         Text(
             text = stringResource(Res.string.profile_footer),
@@ -237,6 +245,7 @@ private fun SettingsTwoPane(
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
     onOpenOssLicenses: () -> Unit,
+    onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -244,6 +253,7 @@ private fun SettingsTwoPane(
         SettingsMaster(
             state = state,
             onSectionSelected = onSectionSelected,
+            onDeleteAccount = onDeleteAccount,
             onSignOut = onSignOut,
             modifier = Modifier.width(280.dp).fillMaxSize(),
         )
@@ -324,6 +334,7 @@ private fun SettingsTwoPane(
 private fun SettingsMaster(
     state: ProfileState,
     onSectionSelected: (SettingsSection) -> Unit,
+    onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -361,6 +372,7 @@ private fun SettingsMaster(
         )
         Box(modifier = Modifier.weight(1f))
         SignOutButton(onClick = onSignOut)
+        DeleteAccountButton(onClick = onDeleteAccount)
     }
 }
 
@@ -806,5 +818,20 @@ private fun SignOutButton(onClick: () -> Unit) {
                 fontWeight = FontWeight.SemiBold,
             )
         }
+    }
+}
+
+@Composable
+private fun DeleteAccountButton(onClick: () -> Unit) {
+    // Deliberately understated next to Sign out: a plain error-tinted text button, not a filled card.
+    TextButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = stringResource(Res.string.profile_delete_account),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
     }
 }

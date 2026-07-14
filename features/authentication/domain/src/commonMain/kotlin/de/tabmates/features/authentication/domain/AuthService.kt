@@ -48,4 +48,12 @@ interface AuthService {
         newEmail: String,
         password: String,
     ): EmptyResult<DataError.Remote>
+
+    /**
+     * Deletes the currently authenticated account.
+     *
+     * Registered users must supply their current [password]; anonymous users have none, so it may
+     * be `null`. On success the caller is responsible for clearing the local session.
+     */
+    suspend fun deleteAccount(password: String?): EmptyResult<DataError.Remote>
 }
