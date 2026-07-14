@@ -24,6 +24,7 @@
     <string name="account_successfully_created">TabMates account successfully created!</string>
     <string name="verification_email_sent_to_x">We've sent a verification email to %1$s</string>
     <string name="resend_verification_email">Resend verification email</string>
+    <string name="resend_verification_email_cooldown">Resend available in %1$s</string>
     <string name="resent_verification_email">Successfully resent verification email</string>
 
     <!-- General Strings -->

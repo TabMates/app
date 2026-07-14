@@ -11,6 +11,7 @@ import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.authentication.domain.EmailValidator
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
@@ -95,6 +96,7 @@ class LoginViewModel(
             _state.update {
                 it.copy(
                     isLoggingIn = true,
+                    isEmailNotVerified = false,
                 )
             }
 
@@ -128,10 +130,64 @@ class LoginViewModel(
                     _state.update {
                         it.copy(
                             isLoggingIn = false,
+                            isEmailNotVerified = error == DataError.Remote.FORBIDDEN,
                         )
                     }
                     eventChannel.send(LoginEvent.LoginFailure(errorMessage))
                 }
         }
+    }
+
+    fun resendVerification() {
+        if (_state.value.isResendingVerificationEmail || _state.value.resendCooldownSeconds > 0) {
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isResendingVerificationEmail = true,
+                )
+            }
+
+            val email =
+                state.value.emailTextFieldState.text
+                    .toString()
+                    .trim()
+
+            authService
+                .resendVerificationEmail(email)
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            isResendingVerificationEmail = false,
+                        )
+                    }
+                    startResendCooldown()
+                    eventChannel.send(LoginEvent.ResendVerificationEmailSuccess)
+                }.onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isResendingVerificationEmail = false,
+                            resendVerificationError = error.toUiText(),
+                        )
+                    }
+                    eventChannel.send(LoginEvent.ResendVerificationEmailError)
+                }
+        }
+    }
+
+    private fun startResendCooldown() {
+        viewModelScope.launch {
+            _state.update { it.copy(resendCooldownSeconds = RESEND_COOLDOWN_SECONDS) }
+            while (_state.value.resendCooldownSeconds > 0) {
+                delay(1.seconds)
+                _state.update { it.copy(resendCooldownSeconds = it.resendCooldownSeconds - 1) }
+            }
+        }
+    }
+
+    private companion object {
+        const val RESEND_COOLDOWN_SECONDS = 180
     }
 }
