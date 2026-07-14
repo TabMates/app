@@ -9,11 +9,11 @@ import kotlin.test.assertTrue
 
 class RegisterDeviceRequestTest {
     @Test
-    fun devicePlatform_usesStableLowercaseWireValues() {
-        assertEquals("android", DevicePlatform.ANDROID.wireValue)
-        assertEquals("ios", DevicePlatform.IOS.wireValue)
-        assertEquals("desktop", DevicePlatform.DESKTOP.wireValue)
-        assertEquals("web", DevicePlatform.WEB.wireValue)
+    fun devicePlatform_usesStableBackendEnumWireValues() {
+        assertEquals("ANDROID", DevicePlatform.ANDROID.wireValue)
+        assertEquals("IOS", DevicePlatform.IOS.wireValue)
+        assertEquals("DESKTOP", DevicePlatform.DESKTOP.wireValue)
+        assertEquals("WEB", DevicePlatform.WEB.wireValue)
     }
 
     @Test
@@ -28,8 +28,8 @@ class RegisterDeviceRequestTest {
             )
 
         assertTrue(json.contains("\"token\":\"tok-123\""), json)
-        // wireValue ("ios"), not the enum name ("IOS")
-        assertTrue(json.contains("\"platform\":\"ios\""), json)
+        // wireValue matches the backend PlatformDto enum name
+        assertTrue(json.contains("\"platform\":\"IOS\""), json)
         assertTrue(json.contains("\"locale\":\"de\""), json)
     }
 }
