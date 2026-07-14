@@ -283,6 +283,29 @@ class LoginViewModelTest {
         }
 
     @Test
+    fun resendVerificationEntersCooldownAndBlocksFurtherSendsUntilElapsed() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService()
+            val viewModel = createViewModel(authService = authService)
+
+            viewModel.resendVerification()
+            assertEquals(1, authService.resendVerificationEmailCalls)
+            assertEquals(180, viewModel.state.value.resendCooldownSeconds)
+
+            // Blocked while the cooldown is active.
+            viewModel.resendVerification()
+            assertEquals(1, authService.resendVerificationEmailCalls)
+
+            // Cooldown counts down to zero.
+            advanceUntilIdle()
+            assertEquals(0, viewModel.state.value.resendCooldownSeconds)
+
+            // Allowed again once the cooldown has elapsed.
+            viewModel.resendVerification()
+            assertEquals(2, authService.resendVerificationEmailCalls)
+        }
+
+    @Test
     fun resendVerificationIgnoresDuplicateCallsWhileInProgress() =
         runTest(testDispatcher) {
             val authService = FakeAuthService(resendVerificationEmailDelayMillis = 1_000L)

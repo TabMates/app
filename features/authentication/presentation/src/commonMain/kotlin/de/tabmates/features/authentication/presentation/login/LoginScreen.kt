@@ -53,6 +53,7 @@ import tabmatesapp.features.authentication.presentation.generated.resources.logi
 import tabmatesapp.features.authentication.presentation.generated.resources.register_email_hint
 import tabmatesapp.features.authentication.presentation.generated.resources.register_password_hint
 import tabmatesapp.features.authentication.presentation.generated.resources.resend_verification_email
+import tabmatesapp.features.authentication.presentation.generated.resources.resend_verification_email_cooldown
 import tabmatesapp.features.authentication.presentation.generated.resources.resent_verification_email
 import tabmatesapp.features.authentication.presentation.generated.resources.welcome_button_guest
 
@@ -95,6 +96,7 @@ fun LoginRoot(
         isLoggingIn = state.isLoggingIn,
         isEmailNotVerified = state.isEmailNotVerified,
         isResendingVerificationEmail = state.isResendingVerificationEmail,
+        resendCooldownSeconds = state.resendCooldownSeconds,
         onTogglePasswordVisibility = loginViewModel::onTogglePasswordVisibility,
         onForgotPasswordClick = {
             backStack.add(ForgotPassword)
@@ -119,6 +121,7 @@ private fun LoginScreen(
     isLoggingIn: Boolean,
     isEmailNotVerified: Boolean,
     isResendingVerificationEmail: Boolean,
+    resendCooldownSeconds: Int,
     onTogglePasswordVisibility: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     onLoginClick: () -> Unit,
@@ -183,11 +186,20 @@ private fun LoginScreen(
             isLoading = isLoggingIn,
         )
         if (isEmailNotVerified) {
+            val resendText =
+                if (resendCooldownSeconds > 0) {
+                    stringResource(
+                        Res.string.resend_verification_email_cooldown,
+                        formatCooldown(resendCooldownSeconds),
+                    )
+                } else {
+                    stringResource(Res.string.resend_verification_email)
+                }
             TabMatesButton(
                 modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
-                text = stringResource(Res.string.resend_verification_email),
+                text = resendText,
                 onClick = onResendVerificationClick,
-                enabled = !isResendingVerificationEmail,
+                enabled = !isResendingVerificationEmail && resendCooldownSeconds == 0,
                 isLoading = isResendingVerificationEmail,
                 style = TabMatesButtonStyle.Secondary,
             )
@@ -209,6 +221,12 @@ private fun LoginScreen(
     }
 }
 
+private fun formatCooldown(totalSeconds: Int): String {
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "$minutes:${seconds.toString().padStart(2, '0')}"
+}
+
 @PreviewThemes
 @Composable
 private fun LoginScreenPreview() {
@@ -222,6 +240,7 @@ private fun LoginScreenPreview() {
                 isLoggingIn = false,
                 isEmailNotVerified = false,
                 isResendingVerificationEmail = false,
+                resendCooldownSeconds = 0,
                 onTogglePasswordVisibility = { },
                 onForgotPasswordClick = { },
                 onLoginClick = { },
@@ -246,6 +265,32 @@ private fun LoginScreenEmailNotVerifiedPreview() {
                 isLoggingIn = false,
                 isEmailNotVerified = true,
                 isResendingVerificationEmail = false,
+                resendCooldownSeconds = 0,
+                onTogglePasswordVisibility = { },
+                onForgotPasswordClick = { },
+                onLoginClick = { },
+                onResendVerificationClick = { },
+                onCreateAccountClick = { },
+                onContinueAsGuestClick = { },
+            )
+        }
+    }
+}
+
+@PreviewThemes
+@Composable
+private fun LoginScreenResendCooldownPreview() {
+    TabMatesTheme {
+        Surface {
+            LoginScreen(
+                emailTextFieldState = TextFieldState("test@test.com"),
+                passwordTextFieldState = TextFieldState("password123"),
+                isPasswordVisible = false,
+                canLogin = true,
+                isLoggingIn = false,
+                isEmailNotVerified = true,
+                isResendingVerificationEmail = false,
+                resendCooldownSeconds = 175,
                 onTogglePasswordVisibility = { },
                 onForgotPasswordClick = { },
                 onLoginClick = { },

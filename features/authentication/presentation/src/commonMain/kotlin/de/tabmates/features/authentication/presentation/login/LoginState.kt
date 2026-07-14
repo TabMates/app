@@ -12,4 +12,5 @@ data class LoginState(
     val isEmailNotVerified: Boolean = false,
     val isResendingVerificationEmail: Boolean = false,
     val resendVerificationError: UiText? = null,
+    val resendCooldownSeconds: Int = 0,
 )

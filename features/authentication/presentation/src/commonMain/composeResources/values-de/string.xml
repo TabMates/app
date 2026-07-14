@@ -24,6 +24,7 @@
     <string name="account_successfully_created">TabMates-Konto erfolgreich erstellt!</string>
     <string name="verification_email_sent_to_x">Wir haben eine Bestätigungs-E-Mail an %1$s gesendet</string>
     <string name="resend_verification_email">Bestätigungs-E-Mail erneut senden</string>
+    <string name="resend_verification_email_cooldown">Erneut senden in %1$s möglich</string>
     <string name="resent_verification_email">Bestätigungs-E-Mail erfolgreich erneut gesendet</string>
 
     <!-- General Strings -->
