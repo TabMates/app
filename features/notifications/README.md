@@ -38,11 +38,17 @@ device token with that user. Server side: TabMatesServer `notification` module
 
 - `POST /api/notification/register` — body `{ "token": String, "platform": "ANDROID"|"IOS"|"DESKTOP"|"WEB", "locale": String }` (idempotent upsert; re-registering refreshes owner, platform, and locale)
 - `DELETE /api/notification/{token}` — no body
+- `GET /api/notifications/stream` (WebSocket) — Desktop only. Server-push-only stream of
+  `NotificationEventDto { title, body, deepLink? }` frames for platforms without FCM. Auth rides
+  the shared `HttpClient` (`Authorization: Bearer` + `x-api-key`); locale is supplied as a `lang`
+  BCP-47 query param (stream clients register no device token, so `lang` is the only locale
+  signal — absent/unsupported → English).
 
 `locale` is a BCP-47 tag (e.g. `"de"`, `"en-US"`). The backend should localize the push
 `notification` block (title/body) in that language — localizing client-side is unreliable
 because the OS renders pushes while the app is killed. The device re-registers automatically
-when the in-app language changes (`NotificationsSyncCoordinator`).
+when the in-app language changes (`NotificationsSyncCoordinator`); the desktop stream likewise
+reconnects with the new `lang` (`DesktopPushNotificationController.refreshRegistration()`).
 
 Push payloads include `deepLink` (`PushNotificationConstants.KEY_DEEP_LINK`) — the URL the
 notification opens on tap. For a group event the backend sends `https://<host>/groups/<groupId>`,
