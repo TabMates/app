@@ -1,11 +1,11 @@
 package de.tabmates.features.notifications.data
 
+import de.tabmates.core.data.networking.delete
 import de.tabmates.core.data.networking.post
 import de.tabmates.core.domain.preferences.LocaleProvider
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.features.notifications.data.dto.requests.RegisterDeviceRequest
-import de.tabmates.features.notifications.data.dto.requests.UnregisterDeviceRequest
 import de.tabmates.features.notifications.domain.DevicePlatform
 import de.tabmates.features.notifications.domain.NotificationService
 import io.ktor.client.HttpClient
@@ -21,7 +21,7 @@ class KtorNotificationService(
         platform: DevicePlatform,
     ): EmptyResult<DataError.Remote> {
         return httpClient.post(
-            route = "/api/notifications/devices",
+            route = "/api/notification/register",
             body =
                 RegisterDeviceRequest(
                     token = token,
@@ -32,9 +32,8 @@ class KtorNotificationService(
     }
 
     override suspend fun unregisterDevice(token: String): EmptyResult<DataError.Remote> {
-        return httpClient.post(
-            route = "/api/notifications/devices/unregister",
-            body = UnregisterDeviceRequest(token = token),
+        return httpClient.delete(
+            route = "/api/notification/$token",
         )
     }
 }

@@ -30,23 +30,32 @@ on logout, and re-registers on in-app language change — mirrors `GroupSyncCoor
 > `mobileMain`) because this project's AGP KMP android target is not part of the
 > `mobile` hierarchy group, so `mobileMain` does not reach the android compilation.
 
-## Backend contract (ASSUMED — confirm with backend)
+## Backend contract
 
 The bearer token on the shared `HttpClient` identifies the user; endpoints associate a
-device token with that user.
+device token with that user. Server side: TabMatesServer `notification` module
+(`DeviceTokenController`).
 
-- `POST /api/notifications/devices` — body `{ "token": String, "platform": "android"|"ios"|"desktop"|"web", "locale": String }`
-- `POST /api/notifications/devices/unregister` — body `{ "token": String }`
+- `POST /api/notification/register` — body `{ "token": String, "platform": "ANDROID"|"IOS"|"DESKTOP"|"WEB", "locale": String }` (idempotent upsert; re-registering refreshes owner, platform, and locale)
+- `DELETE /api/notification/{token}` — no body
+- `GET /api/notifications/stream` (WebSocket) — Desktop only. Server-push-only stream of
+  `NotificationEventDto { title, body, deepLink? }` frames for platforms without FCM. Auth rides
+  the shared `HttpClient` (`Authorization: Bearer` + `x-api-key`); locale is supplied as a `lang`
+  BCP-47 query param (stream clients register no device token, so `lang` is the only locale
+  signal — absent/unsupported → English).
 
 `locale` is a BCP-47 tag (e.g. `"de"`, `"en-US"`). The backend should localize the push
 `notification` block (title/body) in that language — localizing client-side is unreliable
 because the OS renders pushes while the app is killed. The device re-registers automatically
-when the in-app language changes (`NotificationsSyncCoordinator`).
+when the in-app language changes (`NotificationsSyncCoordinator`); the desktop stream likewise
+reconnects with the new `lang` (`DesktopPushNotificationController.refreshRegistration()`).
 
-Push payloads may include `deepLink` (`PushNotificationConstants.KEY_DEEP_LINK`) — the URL the
+Push payloads include `deepLink` (`PushNotificationConstants.KEY_DEEP_LINK`) — the URL the
 notification opens on tap. For a group event the backend sends `https://<host>/groups/<groupId>`,
-which resolves to the group detail screen (`App.kt` registers the deep-link route). Adjust
-routes/DTOs if the backend differs.
+which resolves to the group detail screen (`App.kt` registers the deep-link route). The backend
+pushes on: entry added/updated/deleted (expense/income/settlement) and member joined, always
+excluding the acting user's own devices, with `android.notification.channel_id` set to
+`expenses`/`settle_ups`/`members` accordingly.
 
 ### In-app language
 
