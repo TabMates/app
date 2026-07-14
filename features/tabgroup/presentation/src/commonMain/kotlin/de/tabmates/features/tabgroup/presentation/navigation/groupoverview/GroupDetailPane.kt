@@ -185,7 +185,6 @@ internal fun GroupDetailPane(
                 )
             }
         }
-        VerticalSpacer(16.dp)
         when (selectedTab) {
             DetailTab.EXPENSES -> {
                 ExpensesTab(
@@ -347,12 +346,16 @@ private fun ExpensesTab(
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(bottom = 12.dp),
     ) {
-        StatCardsRow(item = item)
+        VerticalSpacer(16.dp)
+        StatCardsRow(item = item, modifier = Modifier.padding(horizontal = 24.dp))
+        VerticalSpacer(12.dp)
         if (entries.isEmpty()) {
-            EmptyTabHint(text = stringResource(Res.string.groups_detail_empty_expenses))
+            EmptyTabHint(
+                text = stringResource(Res.string.groups_detail_empty_expenses),
+                modifier = Modifier.padding(horizontal = 24.dp),
+            )
         } else {
             entries.forEach { entry ->
                 when (entry) {
@@ -402,7 +405,8 @@ private fun ExpenseRow(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick),
+                .clickable(onClick = onClick)
+                .padding(horizontal = 24.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         EntryIcon(Res.drawable.ic_restaurant)
@@ -546,7 +550,8 @@ private fun SettlementRow(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick),
+                .clickable(onClick = onClick)
+                .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         EntryIcon(
@@ -684,6 +689,7 @@ private fun BalancesTab(
                 .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        VerticalSpacer(16.dp)
         BalanceHero(item = item)
         if (hasOutstandingDebts) {
             Button(
@@ -868,6 +874,7 @@ private fun MembersTab(
                 .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        VerticalSpacer(16.dp)
         Text(
             text = memberCountText(active.size).uppercase(),
             style = MaterialTheme.typography.labelLarge,
@@ -1179,11 +1186,14 @@ private fun StatCard(
 }
 
 @Composable
-private fun EmptyTabHint(text: String) {
+private fun EmptyTabHint(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Text(
             text = text,
