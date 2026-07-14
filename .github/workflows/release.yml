@@ -43,6 +43,16 @@ jobs:
           fileDir: 'androidApp/keystore/'
           encodedString: ${{ secrets.KEYSTORE_PLAY_STORE }}
 
+      # Overwrites the committed dummy google-services.json with the real Firebase
+      # config so the released AAB targets the real FCM project. Dummy stays committed
+      # for local/PR/debug builds (fork PRs have no secret access). See features/notifications/README.md.
+      - name: Decode google-services.json
+        uses: timheuer/base64-to-file@v2
+        with:
+          fileName: 'google-services.json'
+          fileDir: 'androidApp/'
+          encodedString: ${{ secrets.GOOGLE_SERVICES_JSON }}
+
       - name: Build AppBundle
         run: ./gradlew :androidApp:bundleRelease --no-daemon --no-configuration-cache --no-build-cache -x test
         env:
