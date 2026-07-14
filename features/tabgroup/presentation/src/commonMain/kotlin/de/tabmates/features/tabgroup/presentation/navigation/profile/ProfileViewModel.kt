@@ -9,6 +9,7 @@ import de.tabmates.core.domain.preferences.ThemeMode
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.notifications.domain.NotificationPermissionController
 import de.tabmates.features.notifications.domain.NotificationPermissionStatus
+import de.tabmates.features.notifications.domain.PushNotificationController
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,6 +29,7 @@ class ProfileViewModel(
     private val appPreferencesRepository: AppPreferencesRepository,
     private val authService: AuthService,
     private val notificationPermissionController: NotificationPermissionController,
+    private val pushNotificationController: PushNotificationController,
 ) : ViewModel() {
     private val selectedSection = MutableStateFlow(SettingsSection.PROFILE)
 
@@ -92,6 +94,10 @@ class ProfileViewModel(
 
     fun onSignOut() {
         viewModelScope.launch {
+            // Unregister the device token while the session is still valid — the DELETE needs the
+            // bearer token, and both calls below clear it. Doing this after would 401 and silently
+            // leave a stale token on the server, so the device would keep receiving pushes.
+            pushNotificationController.stop()
             // Always clear the local session so sign-out works even if the network call fails.
             authService.logout(sessionStorage.get()?.refreshToken.orEmpty())
             sessionStorage.set(null)
