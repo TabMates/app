@@ -31,9 +31,19 @@ class OfflineFirstSyncRepositoryTest {
     private fun repository(
         service: FakeSyncService,
         cursorStore: FakeSyncCursorStore,
+        tabEntryService: FakeTabEntryService = FakeTabEntryService(),
+        pendingBackfillStore: FakePendingTabEntryBackfillStore = FakePendingTabEntryBackfillStore(),
         lastServerContactStore: FakeLastServerContactStore = FakeLastServerContactStore(),
     ): OfflineFirstSyncRepository =
-        OfflineFirstSyncRepository(service, database, cursorStore, lastServerContactStore)
+        OfflineFirstSyncRepository(
+            syncService = service,
+            database = database,
+            cursorStore = cursorStore,
+            lastServerContactStore = lastServerContactStore,
+            tabEntryBackfiller =
+                GroupTabEntryBackfiller(tabEntryService, database, pendingBackfillStore, NoopLogger),
+            pendingBackfillStore = pendingBackfillStore,
+        )
 
     private suspend fun localGroupIds() = database.groupDao.getAllGroupIds().toSet()
 
@@ -361,7 +371,7 @@ class OfflineFirstSyncRepositoryTest {
             val service = FakeSyncService(Result.Success(snapshot(serverTime = instant(1000))))
             val contactStore = FakeLastServerContactStore()
 
-            repository(service, FakeSyncCursorStore(), contactStore).sync()
+            repository(service, FakeSyncCursorStore(), lastServerContactStore = contactStore).sync()
 
             assertEquals(1, contactStore.recordCallCount)
         }
@@ -372,9 +382,124 @@ class OfflineFirstSyncRepositoryTest {
             val service = FakeSyncService(Result.Failure(DataError.Remote.SERVER_ERROR))
             val contactStore = FakeLastServerContactStore()
 
-            repository(service, FakeSyncCursorStore(), contactStore).sync()
+            repository(service, FakeSyncCursorStore(), lastServerContactStore = contactStore).sync()
 
             assertEquals(0, contactStore.recordCallCount)
+        }
+
+    @Test
+    fun deltaSyncBackfillsEntriesForNewlyKnownGroup() =
+        runTest {
+            val cursorStore = FakeSyncCursorStore(cursor = instant(1000))
+            val service =
+                FakeSyncService(
+                    // Joined-elsewhere group arrives in the delta without its historical entries.
+                    Result.Success(snapshot(serverTime = instant(2000), groups = listOf(group("g2")))),
+                )
+            val tabEntryService =
+                FakeTabEntryService(Result.Success(history(listOf(expense("e9", "g2")))))
+            val pendingStore = FakePendingTabEntryBackfillStore()
+
+            repository(service, cursorStore, tabEntryService, pendingStore).sync()
+
+            assertEquals(listOf("g2"), tabEntryService.receivedGroupIds)
+            assertEquals(setOf("e9"), localEntryIds())
+            assertTrue(pendingStore.getAll().isEmpty())
+        }
+
+    @Test
+    fun fullSyncSkipsBackfillAndClearsPendingMarkers() =
+        runTest {
+            val cursorStore = FakeSyncCursorStore(cursor = null)
+            val service =
+                FakeSyncService(
+                    Result.Success(
+                        snapshot(
+                            serverTime = instant(1000),
+                            groups = listOf(group("g1")),
+                            tabEntries = listOf(expense("e1", "g1")),
+                        ),
+                    ),
+                )
+            val tabEntryService = FakeTabEntryService()
+            val pendingStore = FakePendingTabEntryBackfillStore(initial = setOf("g1"))
+
+            repository(service, cursorStore, tabEntryService, pendingStore).sync()
+
+            assertTrue(tabEntryService.receivedGroupIds.isEmpty())
+            assertTrue(pendingStore.getAll().isEmpty())
+        }
+
+    @Test
+    fun deltaSyncRetriesPendingMarkerForAlreadyKnownGroup() =
+        runTest {
+            val cursorStore = FakeSyncCursorStore(cursor = null)
+            val service =
+                FakeSyncService(
+                    Result.Success(snapshot(serverTime = instant(1000), groups = listOf(group("g1")))),
+                )
+            val tabEntryService = FakeTabEntryService()
+            val pendingStore = FakePendingTabEntryBackfillStore()
+            val repository = repository(service, cursorStore, tabEntryService, pendingStore)
+            repository.sync()
+
+            // Simulates a join whose entries fetch failed: group already local, only the marker left.
+            pendingStore.add("g1")
+            tabEntryService.groupEntriesResult = Result.Success(history(listOf(expense("e1", "g1"))))
+            service.result =
+                Result.Success(snapshot(serverTime = instant(2000), activeGroupIds = listOf("g1")))
+            repository.sync()
+
+            assertEquals(listOf("g1"), tabEntryService.receivedGroupIds)
+            assertEquals(setOf("e1"), localEntryIds())
+            assertTrue(pendingStore.getAll().isEmpty())
+        }
+
+    @Test
+    fun deltaSyncDropsPendingMarkerForDepartedGroup() =
+        runTest {
+            val cursorStore = FakeSyncCursorStore(cursor = instant(1000))
+            val service =
+                FakeSyncService(
+                    Result.Success(snapshot(serverTime = instant(2000), activeGroupIds = emptyList())),
+                )
+            val tabEntryService = FakeTabEntryService()
+            val pendingStore = FakePendingTabEntryBackfillStore(initial = setOf("gone"))
+
+            repository(service, cursorStore, tabEntryService, pendingStore).sync()
+
+            assertTrue(tabEntryService.receivedGroupIds.isEmpty())
+            assertTrue(pendingStore.getAll().isEmpty())
+        }
+
+    @Test
+    fun backfillFailureKeepsSyncSuccessfulAndRetriesNextDelta() =
+        runTest {
+            val cursorStore = FakeSyncCursorStore(cursor = instant(1000))
+            val service =
+                FakeSyncService(
+                    Result.Success(snapshot(serverTime = instant(2000), groups = listOf(group("g2")))),
+                )
+            val tabEntryService =
+                FakeTabEntryService(Result.Failure(DataError.Remote.SERVER_ERROR))
+            val pendingStore = FakePendingTabEntryBackfillStore()
+            val repository = repository(service, cursorStore, tabEntryService, pendingStore)
+
+            val result = repository.sync()
+
+            assertIs<Result.Success<Unit>>(result)
+            assertEquals(instant(2000), cursorStore.get())
+            assertEquals(setOf("g2"), pendingStore.getAll())
+            assertTrue(localEntryIds().isEmpty())
+
+            // Next delta: group no longer "new", marker drives the retry.
+            tabEntryService.groupEntriesResult = Result.Success(history(listOf(expense("e9", "g2"))))
+            service.result =
+                Result.Success(snapshot(serverTime = instant(3000), activeGroupIds = listOf("g2")))
+            repository.sync()
+
+            assertEquals(setOf("e9"), localEntryIds())
+            assertTrue(pendingStore.getAll().isEmpty())
         }
 
     @Test

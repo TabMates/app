@@ -2,6 +2,7 @@ package de.tabmates.composeapp.sync
 
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.sync.LastServerContactStore
+import de.tabmates.core.domain.sync.PendingTabEntryBackfillStore
 import de.tabmates.core.domain.sync.SyncCursorStore
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.sync.SyncRepository
@@ -21,6 +22,7 @@ class GroupSyncCoordinator(
     private val groupRepository: GroupRepository,
     private val syncCursorStore: SyncCursorStore,
     private val lastServerContactStore: LastServerContactStore,
+    private val pendingBackfillStore: PendingTabEntryBackfillStore,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -36,6 +38,7 @@ class GroupSyncCoordinator(
                 } else {
                     syncCursorStore.clear()
                     lastServerContactStore.clear()
+                    pendingBackfillStore.clearAll()
                     groupRepository.deleteAllGroups()
                 }
             }.launchIn(scope)
