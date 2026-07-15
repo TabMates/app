@@ -17,6 +17,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ChangeEmailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ChangePasswordRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.DeleteAccountRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.EditUsernameRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.OssLicensesRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ProfileRoot
@@ -51,6 +52,7 @@ val mainSerializersModule =
             subclass(EditUsername::class)
             subclass(ChangePassword::class)
             subclass(ChangeEmail::class)
+            subclass(DeleteAccount::class)
             subclass(OssLicenses::class)
         }
     }
@@ -126,6 +128,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
             onChangePassword = { backStack.add(ChangePassword) },
             onChangeEmail = { backStack.add(ChangeEmail) },
             onOpenOssLicenses = { backStack.add(OssLicenses) },
+            onDeleteAccount = { backStack.add(DeleteAccount) },
         )
     }
 
@@ -155,6 +158,12 @@ fun EntryProviderScope<NavKey>.mainGraph(
             snackbarHostState = snackbarHostState,
             onSaved = { backStack.removeLastOrNull() },
         )
+    }
+
+    entry<DeleteAccount> {
+        // No back-stack cleanup needed: deleting clears the session and the app shell
+        // (App.kt observing isLoggedIn) resets the whole stack to Welcome.
+        DeleteAccountRoot(snackbarHostState = snackbarHostState)
     }
 
     entry<AddExpense> { route ->

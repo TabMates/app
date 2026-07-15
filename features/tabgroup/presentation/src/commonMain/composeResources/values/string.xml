@@ -302,6 +302,7 @@
     <string name="profile_notifications_blocked">Notifications are turned off for TabMates in your system settings. Enable them to receive push notifications.</string>
     <string name="profile_open_settings">Open settings</string>
     <string name="profile_sign_out">Sign out</string>
+    <string name="profile_delete_account">Delete account</string>
     <string name="profile_nav_appearance">Appearance</string>
     <string name="profile_nav_notifications">Notifications</string>
     <string name="profile_nav_about">About</string>
@@ -347,4 +348,15 @@
     <string name="change_email_error_wrong_password">Incorrect password</string>
     <string name="change_email_verification_sent">Verification email sent to %1$s. Confirm it to complete the change.</string>
     <string name="account_saved">Saved</string>
+
+    <string name="delete_account_title">Delete account</string>
+    <string name="delete_account_warning">This permanently deletes your account and removes you from your groups. Shared expenses stay with the group but are no longer linked to you. This cannot be undone.</string>
+    <string name="delete_account_password_label">Current password</string>
+    <string name="delete_account_button">Delete my account</string>
+    <string name="delete_account_error_password_required">Enter your password</string>
+    <string name="delete_account_error_wrong_password">Incorrect password</string>
+    <string name="delete_account_dialog_title">Delete account?</string>
+    <string name="delete_account_dialog_message">Your account will be permanently deleted. This cannot be undone.</string>
+    <string name="delete_account_dialog_confirm">Delete</string>
+    <string name="delete_account_dialog_cancel">Cancel</string>
 </resources>

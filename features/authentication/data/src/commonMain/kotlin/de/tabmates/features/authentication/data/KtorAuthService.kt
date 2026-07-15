@@ -4,6 +4,7 @@ import de.tabmates.core.data.dto.AuthInfoSerializable
 import de.tabmates.core.data.dto.UserSerializable
 import de.tabmates.core.data.dto.requests.RefreshRequest
 import de.tabmates.core.data.mappers.toDomain
+import de.tabmates.core.data.networking.delete
 import de.tabmates.core.data.networking.get
 import de.tabmates.core.data.networking.post
 import de.tabmates.core.domain.auth.AuthInfo
@@ -16,6 +17,7 @@ import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.authentication.data.dto.requests.ChangeEmailRequest
 import de.tabmates.features.authentication.data.dto.requests.ChangePasswordRequest
 import de.tabmates.features.authentication.data.dto.requests.ChangeUsernameRequest
+import de.tabmates.features.authentication.data.dto.requests.DeleteAccountRequest
 import de.tabmates.features.authentication.data.dto.requests.EmailRequest
 import de.tabmates.features.authentication.data.dto.requests.LoginAnonymousRequest
 import de.tabmates.features.authentication.data.dto.requests.LoginRequest
@@ -25,6 +27,7 @@ import de.tabmates.features.authentication.data.dto.requests.ResetPasswordReques
 import de.tabmates.features.authentication.domain.AuthService
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.auth.clearAuthTokens
+import io.ktor.client.request.setBody
 import org.koin.core.annotation.Single
 
 @Single(binds = [AuthService::class])
@@ -187,5 +190,16 @@ class KtorAuthService(
                     password = password,
                 ),
         )
+    }
+
+    override suspend fun deleteAccount(password: String?): EmptyResult<DataError.Remote> {
+        return httpClient
+            .delete<Unit>(
+                route = "/api/auth/account",
+                // Registered users confirm with their password; anonymous users send no body.
+                builder = { password?.let { setBody(DeleteAccountRequest(password = it)) } },
+            ).onSuccess {
+                httpClient.clearAuthTokens()
+            }
     }
 }

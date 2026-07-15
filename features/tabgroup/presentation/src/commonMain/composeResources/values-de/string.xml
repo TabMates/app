@@ -302,6 +302,7 @@
     <string name="profile_notifications_blocked">Benachrichtigungen sind für TabMates in deinen Systemeinstellungen deaktiviert. Aktiviere sie, um Push-Benachrichtigungen zu erhalten.</string>
     <string name="profile_open_settings">Einstellungen öffnen</string>
     <string name="profile_sign_out">Abmelden</string>
+    <string name="profile_delete_account">Konto löschen</string>
     <string name="profile_nav_appearance">Erscheinungsbild</string>
     <string name="profile_nav_notifications">Benachrichtigungen</string>
     <string name="profile_nav_about">Über</string>
@@ -347,4 +348,15 @@
     <string name="change_email_error_wrong_password">Falsches Passwort</string>
     <string name="change_email_verification_sent">Bestätigungs-E-Mail an %1$s gesendet. Bestätige sie, um die Änderung abzuschließen.</string>
     <string name="account_saved">Gespeichert</string>
+
+    <string name="delete_account_title">Konto löschen</string>
+    <string name="delete_account_warning">Dadurch wird dein Konto dauerhaft gelöscht und du wirst aus deinen Gruppen entfernt. Geteilte Ausgaben bleiben in der Gruppe erhalten, sind aber nicht mehr mit dir verknüpft. Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="delete_account_password_label">Aktuelles Passwort</string>
+    <string name="delete_account_button">Mein Konto löschen</string>
+    <string name="delete_account_error_password_required">Gib dein Passwort ein</string>
+    <string name="delete_account_error_wrong_password">Falsches Passwort</string>
+    <string name="delete_account_dialog_title">Konto löschen?</string>
+    <string name="delete_account_dialog_message">Dein Konto wird dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="delete_account_dialog_confirm">Löschen</string>
+    <string name="delete_account_dialog_cancel">Abbrechen</string>
 </resources>

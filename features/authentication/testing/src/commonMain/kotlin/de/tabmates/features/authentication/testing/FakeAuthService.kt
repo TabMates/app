@@ -22,11 +22,13 @@ open class FakeAuthService(
     var changeUsernameResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var changePasswordResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var changeEmailResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var deleteAccountResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
 ) : AuthService {
     val logoutCalls: MutableList<String> = mutableListOf()
     val changeUsernameCalls: MutableList<String> = mutableListOf()
     val changePasswordCalls: MutableList<Pair<String, String>> = mutableListOf()
     val changeEmailCalls: MutableList<Pair<String, String>> = mutableListOf()
+    val deleteAccountCalls: MutableList<String?> = mutableListOf()
     var registerCalls: Int = 0
         private set
 
@@ -128,5 +130,10 @@ open class FakeAuthService(
     ): EmptyResult<DataError.Remote> {
         changeEmailCalls += (newEmail to password)
         return changeEmailResult
+    }
+
+    override suspend fun deleteAccount(password: String?): EmptyResult<DataError.Remote> {
+        deleteAccountCalls += password
+        return deleteAccountResult
     }
 }
