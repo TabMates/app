@@ -5,7 +5,20 @@
 This page explains how to request deletion of your TabMates account and the data
 associated with it.
 
-## How to request deletion
+## How to delete your account
+
+### In the app (recommended)
+
+1. Open the TabMates app and go to **Profile**.
+2. Tap **Delete account** (below **Sign out**).
+3. Registered accounts confirm with their current **password**; guest accounts
+   are deleted without a password.
+4. Confirm the dialog. Your account is deleted **immediately** and you are
+   signed out on the device.
+
+### By email
+
+If you can no longer access the app:
 
 1. Send an email to **1kylit08@addy.io**.
 2. Use the subject line **"Delete my account"**.
@@ -36,4 +49,4 @@ When your account is deleted, we remove:
 Uninstalling the TabMates app removes all locally cached data (groups, expenses,
 and login tokens) from that device.
 
-_Last updated: 2026-06-25_
+_Last updated: 2026-07-15_
