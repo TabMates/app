@@ -31,7 +31,9 @@ class OfflineFirstSyncRepositoryTest {
     private fun repository(
         service: FakeSyncService,
         cursorStore: FakeSyncCursorStore,
-    ): OfflineFirstSyncRepository = OfflineFirstSyncRepository(service, database, cursorStore)
+        lastServerContactStore: FakeLastServerContactStore = FakeLastServerContactStore(),
+    ): OfflineFirstSyncRepository =
+        OfflineFirstSyncRepository(service, database, cursorStore, lastServerContactStore)
 
     private suspend fun localGroupIds() = database.groupDao.getAllGroupIds().toSet()
 
@@ -351,6 +353,28 @@ class OfflineFirstSyncRepositoryTest {
             repository.sync()
 
             assertEquals("user-u2", database.groupParticipantDao.getParticipantById("u2")?.username)
+        }
+
+    @Test
+    fun successfulSyncRecordsLastServerContact() =
+        runTest {
+            val service = FakeSyncService(Result.Success(snapshot(serverTime = instant(1000))))
+            val contactStore = FakeLastServerContactStore()
+
+            repository(service, FakeSyncCursorStore(), contactStore).sync()
+
+            assertEquals(1, contactStore.recordCallCount)
+        }
+
+    @Test
+    fun failedSyncDoesNotRecordLastServerContact() =
+        runTest {
+            val service = FakeSyncService(Result.Failure(DataError.Remote.SERVER_ERROR))
+            val contactStore = FakeLastServerContactStore()
+
+            repository(service, FakeSyncCursorStore(), contactStore).sync()
+
+            assertEquals(0, contactStore.recordCallCount)
         }
 
     @Test

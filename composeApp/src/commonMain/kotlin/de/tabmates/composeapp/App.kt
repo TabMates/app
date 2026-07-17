@@ -1,7 +1,9 @@
 package de.tabmates.composeapp
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -35,6 +37,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
+import de.tabmates.composeapp.connectivity.ConnectivityBannerRoot
 import de.tabmates.composeapp.deeplink.DeepLinkHandler
 import de.tabmates.composeapp.deeplink.navDeepLink
 import de.tabmates.composeapp.deeplink.resolveDeepLink
@@ -249,21 +252,24 @@ fun App() {
                                 }
                             }
                         },
-                    ) {
-                        CompositionLocalProvider(LocalTopBarActionsController provides topBarActions) {
-                            NavDisplay(
-                                modifier = Modifier.fillMaxSize().padding(it),
-                                backStack = backStack,
-                                onBack = { backStack.removeLastOrNull() },
-                                entryDecorators = entryDecorators,
-                                entryProvider = entryProvider {
-                                    mainGraph(
-                                        backStack = backStack,
-                                        snackbarHostState = snackbarHostState,
-                                        appScope = appScope,
-                                    )
-                                },
-                            )
+                    ) { paddingValues ->
+                        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                            ConnectivityBannerRoot(modifier = Modifier.fillMaxWidth())
+                            CompositionLocalProvider(LocalTopBarActionsController provides topBarActions) {
+                                NavDisplay(
+                                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                                    backStack = backStack,
+                                    onBack = { backStack.removeLastOrNull() },
+                                    entryDecorators = entryDecorators,
+                                    entryProvider = entryProvider {
+                                        mainGraph(
+                                            backStack = backStack,
+                                            snackbarHostState = snackbarHostState,
+                                            appScope = appScope,
+                                        )
+                                    },
+                                )
+                            }
                         }
                     }
                 }
