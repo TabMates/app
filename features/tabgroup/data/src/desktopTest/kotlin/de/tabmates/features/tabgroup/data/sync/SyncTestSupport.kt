@@ -2,6 +2,7 @@ package de.tabmates.features.tabgroup.data.sync
 
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import de.tabmates.core.domain.sync.LastServerContactStore
 import de.tabmates.core.domain.sync.SyncCursorStore
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.Result
@@ -15,7 +16,11 @@ import de.tabmates.features.tabgroup.domain.models.SyncSnapshot
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
 import de.tabmates.features.tabgroup.domain.sync.SyncService
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.LocalDate
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 /** Fresh in-memory Room database, isolated per test. */
@@ -47,6 +52,23 @@ class FakeSyncCursorStore(
 
     override fun clear() {
         cursor = null
+    }
+}
+
+class FakeLastServerContactStore : LastServerContactStore {
+    private val _lastContactAt = MutableStateFlow<Instant?>(null)
+    override val lastContactAt: StateFlow<Instant?> = _lastContactAt.asStateFlow()
+
+    var recordCallCount: Int = 0
+        private set
+
+    override fun recordContactNow() {
+        recordCallCount++
+        _lastContactAt.value = Clock.System.now()
+    }
+
+    override fun clear() {
+        _lastContactAt.value = null
     }
 }
 

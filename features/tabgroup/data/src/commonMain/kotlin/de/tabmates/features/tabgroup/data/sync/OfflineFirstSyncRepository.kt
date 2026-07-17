@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.data.sync
 
+import de.tabmates.core.domain.sync.LastServerContactStore
 import de.tabmates.core.domain.sync.SyncCursorStore
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
@@ -24,6 +25,7 @@ class OfflineFirstSyncRepository(
     private val syncService: SyncService,
     private val database: TabMatesDatabase,
     private val cursorStore: SyncCursorStore,
+    private val lastServerContactStore: LastServerContactStore,
 ) : SyncRepository {
     // Serializes the login and reconnect triggers so their sync runs can't interleave and race
     // on the shared cursor / local DB.
@@ -40,6 +42,7 @@ class OfflineFirstSyncRepository(
                     // it unchanged so the next sync re-fetches (server queries are `>= since`,
                     // last-write-wins, so replaying is idempotent).
                     cursorStore.set(snapshot.serverTime)
+                    lastServerContactStore.recordContactNow()
                 }.asEmptyResult()
         }
 
