@@ -5,6 +5,7 @@ import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.data.mappers.toEntity
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
+import de.tabmates.features.tabgroup.database.entities.types.ParticipantTypeDatabase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -231,6 +232,125 @@ class OfflineFirstSyncRepositoryTest {
             repository.sync()
 
             assertEquals(setOf("e1", "e2"), localEntryIds())
+        }
+
+    @Test
+    fun splitReferencingExMemberIsPersistedViaReferencedParticipants() =
+        runTest {
+            // "ghost" left the group (or deleted their account): not in any group's participant
+            // list, but old splits still reference them. Regression test for the login crash
+            // (FK 787 in TabEntrySplitDao.upsertSplits).
+            val cursorStore = FakeSyncCursorStore(cursor = null)
+            val service =
+                FakeSyncService(
+                    Result.Success(
+                        snapshot(
+                            serverTime = instant(1000),
+                            groups = listOf(group("g1", participantIds = listOf("u1"))),
+                            tabEntries =
+                                listOf(
+                                    expense(
+                                        "e1",
+                                        "g1",
+                                        splits =
+                                            listOf(
+                                                split("s1", "e1", participantId = "u1"),
+                                                split("s2", "e1", participantId = "ghost"),
+                                            ),
+                                    ),
+                                ),
+                            referencedParticipants = listOf(participant("u1"), participant("ghost")),
+                        ),
+                    ),
+                )
+
+            val result = repository(service, cursorStore).sync()
+
+            assertIs<Result.Success<Unit>>(result)
+            assertEquals(
+                setOf("s1", "s2"),
+                database.tabEntrySplitDao
+                    .getSplitsByTabEntryIdOnce("e1")
+                    .map { it.splitId }
+                    .toSet(),
+            )
+            assertEquals("user-ghost", database.groupParticipantDao.getParticipantById("ghost")?.username)
+        }
+
+    @Test
+    fun splitReferencingUnknownParticipantGetsPlaceholderRow() =
+        runTest {
+            // Worst case: the payload carries a split whose participant appears nowhere else in
+            // the payload. Sync must synthesize a placeholder row instead of dying on the FK.
+            val cursorStore = FakeSyncCursorStore(cursor = null)
+            val service =
+                FakeSyncService(
+                    Result.Success(
+                        snapshot(
+                            serverTime = instant(1000),
+                            groups = listOf(group("g1", participantIds = listOf("u1"))),
+                            tabEntries =
+                                listOf(
+                                    expense(
+                                        "e1",
+                                        "g1",
+                                        splits = listOf(split("s1", "e1", participantId = "orphan")),
+                                    ),
+                                ),
+                        ),
+                    ),
+                )
+
+            val result = repository(service, cursorStore).sync()
+
+            assertIs<Result.Success<Unit>>(result)
+            assertEquals(
+                setOf("s1"),
+                database.tabEntrySplitDao
+                    .getSplitsByTabEntryIdOnce("e1")
+                    .map { it.splitId }
+                    .toSet(),
+            )
+            val placeholder = database.groupParticipantDao.getParticipantById("orphan")
+            assertEquals(ParticipantTypeDatabase.PLACEHOLDER, placeholder?.participantType)
+        }
+
+    @Test
+    fun placeholderInsertDoesNotOverwriteExistingParticipant() =
+        runTest {
+            val cursorStore = FakeSyncCursorStore(cursor = null)
+            val service =
+                FakeSyncService(
+                    Result.Success(
+                        snapshot(
+                            serverTime = instant(1000),
+                            groups = listOf(group("g1", participantIds = listOf("u1", "u2"))),
+                        ),
+                    ),
+                )
+            val repository = repository(service, cursorStore)
+            repository.sync()
+
+            // Delta: u2 left the group; an old entry's split still references them but the payload
+            // carries no participant object for them. The existing local row must survive as-is.
+            service.result =
+                Result.Success(
+                    snapshot(
+                        serverTime = instant(2000),
+                        groups = listOf(group("g1", participantIds = listOf("u1"))),
+                        tabEntries =
+                            listOf(
+                                expense(
+                                    "e1",
+                                    "g1",
+                                    splits = listOf(split("s1", "e1", participantId = "u2")),
+                                ),
+                            ),
+                    ),
+                )
+            repository.sync()
+
+            assertEquals("user-u2", database.groupParticipantDao.getParticipantById("u2")?.username)
         }
 
     @Test

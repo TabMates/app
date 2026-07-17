@@ -13,10 +13,15 @@ import kotlin.time.Instant
  *   delta) — used to prune groups the user no longer belongs to.
  * @property tabEntries entries changed since the cursor across all the user's groups, including
  *   soft-deleted ones (non-null [TabEntry.deletedAt]).
+ * @property referencedParticipants every participant referenced by [tabEntries] (creator, payer,
+ *   split members, …), deduplicated. May include users who are no longer members of any group
+ *   (left, removed, or deleted account) and thus absent from [groups]' participant lists — they
+ *   must still be persisted locally so entry/split rows referencing them stay valid.
  */
 data class SyncSnapshot(
     val serverTime: Instant,
     val groups: List<Group>,
     val activeGroupIds: List<String>,
     val tabEntries: List<TabEntry>,
+    val referencedParticipants: List<GroupParticipant> = emptyList(),
 )

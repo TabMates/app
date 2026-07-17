@@ -6,6 +6,7 @@ enum class ParticipantTypeDto {
     REGISTERED,
     ANONYMOUS,
     PLACEHOLDER,
+    DELETED,
 }
 
 @Serializable

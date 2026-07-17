@@ -4,6 +4,7 @@ import de.tabmates.core.data.di.APPLICATION_SCOPE
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.features.tabgroup.data.dto.TabEntryDto
+import de.tabmates.features.tabgroup.data.mappers.referencedParticipants
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.data.mappers.toEntity
 import de.tabmates.features.tabgroup.data.network.KtorWebSocketConnector
@@ -70,6 +71,12 @@ class TabEntryRealtimeSync(
         val dto = json.decodeFromString(TabEntryDto.serializer(), payload)
         val entry = dto.toDomain()
         logger.debug(TAG, "WS echo received id=${entry.tabEntryId}")
+        // The entry may reference participants missing locally (ex-members whose old entry got
+        // edited, or members whose join event hasn't been applied yet) — persist them first so
+        // the split table's participant FK holds.
+        database.groupParticipantDao.upsertParticipants(
+            dto.referencedParticipants().distinctBy { it.userId }.map { it.toDomain().toEntity() },
+        )
         // Optimistic local splits have client-generated ids; server returns its own ids on echo,
         // so the entry + canonical split set must be applied atomically to avoid orphaned rows.
         val splits =

@@ -10,8 +10,10 @@ import de.tabmates.features.tabgroup.database.TabMatesDatabaseConstructor
 import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.ParticipantType
+import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.SyncSnapshot
 import de.tabmates.features.tabgroup.domain.models.TabEntry
+import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
 import de.tabmates.features.tabgroup.domain.sync.SyncService
 import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
@@ -70,12 +72,27 @@ fun group(
         createdAt = instant(0),
     )
 
+fun split(
+    id: String,
+    tabEntryId: String,
+    participantId: String,
+): TabEntrySplit =
+    TabEntrySplit(
+        splitId = id,
+        tabEntryId = tabEntryId,
+        participantId = participantId,
+        splitType = SplitType.EQUAL,
+        value = 0.0,
+        resolvedAmount = 5.0,
+    )
+
 fun expense(
     id: String,
     groupId: String,
     amount: Double = 10.0,
     deletedAt: Instant? = null,
     pendingSync: Boolean = false,
+    splits: List<TabEntrySplit> = emptyList(),
 ): TabEntry.Expense =
     TabEntry.Expense(
         tabEntryId = id,
@@ -93,7 +110,7 @@ fun expense(
         version = 0,
         deletedAt = deletedAt,
         deletedByUserId = deletedAt?.let { "u1" },
-        splits = emptyList(),
+        splits = splits,
         isPendingSync = pendingSync,
     )
 
@@ -102,10 +119,12 @@ fun snapshot(
     groups: List<Group> = emptyList(),
     activeGroupIds: List<String> = groups.map { it.id },
     tabEntries: List<TabEntry> = emptyList(),
+    referencedParticipants: List<GroupParticipant> = emptyList(),
 ): SyncSnapshot =
     SyncSnapshot(
         serverTime = serverTime,
         groups = groups,
         activeGroupIds = activeGroupIds,
         tabEntries = tabEntries,
+        referencedParticipants = referencedParticipants,
     )
