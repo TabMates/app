@@ -20,6 +20,7 @@ fun ParticipantTypeDto.toDomain(): ParticipantType {
         ParticipantTypeDto.REGISTERED -> ParticipantType.REGISTERED
         ParticipantTypeDto.ANONYMOUS -> ParticipantType.ANONYMOUS
         ParticipantTypeDto.PLACEHOLDER -> ParticipantType.PLACEHOLDER
+        ParticipantTypeDto.DELETED -> ParticipantType.DELETED
     }
 }
 
@@ -44,6 +45,7 @@ fun ParticipantTypeDatabase.toDomain(): ParticipantType {
         ParticipantTypeDatabase.REGISTERED -> ParticipantType.REGISTERED
         ParticipantTypeDatabase.ANONYMOUS -> ParticipantType.ANONYMOUS
         ParticipantTypeDatabase.PLACEHOLDER -> ParticipantType.PLACEHOLDER
+        ParticipantTypeDatabase.DELETED -> ParticipantType.DELETED
     }
 }
 
@@ -52,5 +54,6 @@ fun ParticipantType.toDatabase(): ParticipantTypeDatabase {
         ParticipantType.REGISTERED -> ParticipantTypeDatabase.REGISTERED
         ParticipantType.ANONYMOUS -> ParticipantTypeDatabase.ANONYMOUS
         ParticipantType.PLACEHOLDER -> ParticipantTypeDatabase.PLACEHOLDER
+        ParticipantType.DELETED -> ParticipantTypeDatabase.DELETED
     }
 }

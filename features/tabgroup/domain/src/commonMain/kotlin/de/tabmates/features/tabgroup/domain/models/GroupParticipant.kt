@@ -4,6 +4,7 @@ enum class ParticipantType {
     REGISTERED,
     ANONYMOUS,
     PLACEHOLDER,
+    DELETED,
 }
 
 data class GroupParticipant(

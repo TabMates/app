@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.data.mappers
 
+import de.tabmates.features.tabgroup.data.dto.GroupParticipantDto
 import de.tabmates.features.tabgroup.data.dto.TabEntryDto
 import de.tabmates.features.tabgroup.database.entities.LastTabEntryWithSplits
 import de.tabmates.features.tabgroup.database.entities.TabEntryEntity
@@ -75,6 +76,24 @@ fun TabEntryDto.toDomain(): TabEntry =
                 deletedByUserId = deletedBy?.userId,
                 receivedByUserId = receivedBy.userId,
             )
+        }
+    }
+
+/**
+ * Every participant this entry references. These may include users who are no longer group
+ * members (left, removed, or deleted account) and are therefore absent from the group's
+ * participant list — their rows must still exist locally to satisfy the split table's FK.
+ */
+fun TabEntryDto.referencedParticipants(): List<GroupParticipantDto> =
+    buildList {
+        add(creator)
+        add(paidBy)
+        add(lastModifiedBy)
+        deletedBy?.let { add(it) }
+        when (this@referencedParticipants) {
+            is TabEntryDto.Expense -> splits.mapNotNullTo(this) { it.participant }
+            is TabEntryDto.Income -> splits.mapNotNullTo(this) { it.participant }
+            is TabEntryDto.Settlement -> add(receivedBy)
         }
     }
 

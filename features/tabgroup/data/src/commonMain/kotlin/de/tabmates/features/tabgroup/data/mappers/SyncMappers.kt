@@ -9,4 +9,9 @@ fun SyncResponseDto.toDomain(): SyncSnapshot =
         groups = groups.map { it.toDomain() },
         activeGroupIds = activeGroupIds,
         tabEntries = tabEntries.map { it.toDomain() },
+        referencedParticipants =
+            tabEntries
+                .flatMap { it.referencedParticipants() }
+                .distinctBy { it.userId }
+                .map { it.toDomain() },
     )

@@ -7,8 +7,10 @@ import de.tabmates.core.domain.util.asEmptyResult
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.tabgroup.data.mappers.toEntity
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
+import de.tabmates.features.tabgroup.database.entities.GroupParticipantEntity
 import de.tabmates.features.tabgroup.database.entities.GroupWithParticipants
 import de.tabmates.features.tabgroup.database.entities.TabEntrySplitEntity
+import de.tabmates.features.tabgroup.database.entities.types.ParticipantTypeDatabase
 import de.tabmates.features.tabgroup.domain.models.SyncSnapshot
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.sync.SyncRepository
@@ -60,6 +62,15 @@ class OfflineFirstSyncRepository(
             crossRefDao = database.groupParticipantCrossRefDao,
         )
 
+        // Entries/splits may reference users who are no longer members of any group (left,
+        // removed, or deleted account) and therefore aren't in any group's participant list
+        // above. Persist them first so the split table's participant FK holds.
+        if (snapshot.referencedParticipants.isNotEmpty()) {
+            database.groupParticipantDao.upsertParticipants(
+                snapshot.referencedParticipants.map { it.toEntity() },
+            )
+        }
+
         val (deleted, alive) = snapshot.tabEntries.partition { it.isDeleted }
         val aliveEntities = alive.map { it.toEntity() }
         val splitsByEntryId =
@@ -73,6 +84,32 @@ class OfflineFirstSyncRepository(
             }
         val allServerIds =
             if (isFullSync) snapshot.tabEntries.map { it.tabEntryId }.toSet() else null
+
+        // Last-resort FK guard: if a split's participant object was missing from the payload,
+        // synthesize a placeholder row (insert-ignore, never overwrites real data) so applying
+        // the entries can't blow up the whole sync on the participant FK.
+        val knownParticipantIds =
+            buildSet {
+                snapshot.groups.forEach { group -> group.participants.mapTo(this) { it.userId } }
+                snapshot.referencedParticipants.mapTo(this) { it.userId }
+            }
+        val orphanSplitParticipants =
+            splitsByEntryId.values
+                .asSequence()
+                .flatten()
+                .map { it.participantId }
+                .distinct()
+                .filterNot { it in knownParticipantIds }
+                .map {
+                    GroupParticipantEntity(
+                        userId = it,
+                        username = "Unknown",
+                        participantType = ParticipantTypeDatabase.PLACEHOLDER,
+                    )
+                }.toList()
+        if (orphanSplitParticipants.isNotEmpty()) {
+            database.groupParticipantDao.insertParticipantsIgnoringConflicts(orphanSplitParticipants)
+        }
 
         database.tabEntryDao.applySyncedTabEntries(
             aliveEntries = aliveEntities,

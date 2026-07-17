@@ -4,4 +4,5 @@ enum class ParticipantTypeDatabase {
     REGISTERED,
     ANONYMOUS,
     PLACEHOLDER,
+    DELETED,
 }
