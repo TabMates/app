@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">TabMates</string>
+    <string name="app_name" translatable="false">TabMates</string>
 
     <string name="notification_permission_title">Enable notifications</string>
     <string name="notification_permission_message">TabMates uses notifications to alert you about new expenses, members joining, and settle-up reminders.</string>

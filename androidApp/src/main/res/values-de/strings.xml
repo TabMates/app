@@ -1,0 +1,12 @@
+<resources>
+    <string name="notification_permission_title">Benachrichtigungen aktivieren</string>
+    <string name="notification_permission_message">TabMates nutzt Benachrichtigungen, um dich über neue Ausgaben, neue Mitglieder und Erinnerungen zu Ausgleichszahlungen zu informieren.</string>
+    <string name="notification_permission_allow">Erlauben</string>
+    <string name="notification_permission_open_settings">Einstellungen öffnen</string>
+    <string name="notification_permission_dismiss">Nicht jetzt</string>
+
+    <string name="notification_channel_general">Allgemein</string>
+    <string name="notification_channel_expenses">Ausgaben</string>
+    <string name="notification_channel_members">Gruppenmitglieder</string>
+    <string name="notification_channel_settle_ups">Ausgleichszahlungen</string>
+</resources>
