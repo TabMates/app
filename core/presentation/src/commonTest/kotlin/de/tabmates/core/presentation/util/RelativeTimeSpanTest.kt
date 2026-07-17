@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.components
+package de.tabmates.core.presentation.util
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -8,7 +8,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
-class RelativeTimeTest {
+class RelativeTimeSpanTest {
     private val now = Instant.fromEpochMilliseconds(1_752_000_000_000)
 
     @Test
