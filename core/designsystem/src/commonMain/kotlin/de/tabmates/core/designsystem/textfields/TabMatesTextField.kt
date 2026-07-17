@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.MaterialTheme
@@ -37,14 +38,17 @@ import de.tabmates.core.designsystem.theme.TabMatesTheme
  * @param title Optional label displayed above the text field.
  * @param supportingText Optional helper or error message displayed below the text field.
  * @param isError When `true`, the field is styled to indicate a validation error.
- * @param singleLine When `true`, the field is restricted to a single line of input.
+ * @param singleLine When `true` (default), the field is restricted to a single line of input,
+ *   letting hardware Tab/Enter reach focus traversal and the keyboard action. Use
+ *   [TabMatesMultiLineTextField] for intentional multi-line input.
  * @param enabled When `false`, the field is non-editable and visually dimmed.
  * @param keyboardType The [KeyboardType] to use for the software keyboard.
  * @param imeAction The [ImeAction] shown on the software-keyboard action button.
  * @param capitalization The [KeyboardCapitalization] the software keyboard applies by default.
  * @param contentType The [ContentType] for autofill support.
  * @param onFocusChanged Callback invoked when the field's focus state changes.
- * @param onKeyboardAction Callback invoked when the IME action button is pressed.
+ * @param onKeyboardAction Callback invoked when the IME action button is pressed. When `null`
+ *   (default), the platform default is performed (e.g. [ImeAction.Next] moves focus).
  */
 @Composable
 fun TabMatesTextField(
@@ -54,14 +58,14 @@ fun TabMatesTextField(
     title: String? = null,
     supportingText: String? = null,
     isError: Boolean = false,
-    singleLine: Boolean = false,
+    singleLine: Boolean = true,
     enabled: Boolean = true,
     keyboardType: KeyboardType = KeyboardType.Text,
     imeAction: ImeAction = ImeAction.Default,
     capitalization: KeyboardCapitalization = KeyboardCapitalization.Unspecified,
     contentType: ContentType? = null,
     onFocusChanged: (Boolean) -> Unit = {},
-    onKeyboardAction: () -> Unit = {},
+    onKeyboardAction: (() -> Unit)? = null,
 ) {
     TabMatesTextFieldLayout(
         isError = isError,
@@ -99,7 +103,7 @@ fun TabMatesTextField(
                     imeAction = imeAction,
                     capitalization = capitalization,
                 ),
-            onKeyboardAction = { onKeyboardAction() },
+            onKeyboardAction = onKeyboardAction?.let { action -> KeyboardActionHandler { action() } },
             interactionSource = interactionSource,
             placeholder =
                 if (state.text.isEmpty() && placeholder != null) {

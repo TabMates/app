@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.MaterialTheme
@@ -44,7 +45,8 @@ import de.tabmates.core.designsystem.theme.TabMatesTheme
  * @param placeholder Optional hint text displayed when the field is empty.
  * @param enabled When `false`, the field is non-editable and visually dimmed.
  * @param keyboardOptions Software-keyboard configuration such as capitalization and IME action.
- * @param onKeyboardAction Callback invoked when the IME action button is pressed.
+ * @param onKeyboardAction Callback invoked when the IME action button is pressed. When `null`
+ *   (default), the platform default is performed.
  * @param maxHeightInLines Maximum number of visible lines before the field scrolls (default **3**).
  * @param bottomContent Optional composable row rendered below the text input, useful for
  *   action buttons or character counters.
@@ -56,7 +58,7 @@ fun TabMatesMultiLineTextField(
     placeholder: String? = null,
     enabled: Boolean = true,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    onKeyboardAction: () -> Unit = {},
+    onKeyboardAction: (() -> Unit)? = null,
     maxHeightInLines: Int = 3,
     bottomContent: @Composable (RowScope.() -> Unit)? = null,
 ) {
@@ -103,9 +105,7 @@ fun TabMatesMultiLineTextField(
                     maxHeightInLines = maxHeightInLines,
                 ),
             keyboardOptions = keyboardOptions,
-            onKeyboardAction = {
-                onKeyboardAction()
-            },
+            onKeyboardAction = onKeyboardAction?.let { action -> KeyboardActionHandler { action() } },
             placeholder =
                 if (placeholder != null && state.text.isEmpty()) {
                     {
