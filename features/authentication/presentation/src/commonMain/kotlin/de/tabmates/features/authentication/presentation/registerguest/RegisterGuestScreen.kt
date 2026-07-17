@@ -15,6 +15,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -68,6 +70,7 @@ private fun RegisterGuestScreen(
     onGuestClick: () -> Unit,
     isRegistering: Boolean,
 ) {
+    val focusManager = LocalFocusManager.current
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center,
@@ -92,6 +95,13 @@ private fun RegisterGuestScreen(
             supportingText = usernameError?.asString(),
             singleLine = true,
             capitalization = KeyboardCapitalization.Words,
+            imeAction = ImeAction.Done,
+            onKeyboardAction = {
+                if (!isRegistering) {
+                    focusManager.clearFocus()
+                    onGuestClick()
+                }
+            },
         )
         VerticalSpacer(16.dp)
         TabMatesButton(

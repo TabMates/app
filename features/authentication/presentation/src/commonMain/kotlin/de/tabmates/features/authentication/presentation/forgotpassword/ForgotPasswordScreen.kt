@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -60,6 +62,7 @@ private fun ForgotPasswordScreen(
     onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
     Column(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 32.dp).fillMaxSize(),
         verticalArrangement = Arrangement.Top,
@@ -76,6 +79,13 @@ private fun ForgotPasswordScreen(
             placeholder = stringResource(Res.string.register_email_hint),
             keyboardType = KeyboardType.Email,
             singleLine = true,
+            imeAction = ImeAction.Done,
+            onKeyboardAction = {
+                if (enabled) {
+                    focusManager.clearFocus()
+                    onSubmitClick()
+                }
+            },
         )
         VerticalSpacer(16.dp)
         TabMatesButton(
