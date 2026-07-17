@@ -1,8 +1,10 @@
 package de.tabmates.composeapp.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -20,6 +22,10 @@ import de.tabmates.core.presentation.navigation.ScreenWithTopBar
  *
  * Reads the decorated entry's own key rather than the back stack's last key: during a crossfade or
  * predictive-back gesture two entries are visible at once, and each must show its own bar.
+ *
+ * Also paints an opaque [MaterialTheme.colorScheme.background] behind every entry: NavEntry
+ * content is otherwise transparent, so when two entries render at once (crossfade, predictive
+ * back) the outgoing screen showed through as a ghost instead of a solid page.
  */
 @Composable
 fun rememberScreenTopBarNavEntryDecorator(backStack: NavBackStack<NavKey>): NavEntryDecorator<NavKey> =
@@ -31,29 +37,31 @@ fun rememberScreenTopBarNavEntryDecorator(backStack: NavBackStack<NavKey>): NavE
                 val controller = LocalTopBarActionsController.current
                 val override = controller?.overrideFor(key)
                 val declared = key as? ScreenWithTopBar
-                if (override != null || declared != null) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        if (override != null) {
-                            ScreenTopBar(
-                                title = override.title,
-                                navigationAction = override.navigationAction,
-                                onNavigationClick = override.onNavigationClick,
-                                actions = override.actions,
-                            )
-                        } else if (declared != null) {
-                            ScreenTopBar(
-                                title = declared.topBarTitle,
-                                navigationAction = declared.topBarAction,
-                                onNavigationClick = { backStack.removeLastOrNull() },
-                                actions = { controller?.actionsFor(key)?.invoke() },
-                            )
+                Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                    if (override != null || declared != null) {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            if (override != null) {
+                                ScreenTopBar(
+                                    title = override.title,
+                                    navigationAction = override.navigationAction,
+                                    onNavigationClick = override.onNavigationClick,
+                                    actions = override.actions,
+                                )
+                            } else if (declared != null) {
+                                ScreenTopBar(
+                                    title = declared.topBarTitle,
+                                    navigationAction = declared.topBarAction,
+                                    onNavigationClick = { backStack.removeLastOrNull() },
+                                    actions = { controller?.actionsFor(key)?.invoke() },
+                                )
+                            }
+                            Box(modifier = Modifier.weight(1f)) {
+                                entry.Content()
+                            }
                         }
-                        Box(modifier = Modifier.weight(1f)) {
-                            entry.Content()
-                        }
+                    } else {
+                        entry.Content()
                     }
-                } else {
-                    entry.Content()
                 }
             }
             wrapped.Content()

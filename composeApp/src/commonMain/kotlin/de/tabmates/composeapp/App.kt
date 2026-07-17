@@ -4,6 +4,7 @@ import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -111,12 +112,26 @@ private fun rememberEntryDecorators(backStack: NavBackStack<NavKey>): List<NavEn
     )
 
 private const val NAV_TRANSITION_DURATION_MS = 300
+private const val PREDICTIVE_POP_EXIT_TARGET_SCALE = 0.92f
 
 private val navTransition: ContentTransform
     get() =
         ContentTransform(
             fadeIn(tween(NAV_TRANSITION_DURATION_MS)),
             fadeOut(tween(NAV_TRANSITION_DURATION_MS)),
+        )
+
+// All sub-animations share one duration: the predictive gesture scrubs the whole
+// ContentTransform through a SeekableTransitionState, and mismatched durations hitch on settle.
+private val predictivePopTransition: ContentTransform
+    get() =
+        ContentTransform(
+            targetContentEnter = fadeIn(tween(NAV_TRANSITION_DURATION_MS)),
+            initialContentExit =
+                scaleOut(
+                    targetScale = PREDICTIVE_POP_EXIT_TARGET_SCALE,
+                    animationSpec = tween(NAV_TRANSITION_DURATION_MS),
+                ) + fadeOut(tween(NAV_TRANSITION_DURATION_MS)),
         )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -254,6 +269,7 @@ fun App() {
                                     entryDecorators = rememberEntryDecorators(backStack),
                                     transitionSpec = { navTransition },
                                     popTransitionSpec = { navTransition },
+                                    predictivePopTransitionSpec = { _ -> predictivePopTransition },
                                     entryProvider = entryProvider {
                                         mainGraph(
                                             backStack = backStack,
@@ -276,6 +292,7 @@ fun App() {
                         entryDecorators = rememberEntryDecorators(backStack),
                         transitionSpec = { navTransition },
                         popTransitionSpec = { navTransition },
+                        predictivePopTransitionSpec = { _ -> predictivePopTransition },
                         onBack = { backStack.removeLastOrNull() },
                         entryProvider = entryProvider {
                             authGraph(
