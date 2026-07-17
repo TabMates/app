@@ -7,6 +7,7 @@ import de.tabmates.core.domain.util.asEmptyResult
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.data.mappers.toEntity
+import de.tabmates.features.tabgroup.data.sync.GroupTabEntryBackfiller
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import de.tabmates.features.tabgroup.database.entities.GroupParticipantEntity
 import de.tabmates.features.tabgroup.database.entities.GroupWithParticipants
@@ -27,6 +28,7 @@ import org.koin.core.annotation.Single
 class OfflineFirstGroupRepository(
     private val groupService: GroupService,
     private val database: TabMatesDatabase,
+    private val tabEntryBackfiller: GroupTabEntryBackfiller,
 ) : GroupRepository {
     override fun getGroups(): Flow<List<Group>> {
         return database.groupDao
@@ -180,6 +182,10 @@ class OfflineFirstGroupRepository(
                     participantDao = database.groupParticipantDao,
                     crossRefDao = database.groupParticipantCrossRefDao,
                 )
+                // After the group upsert (entries FK onto the group row). Delta sync can't deliver
+                // the group's pre-existing entries, and a backfill failure doesn't fail the join —
+                // the pending marker lets the next delta sync retry.
+                tabEntryBackfiller.backfill(group.id)
             }
     }
 

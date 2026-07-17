@@ -4,6 +4,7 @@ import de.tabmates.features.tabgroup.data.dto.GroupParticipantDto
 import de.tabmates.features.tabgroup.data.dto.TabEntryDto
 import de.tabmates.features.tabgroup.database.entities.LastTabEntryWithSplits
 import de.tabmates.features.tabgroup.database.entities.TabEntryEntity
+import de.tabmates.features.tabgroup.database.entities.TabEntrySplitEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntryWithSplits
 import de.tabmates.features.tabgroup.database.entities.types.TabEntryTypeDatabase
 import de.tabmates.features.tabgroup.domain.models.TabEntry
@@ -119,6 +120,13 @@ fun TabEntry.toEntity(pendingSync: Boolean = false): TabEntryEntity =
         deletedByUserId = deletedByUserId,
         pendingSync = pendingSync,
     )
+
+fun TabEntry.toSplitEntities(): List<TabEntrySplitEntity> =
+    when (this) {
+        is TabEntry.Expense -> splits.map { it.toEntity() }
+        is TabEntry.Income -> splits.map { it.toEntity() }
+        is TabEntry.Settlement -> emptyList()
+    }
 
 fun TabEntryWithSplits.toDomain(): TabEntry =
     when (tabEntry.entryType) {
