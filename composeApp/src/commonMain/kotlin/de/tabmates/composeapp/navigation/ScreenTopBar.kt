@@ -1,5 +1,6 @@
 package de.tabmates.composeapp.navigation
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,6 +29,9 @@ fun ScreenTopBar(
 ) {
     TopAppBar(
         title = { Text(title.asString()) },
+        // The host Scaffold's contentWindowInsets already reserves status-bar and horizontal
+        // safe-area space around the nav content this bar now lives in.
+        windowInsets = WindowInsets(0),
         navigationIcon = {
             IconButton(onClick = onNavigationClick) {
                 Icon(

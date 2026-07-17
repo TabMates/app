@@ -1,5 +1,9 @@
 package de.tabmates.composeapp
 
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,13 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
@@ -30,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -42,7 +45,7 @@ import de.tabmates.composeapp.deeplink.DeepLinkHandler
 import de.tabmates.composeapp.deeplink.navDeepLink
 import de.tabmates.composeapp.deeplink.resolveDeepLink
 import de.tabmates.composeapp.di.TabMatesKoinApp
-import de.tabmates.composeapp.navigation.ScreenTopBar
+import de.tabmates.composeapp.navigation.rememberScreenTopBarNavEntryDecorator
 import de.tabmates.composeapp.sync.CurrencySyncCoordinator
 import de.tabmates.composeapp.sync.GroupSyncCoordinator
 import de.tabmates.composeapp.sync.NotificationsSyncCoordinator
@@ -53,7 +56,6 @@ import de.tabmates.core.presentation.navigation.FabAction
 import de.tabmates.core.presentation.navigation.LocalTopBarActionsController
 import de.tabmates.core.presentation.navigation.LoggedIn
 import de.tabmates.core.presentation.navigation.ScreenWithFab
-import de.tabmates.core.presentation.navigation.ScreenWithTopBar
 import de.tabmates.core.presentation.navigation.TopBarActionsController
 import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.core.presentation.util.ObserveAsEvents
@@ -83,10 +85,8 @@ import org.koin.compose.getKoin
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.plugin.module.dsl.koinConfiguration
 import tabmatesapp.composeapp.generated.resources.Res
-import tabmatesapp.composeapp.generated.resources.back
 import tabmatesapp.composeapp.generated.resources.create_group
 import tabmatesapp.composeapp.generated.resources.ic_add
-import tabmatesapp.composeapp.generated.resources.ic_arrow_back
 
 private val savedStateConfiguration = SavedStateConfiguration {
     serializersModule = authSerializersModule + mainSerializersModule
@@ -101,12 +101,23 @@ private val deepLinks = listOf(
     navDeepLink<GroupDetail>(basePath = "${BuildKonfig.BASE_URL_HTTP}/groups", pathSuffixParam = "groupId"),
 )
 
-@get:Composable
-private val entryDecorators
-    get() = listOf<NavEntryDecorator<NavKey>>(
-    rememberSaveableStateHolderNavEntryDecorator(),
-    rememberViewModelStoreNavEntryDecorator(),
-)
+@Composable
+private fun rememberEntryDecorators(backStack: NavBackStack<NavKey>): List<NavEntryDecorator<NavKey>> =
+    listOf(
+        rememberSaveableStateHolderNavEntryDecorator(),
+        rememberViewModelStoreNavEntryDecorator(),
+        // Last = innermost: the top bar composes inside the saveable-state/ViewModel scopes.
+        rememberScreenTopBarNavEntryDecorator(backStack),
+    )
+
+private const val NAV_TRANSITION_DURATION_MS = 300
+
+private val navTransition: ContentTransform
+    get() =
+        ContentTransform(
+            fadeIn(tween(NAV_TRANSITION_DURATION_MS)),
+            fadeOut(tween(NAV_TRANSITION_DURATION_MS)),
+        )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -232,26 +243,6 @@ fun App() {
                 ) {
                     Scaffold(
                         snackbarHost = { SnackbarHost(snackbarHostState) },
-                        topBar = {
-                            val override = topBarActions.overrideFor(currentKey)
-                            if (override != null) {
-                                ScreenTopBar(
-                                    title = override.title,
-                                    navigationAction = override.navigationAction,
-                                    onNavigationClick = override.onNavigationClick,
-                                    actions = override.actions,
-                                )
-                            } else {
-                                (currentKey as? ScreenWithTopBar)?.let { config ->
-                                    ScreenTopBar(
-                                        title = config.topBarTitle,
-                                        navigationAction = config.topBarAction,
-                                        onNavigationClick = { backStack.removeLastOrNull() },
-                                        actions = { topBarActions.actionsFor(currentKey)?.invoke() },
-                                    )
-                                }
-                            }
-                        },
                     ) { paddingValues ->
                         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                             ConnectivityBannerRoot(modifier = Modifier.fillMaxWidth())
@@ -260,7 +251,9 @@ fun App() {
                                     modifier = Modifier.weight(1f).fillMaxWidth(),
                                     backStack = backStack,
                                     onBack = { backStack.removeLastOrNull() },
-                                    entryDecorators = entryDecorators,
+                                    entryDecorators = rememberEntryDecorators(backStack),
+                                    transitionSpec = { navTransition },
+                                    popTransitionSpec = { navTransition },
                                     entryProvider = entryProvider {
                                         mainGraph(
                                             backStack = backStack,
@@ -276,26 +269,13 @@ fun App() {
             } else {
                 Scaffold(
                     snackbarHost = { SnackbarHost(snackbarHostState) },
-                    topBar = {
-                        if (currentKey != Welcome) {
-                            TopAppBar(
-                                title = { },
-                                navigationIcon = {
-                                    IconButton(onClick = { backStack.removeLastOrNull() }) {
-                                        Icon(
-                                            imageVector = vectorResource(Res.drawable.ic_arrow_back),
-                                            contentDescription = stringResource(Res.string.back),
-                                        )
-                                    }
-                                },
-                            )
-                        }
-                    },
                 ) {
                     NavDisplay(
                         modifier = Modifier.fillMaxSize().padding(it),
                         backStack = backStack,
-                        entryDecorators = entryDecorators,
+                        entryDecorators = rememberEntryDecorators(backStack),
+                        transitionSpec = { navTransition },
+                        popTransitionSpec = { navTransition },
                         onBack = { backStack.removeLastOrNull() },
                         entryProvider = entryProvider {
                             authGraph(
