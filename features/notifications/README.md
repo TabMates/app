@@ -88,7 +88,7 @@ Handling per platform:
 Firebase Analytics / data collection is **disabled** — only Cloud Messaging is used:
 - Android: `firebase_analytics_collection_deactivated` + ad-id/ssaid flags in the app manifest.
 - iOS: `FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED` in `Info.plist`; do **not** link the
-  `FirebaseAnalytics` pod (FirebaseMessaging alone collects no analytics).
+  `FirebaseAnalytics` SPM product (FirebaseMessaging alone collects no analytics).
 - Web: only `firebase.messaging()` is initialized (never `getAnalytics()`), and
   `automaticDataCollectionEnabled = false`.
 
@@ -118,9 +118,12 @@ ones. iOS/Web have no equivalent channel concept here.
 
 ### iOS
 1. Create a Firebase iOS app; add `GoogleService-Info.plist` to the Xcode `iosApp` target.
-2. Link the Firebase iOS SDK (FirebaseCore + FirebaseMessaging) via SPM/CocoaPods in
-   `iosApp.xcodeproj`. The `iOSApp.swift` AppDelegate already calls `FirebaseApp.configure()`
-   and forwards APNs/remote-notification callbacks into kmpnotifier.
+2. Link the Firebase iOS SDK (FirebaseCore + FirebaseMessaging) via **Swift Package Manager**
+   in `iosApp.xcodeproj` (File → Add Package Dependencies… → `https://github.com/firebase/firebase-ios-sdk`,
+   select the `FirebaseCore` + `FirebaseMessaging` products for the `iosApp` target). KMPNotifier 2.0
+   consumes Firebase via SPM (`swiftPMDependencies`), not the CocoaPods Gradle plugin. The
+   `iOSApp.swift` AppDelegate already calls `FirebaseApp.configure()` and forwards APNs /
+   remote-notification callbacks into kmpnotifier via `KMPNotifier.onApplicationDidReceiveRemoteNotification`.
 3. In the target's Signing & Capabilities, add **Push Notifications** and **Background Modes →
    Remote notifications**.
 4. Upload the APNs auth key to Firebase Console.

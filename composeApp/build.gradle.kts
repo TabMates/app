@@ -53,8 +53,9 @@ kotlin {
             implementation(libs.play.app.update.ktx)
         }
         iosMain.dependencies {
-            // Exposes kmpnotifier extension functions to the iOS Swift AppDelegate bridge.
-            implementation(libs.kmpnotifier)
+            // Exposes kmpnotifier iOS extension functions to the Swift AppDelegate bridge
+            // (onApplicationDidReceiveRemoteNotification in push-firebase, onNotificationClicked in core).
+            implementation(libs.kmpnotifier.push.firebase)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

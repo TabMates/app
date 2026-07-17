@@ -1,7 +1,8 @@
 package de.tabmates.features.notifications.data
 
-import com.mmk.kmpnotifier.notification.NotifierManager
-import com.mmk.kmpnotifier.notification.NotifierManager.Listener
+import com.mmk.kmpnotifier.KMPNotifier
+import com.mmk.kmpnotifier.local.LocalNotifications
+import com.mmk.kmpnotifier.local.localNotifier
 import com.mmk.kmpnotifier.notification.PayloadData
 import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
 import de.tabmates.core.domain.logging.TabMatesLogger
@@ -39,8 +40,8 @@ class DesktopPushNotificationController(
     private var streamJob: Job? = null
     private var notificationId = 0
 
-    private val notifierManagerListener =
-        object : Listener {
+    private val clickListener =
+        object : KMPNotifier.Listener {
             override fun onNotificationClicked(data: PayloadData) {
                 val deepLink = data[PushNotificationConstants.KEY_DEEP_LINK] as? String
                 if (deepLink != null) {
@@ -51,14 +52,15 @@ class DesktopPushNotificationController(
         }
 
     override fun start() {
-        NotifierManager.initialize(
+        KMPNotifier.initialize(
             NotificationPlatformConfiguration.Desktop(
                 showPushNotification = true,
                 // TODO: ship a real .png icon and point this at its extracted file path.
                 notificationIconPath = "",
             ),
+            LocalNotifications,
         )
-        NotifierManager.addListener(notifierManagerListener)
+        KMPNotifier.addListener(clickListener)
         if (streamJob?.isActive == true) return
         streamJob = launchStreamLoop()
     }
@@ -96,7 +98,7 @@ class DesktopPushNotificationController(
             for (frame in incoming) {
                 if (frame !is Frame.Text) continue
                 val event = json.decodeFromString<NotificationEventDto>(frame.readText())
-                NotifierManager.getLocalNotifier().notify {
+                KMPNotifier.localNotifier.notify {
                     id = notificationId++
                     title = event.title
                     body = event.body
