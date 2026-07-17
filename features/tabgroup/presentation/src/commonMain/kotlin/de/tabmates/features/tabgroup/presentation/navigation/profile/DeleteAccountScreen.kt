@@ -10,6 +10,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.buttons.TabMatesButton
@@ -66,6 +68,7 @@ private fun DeleteAccountScreen(
     onDismissDialog: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
     AccountFieldColumn(modifier = modifier) {
         Text(
             text = stringResource(Res.string.delete_account_warning),
@@ -79,6 +82,11 @@ private fun DeleteAccountScreen(
                 title = stringResource(Res.string.delete_account_password_label),
                 isPasswordVisible = state.isPasswordVisible,
                 onToggleVisibilityClick = onTogglePasswordVisibility,
+                imeAction = ImeAction.Done,
+                onKeyboardAction = {
+                    focusManager.clearFocus()
+                    onDeleteClick()
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
         }

@@ -7,7 +7,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -53,12 +55,14 @@ fun ChangeEmailRoot(
         }
     }
 
+    val focusManager = LocalFocusManager.current
     AccountFieldColumn(modifier = modifier) {
         TabMatesTextField(
             state = viewModel.newEmailState,
             title = stringResource(Res.string.change_email_new_label),
             singleLine = true,
             keyboardType = KeyboardType.Email,
+            imeAction = ImeAction.Next,
             modifier = Modifier.fillMaxWidth(),
         )
         VerticalSpacer(16.dp)
@@ -67,6 +71,13 @@ fun ChangeEmailRoot(
             title = stringResource(Res.string.change_email_password_label),
             isPasswordVisible = state.isPasswordVisible,
             onToggleVisibilityClick = viewModel::onTogglePasswordVisibility,
+            imeAction = ImeAction.Done,
+            onKeyboardAction = {
+                if (!state.isSubmitting) {
+                    focusManager.clearFocus()
+                    viewModel.onSave()
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
         )
     }

@@ -30,6 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -127,6 +129,7 @@ private fun CreateGroupScreen(
     onCurrencyPickerDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
     if (state.isCurrencyPickerVisible) {
         CurrencyPickerBottomSheet(
             queryState = state.currencyQueryState,
@@ -185,6 +188,7 @@ private fun CreateGroupScreen(
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
             singleLine = true,
             capitalization = KeyboardCapitalization.Words,
+            imeAction = ImeAction.Next,
         )
         VerticalSpacer(12.dp)
         TabMatesTextField(
@@ -193,6 +197,13 @@ private fun CreateGroupScreen(
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
             singleLine = true,
             capitalization = KeyboardCapitalization.Words,
+            imeAction = ImeAction.Done,
+            onKeyboardAction = {
+                if (!state.isSubmitting) {
+                    focusManager.clearFocus()
+                    onCreateClick()
+                }
+            },
         )
         VerticalSpacer(12.dp)
         CurrencyRow(

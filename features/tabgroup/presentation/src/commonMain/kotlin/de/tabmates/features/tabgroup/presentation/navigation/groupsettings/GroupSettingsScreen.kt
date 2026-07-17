@@ -30,7 +30,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -117,6 +119,7 @@ private fun GroupSettingsScreen(
         }
         return
     }
+    val focusManager = LocalFocusManager.current
     Column(
         modifier =
             modifier
@@ -138,12 +141,20 @@ private fun GroupSettingsScreen(
             title = stringResource(Res.string.group_settings_name_label),
             singleLine = true,
             capitalization = KeyboardCapitalization.Words,
+            imeAction = ImeAction.Next,
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         TabMatesTextField(
             state = state.descriptionTextState,
             title = stringResource(Res.string.group_settings_description_label),
             capitalization = KeyboardCapitalization.Words,
+            imeAction = ImeAction.Done,
+            onKeyboardAction = {
+                if (!state.isSaving) {
+                    focusManager.clearFocus()
+                    onAction(GroupSettingsAction.Save)
+                }
+            },
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         CurrencyRow(

@@ -13,7 +13,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -80,6 +82,7 @@ fun EditSettlementRoot(
         onDateClick = viewModel::onDateClick,
         onDatePickerDismiss = viewModel::onDatePickerDismiss,
         onDateSelected = viewModel::onDateSelected,
+        onSaveClick = viewModel::onSaveClick,
         modifier = modifier,
     )
 }
@@ -90,8 +93,10 @@ private fun EditSettlementScreen(
     onDateClick: () -> Unit,
     onDatePickerDismiss: () -> Unit,
     onDateSelected: (Long) -> Unit,
+    onSaveClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
     val monthLabels = rememberMonthAbbreviations()
 
     Column(
@@ -118,6 +123,13 @@ private fun EditSettlementScreen(
             title = stringResource(Res.string.settle_up_amount_label),
             singleLine = true,
             keyboardType = KeyboardType.Decimal,
+            imeAction = ImeAction.Done,
+            onKeyboardAction = {
+                if (!state.isSubmitting) {
+                    focusManager.clearFocus()
+                    onSaveClick()
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
         )
         VerticalSpacer(12.dp)
