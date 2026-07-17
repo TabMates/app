@@ -1,8 +1,8 @@
 package de.tabmates.composeapp
 
-import com.mmk.kmpnotifier.extensions.onApplicationDidReceiveRemoteNotification
+import com.mmk.kmpnotifier.KMPNotifier
 import com.mmk.kmpnotifier.extensions.onNotificationClicked
-import com.mmk.kmpnotifier.notification.NotifierManager
+import com.mmk.kmpnotifier.push.firebase.onApplicationDidReceiveRemoteNotification
 import platform.UserNotifications.UNNotificationResponse
 
 /**
@@ -11,9 +11,9 @@ import platform.UserNotifications.UNNotificationResponse
  */
 
 fun handleRemoteNotification(userInfo: Map<Any?, *>) {
-    NotifierManager.onApplicationDidReceiveRemoteNotification(userInfo)
+    KMPNotifier.onApplicationDidReceiveRemoteNotification(userInfo)
 }
 
 fun handleNotificationResponse(response: UNNotificationResponse) {
-    NotifierManager.onNotificationClicked(response.notification.request.content)
+    KMPNotifier.onNotificationClicked(response.notification.request.content)
 }

@@ -1,9 +1,12 @@
 package de.tabmates.features.notifications.data
 
-import com.mmk.kmpnotifier.notification.NotifierManager
-import com.mmk.kmpnotifier.notification.NotifierManager.Listener
+import com.mmk.kmpnotifier.KMPNotifier
 import com.mmk.kmpnotifier.notification.PayloadData
 import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
+import com.mmk.kmpnotifier.push.PushListener
+import com.mmk.kmpnotifier.push.firebase.FirebasePush
+import com.mmk.kmpnotifier.push.firebase.addPushListener
+import com.mmk.kmpnotifier.push.firebase.firebasePushNotifier
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
@@ -30,13 +33,8 @@ class MobilePushNotificationController(
     private val tokenStore: PushTokenStore,
     private val deepLinkBus: NotificationDeepLinkBus,
 ) : PushNotificationController {
-    private val notifierManagerListener =
-        object : Listener {
-            override fun onNewToken(token: String) {
-                logger.debug(TAG, "New push token received")
-                registerToken(token)
-            }
-
+    private val clickListener =
+        object : KMPNotifier.Listener {
             override fun onNotificationClicked(data: PayloadData) {
                 val deepLink = data[PushNotificationConstants.KEY_DEEP_LINK] as? String
                 if (deepLink != null) {
@@ -46,24 +44,33 @@ class MobilePushNotificationController(
             }
         }
 
+    private val pushListener =
+        object : PushListener {
+            override fun onNewToken(token: String) {
+                logger.debug(TAG, "New push token received")
+                registerToken(token)
+            }
+        }
+
     override fun start() {
-        NotifierManager.initialize(config)
-        NotifierManager.addListener(notifierManagerListener)
+        KMPNotifier.initialize(config, FirebasePush)
+        KMPNotifier.addListener(clickListener)
+        KMPNotifier.addPushListener(pushListener)
 
         appScope.launch {
-            val token = NotifierManager.getPushNotifier().getToken() ?: return@launch
+            val token = KMPNotifier.firebasePushNotifier.getToken() ?: return@launch
             registerAndCache(token, force = false)
         }
     }
 
     override suspend fun refreshRegistration() {
-        val token = NotifierManager.getPushNotifier().getToken() ?: return
+        val token = KMPNotifier.firebasePushNotifier.getToken() ?: return
         // Force: locale may have changed even though the token is the same.
         registerAndCache(token, force = true)
     }
 
     override suspend fun stop() {
-        val token = NotifierManager.getPushNotifier().getToken()
+        val token = KMPNotifier.firebasePushNotifier.getToken()
         if (token != null) {
             notificationService
                 .unregisterDevice(token)

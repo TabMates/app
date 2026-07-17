@@ -18,7 +18,7 @@ jetbrains-core-bundle = "1.0.1"
 jetbrains-savedstate = "1.4.0"
 junit = "4.13.2"
 kermit = "2.1.0"
-kmpnotifier = "1.6.1"
+kmpnotifier = "2.0.0"
 google-services = "4.5.0"
 aboutlibraries = "15.0.4"
 koin = "4.2.2"
@@ -147,7 +147,9 @@ androidx-sqlite-web = { module = "androidx.sqlite:sqlite-web", version.ref = "sq
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 
 # Push notifications (Firebase Cloud Messaging wrapper)
-kmpnotifier = { module = "io.github.mirzemehdi:kmpnotifier", version.ref = "kmpnotifier" }
+kmpnotifier-core = { module = "io.github.mirzemehdi:kmpnotifier-core", version.ref = "kmpnotifier" }
+kmpnotifier-local = { module = "io.github.mirzemehdi:kmpnotifier-local", version.ref = "kmpnotifier" }
+kmpnotifier-push-firebase = { module = "io.github.mirzemehdi:kmpnotifier-push-firebase", version.ref = "kmpnotifier" }
 
 # Google Play in-app updates (Android only)
 play-app-update = { module = "com.google.android.play:app-update", version.ref = "play-app-update" }

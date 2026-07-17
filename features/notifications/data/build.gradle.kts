@@ -29,8 +29,8 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(libs.ktor.client.okhttp)
-                // Firebase Cloud Messaging via kmpnotifier.
-                implementation(libs.kmpnotifier)
+                // Firebase Cloud Messaging via kmpnotifier-push-firebase (also pulls kmpnotifier-local + core).
+                implementation(libs.kmpnotifier.push.firebase)
                 // NotificationManagerCompat for the notification-permission check.
                 implementation(libs.androidx.core.ktx)
             }
@@ -44,8 +44,8 @@ kotlin {
         desktopMain {
             dependencies {
                 implementation(libs.ktor.client.okhttp)
-                // Local desktop notifications via kmpnotifier (no FCM on desktop).
-                implementation(libs.kmpnotifier)
+                // Local desktop notifications via kmpnotifier-local (no FCM on desktop).
+                implementation(libs.kmpnotifier.local)
             }
         }
 
@@ -57,8 +57,8 @@ kotlin {
 
         iosMain {
             dependencies {
-                // Firebase Cloud Messaging via kmpnotifier.
-                implementation(libs.kmpnotifier)
+                // Firebase Cloud Messaging via kmpnotifier-push-firebase (also pulls kmpnotifier-local + core).
+                implementation(libs.kmpnotifier.push.firebase)
             }
         }
 
