@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicSecureTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.material3.Icon
@@ -56,7 +57,8 @@ import tabmatesapp.core.designsystem.generated.resources.show_password
  * @param imeAction The [ImeAction] shown on the software-keyboard action button.
  * @param contentType The content type for the text field, used for autofill purposes.
  * @param onFocusChanged Callback invoked when the field's focus state changes.
- * @param onKeyboardAction Callback invoked when the IME action button is pressed.
+ * @param onKeyboardAction Callback invoked when the IME action button is pressed. When `null`
+ *   (default), the platform default is performed (e.g. [ImeAction.Next] moves focus).
  */
 @Composable
 fun TabMatesPasswordTextField(
@@ -72,7 +74,7 @@ fun TabMatesPasswordTextField(
     imeAction: ImeAction = ImeAction.Default,
     contentType: ContentType? = ContentType.Password,
     onFocusChanged: (Boolean) -> Unit = {},
-    onKeyboardAction: () -> Unit = {},
+    onKeyboardAction: (() -> Unit)? = null,
 ) {
     TabMatesTextFieldLayout(
         isError = isError,
@@ -108,7 +110,7 @@ fun TabMatesPasswordTextField(
                     keyboardType = KeyboardType.Password,
                     imeAction = imeAction,
                 ),
-            onKeyboardAction = { onKeyboardAction() },
+            onKeyboardAction = onKeyboardAction?.let { action -> KeyboardActionHandler { action() } },
             textStyle =
                 MaterialTheme.typography.bodyMedium.copy(
                     color =

@@ -12,7 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,12 +60,20 @@ fun EditUsernameRoot(
         }
     }
 
+    val focusManager = LocalFocusManager.current
     AccountFieldColumn(modifier = modifier) {
         TabMatesTextField(
             state = viewModel.usernameState,
             title = stringResource(Res.string.edit_username_label),
             singleLine = true,
             capitalization = KeyboardCapitalization.Words,
+            imeAction = ImeAction.Done,
+            onKeyboardAction = {
+                if (!state.isSubmitting) {
+                    focusManager.clearFocus()
+                    viewModel.onSave()
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
         )
     }

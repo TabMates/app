@@ -18,7 +18,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import org.jetbrains.compose.resources.vectorResource
@@ -103,6 +105,7 @@ fun AddPlaceholderDialog(
     onDismiss: () -> Unit,
     confirmEnabled: Boolean = true,
 ) {
+    val focusManager = LocalFocusManager.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
@@ -112,6 +115,13 @@ fun AddPlaceholderDialog(
                 title = nameLabel,
                 singleLine = true,
                 capitalization = KeyboardCapitalization.Words,
+                imeAction = ImeAction.Done,
+                onKeyboardAction = {
+                    if (confirmEnabled) {
+                        focusManager.clearFocus()
+                        onConfirm()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
         },

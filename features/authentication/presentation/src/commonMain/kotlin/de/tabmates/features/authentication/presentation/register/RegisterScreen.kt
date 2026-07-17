@@ -17,7 +17,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -137,7 +136,6 @@ private fun RegisterScreen(
             imeAction = ImeAction.Next,
             onFocusChanged = onUsernameFocusChanged,
             contentType = ContentType.Username,
-            onKeyboardAction = { focusManager.moveFocus(FocusDirection.Next) },
         )
         state.usernameError?.let {
             VerticalSpacer(16.dp)
@@ -153,7 +151,6 @@ private fun RegisterScreen(
             imeAction = ImeAction.Next,
             onFocusChanged = onEmailFocusChanged,
             contentType = ContentType.EmailAddress,
-            onKeyboardAction = { focusManager.moveFocus(FocusDirection.Next) },
         )
         state.emailError?.let {
             VerticalSpacer(16.dp)
@@ -169,7 +166,6 @@ private fun RegisterScreen(
             isPasswordVisible = state.isPasswordVisible,
             imeAction = ImeAction.Next,
             onFocusChanged = onPasswordFocusChanged,
-            onKeyboardAction = { focusManager.moveFocus(FocusDirection.Next) },
         )
         state.passwordError?.let {
             VerticalSpacer(16.dp)

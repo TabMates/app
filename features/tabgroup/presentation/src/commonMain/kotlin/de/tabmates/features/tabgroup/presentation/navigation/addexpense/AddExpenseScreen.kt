@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -247,6 +248,7 @@ internal fun AddExpenseScreen(
                 placeholder = stringResource(Res.string.add_expense_title_placeholder),
                 singleLine = true,
                 capitalization = KeyboardCapitalization.Words,
+                imeAction = ImeAction.Next,
                 modifier = Modifier.fillMaxWidth(),
             )
             TabMatesTextField(
@@ -402,7 +404,11 @@ private fun AmountInput(
                         state = amountState,
                         textStyle = amountTextStyle,
                         lineLimits = TextFieldLineLimits.SingleLine,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        keyboardOptions =
+                            KeyboardOptions(
+                                keyboardType = KeyboardType.Decimal,
+                                imeAction = ImeAction.Next,
+                            ),
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                         decorator = { inner ->
                             Box(contentAlignment = Alignment.Center) {

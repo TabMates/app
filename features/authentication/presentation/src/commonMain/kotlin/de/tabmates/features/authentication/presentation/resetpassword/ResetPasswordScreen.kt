@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.buttons.TabMatesButton
@@ -63,6 +65,7 @@ private fun ResetPasswordScreen(
     onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
     Column(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -79,6 +82,13 @@ private fun ResetPasswordScreen(
             isPasswordVisible = isPasswordVisible,
             onToggleVisibilityClick = onToggleVisibilityClick,
             placeholder = stringResource(Res.string.new_password),
+            imeAction = ImeAction.Done,
+            onKeyboardAction = {
+                if (enabled) {
+                    focusManager.clearFocus()
+                    onSubmitClick()
+                }
+            },
         )
         VerticalSpacer(height = 16.dp)
         TabMatesButton(

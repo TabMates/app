@@ -7,7 +7,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -53,12 +55,14 @@ fun ChangePasswordRoot(
         }
     }
 
+    val focusManager = LocalFocusManager.current
     AccountFieldColumn(modifier = modifier) {
         TabMatesPasswordTextField(
             state = viewModel.currentPasswordState,
             title = stringResource(Res.string.change_password_current_label),
             isPasswordVisible = state.isCurrentPasswordVisible,
             onToggleVisibilityClick = viewModel::onToggleCurrentPasswordVisibility,
+            imeAction = ImeAction.Next,
             modifier = Modifier.fillMaxWidth(),
         )
         VerticalSpacer(16.dp)
@@ -67,6 +71,13 @@ fun ChangePasswordRoot(
             title = stringResource(Res.string.change_password_new_label),
             isPasswordVisible = state.isNewPasswordVisible,
             onToggleVisibilityClick = viewModel::onToggleNewPasswordVisibility,
+            imeAction = ImeAction.Done,
+            onKeyboardAction = {
+                if (!state.isSubmitting) {
+                    focusManager.clearFocus()
+                    viewModel.onSave()
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
         )
     }
