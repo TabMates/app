@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
     <!-- Welcome Screen -->
-    <string name="welcome_title">Willkommen bei TabMates</string>
+    <string name="welcome_title_prefix">Willkommen bei</string>
     <string name="welcome_button_register">Registrieren</string>
     <string name="welcome_button_guest">Als Gast fortfahren</string>
 

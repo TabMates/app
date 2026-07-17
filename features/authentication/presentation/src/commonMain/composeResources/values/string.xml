@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
     <!-- Welcome Screen -->
-    <string name="welcome_title">Welcome to TabMates</string>
+    <string name="welcome_title_prefix">Welcome to</string>
     <string name="welcome_button_register">Register</string>
     <string name="welcome_button_guest">Continue as Guest</string>
 
@@ -28,6 +28,7 @@
     <string name="resent_verification_email">Successfully resent verification email</string>
 
     <!-- General Strings -->
+    <string name="app_name" translatable="false">TabMates</string>
     <string name="login">Login</string>
     <string name="close">Close</string>
 
