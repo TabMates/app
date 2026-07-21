@@ -95,6 +95,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
         GroupDetailRoot(
             groupId = route.groupId,
             snackbarHostState = snackbarHostState,
+            onBack = { backStack.removeLastOrNull() },
             onSettingsClick = { backStack.add(GroupSettings(route.groupId)) },
             onAddEntryClick = { backStack.add(AddEntry(route.groupId)) },
             onSettleUpClick = { backStack.add(SettleUp(route.groupId)) },

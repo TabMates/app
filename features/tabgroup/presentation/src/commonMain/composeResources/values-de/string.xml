@@ -120,6 +120,7 @@
     <string name="groups_detail_placeholder_caption">Wähle links eine Gruppe aus, um Details zu sehen.</string>
     <string name="groups_detail_invite">Einladen</string>
     <string name="groups_detail_add_entry">Eintrag hinzufügen</string>
+    <string name="groups_detail_back_cd">Zurück</string>
     <string name="groups_detail_tab_transactions">Transaktionen</string>
     <string name="groups_detail_tab_balances">Salden</string>
     <string name="groups_detail_tab_members">Mitglieder</string>
