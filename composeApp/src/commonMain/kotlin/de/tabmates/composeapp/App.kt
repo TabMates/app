@@ -86,6 +86,7 @@ import org.koin.compose.getKoin
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.plugin.module.dsl.koinConfiguration
 import tabmatesapp.composeapp.generated.resources.Res
+import tabmatesapp.composeapp.generated.resources.add_entry
 import tabmatesapp.composeapp.generated.resources.create_group
 import tabmatesapp.composeapp.generated.resources.ic_add
 
@@ -250,7 +251,10 @@ fun App() {
                             ) {
                                 Icon(
                                     imageVector = vectorResource(Res.drawable.ic_add),
-                                    contentDescription = stringResource(Res.string.create_group),
+                                    contentDescription = when (screen.fabAction) {
+                                        FabAction.CreateGroup -> stringResource(Res.string.create_group)
+                                        is FabAction.AddEntry -> stringResource(Res.string.add_entry)
+                                    },
                                 )
                             }
                         }

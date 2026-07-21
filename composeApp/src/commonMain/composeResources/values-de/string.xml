@@ -3,6 +3,7 @@
     <string name="back">Zurück</string>
     <string name="close">Schließen</string>
     <string name="create_group">Gruppe erstellen</string>
+    <string name="add_entry">Eintrag hinzufügen</string>
     <string name="update_dialog_title">Update verfügbar</string>
     <string name="update_dialog_message_optional">Eine neue Version von TabMates ist verfügbar. Aktualisiere jetzt, um die neuesten Funktionen und Fehlerbehebungen zu erhalten.</string>
     <string name="update_dialog_message_forced">Diese Version von TabMates wird nicht mehr unterstützt. Bitte aktualisiere, um fortzufahren.</string>
