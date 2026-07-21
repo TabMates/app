@@ -170,7 +170,7 @@ private fun SplitRemainderText(
         SplitType.EQUAL, SplitType.SHARES -> {
             Text(
                 text = stringResource(Res.string.split_screen_balanced),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
