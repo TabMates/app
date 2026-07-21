@@ -80,6 +80,9 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: composeApp/build/dist/wasmJs/productionExecutable
+          # Default excludes dotfiles/dotdirs from the tarball — silently drops
+          # .well-known/assetlinks.json
+          include-hidden-files: true
 
   deploy:
     name: Deploy to GitHub Pages
