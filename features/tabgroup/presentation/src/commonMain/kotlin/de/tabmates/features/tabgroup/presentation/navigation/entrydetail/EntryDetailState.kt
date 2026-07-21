@@ -1,13 +1,13 @@
-package de.tabmates.features.tabgroup.presentation.navigation.expensedetail
+package de.tabmates.features.tabgroup.presentation.navigation.entrydetail
 
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.EntryKind
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.EntryKind
 import kotlin.time.Instant
 
-data class ExpenseDetailState(
-    val expenseId: String = "",
+data class EntryDetailState(
+    val entryId: String = "",
     val isLoading: Boolean = true,
     val isDeleting: Boolean = false,
     // The entry being shown — an expense or an income (both split-carrying). Null while loading or
@@ -17,9 +17,9 @@ data class ExpenseDetailState(
     val splits: List<TabEntrySplit> = emptyList(),
     val currentUserId: String = "",
     // The currency the entry was recorded in — amounts on this screen render in it.
-    val expenseCurrencyCode: String = "",
-    val expenseCurrencySymbol: String = "",
-    val expenseCurrencyDecimalDigits: Int = 2,
+    val entryCurrencyCode: String = "",
+    val entryCurrencySymbol: String = "",
+    val entryCurrencyDecimalDigits: Int = 2,
     // The group's default currency, base for the converted amount and exchange rate.
     val groupCurrencyCode: String = "",
     val groupCurrencySymbol: String = "",
@@ -32,6 +32,6 @@ data class ExpenseDetailState(
     val isForeignCurrency: Boolean
         get() =
             groupCurrencyCode.isNotEmpty() &&
-                expenseCurrencyCode.isNotEmpty() &&
-                expenseCurrencyCode != groupCurrencyCode
+                entryCurrencyCode.isNotEmpty() &&
+                entryCurrencyCode != groupCurrencyCode
 }

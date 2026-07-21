@@ -21,7 +21,7 @@ interface TabEntryRepository {
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Expense, DataError.Remote>
 
     suspend fun updateExpense(
@@ -34,7 +34,7 @@ interface TabEntryRepository {
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Expense, DataError.Remote>
 
     suspend fun createIncome(
@@ -46,7 +46,7 @@ interface TabEntryRepository {
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Income, DataError.Remote>
 
     suspend fun updateIncome(
@@ -59,7 +59,7 @@ interface TabEntryRepository {
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Income, DataError.Remote>
 
     suspend fun createSettlement(

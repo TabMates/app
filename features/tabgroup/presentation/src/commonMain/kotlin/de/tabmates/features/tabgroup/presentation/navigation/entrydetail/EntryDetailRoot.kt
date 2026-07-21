@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.navigation.expensedetail
+package de.tabmates.features.tabgroup.presentation.navigation.entrydetail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -44,9 +44,9 @@ import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.components.formatRate
 import de.tabmates.features.tabgroup.presentation.components.rateUpdatedLabel
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.EntryKind
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatExpenseDate
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.rememberMonthAbbreviations
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.EntryKind
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.formatEntryDate
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.rememberMonthAbbreviations
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.stringResource
@@ -54,10 +54,13 @@ import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_locked_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_unavailable
+import tabmatesapp.features.tabgroup.presentation.generated.resources.entry_detail_delete_dialog_message
+import tabmatesapp.features.tabgroup.presentation.generated.resources.entry_detail_delete_dialog_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.entry_detail_received_by_section
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_dialog_cancel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_dialog_confirm
@@ -71,23 +74,20 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_delete
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_edit
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_redeem
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_restaurant
-import tabmatesapp.features.tabgroup.presentation.generated.resources.income_detail_delete_dialog_message
-import tabmatesapp.features.tabgroup.presentation.generated.resources.income_detail_delete_dialog_title
-import tabmatesapp.features.tabgroup.presentation.generated.resources.income_detail_received_by_section
 
 @Composable
-fun ExpenseDetailRoot(
-    expenseId: String,
+fun EntryDetailRoot(
+    entryId: String,
     groupId: String,
     navKey: NavKey,
     snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ExpenseDetailViewModel =
+    viewModel: EntryDetailViewModel =
         koinViewModel(
-            key = expenseId,
-            parameters = { parametersOf(expenseId, groupId) },
+            key = entryId,
+            parameters = { parametersOf(entryId, groupId) },
         ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -95,8 +95,8 @@ fun ExpenseDetailRoot(
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            ExpenseDetailEvent.ExpenseDeleted -> onBack()
-            is ExpenseDetailEvent.Error -> snackbarHostState.showSnackbar(event.message.asStringAsync())
+            EntryDetailEvent.EntryDeleted -> onBack()
+            is EntryDetailEvent.Error -> snackbarHostState.showSnackbar(event.message.asStringAsync())
         }
     }
 
@@ -126,15 +126,15 @@ fun ExpenseDetailRoot(
         }
     }
 
-    ExpenseDetailScreen(
+    EntryDetailScreen(
         state = state,
         modifier = modifier,
     )
 }
 
 @Composable
-private fun ExpenseDetailScreen(
-    state: ExpenseDetailState,
+private fun EntryDetailScreen(
+    state: EntryDetailState,
     modifier: Modifier = Modifier,
 ) {
     val monthLabels = rememberMonthAbbreviations()
@@ -157,11 +157,11 @@ private fun ExpenseDetailScreen(
             title = entry.title,
             amountFormatted =
                 formatMoney(
-                    state.expenseCurrencySymbol,
+                    state.entryCurrencySymbol,
                     entry.amount,
-                    state.expenseCurrencyDecimalDigits,
+                    state.entryCurrencyDecimalDigits,
                 ),
-            dateText = formatExpenseDate(entry.entryDate, monthLabels),
+            dateText = formatEntryDate(entry.entryDate, monthLabels),
             description = entry.description,
             isPendingSync = entry.isPendingSync,
         )
@@ -175,7 +175,7 @@ private fun ExpenseDetailScreen(
                 text =
                     stringResource(
                         if (isIncome) {
-                            Res.string.income_detail_received_by_section
+                            Res.string.entry_detail_received_by_section
                         } else {
                             Res.string.expense_detail_paid_by_section
                         },
@@ -187,14 +187,14 @@ private fun ExpenseDetailScreen(
             val payerName =
                 when {
                     payer == null -> stringResource(Res.string.expense_detail_removed_member)
-                    payer.userId == state.currentUserId -> stringResource(Res.string.add_expense_paid_by_you)
+                    payer.userId == state.currentUserId -> stringResource(Res.string.add_entry_paid_by_you)
                     else -> payer.username
                 }
             DetailRow(
                 initials = payer?.initials ?: "?",
                 primary = payerName,
                 trailingValue =
-                    formatMoney(state.expenseCurrencySymbol, entry.amount, state.expenseCurrencyDecimalDigits),
+                    formatMoney(state.entryCurrencySymbol, entry.amount, state.entryCurrencyDecimalDigits),
                 isRemoved = payer == null,
             )
             VerticalSpacer(20.dp)
@@ -276,7 +276,7 @@ private fun HeroSection(
 }
 
 @Composable
-private fun ForeignCurrencyDetails(state: ExpenseDetailState) {
+private fun ForeignCurrencyDetails(state: EntryDetailState) {
     val entry = state.entry ?: return
     // The rate locked in when the entry was added wins over the live table; only legacy
     // entries without a snapshot fall back to live rates (and show when those were updated).
@@ -285,7 +285,7 @@ private fun ForeignCurrencyDetails(state: ExpenseDetailState) {
         lockedRate
             ?: CurrencyConverter.convert(
                 amount = 1.0,
-                from = state.expenseCurrencyCode,
+                from = state.entryCurrencyCode,
                 to = state.groupCurrencyCode,
                 rates = state.ratesByCurrency,
             )
@@ -306,7 +306,7 @@ private fun ForeignCurrencyDetails(state: ExpenseDetailState) {
                 text =
                     stringResource(
                         Res.string.currency_rate_label,
-                        state.expenseCurrencyCode,
+                        state.entryCurrencyCode,
                         rateText,
                         state.groupCurrencyCode,
                     ),
@@ -375,20 +375,20 @@ private fun DetailRow(
 @Composable
 private fun SplitRow(
     split: TabEntrySplit,
-    state: ExpenseDetailState,
+    state: EntryDetailState,
 ) {
     val member = state.membersById[split.participantId]
     val name =
         when {
             member == null -> stringResource(Res.string.expense_detail_removed_member)
-            member.userId == state.currentUserId -> stringResource(Res.string.add_expense_paid_by_you)
+            member.userId == state.currentUserId -> stringResource(Res.string.add_entry_paid_by_you)
             else -> member.username
         }
     DetailRow(
         initials = member?.initials ?: "?",
         primary = name,
         trailingValue =
-            formatMoney(state.expenseCurrencySymbol, split.resolvedAmount, state.expenseCurrencyDecimalDigits),
+            formatMoney(state.entryCurrencySymbol, split.resolvedAmount, state.entryCurrencyDecimalDigits),
         isRemoved = member == null,
     )
 }
@@ -406,7 +406,7 @@ private fun DeleteConfirmDialog(
             Text(
                 stringResource(
                     if (isIncome) {
-                        Res.string.income_detail_delete_dialog_title
+                        Res.string.entry_detail_delete_dialog_title
                     } else {
                         Res.string.expense_detail_delete_dialog_title
                     },
@@ -417,7 +417,7 @@ private fun DeleteConfirmDialog(
             Text(
                 stringResource(
                     if (isIncome) {
-                        Res.string.income_detail_delete_dialog_message
+                        Res.string.entry_detail_delete_dialog_message
                     } else {
                         Res.string.expense_detail_delete_dialog_message
                     },

@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.navigation.expensedetail
+package de.tabmates.features.tabgroup.presentation.navigation.entrydetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +11,7 @@ import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.EntryKind
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.EntryKind
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,8 +28,8 @@ import org.koin.core.annotation.KoinViewModel
 import kotlin.time.Duration.Companion.seconds
 
 @KoinViewModel
-class ExpenseDetailViewModel(
-    @InjectedParam private val expenseId: String,
+class EntryDetailViewModel(
+    @InjectedParam private val entryId: String,
     @InjectedParam private val groupId: String,
     private val tabEntryRepository: TabEntryRepository,
     groupRepository: GroupRepository,
@@ -45,9 +45,9 @@ class ExpenseDetailViewModel(
             .orEmpty()
     private val isDeleting = MutableStateFlow(false)
 
-    val state: StateFlow<ExpenseDetailState> =
+    val state: StateFlow<EntryDetailState> =
         combine(
-            tabEntryRepository.getTabEntryById(expenseId).onStart { emit(null) },
+            tabEntryRepository.getTabEntryById(entryId).onStart { emit(null) },
             groupRepository.getGroups().onStart { emit(emptyList()) },
             currencyRepository.getCurrencies().onStart { emit(emptyList()) },
             exchangeRateRepository.getExchangeRates().onStart { emit(emptyList()) },
@@ -72,21 +72,21 @@ class ExpenseDetailViewModel(
                     is TabEntry.Income -> detailEntry.splits
                     else -> emptyList()
                 }
-            val expenseCurrencyCode = detailEntry?.currencyCode ?: group?.defaultCurrencyCode.orEmpty()
-            val expenseCurrency = currencies.firstOrNull { it.code == expenseCurrencyCode }
+            val entryCurrencyCode = detailEntry?.currencyCode ?: group?.defaultCurrencyCode.orEmpty()
+            val entryCurrency = currencies.firstOrNull { it.code == entryCurrencyCode }
             val groupCurrencyCode = group?.defaultCurrencyCode.orEmpty()
             val groupCurrency = currencies.firstOrNull { it.code == groupCurrencyCode }
-            ExpenseDetailState(
-                expenseId = expenseId,
+            EntryDetailState(
+                entryId = entryId,
                 isLoading = detailEntry == null,
                 isDeleting = deleting,
                 entry = detailEntry,
                 entryKind = entryKind,
                 splits = splits,
                 currentUserId = currentUserId,
-                expenseCurrencyCode = expenseCurrencyCode,
-                expenseCurrencySymbol = expenseCurrency?.nativeSymbol ?: expenseCurrencyCode,
-                expenseCurrencyDecimalDigits = expenseCurrency?.decimalDigits ?: 2,
+                entryCurrencyCode = entryCurrencyCode,
+                entryCurrencySymbol = entryCurrency?.nativeSymbol ?: entryCurrencyCode,
+                entryCurrencyDecimalDigits = entryCurrency?.decimalDigits ?: 2,
                 groupCurrencyCode = groupCurrencyCode,
                 groupCurrencySymbol = groupCurrency?.nativeSymbol ?: groupCurrencyCode,
                 groupCurrencyDecimalDigits = groupCurrency?.decimalDigits ?: 2,
@@ -99,10 +99,10 @@ class ExpenseDetailViewModel(
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5.seconds),
-            initialValue = ExpenseDetailState(expenseId = expenseId, currentUserId = currentUserId),
+            initialValue = EntryDetailState(entryId = entryId, currentUserId = currentUserId),
         )
 
-    private val eventChannel = Channel<ExpenseDetailEvent>()
+    private val eventChannel = Channel<EntryDetailEvent>()
     val events = eventChannel.receiveAsFlow()
 
     fun onConfirmDelete() {
@@ -110,10 +110,10 @@ class ExpenseDetailViewModel(
         viewModelScope.launch {
             isDeleting.update { true }
             tabEntryRepository
-                .deleteTabEntry(expenseId)
-                .onSuccess { eventChannel.send(ExpenseDetailEvent.ExpenseDeleted) }
+                .deleteTabEntry(entryId)
+                .onSuccess { eventChannel.send(EntryDetailEvent.EntryDeleted) }
                 .onFailure { error ->
-                    eventChannel.send(ExpenseDetailEvent.Error(error.toUiText()))
+                    eventChannel.send(EntryDetailEvent.Error(error.toUiText()))
                 }
             isDeleting.update { false }
         }

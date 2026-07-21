@@ -5,7 +5,7 @@ import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
-import de.tabmates.features.tabgroup.domain.tabentry.NewExpenseSplit
+import de.tabmates.features.tabgroup.domain.tabentry.NewTabEntrySplit
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
@@ -53,7 +53,7 @@ class FakeTabEntryRepository(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Expense, DataError.Remote> {
         val id = "fake-${flowByGroupId.values.sumOf { it.value.size } + 1}"
         val expense =
@@ -101,7 +101,7 @@ class FakeTabEntryRepository(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Expense, DataError.Remote> {
         val expense =
             TabEntry.Expense(
@@ -147,7 +147,7 @@ class FakeTabEntryRepository(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Income, DataError.Remote> {
         val id = "fake-${flowByGroupId.values.sumOf { it.value.size } + 1}"
         val income =
@@ -195,7 +195,7 @@ class FakeTabEntryRepository(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Income, DataError.Remote> {
         val income =
             TabEntry.Income(

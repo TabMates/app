@@ -8,7 +8,7 @@ import de.tabmates.features.tabgroup.data.mappers.toEntity
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
-import de.tabmates.features.tabgroup.domain.tabentry.NewExpenseSplit
+import de.tabmates.features.tabgroup.domain.tabentry.NewTabEntrySplit
 import de.tabmates.features.tabgroup.domain.tabentry.SplitResolver
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import kotlinx.coroutines.flow.Flow
@@ -43,7 +43,7 @@ class OfflineFirstTabEntryRepository(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Expense, DataError.Remote> {
         val localId = generateLocalId()
         val now = Clock.System.now()
@@ -96,7 +96,7 @@ class OfflineFirstTabEntryRepository(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Expense, DataError.Remote> {
         // Preserve server-owned fields from the existing row; the server reconciles the rest on echo.
         val existing = database.tabEntryDao.getTabEntryById(tabEntryId)?.toDomain() as? TabEntry.Expense
@@ -153,7 +153,7 @@ class OfflineFirstTabEntryRepository(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Income, DataError.Remote> {
         val localId = generateLocalId()
         val now = Clock.System.now()
@@ -206,7 +206,7 @@ class OfflineFirstTabEntryRepository(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ): Result<TabEntry.Income, DataError.Remote> {
         // Preserve server-owned fields from the existing row; the server reconciles the rest on echo.
         val existing = database.tabEntryDao.getTabEntryById(tabEntryId)?.toDomain() as? TabEntry.Income
@@ -386,7 +386,7 @@ class OfflineFirstTabEntryRepository(
 
     private fun resolveSplits(
         tabEntryId: String,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
         totalAmount: Double,
     ): List<TabEntrySplit> {
         if (splits.isEmpty()) return emptyList()

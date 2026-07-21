@@ -67,7 +67,7 @@ import de.tabmates.features.authentication.presentation.navigation.authGraph
 import de.tabmates.features.authentication.presentation.navigation.authSerializersModule
 import de.tabmates.features.notifications.domain.NotificationDeepLinkBus
 import de.tabmates.features.tabgroup.presentation.navigation.Activity
-import de.tabmates.features.tabgroup.presentation.navigation.AddExpense
+import de.tabmates.features.tabgroup.presentation.navigation.AddEntry
 import de.tabmates.features.tabgroup.presentation.navigation.CreateGroup
 import de.tabmates.features.tabgroup.presentation.navigation.Group
 import de.tabmates.features.tabgroup.presentation.navigation.GroupDetail
@@ -244,7 +244,7 @@ fun App() {
                                 onClick = {
                                     when (val action = screen.fabAction) {
                                         FabAction.CreateGroup -> backStack.add(CreateGroup)
-                                        is FabAction.AddExpense -> backStack.add(AddExpense(action.groupId))
+                                        is FabAction.AddEntry -> backStack.add(AddEntry(action.groupId))
                                     }
                                 },
                             ) {

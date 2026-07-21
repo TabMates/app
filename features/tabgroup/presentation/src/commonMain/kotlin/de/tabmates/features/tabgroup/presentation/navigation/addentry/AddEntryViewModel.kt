@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.navigation.addexpense
+package de.tabmates.features.tabgroup.presentation.navigation.addentry
 
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
@@ -16,7 +16,7 @@ import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
-import de.tabmates.features.tabgroup.domain.tabentry.NewExpenseSplit
+import de.tabmates.features.tabgroup.domain.tabentry.NewTabEntrySplit
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
@@ -38,28 +38,28 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_amount_required
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_description_too_long
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_no_splits
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_paid_by_required
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_split_total_mismatch
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_title_required
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_title_too_long
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_error_amount_required
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_error_description_too_long
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_error_no_splits
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_error_paid_by_required
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_error_split_total_mismatch
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_error_title_required
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_error_title_too_long
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 @KoinViewModel
-class AddExpenseViewModel(
+class AddEntryViewModel(
     @InjectedParam private val groupId: String,
-    @InjectedParam private val expenseId: String,
+    @InjectedParam private val entryId: String,
     private val tabEntryRepository: TabEntryRepository,
     private val groupRepository: GroupRepository,
     private val currencyRepository: CurrencyRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
     sessionStorage: SessionStorage,
 ) : ViewModel() {
-    private val isEditing = expenseId.isNotBlank()
+    private val isEditing = entryId.isNotBlank()
     private val currentUserId =
         sessionStorage
             .get()
@@ -68,11 +68,11 @@ class AddExpenseViewModel(
             .orEmpty()
     private val _state =
         MutableStateFlow(
-            AddExpenseState(groupId = groupId, currentUserId = currentUserId, isEditing = isEditing),
+            AddEntryState(groupId = groupId, currentUserId = currentUserId, isEditing = isEditing),
         )
     private var hasLoadedInitialData = false
 
-    val state: StateFlow<AddExpenseState> =
+    val state: StateFlow<AddEntryState> =
         _state
             .onStart {
                 if (!hasLoadedInitialData) {
@@ -85,7 +85,7 @@ class AddExpenseViewModel(
                 initialValue = _state.value,
             )
 
-    private val eventChannel = Channel<AddExpenseEvent>()
+    private val eventChannel = Channel<AddEntryEvent>()
     val events = eventChannel.receiveAsFlow()
 
     private val currencyQueryFlow =
@@ -99,7 +99,7 @@ class AddExpenseViewModel(
             buildCurrencyPickerState(
                 currencies = current.supportedCurrencies,
                 recentCodes = listOfNotNull(current.baseCurrencyCode.ifEmpty { null }),
-                selectedCode = current.expenseCurrencyCode,
+                selectedCode = current.entryCurrencyCode,
                 query = query,
                 baseCurrencyCode = current.baseCurrencyCode,
                 ratesByCurrency = current.ratesByCurrency,
@@ -125,9 +125,9 @@ class AddExpenseViewModel(
         _state.value.currencyQueryState.clearText()
         _state.update {
             it.copy(
-                expenseCurrencyCode = code,
-                expenseCurrencySymbol = currency?.nativeSymbol ?: code,
-                expenseCurrencyDecimalDigits = currency?.decimalDigits ?: 2,
+                entryCurrencyCode = code,
+                entryCurrencySymbol = currency?.nativeSymbol ?: code,
+                entryCurrencyDecimalDigits = currency?.decimalDigits ?: 2,
                 isCurrencyPickerVisible = false,
             )
         }
@@ -149,7 +149,7 @@ class AddExpenseViewModel(
             // then fixed for the rest of the edit. Create mode starts from the toggle default.
             val existing =
                 if (isEditing) {
-                    tabEntryRepository.getTabEntryById(expenseId).first()
+                    tabEntryRepository.getTabEntryById(entryId).first()
                 } else {
                     null
                 }
@@ -167,9 +167,9 @@ class AddExpenseViewModel(
             val baseCurrencyCode = group?.defaultCurrencyCode.orEmpty()
             val baseCurrency = currencies.firstOrNull { it.code == baseCurrencyCode }
             // Expense currency defaults to the group's base; an edited expense keeps its own.
-            val expenseCurrencyCode = existing?.currencyCode ?: baseCurrencyCode
-            val expenseCurrency = currencies.firstOrNull { it.code == expenseCurrencyCode }
-            val decimals = expenseCurrency?.decimalDigits ?: 2
+            val entryCurrencyCode = existing?.currencyCode ?: baseCurrencyCode
+            val entryCurrency = currencies.firstOrNull { it.code == entryCurrencyCode }
+            val decimals = entryCurrency?.decimalDigits ?: 2
             val defaultPaidBy =
                 existing?.paidByUserId
                     ?: activeMembers.firstOrNull { it.userId == currentUserId }?.userId
@@ -181,9 +181,9 @@ class AddExpenseViewModel(
                     entryKind = existingKind,
                     members = activeMembers,
                     paidByUserId = defaultPaidBy,
-                    expenseCurrencyCode = expenseCurrencyCode,
-                    expenseCurrencySymbol = expenseCurrency?.nativeSymbol ?: expenseCurrencyCode,
-                    expenseCurrencyDecimalDigits = decimals,
+                    entryCurrencyCode = entryCurrencyCode,
+                    entryCurrencySymbol = entryCurrency?.nativeSymbol ?: entryCurrencyCode,
+                    entryCurrencyDecimalDigits = decimals,
                     baseCurrencyCode = baseCurrencyCode,
                     baseCurrencySymbol = baseCurrency?.nativeSymbol ?: baseCurrencyCode,
                     baseCurrencyDecimalDigits = baseCurrency?.decimalDigits ?: 2,
@@ -303,7 +303,7 @@ class AddExpenseViewModel(
         val amount =
             parseAmount(current.amountTextState.text.toString())?.takeIf { it > 0.0 }
         if (amount == null) {
-            emitError(UiText.Resource(Res.string.add_expense_error_amount_required))
+            emitError(UiText.Resource(Res.string.add_entry_error_amount_required))
             return
         }
         val title =
@@ -311,11 +311,11 @@ class AddExpenseViewModel(
                 .toString()
                 .trim()
         if (title.isEmpty()) {
-            emitError(UiText.Resource(Res.string.add_expense_error_title_required))
+            emitError(UiText.Resource(Res.string.add_entry_error_title_required))
             return
         }
         if (title.length > MAX_TITLE_LENGTH) {
-            emitError(UiText.Resource(Res.string.add_expense_error_title_too_long))
+            emitError(UiText.Resource(Res.string.add_entry_error_title_too_long))
             return
         }
         val description =
@@ -323,11 +323,11 @@ class AddExpenseViewModel(
                 .toString()
                 .trim()
         if (description.length > MAX_DESCRIPTION_LENGTH) {
-            emitError(UiText.Resource(Res.string.add_expense_error_description_too_long))
+            emitError(UiText.Resource(Res.string.add_entry_error_description_too_long))
             return
         }
         if (current.paidByUserId.isBlank()) {
-            emitError(UiText.Resource(Res.string.add_expense_error_paid_by_required))
+            emitError(UiText.Resource(Res.string.add_entry_error_paid_by_required))
             return
         }
         val splits = buildSplits(current, amount) ?: return
@@ -340,12 +340,12 @@ class AddExpenseViewModel(
                 when {
                     isEditing && isIncome -> {
                         tabEntryRepository.updateIncome(
-                            tabEntryId = expenseId,
+                            tabEntryId = entryId,
                             groupId = current.groupId,
                             title = title,
                             description = description,
                             amount = amount,
-                            currencyCode = current.expenseCurrencyCode,
+                            currencyCode = current.entryCurrencyCode,
                             exchangeRate = exchangeRate,
                             paidByUserId = current.paidByUserId,
                             entryDate = current.entryDate,
@@ -355,12 +355,12 @@ class AddExpenseViewModel(
 
                     isEditing -> {
                         tabEntryRepository.updateExpense(
-                            tabEntryId = expenseId,
+                            tabEntryId = entryId,
                             groupId = current.groupId,
                             title = title,
                             description = description,
                             amount = amount,
-                            currencyCode = current.expenseCurrencyCode,
+                            currencyCode = current.entryCurrencyCode,
                             exchangeRate = exchangeRate,
                             paidByUserId = current.paidByUserId,
                             entryDate = current.entryDate,
@@ -374,7 +374,7 @@ class AddExpenseViewModel(
                             title = title,
                             description = description,
                             amount = amount,
-                            currencyCode = current.expenseCurrencyCode,
+                            currencyCode = current.entryCurrencyCode,
                             exchangeRate = exchangeRate,
                             paidByUserId = current.paidByUserId,
                             entryDate = current.entryDate,
@@ -388,7 +388,7 @@ class AddExpenseViewModel(
                             title = title,
                             description = description,
                             amount = amount,
-                            currencyCode = current.expenseCurrencyCode,
+                            currencyCode = current.entryCurrencyCode,
                             exchangeRate = exchangeRate,
                             paidByUserId = current.paidByUserId,
                             entryDate = current.entryDate,
@@ -399,10 +399,10 @@ class AddExpenseViewModel(
             result
                 .onSuccess {
                     _state.update { it.copy(isSubmitting = false) }
-                    eventChannel.send(AddExpenseEvent.ExpenseCreated)
+                    eventChannel.send(AddEntryEvent.EntrySaved)
                 }.onFailure { error ->
                     _state.update { it.copy(isSubmitting = false) }
-                    eventChannel.send(AddExpenseEvent.Error(error.toUiText()))
+                    eventChannel.send(AddEntryEvent.Error(error.toUiText()))
                 }
         }
     }
@@ -413,31 +413,31 @@ class AddExpenseViewModel(
      * what gets locked. Editing keeps the originally locked rate unless the currency changed;
      * same-currency expenses and missing rates yield null (consumers fall back to live rates).
      */
-    private fun resolveExchangeRate(state: AddExpenseState): Double? {
-        if (isEditing && state.expenseCurrencyCode == state.originalCurrencyCode) {
+    private fun resolveExchangeRate(state: AddEntryState): Double? {
+        if (isEditing && state.entryCurrencyCode == state.originalCurrencyCode) {
             return state.originalExchangeRate
         }
-        if (state.expenseCurrencyCode == state.baseCurrencyCode) return null
+        if (state.entryCurrencyCode == state.baseCurrencyCode) return null
         return CurrencyConverter.convert(
             amount = 1.0,
-            from = state.expenseCurrencyCode,
+            from = state.entryCurrencyCode,
             to = state.baseCurrencyCode,
             rates = state.ratesByCurrency,
         )
     }
 
     private fun buildSplits(
-        state: AddExpenseState,
+        state: AddEntryState,
         totalAmount: Double,
-    ): List<NewExpenseSplit>? {
+    ): List<NewTabEntrySplit>? {
         return when (state.splitType) {
             SplitType.EQUAL -> {
                 val included = state.splitInputs.filter { it.included }
                 if (included.isEmpty()) {
-                    emitError(UiText.Resource(Res.string.add_expense_error_no_splits))
+                    emitError(UiText.Resource(Res.string.add_entry_error_no_splits))
                     return null
                 }
-                included.map { NewExpenseSplit(it.participantId, SplitType.EQUAL, value = 1.0) }
+                included.map { NewTabEntrySplit(it.participantId, SplitType.EQUAL, value = 1.0) }
             }
 
             SplitType.EXACT_AMOUNT -> {
@@ -446,15 +446,15 @@ class AddExpenseViewModel(
                         input.participantId to (parseAmount(input.exactAmountState.text.toString()) ?: 0.0)
                     }
                 val total = rows.sumOf { it.second }
-                if (abs(total - totalAmount) > epsilon(state.expenseCurrencyDecimalDigits)) {
+                if (abs(total - totalAmount) > epsilon(state.entryCurrencyDecimalDigits)) {
                     emitError(
                         UiText.Resource(
-                            Res.string.add_expense_error_split_total_mismatch,
+                            Res.string.add_entry_error_split_total_mismatch,
                             arrayOf(
                                 formatMoney(
-                                    state.expenseCurrencySymbol,
+                                    state.entryCurrencySymbol,
                                     totalAmount,
-                                    state.expenseCurrencyDecimalDigits,
+                                    state.entryCurrencyDecimalDigits,
                                 ),
                             ),
                         ),
@@ -463,10 +463,10 @@ class AddExpenseViewModel(
                 }
                 val nonZero = rows.filter { it.second > 0.0 }
                 if (nonZero.isEmpty()) {
-                    emitError(UiText.Resource(Res.string.add_expense_error_no_splits))
+                    emitError(UiText.Resource(Res.string.add_entry_error_no_splits))
                     return null
                 }
-                nonZero.map { (id, value) -> NewExpenseSplit(id, SplitType.EXACT_AMOUNT, value) }
+                nonZero.map { (id, value) -> NewTabEntrySplit(id, SplitType.EXACT_AMOUNT, value) }
             }
 
             SplitType.PERCENTAGE -> {
@@ -478,7 +478,7 @@ class AddExpenseViewModel(
                 if (abs(total - 100.0) > 0.01) {
                     emitError(
                         UiText.Resource(
-                            Res.string.add_expense_error_split_total_mismatch,
+                            Res.string.add_entry_error_split_total_mismatch,
                             arrayOf("100%"),
                         ),
                     )
@@ -486,10 +486,10 @@ class AddExpenseViewModel(
                 }
                 val nonZero = rows.filter { it.second > 0.0 }
                 if (nonZero.isEmpty()) {
-                    emitError(UiText.Resource(Res.string.add_expense_error_no_splits))
+                    emitError(UiText.Resource(Res.string.add_entry_error_no_splits))
                     return null
                 }
-                nonZero.map { (id, value) -> NewExpenseSplit(id, SplitType.PERCENTAGE, value) }
+                nonZero.map { (id, value) -> NewTabEntrySplit(id, SplitType.PERCENTAGE, value) }
             }
 
             SplitType.SHARES -> {
@@ -504,18 +504,18 @@ class AddExpenseViewModel(
                     }
                 val total = rows.sumOf { it.second }
                 if (total <= 0.0) {
-                    emitError(UiText.Resource(Res.string.add_expense_error_no_splits))
+                    emitError(UiText.Resource(Res.string.add_entry_error_no_splits))
                     return null
                 }
                 rows
                     .filter { it.second > 0.0 }
-                    .map { (id, value) -> NewExpenseSplit(id, SplitType.SHARES, value) }
+                    .map { (id, value) -> NewTabEntrySplit(id, SplitType.SHARES, value) }
             }
         }
     }
 
     private fun emitError(message: UiText) {
-        viewModelScope.launch { eventChannel.send(AddExpenseEvent.Error(message)) }
+        viewModelScope.launch { eventChannel.send(AddEntryEvent.Error(message)) }
     }
 
     private fun epsilon(decimals: Int): Double {

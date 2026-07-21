@@ -11,5 +11,5 @@ interface ScreenWithFab {
 sealed interface FabAction {
     data object CreateGroup : FabAction
 
-    data class AddExpense(val groupId: String) : FabAction
+    data class AddEntry(val groupId: String) : FabAction
 }
