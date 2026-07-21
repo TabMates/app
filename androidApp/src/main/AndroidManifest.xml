@@ -39,7 +39,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="https" />
-                <data android:host="dev.tabmates.de" />
+                <!-- Must match the prod BASE_URL_PUBLIC host (and the web CNAME). -->
+                <data android:host="app.tabmates.de" />
 
                 <data android:pathPrefix="/api/auth/verify" />
                 <data android:pathPrefix="/api/auth/reset-password" />
@@ -52,7 +53,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="tabmates" />
-                <data android:host="dev.tabmates.de" />
+                <data android:host="app.tabmates.de" />
 
                 <data android:pathPrefix="/api/auth/verify" />
                 <data android:pathPrefix="/api/auth/reset-password" />

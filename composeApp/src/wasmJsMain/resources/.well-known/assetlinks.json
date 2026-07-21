@@ -1,0 +1,16 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "de.tabmates.androidapp",
+      "sha256_cert_fingerprints": [
+        "48:13:61:A8:35:0C:DB:1A:A6:45:52:7B:2D:46:DC:DD:F4:0C:FB:E1:90:43:B9:24:5F:9A:1F:4D:52:32:03:00",
+        "9E:12:15:09:3F:FC:DF:A4:75:64:39:5A:4D:3B:1A:56:A9:3F:AF:6A:3C:D7:F0:51:BC:80:F9:B0:73:12:EE:C7"
+      ]
+    }
+  }
+]

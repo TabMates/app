@@ -29,14 +29,14 @@ class MainActivityDeepLinkTest {
         val intent =
             Intent(
                 Intent.ACTION_VIEW,
-                Uri.parse("https://dev.tabmates.de/api/auth/verify?token=abc123"),
+                Uri.parse("https://app.tabmates.de/api/auth/verify?token=abc123"),
             )
 
         Robolectric
             .buildActivity(MainActivity::class.java, intent)
             .create()
 
-        assertEquals("https://dev.tabmates.de/api/auth/verify?token=abc123", received)
+        assertEquals("https://app.tabmates.de/api/auth/verify?token=abc123", received)
     }
 
     @Test
@@ -65,11 +65,11 @@ class MainActivityDeepLinkTest {
         val newIntent =
             Intent(
                 Intent.ACTION_VIEW,
-                Uri.parse("https://dev.tabmates.de/api/auth/reset-password?token=xyz789"),
+                Uri.parse("https://app.tabmates.de/api/auth/reset-password?token=xyz789"),
             )
         activityController.newIntent(newIntent)
 
-        assertEquals("https://dev.tabmates.de/api/auth/reset-password?token=xyz789", received)
+        assertEquals("https://app.tabmates.de/api/auth/reset-password?token=xyz789", received)
     }
 
     // region — custom tabmates:// scheme (matches second intent-filter in AndroidManifest)
@@ -82,14 +82,14 @@ class MainActivityDeepLinkTest {
         val intent =
             Intent(
                 Intent.ACTION_VIEW,
-                Uri.parse("tabmates://dev.tabmates.de/api/auth/verify?token=abc123"),
+                Uri.parse("tabmates://app.tabmates.de/api/auth/verify?token=abc123"),
             )
 
         Robolectric
             .buildActivity(MainActivity::class.java, intent)
             .create()
 
-        assertEquals("tabmates://dev.tabmates.de/api/auth/verify?token=abc123", received)
+        assertEquals("tabmates://app.tabmates.de/api/auth/verify?token=abc123", received)
     }
 
     @Test
@@ -100,14 +100,14 @@ class MainActivityDeepLinkTest {
         val intent =
             Intent(
                 Intent.ACTION_VIEW,
-                Uri.parse("tabmates://dev.tabmates.de/api/auth/reset-password?token=xyz789"),
+                Uri.parse("tabmates://app.tabmates.de/api/auth/reset-password?token=xyz789"),
             )
 
         Robolectric
             .buildActivity(MainActivity::class.java, intent)
             .create()
 
-        assertEquals("tabmates://dev.tabmates.de/api/auth/reset-password?token=xyz789", received)
+        assertEquals("tabmates://app.tabmates.de/api/auth/reset-password?token=xyz789", received)
     }
 
     @Test
@@ -124,11 +124,11 @@ class MainActivityDeepLinkTest {
         val newIntent =
             Intent(
                 Intent.ACTION_VIEW,
-                Uri.parse("tabmates://dev.tabmates.de/api/auth/verify?token=abc123"),
+                Uri.parse("tabmates://app.tabmates.de/api/auth/verify?token=abc123"),
             )
         activityController.newIntent(newIntent)
 
-        assertEquals("tabmates://dev.tabmates.de/api/auth/verify?token=abc123", received)
+        assertEquals("tabmates://app.tabmates.de/api/auth/verify?token=abc123", received)
     }
 
     // endregion

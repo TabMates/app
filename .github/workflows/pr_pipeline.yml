@@ -12,6 +12,7 @@ env:
   API_KEY: ${{ 'dev-api-key' }}
   BASE_URL_HTTP: ${{ '' }}
   BASE_URL_WS: ${{ '' }}
+  BASE_URL_PUBLIC: ${{ '' }}
 
 jobs:
   code_formatting:

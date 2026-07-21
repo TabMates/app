@@ -98,3 +98,50 @@ GitHub Pages at `app.tabmates.de`. One-time setup:
 The `API_KEY` is compiled into the JS bundle, so on web it is **public** — treat it as a client
 identifier, not a secret. Real authorization is the JWT; the api-key only shields the public
 auth/register endpoints, so no endpoint may rely on it alone.
+
+## Deep links & Android App Links
+
+One URL — `https://app.tabmates.de/<path>` — is meant to open the **installed app** (Android
+App Links) when present, and otherwise load the **web client** at the same URL, with no
+"Open in app?" interstitial. Both platforms resolve the URL through the same shared code
+(`composeApp/src/commonMain/.../deeplink/`), so there is no per-platform link logic.
+
+Key point: the user-facing link host is **decoupled from the backend API host**. Links and
+deep-link matching use `BASE_URL_PUBLIC` (e.g. `https://app.tabmates.de`), *not* the API
+`BASE_URL_HTTP`. `BASE_URL_PUBLIC` is **required to build** (like `BASE_URL_HTTP`); for local
+dev set it to your `BASE_URL_HTTP` value. Currently deep-linkable: `/api/auth/verify`,
+`/api/auth/reset-password`, `/j/<token>` (invites). `/groups/<id>` resolves in-app from
+notifications but is intentionally **not** an external App Link.
+
+**Web fallback (app not installed).** GitHub Pages is static with no SPA rewrite, so a direct
+hit to a sub-path (`/j/<token>`) would 404. `composeApp/src/wasmJsMain/resources/404.html`
+stashes the original URL in `sessionStorage` and redirects to the root (a real file, so it is
+reload-safe with coi-serviceworker); `webMain/.../main.kt` then consumes the stashed URL and
+feeds the shared `DeepLinkHandler`. The address bar stays on `/` — consistent with the app,
+which never syncs the URL to in-app navigation.
+
+**Android App Links verification.** The manifest sets `autoVerify="true"` for
+`https://app.tabmates.de/…` (the host is hardcoded in `AndroidManifest.xml` and must match the
+prod `BASE_URL_PUBLIC` host; the lint check `AppLinkUrlError` rejects a placeholder host).
+Verification requires
+`https://app.tabmates.de/.well-known/assetlinks.json` to be reachable — it ships as a static
+resource (`composeApp/src/wasmJsMain/resources/.well-known/assetlinks.json`) and is served with
+`application/json` by Pages (`.json` extension). **Fill in the SHA-256** placeholder with the
+**Play App Signing** certificate fingerprint from Play Console → *App integrity → App signing
+key certificate* (it is public, not a secret). After deploying, confirm:
+
+```
+curl -sI https://app.tabmates.de/.well-known/assetlinks.json   # 200, content-type: application/json
+adb shell pm verify-app-links --re-verify de.tabmates.androidapp
+adb shell pm get-app-links de.tabmates.androidapp              # expect: verified
+```
+
+Debug builds are signed with the debug key, which is **not** in `assetlinks.json`, so they will
+not auto-verify — test the installed-app path with a release build (or the `tabmates://` custom
+scheme). For manual testing:
+`adb shell am start -a android.intent.action.VIEW -d "https://app.tabmates.de/j/TESTTOKEN"`.
+
+**Backend (separate repo) — required for auth email links.** The emailed
+`/api/auth/verify` and `/api/auth/reset-password` links (and group-notification deep links)
+must be emitted on the **public host** (`app.tabmates.de`) so they match the app's registered
+links and open the app/web rather than hitting the API host directly.
