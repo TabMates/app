@@ -1,12 +1,7 @@
 name: Release
 
-permissions:
-  contents: write        # create the GitHub prerelease
-
 on:
-  push:
-    tags:
-      - '*'
+  workflow_call:
 
 env:
   API_KEY: ${{ secrets.API_KEY }}
