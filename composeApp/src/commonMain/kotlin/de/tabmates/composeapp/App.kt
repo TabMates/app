@@ -7,9 +7,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -22,6 +24,7 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -217,8 +220,10 @@ fun App() {
 
             if (currentKey is LoggedIn) {
                 val topBarActions = remember { TopBarActionsController() }
+                val navigationSuiteType =
+                    NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfoV2())
                 NavigationSuiteScaffold(
-                    navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfoV2()),
+                    navigationSuiteType = navigationSuiteType,
                     navigationItems = {
                         topLevelTabs.forEach { tab ->
                             val selected = currentKey == tab
@@ -239,11 +244,12 @@ fun App() {
                         }
                     },
                     primaryActionContent = {
-                        (currentKey as? ScreenWithFab)?.let { screen ->
+                        val fabScreen = currentKey as? ScreenWithFab
+                        if (fabScreen != null) {
                             FloatingActionButton(
                                 modifier = Modifier.padding(start = 16.dp),
                                 onClick = {
-                                    when (val action = screen.fabAction) {
+                                    when (val action = fabScreen.fabAction) {
                                         FabAction.CreateGroup -> backStack.add(CreateGroup)
                                         is FabAction.AddEntry -> backStack.add(AddEntry(action.groupId))
                                     }
@@ -251,12 +257,16 @@ fun App() {
                             ) {
                                 Icon(
                                     imageVector = vectorResource(Res.drawable.ic_add),
-                                    contentDescription = when (screen.fabAction) {
+                                    contentDescription = when (fabScreen.fabAction) {
                                         FabAction.CreateGroup -> stringResource(Res.string.create_group)
                                         is FabAction.AddEntry -> stringResource(Res.string.add_entry)
                                     },
                                 )
                             }
+                        } else if (navigationSuiteType != NavigationSuiteType.NavigationBar) {
+                            // Reserve the FAB's footprint so the navigation rail/drawer items don't
+                            // jump vertically when the FAB is shown/hidden across tabs.
+                            Spacer(modifier = Modifier.padding(start = 16.dp).size(56.dp))
                         }
                     },
                 ) {
