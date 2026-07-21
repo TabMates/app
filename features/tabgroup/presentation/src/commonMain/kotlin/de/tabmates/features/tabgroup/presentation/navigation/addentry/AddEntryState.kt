@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.navigation.addexpense
+package de.tabmates.features.tabgroup.presentation.navigation.addentry
 
 import androidx.compose.foundation.text.input.TextFieldState
 import de.tabmates.features.tabgroup.domain.models.Currency
@@ -10,7 +10,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-data class AddExpenseState(
+data class AddEntryState(
     val groupId: String = "",
     val isEditing: Boolean = false,
     // Expense vs. income. Switchable via the on-screen toggle while creating; fixed to the loaded
@@ -20,9 +20,9 @@ data class AddExpenseState(
     val isSubmitting: Boolean = false,
     // The currency the expense is paid in (defaults to the group's base currency). Amount + splits
     // are entered and displayed in this currency.
-    val expenseCurrencyCode: String = "",
-    val expenseCurrencySymbol: String = "",
-    val expenseCurrencyDecimalDigits: Int = 2,
+    val entryCurrencyCode: String = "",
+    val entryCurrencySymbol: String = "",
+    val entryCurrencyDecimalDigits: Int = 2,
     // The group's base currency, used to show an approximate converted total when they differ.
     val baseCurrencyCode: String = "",
     val baseCurrencySymbol: String = "",
@@ -55,7 +55,7 @@ data class AddExpenseState(
 ) {
     /** True when the chosen expense currency differs from the group's base currency. */
     val isForeignCurrency: Boolean
-        get() = baseCurrencyCode.isNotEmpty() && expenseCurrencyCode != baseCurrencyCode
+        get() = baseCurrencyCode.isNotEmpty() && entryCurrencyCode != baseCurrencyCode
 }
 
 data class ParticipantSplitInput(

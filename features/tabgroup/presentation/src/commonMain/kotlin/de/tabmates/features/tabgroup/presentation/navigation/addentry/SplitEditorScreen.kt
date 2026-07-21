@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.navigation.addexpense
+package de.tabmates.features.tabgroup.presentation.navigation.addentry
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -37,7 +37,7 @@ import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import org.jetbrains.compose.resources.stringResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_balanced
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_left_to_assign
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_over_by
@@ -53,7 +53,7 @@ import kotlin.math.abs
 
 @Composable
 internal fun SplitEditorScreen(
-    state: AddExpenseState,
+    state: AddEntryState,
     onTypeChange: (SplitType) -> Unit,
     onToggleParticipant: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -99,8 +99,8 @@ internal fun SplitEditorScreen(
                     isCurrentUser = member.userId == state.currentUserId,
                     included = input.included,
                     splitType = state.splitType,
-                    currencySymbol = state.expenseCurrencySymbol,
-                    currencyDecimals = state.expenseCurrencyDecimalDigits,
+                    currencySymbol = state.entryCurrencySymbol,
+                    currencyDecimals = state.entryCurrencyDecimalDigits,
                     equalShare =
                         if (state.splitType == SplitType.EQUAL) {
                             equalShareFor(input, state, total)
@@ -123,7 +123,7 @@ internal fun SplitEditorScreen(
 @Composable
 private fun SplitHero(
     total: Double,
-    state: AddExpenseState,
+    state: AddEntryState,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -133,7 +133,7 @@ private fun SplitHero(
             text =
                 stringResource(
                     Res.string.split_screen_total,
-                    formatMoney(state.expenseCurrencySymbol, total, state.expenseCurrencyDecimalDigits),
+                    formatMoney(state.entryCurrencySymbol, total, state.entryCurrencyDecimalDigits),
                 ),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -145,7 +145,7 @@ private fun SplitHero(
 
 @Composable
 private fun SplitRemainderText(
-    state: AddExpenseState,
+    state: AddEntryState,
     total: Double,
 ) {
     when (state.splitType) {
@@ -155,8 +155,8 @@ private fun SplitRemainderText(
             val remaining = total - assigned
             RemainderText(
                 remaining = remaining,
-                symbol = state.expenseCurrencySymbol,
-                decimals = state.expenseCurrencyDecimalDigits,
+                symbol = state.entryCurrencySymbol,
+                decimals = state.entryCurrencyDecimalDigits,
             )
         }
 
@@ -255,7 +255,7 @@ private fun PercentageRemainderText(remaining: Double) {
 
 @Composable
 private fun ValidationBanner(
-    state: AddExpenseState,
+    state: AddEntryState,
     total: Double,
 ) {
     val message: String? =
@@ -263,10 +263,10 @@ private fun ValidationBanner(
             SplitType.EXACT_AMOUNT -> {
                 val assigned =
                     state.splitInputs.sumOf { parseAmount(it.exactAmountState.text.toString()) ?: 0.0 }
-                if (abs(assigned - total) > epsilon(state.expenseCurrencyDecimalDigits)) {
+                if (abs(assigned - total) > epsilon(state.entryCurrencyDecimalDigits)) {
                     stringResource(
                         Res.string.split_screen_running_total_must_equal,
-                        formatMoney(state.expenseCurrencySymbol, total, state.expenseCurrencyDecimalDigits),
+                        formatMoney(state.entryCurrencySymbol, total, state.entryCurrencyDecimalDigits),
                     )
                 } else {
                     null
@@ -341,7 +341,7 @@ private fun SplitMemberRow(
         UserAvatar(initials = participant.initials)
         HorizontalSpacer(12.dp)
         Text(
-            text = if (isCurrentUser) stringResource(Res.string.add_expense_paid_by_you) else participant.username,
+            text = if (isCurrentUser) stringResource(Res.string.add_entry_paid_by_you) else participant.username,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
@@ -436,7 +436,7 @@ private fun AmountInputField(
 
 private fun equalShareFor(
     input: ParticipantSplitInput,
-    state: AddExpenseState,
+    state: AddEntryState,
     total: Double,
 ): Double {
     if (!input.included) return 0.0

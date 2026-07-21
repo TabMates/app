@@ -13,7 +13,7 @@ import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.parseAmount
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.parseAmount
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,7 +30,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_error_amount_required
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_error_amount_required
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -127,7 +127,7 @@ class EditSettlementViewModel(
         if (amount == null) {
             viewModelScope.launch {
                 eventChannel.send(
-                    EditSettlementEvent.Error(UiText.Resource(Res.string.add_expense_error_amount_required)),
+                    EditSettlementEvent.Error(UiText.Resource(Res.string.add_entry_error_amount_required)),
                 )
             }
             return

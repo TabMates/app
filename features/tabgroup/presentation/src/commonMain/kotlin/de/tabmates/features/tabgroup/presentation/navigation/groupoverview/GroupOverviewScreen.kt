@@ -96,8 +96,8 @@ fun GroupOverviewRoot(
     onGroupOpen: (String) -> Unit,
     onSettingsOpen: (String) -> Unit,
     snackbarHostState: SnackbarHostState,
-    onAddExpenseClick: (String) -> Unit = {},
-    onExpenseClick: (groupId: String, expenseId: String) -> Unit = { _, _ -> },
+    onAddEntryClick: (String) -> Unit = {},
+    onEntryClick: (groupId: String, entryId: String) -> Unit = { _, _ -> },
     viewModel: GroupOverviewViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -107,8 +107,8 @@ fun GroupOverviewRoot(
         onGroupSelected = viewModel::onGroupSelected,
         onGroupOpen = onGroupOpen,
         onSettingsOpen = onSettingsOpen,
-        onAddExpenseClick = onAddExpenseClick,
-        onExpenseClick = onExpenseClick,
+        onAddEntryClick = onAddEntryClick,
+        onEntryClick = onEntryClick,
         snackbarHostState = snackbarHostState,
     )
 }
@@ -120,8 +120,8 @@ private fun GroupOverviewScreen(
     onGroupSelected: (String) -> Unit,
     onGroupOpen: (String) -> Unit,
     onSettingsOpen: (String) -> Unit,
-    onAddExpenseClick: (String) -> Unit,
-    onExpenseClick: (groupId: String, expenseId: String) -> Unit,
+    onAddEntryClick: (String) -> Unit,
+    onEntryClick: (groupId: String, entryId: String) -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -135,8 +135,8 @@ private fun GroupOverviewScreen(
             onFilterSelected = onFilterSelected,
             onGroupSelected = onGroupSelected,
             onSettingsOpen = onSettingsOpen,
-            onAddExpenseClick = onAddExpenseClick,
-            onExpenseClick = onExpenseClick,
+            onAddEntryClick = onAddEntryClick,
+            onEntryClick = onEntryClick,
             snackbarHostState = snackbarHostState,
             modifier = modifier,
         )
@@ -186,8 +186,8 @@ private fun ExpandedLayout(
     onFilterSelected: (GroupFilter) -> Unit,
     onGroupSelected: (String) -> Unit,
     onSettingsOpen: (String) -> Unit,
-    onAddExpenseClick: (String) -> Unit,
-    onExpenseClick: (groupId: String, expenseId: String) -> Unit,
+    onAddEntryClick: (String) -> Unit,
+    onEntryClick: (groupId: String, entryId: String) -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -230,8 +230,8 @@ private fun ExpandedLayout(
                         groupId = selectedId,
                         snackbarHostState = snackbarHostState,
                         onSettingsClick = { onSettingsOpen(selectedId) },
-                        onAddExpenseClick = { onAddExpenseClick(selectedId) },
-                        onExpenseClick = { expenseId -> onExpenseClick(selectedId, expenseId) },
+                        onAddEntryClick = { onAddEntryClick(selectedId) },
+                        onEntryClick = { entryId -> onEntryClick(selectedId, entryId) },
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -561,8 +561,8 @@ private fun GroupOverviewPreviewThemes() {
                 onGroupSelected = {},
                 onGroupOpen = {},
                 onSettingsOpen = {},
-                onAddExpenseClick = {},
-                onExpenseClick = { _, _ -> },
+                onAddEntryClick = {},
+                onEntryClick = { _, _ -> },
                 snackbarHostState = remember { SnackbarHostState() },
             )
         }
@@ -580,8 +580,8 @@ private fun GroupOverviewPreviewSizes() {
                 onGroupSelected = {},
                 onGroupOpen = {},
                 onSettingsOpen = {},
-                onAddExpenseClick = {},
-                onExpenseClick = { _, _ -> },
+                onAddEntryClick = {},
+                onEntryClick = { _, _ -> },
                 snackbarHostState = remember { SnackbarHostState() },
             )
         }

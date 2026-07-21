@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.navigation.addexpense
+package de.tabmates.features.tabgroup.presentation.navigation.addentry
 
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import de.tabmates.features.tabgroup.domain.models.ExchangeRate
@@ -31,7 +31,7 @@ import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AddExpenseViewModelTest {
+class AddEntryViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
 
     @BeforeTest
@@ -80,7 +80,7 @@ class AddExpenseViewModelTest {
             val expense = assertIs<TabEntry.Expense>(entries.first())
             assertEquals("Lunch", expense.title)
             assertEquals(20.0, expense.amount)
-            assertEquals(AddExpenseEvent.ExpenseCreated, events.last())
+            assertEquals(AddEntryEvent.EntrySaved, events.last())
         }
 
     @Test
@@ -105,7 +105,7 @@ class AddExpenseViewModelTest {
             val income = assertIs<TabEntry.Income>(entries.first())
             assertEquals("Refund", income.title)
             assertEquals(30.0, income.amount)
-            assertEquals(AddExpenseEvent.ExpenseCreated, events.last())
+            assertEquals(AddEntryEvent.EntrySaved, events.last())
         }
 
     @Test
@@ -123,7 +123,7 @@ class AddExpenseViewModelTest {
             advanceUntilIdle()
 
             assertTrue(tabEntryRepo.getTabEntriesForGroup("g1").first().isEmpty())
-            assertIs<AddExpenseEvent.Error>(events.last())
+            assertIs<AddEntryEvent.Error>(events.last())
         }
 
     @Test
@@ -143,7 +143,7 @@ class AddExpenseViewModelTest {
             advanceUntilIdle()
 
             assertTrue(tabEntryRepo.getTabEntriesForGroup("g1").first().isEmpty())
-            assertIs<AddExpenseEvent.Error>(events.last())
+            assertIs<AddEntryEvent.Error>(events.last())
         }
 
     @Test
@@ -165,7 +165,7 @@ class AddExpenseViewModelTest {
             advanceUntilIdle()
 
             assertTrue(tabEntryRepo.getTabEntriesForGroup("g1").first().isEmpty())
-            assertIs<AddExpenseEvent.Error>(events.last())
+            assertIs<AddEntryEvent.Error>(events.last())
         }
 
     // endregion
@@ -177,7 +177,7 @@ class AddExpenseViewModelTest {
         runTest(testDispatcher) {
             val tabEntryRepo = FakeTabEntryRepository()
             tabEntryRepo.emit("g1", listOf(existingExpense()))
-            val viewModel = createViewModel(groupId = "g1", expenseId = "e1", tabEntryRepository = tabEntryRepo)
+            val viewModel = createViewModel(groupId = "g1", entryId = "e1", tabEntryRepository = tabEntryRepo)
             activateState(viewModel)
             advanceUntilIdle()
 
@@ -195,7 +195,7 @@ class AddExpenseViewModelTest {
         runTest(testDispatcher) {
             val tabEntryRepo = FakeTabEntryRepository()
             tabEntryRepo.emit("g1", listOf(existingExpense()))
-            val viewModel = createViewModel(groupId = "g1", expenseId = "e1", tabEntryRepository = tabEntryRepo)
+            val viewModel = createViewModel(groupId = "g1", entryId = "e1", tabEntryRepository = tabEntryRepo)
             val events = collectEvents(viewModel)
             activateState(viewModel)
             advanceUntilIdle()
@@ -210,7 +210,7 @@ class AddExpenseViewModelTest {
             val expense = assertIs<TabEntry.Expense>(entries.first())
             assertEquals("e1", expense.tabEntryId)
             assertEquals("New title", expense.title)
-            assertEquals(AddExpenseEvent.ExpenseCreated, events.last())
+            assertEquals(AddEntryEvent.EntrySaved, events.last())
         }
 
     @Test
@@ -218,7 +218,7 @@ class AddExpenseViewModelTest {
         runTest(testDispatcher) {
             val tabEntryRepo = FakeTabEntryRepository()
             tabEntryRepo.emit("g1", listOf(existingIncome()))
-            val viewModel = createViewModel(groupId = "g1", expenseId = "i1", tabEntryRepository = tabEntryRepo)
+            val viewModel = createViewModel(groupId = "g1", entryId = "i1", tabEntryRepository = tabEntryRepo)
             val events = collectEvents(viewModel)
             activateState(viewModel)
             advanceUntilIdle()
@@ -239,7 +239,7 @@ class AddExpenseViewModelTest {
             val income = assertIs<TabEntry.Income>(entries.first())
             assertEquals("i1", income.tabEntryId)
             assertEquals("New income title", income.title)
-            assertEquals(AddExpenseEvent.ExpenseCreated, events.last())
+            assertEquals(AddEntryEvent.EntrySaved, events.last())
         }
 
     // endregion
@@ -352,7 +352,7 @@ class AddExpenseViewModelTest {
             val viewModel =
                 createViewModel(
                     groupId = "g1",
-                    expenseId = "e1",
+                    entryId = "e1",
                     tabEntryRepository = tabEntryRepo,
                     exchangeRateRepository = usdEurRates(),
                 )
@@ -379,7 +379,7 @@ class AddExpenseViewModelTest {
             val viewModel =
                 createViewModel(
                     groupId = "g1",
-                    expenseId = "e1",
+                    entryId = "e1",
                     tabEntryRepository = tabEntryRepo,
                     exchangeRateRepository = usdEurRates(),
                 )
@@ -435,30 +435,30 @@ class AddExpenseViewModelTest {
                     ),
             ).copy(title = "Old income", description = "note")
 
-    private fun TestScope.collectEvents(viewModel: AddExpenseViewModel): List<AddExpenseEvent> {
-        val events = mutableListOf<AddExpenseEvent>()
+    private fun TestScope.collectEvents(viewModel: AddEntryViewModel): List<AddEntryEvent> {
+        val events = mutableListOf<AddEntryEvent>()
         backgroundScope.launch { viewModel.events.collect { events.add(it) } }
         return events
     }
 
-    private fun TestScope.activateState(viewModel: AddExpenseViewModel) {
+    private fun TestScope.activateState(viewModel: AddEntryViewModel) {
         backgroundScope.launch { viewModel.state.collect {} }
         advanceUntilIdle()
     }
 
     private fun createViewModel(
         groupId: String,
-        expenseId: String = "",
+        entryId: String = "",
         tabEntryRepository: FakeTabEntryRepository = FakeTabEntryRepository(),
         groupRepository: FakeGroupRepository =
             FakeGroupRepository(initialGroups = listOf(Fixtures.group(id = "g1", currency = "EUR"))),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
         exchangeRateRepository: FakeExchangeRateRepository = FakeExchangeRateRepository(),
         sessionStorage: FakeSessionStorage = FakeSessionStorage(),
-    ): AddExpenseViewModel =
-        AddExpenseViewModel(
+    ): AddEntryViewModel =
+        AddEntryViewModel(
             groupId = groupId,
-            expenseId = expenseId,
+            entryId = entryId,
             tabEntryRepository = tabEntryRepository,
             groupRepository = groupRepository,
             currencyRepository = currencyRepository,

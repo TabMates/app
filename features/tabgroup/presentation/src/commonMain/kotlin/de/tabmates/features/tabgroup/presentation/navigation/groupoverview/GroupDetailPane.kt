@@ -95,9 +95,9 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_paid_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_you_paid
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_balances
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_expenses
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_members
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_settings
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_transactions
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_total_spent
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_you_owe
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_youre_owed
@@ -119,7 +119,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_swap_ho
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_action
 import kotlin.math.abs
 
-private enum class DetailTab { EXPENSES, BALANCES, MEMBERS, SETTINGS }
+private enum class DetailTab { TRANSACTIONS, BALANCES, MEMBERS, SETTINGS }
 
 @Composable
 internal fun GroupDetailPane(
@@ -134,9 +134,9 @@ internal fun GroupDetailPane(
     ratesByCurrency: Map<String, Double>,
     onRotateInvite: () -> Unit,
     onSettingsClick: () -> Unit,
-    onAddExpenseClick: () -> Unit = {},
+    onAddEntryClick: () -> Unit = {},
     onSettleUpClick: () -> Unit = {},
-    onExpenseClick: (String) -> Unit = {},
+    onEntryClick: (String) -> Unit = {},
     onSettlementClick: (String) -> Unit = {},
     onLeaveGroup: () -> Unit = {},
     snackbarHostState: SnackbarHostState,
@@ -148,8 +148,8 @@ internal fun GroupDetailPane(
         )
     val visibleTabs =
         if (isExpanded) DetailTab.entries.toList() else DetailTab.entries.filterNot { it == DetailTab.SETTINGS }
-    var selectedTab by rememberSaveable(item.id) { mutableStateOf(DetailTab.EXPENSES) }
-    if (selectedTab !in visibleTabs) selectedTab = DetailTab.EXPENSES
+    var selectedTab by rememberSaveable(item.id) { mutableStateOf(DetailTab.TRANSACTIONS) }
+    if (selectedTab !in visibleTabs) selectedTab = DetailTab.TRANSACTIONS
     val linkSharer = rememberLinkSharer()
     val scope = rememberCoroutineScope()
     val inviteUrl = remember(item.inviteToken) { buildInviteUrl(item.inviteToken) }
@@ -176,7 +176,7 @@ internal fun GroupDetailPane(
             isExpanded = isExpanded,
             onInviteClick = onShareInvite,
             onSettingsClick = onSettingsClick,
-            onAddExpenseClick = onAddExpenseClick,
+            onAddEntryClick = onAddEntryClick,
         )
         PrimaryTabRow(
             selectedTabIndex = visibleTabs.indexOf(selectedTab).coerceAtLeast(0),
@@ -191,15 +191,15 @@ internal fun GroupDetailPane(
             }
         }
         when (selectedTab) {
-            DetailTab.EXPENSES -> {
-                ExpensesTab(
+            DetailTab.TRANSACTIONS -> {
+                TransactionsTab(
                     item = item,
                     currentUserId = currentUserId,
                     members = members,
                     entries = entries,
                     currencyByCode = currencyByCode,
                     ratesByCurrency = ratesByCurrency,
-                    onExpenseClick = onExpenseClick,
+                    onEntryClick = onEntryClick,
                     onSettlementClick = onSettlementClick,
                 )
             }
@@ -245,7 +245,7 @@ private fun DetailHeader(
     isExpanded: Boolean,
     onInviteClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onAddExpenseClick: () -> Unit,
+    onAddEntryClick: () -> Unit,
 ) {
     Column(
         modifier =
@@ -280,7 +280,7 @@ private fun DetailHeader(
                 HeaderActions(
                     modifier = Modifier,
                     onInviteClick = onInviteClick,
-                    onAddExpenseClick = onAddExpenseClick,
+                    onAddEntryClick = onAddEntryClick,
                 )
             } else {
                 IconButton(onClick = onSettingsClick) {
@@ -296,7 +296,7 @@ private fun DetailHeader(
             HeaderActions(
                 modifier = Modifier.fillMaxWidth(),
                 onInviteClick = onInviteClick,
-                onAddExpenseClick = onAddExpenseClick,
+                onAddEntryClick = onAddEntryClick,
             )
         }
     }
@@ -306,7 +306,7 @@ private fun DetailHeader(
 private fun HeaderActions(
     modifier: Modifier = Modifier,
     onInviteClick: () -> Unit,
-    onAddExpenseClick: () -> Unit,
+    onAddEntryClick: () -> Unit,
 ) {
     Row(
         modifier = modifier,
@@ -326,7 +326,7 @@ private fun HeaderActions(
             Text(stringResource(Res.string.groups_detail_invite))
         }
         FilledTonalButton(
-            onClick = onAddExpenseClick,
+            onClick = onAddEntryClick,
             modifier = Modifier.weight(1f, fill = false),
         ) {
             Text("+ ${stringResource(Res.string.groups_detail_add_entry)}")
@@ -335,14 +335,14 @@ private fun HeaderActions(
 }
 
 @Composable
-private fun ExpensesTab(
+private fun TransactionsTab(
     item: GroupOverviewItem,
     currentUserId: String,
     members: List<GroupParticipant>,
     entries: List<TabEntry>,
     currencyByCode: Map<String, Currency>,
     ratesByCurrency: Map<String, Double>,
-    onExpenseClick: (String) -> Unit,
+    onEntryClick: (String) -> Unit,
     onSettlementClick: (String) -> Unit,
 ) {
     val payerById = remember(members) { members.associateBy { it.userId } }
@@ -372,7 +372,7 @@ private fun ExpensesTab(
                             item = item,
                             currency = currencyByCode[entry.currencyCode],
                             ratesByCurrency = ratesByCurrency,
-                            onClick = { onExpenseClick(entry.tabEntryId) },
+                            onClick = { onEntryClick(entry.tabEntryId) },
                         )
                     }
 
@@ -397,7 +397,7 @@ private fun ExpensesTab(
                             item = item,
                             currency = currencyByCode[entry.currencyCode],
                             ratesByCurrency = ratesByCurrency,
-                            onClick = { onExpenseClick(entry.tabEntryId) },
+                            onClick = { onEntryClick(entry.tabEntryId) },
                         )
                     }
                 }
@@ -1334,7 +1334,7 @@ private fun EmptyTabHint(
 @Composable
 private fun DetailTab.label(): String =
     when (this) {
-        DetailTab.EXPENSES -> stringResource(Res.string.groups_detail_tab_expenses)
+        DetailTab.TRANSACTIONS -> stringResource(Res.string.groups_detail_tab_transactions)
         DetailTab.BALANCES -> stringResource(Res.string.groups_detail_tab_balances)
         DetailTab.MEMBERS -> stringResource(Res.string.groups_detail_tab_members)
         DetailTab.SETTINGS -> stringResource(Res.string.groups_detail_tab_settings)

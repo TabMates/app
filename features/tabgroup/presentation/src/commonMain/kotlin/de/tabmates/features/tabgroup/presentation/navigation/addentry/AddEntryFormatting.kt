@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.navigation.addexpense
+package de.tabmates.features.tabgroup.presentation.navigation.addentry
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -15,7 +15,7 @@ internal fun parseAmount(input: String): Double? {
 @Composable
 internal fun rememberMonthAbbreviations(): List<String> = remember { platformShortMonthNames() }
 
-internal fun formatExpenseDate(
+internal fun formatEntryDate(
     date: LocalDate,
     monthAbbreviations: List<String>,
 ): String {

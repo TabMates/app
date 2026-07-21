@@ -8,7 +8,7 @@ import de.tabmates.features.tabgroup.domain.models.SplitType
  */
 object SplitResolver {
     fun resolveAmounts(
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
         totalAmount: Double,
     ): List<Double> {
         if (splits.isEmpty()) return emptyList()

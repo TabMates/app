@@ -13,7 +13,7 @@ import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
 import de.tabmates.features.tabgroup.data.network.dto.WsMessageType
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import de.tabmates.features.tabgroup.database.entities.PendingOutboxEntity
-import de.tabmates.features.tabgroup.domain.tabentry.NewExpenseSplit
+import de.tabmates.features.tabgroup.domain.tabentry.NewTabEntrySplit
 import de.tabmates.features.tabgroup.domain.tabentry.SplitResolver
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryService
 import kotlinx.coroutines.CoroutineScope
@@ -73,7 +73,7 @@ class TabEntryOutbox(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ) {
         logger.debug(TAG, "Outbox enqueue create id=$clientRequestId")
         val payload =
@@ -156,7 +156,7 @@ class TabEntryOutbox(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ) {
         val payload =
             NewTabEntryWsPayload.Expense(
@@ -197,7 +197,7 @@ class TabEntryOutbox(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ) {
         logger.debug(TAG, "Outbox enqueue create income id=$clientRequestId")
         val payload =
@@ -239,7 +239,7 @@ class TabEntryOutbox(
         exchangeRate: Double?,
         paidByUserId: String,
         entryDate: LocalDate,
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
     ) {
         val payload =
             NewTabEntryWsPayload.Income(
@@ -346,7 +346,7 @@ class TabEntryOutbox(
     }
 
     private fun buildSplitPayloads(
-        splits: List<NewExpenseSplit>,
+        splits: List<NewTabEntrySplit>,
         amount: Double,
     ): List<NewTabEntrySplitWsPayload> {
         if (splits.isEmpty()) return emptyList()

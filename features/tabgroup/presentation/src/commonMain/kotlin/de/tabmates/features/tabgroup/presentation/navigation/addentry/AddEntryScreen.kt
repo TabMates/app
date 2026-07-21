@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.navigation.addexpense
+package de.tabmates.features.tabgroup.presentation.navigation.addentry
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -89,31 +89,31 @@ import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_amount_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_amount_placeholder
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_currency_cd
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_date_cancel
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_date_confirm
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_date_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_description_placeholder
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_kind_expense
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_kind_income
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_amount_label
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_amount_placeholder
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_currency_cd
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_cancel
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_confirm
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_label
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_description_placeholder
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_label
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_sheet_done
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_sheet_title
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_you
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_people_plural
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_people_singular
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_rate_unavailable
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_received_by_label
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_received_by_sheet_title
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_save
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_label
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_equal
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_exact
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_percentage
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_shares
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_title_placeholder
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_sheet_done
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_sheet_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_people_plural
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_people_singular
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_rate_unavailable
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_received_by_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_received_by_sheet_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_save
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_split_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_split_summary_equal
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_split_summary_exact
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_split_summary_percentage
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_split_summary_shares
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_title_placeholder
 import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_calendar
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
@@ -122,17 +122,17 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.split_scre
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_title
 
 @Composable
-fun AddExpenseRoot(
+fun AddEntryRoot(
     groupId: String,
     navKey: NavKey,
     snackbarHostState: SnackbarHostState,
     onSaved: () -> Unit,
     modifier: Modifier = Modifier,
-    expenseId: String = "",
-    viewModel: AddExpenseViewModel =
+    entryId: String = "",
+    viewModel: AddEntryViewModel =
         koinViewModel(
-            key = expenseId.ifBlank { groupId },
-            parameters = { parametersOf(groupId, expenseId) },
+            key = entryId.ifBlank { groupId },
+            parameters = { parametersOf(groupId, entryId) },
         ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -140,8 +140,8 @@ fun AddExpenseRoot(
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            AddExpenseEvent.ExpenseCreated -> onSaved()
-            is AddExpenseEvent.Error -> snackbarHostState.showSnackbar(event.message.asStringAsync())
+            AddEntryEvent.EntrySaved -> onSaved()
+            is AddEntryEvent.Error -> snackbarHostState.showSnackbar(event.message.asStringAsync())
         }
     }
 
@@ -167,14 +167,14 @@ fun AddExpenseRoot(
                 enabled = !state.isSubmitting,
             ) {
                 Text(
-                    text = stringResource(Res.string.add_expense_save),
+                    text = stringResource(Res.string.add_entry_save),
                     fontWeight = FontWeight.SemiBold,
                 )
             }
         }
     }
 
-    AddExpenseScreen(
+    AddEntryScreen(
         state = state,
         currencyPickerState = currencyPickerState,
         onKindChange = viewModel::onKindChange,
@@ -197,8 +197,8 @@ fun AddExpenseRoot(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun AddExpenseScreen(
-    state: AddExpenseState,
+internal fun AddEntryScreen(
+    state: AddEntryState,
     currencyPickerState: CurrencyPickerUiState,
     onKindChange: (EntryKind) -> Unit,
     onPaidByClick: () -> Unit,
@@ -246,7 +246,7 @@ internal fun AddExpenseScreen(
         VerticalSpacer(8.dp)
         AmountInput(
             amountState = state.amountTextState,
-            symbol = state.expenseCurrencySymbol,
+            symbol = state.entryCurrencySymbol,
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         VerticalSpacer(8.dp)
@@ -261,7 +261,7 @@ internal fun AddExpenseScreen(
         ) {
             TabMatesTextField(
                 state = state.titleTextState,
-                placeholder = stringResource(Res.string.add_expense_title_placeholder),
+                placeholder = stringResource(Res.string.add_entry_title_placeholder),
                 singleLine = true,
                 capitalization = KeyboardCapitalization.Words,
                 imeAction = ImeAction.Next,
@@ -269,7 +269,7 @@ internal fun AddExpenseScreen(
             )
             TabMatesTextField(
                 state = state.descriptionTextState,
-                placeholder = stringResource(Res.string.add_expense_description_placeholder),
+                placeholder = stringResource(Res.string.add_entry_description_placeholder),
                 singleLine = false,
                 capitalization = KeyboardCapitalization.Words,
                 modifier = Modifier.fillMaxWidth(),
@@ -277,23 +277,23 @@ internal fun AddExpenseScreen(
             FieldRow(
                 label =
                     if (state.entryKind == EntryKind.INCOME) {
-                        stringResource(Res.string.add_expense_received_by_label)
+                        stringResource(Res.string.add_entry_received_by_label)
                     } else {
-                        stringResource(Res.string.add_expense_paid_by_label)
+                        stringResource(Res.string.add_entry_paid_by_label)
                     },
                 value = paidByDisplay(state),
                 onClick = onPaidByClick,
                 leadingIcon = null,
             )
             FieldRow(
-                label = stringResource(Res.string.add_expense_split_label),
+                label = stringResource(Res.string.add_entry_split_label),
                 value = splitSummary(state),
                 onClick = onSplitOpen,
                 leadingIcon = Res.drawable.ic_pie_chart,
             )
             FieldRow(
-                label = stringResource(Res.string.add_expense_date_label),
-                value = formatExpenseDate(state.entryDate, monthLabels),
+                label = stringResource(Res.string.add_entry_date_label),
+                value = formatEntryDate(state.entryDate, monthLabels),
                 onClick = onDateClick,
                 leadingIcon = Res.drawable.ic_calendar,
             )
@@ -416,7 +416,7 @@ private fun AmountInput(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = stringResource(Res.string.add_expense_amount_label),
+            text = stringResource(Res.string.add_entry_amount_label),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -467,7 +467,7 @@ private fun AmountInput(
                             Box(contentAlignment = Alignment.Center) {
                                 if (amountState.text.isEmpty()) {
                                     Text(
-                                        text = stringResource(Res.string.add_expense_amount_placeholder),
+                                        text = stringResource(Res.string.add_entry_amount_placeholder),
                                         style = amountTextStyle,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
@@ -490,17 +490,17 @@ private fun AmountInput(
 
 @Composable
 private fun CurrencySelector(
-    state: AddExpenseState,
+    state: AddEntryState,
     onCurrencyClick: () -> Unit,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         AssistChip(
             onClick = onCurrencyClick,
-            label = { Text(state.expenseCurrencyCode.ifEmpty { "—" }) },
+            label = { Text(state.entryCurrencyCode.ifEmpty { "—" }) },
             trailingIcon = {
                 Icon(
                     imageVector = vectorResource(Res.drawable.ic_chevron_right),
-                    contentDescription = stringResource(Res.string.add_expense_currency_cd),
+                    contentDescription = stringResource(Res.string.add_entry_currency_cd),
                     modifier = Modifier.size(16.dp),
                 )
             },
@@ -514,11 +514,11 @@ private fun CurrencySelector(
 }
 
 @Composable
-private fun ExchangeRateHint(state: AddExpenseState) {
+private fun ExchangeRateHint(state: AddEntryState) {
     val rate =
         CurrencyConverter.convert(
             amount = 1.0,
-            from = state.expenseCurrencyCode,
+            from = state.entryCurrencyCode,
             to = state.baseCurrencyCode,
             rates = state.ratesByCurrency,
         )
@@ -528,7 +528,7 @@ private fun ExchangeRateHint(state: AddExpenseState) {
         text =
             stringResource(
                 Res.string.currency_rate_label,
-                state.expenseCurrencyCode,
+                state.entryCurrencyCode,
                 rateText,
                 state.baseCurrencyCode,
             ),
@@ -545,13 +545,13 @@ private fun ExchangeRateHint(state: AddExpenseState) {
 }
 
 @Composable
-private fun ConvertedAmountHint(state: AddExpenseState) {
+private fun ConvertedAmountHint(state: AddEntryState) {
     val amount = parseAmount(state.amountTextState.text.toString())
     val converted =
         amount?.let {
             CurrencyConverter.convert(
                 amount = it,
-                from = state.expenseCurrencyCode,
+                from = state.entryCurrencyCode,
                 to = state.baseCurrencyCode,
                 rates = state.ratesByCurrency,
             )
@@ -567,7 +567,7 @@ private fun ConvertedAmountHint(state: AddExpenseState) {
             }
 
             else -> {
-                stringResource(Res.string.add_expense_rate_unavailable)
+                stringResource(Res.string.add_entry_rate_unavailable)
             }
         } ?: return
     Text(
@@ -625,39 +625,39 @@ internal fun FieldRow(
 }
 
 @Composable
-private fun paidByDisplay(state: AddExpenseState): String {
+private fun paidByDisplay(state: AddEntryState): String {
     val paidBy = state.members.firstOrNull { it.userId == state.paidByUserId }
     return when {
         paidBy == null -> "—"
-        paidBy.userId == state.currentUserId -> stringResource(Res.string.add_expense_paid_by_you)
+        paidBy.userId == state.currentUserId -> stringResource(Res.string.add_entry_paid_by_you)
         else -> paidBy.username
     }
 }
 
 @Composable
-private fun splitSummary(state: AddExpenseState): String {
+private fun splitSummary(state: AddEntryState): String {
     return when (state.splitType) {
         SplitType.EQUAL -> {
             val count = state.splitInputs.count { it.included }
             val unit =
                 if (count == 1) {
-                    stringResource(Res.string.add_expense_people_singular)
+                    stringResource(Res.string.add_entry_people_singular)
                 } else {
-                    stringResource(Res.string.add_expense_people_plural)
+                    stringResource(Res.string.add_entry_people_plural)
                 }
-            stringResource(Res.string.add_expense_split_summary_equal, count, unit)
+            stringResource(Res.string.add_entry_split_summary_equal, count, unit)
         }
 
         SplitType.EXACT_AMOUNT -> {
-            stringResource(Res.string.add_expense_split_summary_exact)
+            stringResource(Res.string.add_entry_split_summary_exact)
         }
 
         SplitType.PERCENTAGE -> {
-            stringResource(Res.string.add_expense_split_summary_percentage)
+            stringResource(Res.string.add_entry_split_summary_percentage)
         }
 
         SplitType.SHARES -> {
-            stringResource(Res.string.add_expense_split_summary_shares)
+            stringResource(Res.string.add_entry_split_summary_shares)
         }
     }
 }
@@ -683,9 +683,9 @@ private fun PaidByPickerSheet(
             Text(
                 text =
                     if (isIncome) {
-                        stringResource(Res.string.add_expense_received_by_sheet_title)
+                        stringResource(Res.string.add_entry_received_by_sheet_title)
                     } else {
-                        stringResource(Res.string.add_expense_paid_by_sheet_title)
+                        stringResource(Res.string.add_entry_paid_by_sheet_title)
                     },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
@@ -704,7 +704,7 @@ private fun PaidByPickerSheet(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.End),
             ) {
-                Text(stringResource(Res.string.add_expense_paid_by_sheet_done))
+                Text(stringResource(Res.string.add_entry_paid_by_sheet_done))
             }
         }
     }
@@ -725,7 +725,7 @@ private fun PaidByRow(
                 text =
                     if (isCurrentUser) {
                         stringResource(
-                            Res.string.add_expense_paid_by_you,
+                            Res.string.add_entry_paid_by_you,
                         )
                     } else {
                         participant.username
@@ -755,12 +755,12 @@ internal fun DatePickerSheet(
                     onConfirm(selected)
                 },
             ) {
-                Text(stringResource(Res.string.add_expense_date_confirm))
+                Text(stringResource(Res.string.add_entry_date_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.add_expense_date_cancel))
+                Text(stringResource(Res.string.add_entry_date_cancel))
             }
         },
     ) {

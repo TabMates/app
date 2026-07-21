@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.navigation.addexpense
+package de.tabmates.features.tabgroup.presentation.navigation.addentry
 
 /**
  * The kind of split-carrying tab entry the add/edit + detail screens operate on. Picked via the

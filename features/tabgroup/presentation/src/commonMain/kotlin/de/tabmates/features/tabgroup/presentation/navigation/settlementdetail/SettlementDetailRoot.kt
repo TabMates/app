@@ -40,15 +40,15 @@ import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.presentation.components.SectionLabel
 import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatExpenseDate
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.rememberMonthAbbreviations
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.formatEntryDate
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.rememberMonthAbbreviations
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_paid_by_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_dialog_cancel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_dialog_confirm
@@ -145,7 +145,7 @@ private fun SettlementDetailScreen(
                     settlement.amount,
                     state.groupCurrencyDecimalDigits,
                 ),
-            dateText = formatExpenseDate(settlement.entryDate, monthLabels),
+            dateText = formatEntryDate(settlement.entryDate, monthLabels),
             isPendingSync = settlement.isPendingSync,
         )
         VerticalSpacer(24.dp)
@@ -237,7 +237,7 @@ private fun ParticipantRow(
     val name =
         when {
             participant == null -> stringResource(Res.string.expense_detail_removed_member)
-            participant.userId == currentUserId -> stringResource(Res.string.add_expense_paid_by_you)
+            participant.userId == currentUserId -> stringResource(Res.string.add_entry_paid_by_you)
             else -> participant.username
         }
     val isRemoved = participant == null

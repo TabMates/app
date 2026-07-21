@@ -21,7 +21,7 @@ import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.parseAmount
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.parseAmount
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

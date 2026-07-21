@@ -1,8 +1,8 @@
-package de.tabmates.features.tabgroup.presentation.navigation.expensedetail
+package de.tabmates.features.tabgroup.presentation.navigation.entrydetail
 
 import de.tabmates.features.tabgroup.domain.models.ExchangeRate
 import de.tabmates.features.tabgroup.domain.models.TabEntry
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.EntryKind
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.EntryKind
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
@@ -28,7 +28,7 @@ import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ExpenseDetailViewModelTest {
+class EntryDetailViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private val lastUpdatedAt = Instant.fromEpochMilliseconds(1_752_000_000_000)
 
@@ -52,7 +52,7 @@ class ExpenseDetailViewModelTest {
 
             val state = viewModel.state.value
             assertFalse(state.isForeignCurrency)
-            assertEquals("EUR", state.expenseCurrencyCode)
+            assertEquals("EUR", state.entryCurrencyCode)
             assertEquals("EUR", state.groupCurrencyCode)
         }
 
@@ -81,8 +81,8 @@ class ExpenseDetailViewModelTest {
 
             val state = viewModel.state.value
             assertTrue(state.isForeignCurrency)
-            assertEquals("USD", state.expenseCurrencyCode)
-            assertEquals("$", state.expenseCurrencySymbol)
+            assertEquals("USD", state.entryCurrencyCode)
+            assertEquals("$", state.entryCurrencySymbol)
             assertEquals("EUR", state.groupCurrencyCode)
             assertEquals("€", state.groupCurrencySymbol)
             assertEquals(mapOf("USD" to 1.0, "EUR" to 0.92), state.ratesByCurrency)
@@ -130,7 +130,7 @@ class ExpenseDetailViewModelTest {
             assertEquals(1, state.splits.size)
         }
 
-    private fun TestScope.activateState(viewModel: ExpenseDetailViewModel) {
+    private fun TestScope.activateState(viewModel: EntryDetailViewModel) {
         backgroundScope.launch { viewModel.state.collect {} }
         advanceUntilIdle()
     }
@@ -142,9 +142,9 @@ class ExpenseDetailViewModelTest {
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
         exchangeRateRepository: FakeExchangeRateRepository = FakeExchangeRateRepository(),
         sessionStorage: FakeSessionStorage = FakeSessionStorage(),
-    ): ExpenseDetailViewModel =
-        ExpenseDetailViewModel(
-            expenseId = "e1",
+    ): EntryDetailViewModel =
+        EntryDetailViewModel(
+            entryId = "e1",
             groupId = "g1",
             tabEntryRepository = tabEntryRepository,
             groupRepository = groupRepository,

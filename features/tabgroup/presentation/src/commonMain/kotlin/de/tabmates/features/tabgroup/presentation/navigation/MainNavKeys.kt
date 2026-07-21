@@ -118,20 +118,20 @@ data object OssLicenses : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
 }
 
 @Serializable
-data class AddExpense(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+data class AddEntry(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.add_entry_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
 
 @Serializable
-data class EditExpense(val groupId: String, val expenseId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+data class EditEntry(val groupId: String, val entryId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.edit_entry_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
 
 @Serializable
-data class ExpenseDetail(
-    val expenseId: String,
+data class EntryDetail(
+    val entryId: String,
     val groupId: String,
 ) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.DynamicString("")

@@ -25,18 +25,18 @@ import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.DatePickerSheet
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.FieldRow
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatExpenseDate
-import de.tabmates.features.tabgroup.presentation.navigation.addexpense.rememberMonthAbbreviations
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.DatePickerSheet
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.FieldRow
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.formatEntryDate
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.rememberMonthAbbreviations
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_date_label
-import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_save
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_date_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_save
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_removed_member
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_calendar
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_amount_dialog_subtitle
@@ -71,7 +71,7 @@ fun EditSettlementRoot(
             enabled = !state.isSubmitting,
         ) {
             Text(
-                text = stringResource(Res.string.add_expense_save),
+                text = stringResource(Res.string.add_entry_save),
                 fontWeight = FontWeight.SemiBold,
             )
         }
@@ -134,8 +134,8 @@ private fun EditSettlementScreen(
         )
         VerticalSpacer(12.dp)
         FieldRow(
-            label = stringResource(Res.string.add_expense_date_label),
-            value = formatExpenseDate(state.entryDate, monthLabels),
+            label = stringResource(Res.string.add_entry_date_label),
+            value = formatEntryDate(state.entryDate, monthLabels),
             onClick = onDateClick,
             leadingIcon = Res.drawable.ic_calendar,
         )
