@@ -52,7 +52,7 @@ data object Home : LoggableNavKey(), TopLevelTab, ScreenWithFab {
 }
 
 @Serializable
-data object Activity : LoggableNavKey(), TopLevelTab, ScreenWithFab {
+data object Activity : LoggableNavKey(), TopLevelTab {
     override val icon: ImageVector
         @Composable
         get() = Icons.Outlined.Notifications
@@ -60,7 +60,6 @@ data object Activity : LoggableNavKey(), TopLevelTab, ScreenWithFab {
         @Composable
         get() = Icons.Filled.Notifications
     override val label: UiText = UiText.Resource(Res.string.activity_label)
-    override val fabAction: FabAction = FabAction.CreateGroup
 }
 
 @Serializable
@@ -76,7 +75,7 @@ data object Group : LoggableNavKey(), TopLevelTab, ScreenWithFab {
 }
 
 @Serializable
-data object Profile : LoggableNavKey(), TopLevelTab, ScreenWithFab {
+data object Profile : LoggableNavKey(), TopLevelTab {
     override val icon: ImageVector
         @Composable
         get() = Icons.Outlined.AccountCircle
@@ -84,7 +83,6 @@ data object Profile : LoggableNavKey(), TopLevelTab, ScreenWithFab {
         @Composable
         get() = Icons.Filled.AccountCircle
     override val label: UiText = UiText.Resource(Res.string.profile_label)
-    override val fabAction: FabAction = FabAction.CreateGroup
 }
 
 @Serializable
