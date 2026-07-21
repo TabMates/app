@@ -496,8 +496,9 @@ private fun ExpenseRow(
                         style = MaterialTheme.typography.bodySmall,
                         color = netColor,
                     )
+                    val sign = if (net > 0) "+" else "−"
                     Text(
-                        text = shareAmountLabel(abs(net), expense, item, currency, ratesByCurrency),
+                        text = "$sign${shareAmountLabel(abs(net), expense, item, currency, ratesByCurrency)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = netColor,
@@ -526,7 +527,11 @@ private fun IncomeRow(
                 .padding(horizontal = 24.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        EntryIcon(Res.drawable.ic_redeem)
+        EntryIcon(
+            icon = Res.drawable.ic_redeem,
+            containerColor = MaterialTheme.colorScheme.extended.positiveContainer,
+            contentColor = MaterialTheme.colorScheme.extended.onPositiveContainer,
+        )
         HorizontalSpacer(12.dp)
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -598,8 +603,9 @@ private fun IncomeRow(
                         style = MaterialTheme.typography.bodySmall,
                         color = netColor,
                     )
+                    val sign = if (net > 0) "+" else "−"
                     Text(
-                        text = shareAmountLabel(abs(net), income, item, currency, ratesByCurrency),
+                        text = "$sign${shareAmountLabel(abs(net), income, item, currency, ratesByCurrency)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = netColor,
@@ -628,6 +634,7 @@ private fun SettlementRow(
     val iconContainerColor: Color
     val iconContentColor: Color
     val amountColor: Color
+    val amountPrefix: String
     when (currentUserId) {
         settlement.paidByUserId -> {
             subtitle =
@@ -638,6 +645,7 @@ private fun SettlementRow(
             iconContainerColor = extended.negativeContainer
             iconContentColor = extended.onNegativeContainer
             amountColor = extended.negative
+            amountPrefix = "−"
         }
 
         settlement.receivedByUserId -> {
@@ -649,6 +657,7 @@ private fun SettlementRow(
             iconContainerColor = extended.positiveContainer
             iconContentColor = extended.onPositiveContainer
             amountColor = extended.positive
+            amountPrefix = "+"
         }
 
         else -> {
@@ -661,6 +670,7 @@ private fun SettlementRow(
             iconContainerColor = extended.settledContainer
             iconContentColor = extended.onSettledContainer
             amountColor = MaterialTheme.colorScheme.onSurface
+            amountPrefix = ""
         }
     }
     Row(
@@ -701,7 +711,7 @@ private fun SettlementRow(
         }
         HorizontalSpacer(8.dp)
         Text(
-            text = entryAmountLabel(settlement, item, currency, ratesByCurrency),
+            text = "$amountPrefix${entryAmountLabel(settlement, item, currency, ratesByCurrency)}",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = amountColor,
