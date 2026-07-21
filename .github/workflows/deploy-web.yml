@@ -30,6 +30,7 @@ env:
   BASE_URL_HTTP_WEB: ${{ secrets.BASE_URL_HTTP_WEB }}
   BASE_URL_WS_WEB: ${{ secrets.BASE_URL_WS_WEB }}
   WEB_DOMAIN: app.tabmates.de
+  BASE_URL_PUBLIC: https://app.tabmates.de
 
 jobs:
   build:

@@ -45,6 +45,10 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                     buildConfigField(FieldSpec.Type.STRING, "API_KEY", requireProperty("API_KEY"))
                     buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", requireProperty("BASE_URL_HTTP"))
                     buildConfigField(FieldSpec.Type.STRING, "BASE_URL_WS", requireProperty("BASE_URL_WS"))
+                    // User-facing host for shareable links / deep links (e.g. https://app.tabmates.de),
+                    // decoupled from the backend API host above. Required (like BASE_URL_HTTP) so the
+                    // deep-link host is always explicit; same value on all targets.
+                    buildConfigField(FieldSpec.Type.STRING, "BASE_URL_PUBLIC", requireProperty("BASE_URL_PUBLIC"))
                     buildConfigField(FieldSpec.Type.STRING, "APP_VERSION", appVersion)
                     buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "false")
                 }

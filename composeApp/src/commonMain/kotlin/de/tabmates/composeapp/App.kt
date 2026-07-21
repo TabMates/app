@@ -99,11 +99,13 @@ private val savedStateConfiguration = SavedStateConfiguration {
 
 // Deep-link definitions — mirrors the upcoming Nav3 navDeepLink<T>(basePath) API.
 // TODO: Replace import with `androidx.navigation3.navDeepLink` when available.
+// Matched against the user-facing public host (BASE_URL_PUBLIC, e.g. https://app.tabmates.de),
+// not the backend API host — the same URL an installed app (App Links) and the web client resolve.
 private val deepLinks = listOf(
-    navDeepLink<EmailVerification>(basePath = "${BuildKonfig.BASE_URL_HTTP}/api/auth/verify"),
-    navDeepLink<ResetPassword>(basePath = "${BuildKonfig.BASE_URL_HTTP}/api/auth/reset-password"),
-    navDeepLink<JoinGroup>(basePath = "${BuildKonfig.BASE_URL_HTTP}/j", pathSuffixParam = "token"),
-    navDeepLink<GroupDetail>(basePath = "${BuildKonfig.BASE_URL_HTTP}/groups", pathSuffixParam = "groupId"),
+    navDeepLink<EmailVerification>(basePath = "${BuildKonfig.BASE_URL_PUBLIC}/api/auth/verify"),
+    navDeepLink<ResetPassword>(basePath = "${BuildKonfig.BASE_URL_PUBLIC}/api/auth/reset-password"),
+    navDeepLink<JoinGroup>(basePath = "${BuildKonfig.BASE_URL_PUBLIC}/j", pathSuffixParam = "token"),
+    navDeepLink<GroupDetail>(basePath = "${BuildKonfig.BASE_URL_PUBLIC}/groups", pathSuffixParam = "groupId"),
 )
 
 @Composable

@@ -66,7 +66,10 @@ Build-time config is injected via BuildKonfig and **required** to build. Add the
 API_KEY=your-api-key
 BASE_URL_HTTP=https://your-backend.example.com
 BASE_URL_WS=wss://your-backend.example.com
+BASE_URL_PUBLIC=https://your-web-app.example.com
 ```
+
+`BASE_URL_PUBLIC` is the user-facing host for shareable links and deep links (App Links / web fallback), decoupled from the API host. For local dev, set it to your `BASE_URL_HTTP` value. See [`docs/WEB_DEPLOYMENT.md`](docs/WEB_DEPLOYMENT.md#deep-links--android-app-links).
 
 Optional per-target overrides let every target run against a local backend (`http://localhost:8080`) at the same time — the Android emulator reaches the host via `10.0.2.2`, and the browser stays same-origin through the webpack dev proxy:
 
