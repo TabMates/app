@@ -69,6 +69,35 @@ object Fixtures {
             isPendingSync = isPendingSync,
         )
 
+    fun income(
+        id: String = "i1",
+        groupId: String = "g1",
+        amount: Double = 100.0,
+        paidByUserId: String = "user-1",
+        splits: List<TabEntrySplit> = emptyList(),
+        entryDate: LocalDate = LocalDate.parse("1970-01-01"),
+        isPendingSync: Boolean = false,
+    ): TabEntry.Income =
+        TabEntry.Income(
+            tabEntryId = id,
+            groupId = groupId,
+            title = "Income",
+            description = "",
+            amount = amount,
+            currencyCode = "EUR",
+            creatorId = paidByUserId,
+            paidByUserId = paidByUserId,
+            entryDate = entryDate,
+            createdAt = Instant.fromEpochMilliseconds(0),
+            lastModifiedAt = Instant.fromEpochMilliseconds(0),
+            lastModifiedByUserId = paidByUserId,
+            version = 1,
+            deletedAt = null,
+            deletedByUserId = null,
+            splits = splits,
+            isPendingSync = isPendingSync,
+        )
+
     fun settlement(
         id: String = "s1",
         groupId: String = "g1",

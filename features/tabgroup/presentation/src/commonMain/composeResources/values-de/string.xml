@@ -120,7 +120,8 @@
     <string name="groups_detail_placeholder_caption">Wähle links eine Gruppe aus, um Details zu sehen.</string>
     <string name="groups_detail_invite">Einladen</string>
     <string name="groups_detail_add_expense">Ausgabe hinzufügen</string>
-    <string name="groups_detail_tab_expenses">Ausgaben</string>
+    <string name="groups_detail_add_entry">Eintrag hinzufügen</string>
+    <string name="groups_detail_tab_expenses">Transaktionen</string>
     <string name="groups_detail_tab_balances">Salden</string>
     <string name="groups_detail_tab_members">Mitglieder</string>
     <string name="groups_detail_tab_settings">Einstellungen</string>
@@ -135,6 +136,10 @@
     <string name="groups_detail_paid_by">%1$s hat %2$s bezahlt</string>
     <string name="groups_detail_row_you_borrowed">du hast geliehen</string>
     <string name="groups_detail_row_you_lent">du hast verliehen</string>
+    <string name="groups_detail_row_you_receive">du erhältst</string>
+    <string name="groups_detail_row_you_owe">du schuldest</string>
+    <string name="groups_detail_received_by_you">Du hast %1$s erhalten</string>
+    <string name="groups_detail_received_by">%1$s hat %2$s erhalten</string>
     <string name="groups_detail_row_not_involved">nicht beteiligt</string>
     <string name="groups_detail_row_no_balance">kein Saldo</string>
     <string name="groups_detail_settlement_you_paid">Du hast %1$s bezahlt</string>
@@ -193,6 +198,12 @@
 
     <string name="add_expense_title">Ausgabe hinzufügen</string>
     <string name="edit_expense_title">Ausgabe bearbeiten</string>
+    <string name="add_entry_title">Neuer Eintrag</string>
+    <string name="edit_entry_title">Eintrag bearbeiten</string>
+    <string name="add_entry_kind_expense">Ausgabe</string>
+    <string name="add_entry_kind_income">Einnahme</string>
+    <string name="add_expense_received_by_label">Erhalten von</string>
+    <string name="add_expense_received_by_sheet_title">Erhalten von</string>
     <string name="add_expense_save">Speichern</string>
     <string name="add_expense_close_cd">Schließen</string>
     <string name="add_expense_currency_cd">Währung ändern</string>
@@ -248,6 +259,9 @@
     <string name="expense_detail_delete_dialog_message">Diese Ausgabe wird aus der Gruppe entfernt. Dies kann nicht rückgängig gemacht werden.</string>
     <string name="expense_detail_delete_dialog_confirm">Löschen</string>
     <string name="expense_detail_delete_dialog_cancel">Abbrechen</string>
+    <string name="income_detail_received_by_section">ERHALTEN VON</string>
+    <string name="income_detail_delete_dialog_title">Einnahme löschen?</string>
+    <string name="income_detail_delete_dialog_message">Diese Einnahme wird aus der Gruppe entfernt. Dies kann nicht rückgängig gemacht werden.</string>
 
     <string name="settlement_detail_received_by_section">ERHALTEN VON</string>
     <string name="settlement_detail_delete_dialog_title">Zahlung löschen?</string>

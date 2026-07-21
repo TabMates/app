@@ -1,6 +1,8 @@
 package de.tabmates.features.tabgroup.presentation.navigation.expensedetail
 
 import de.tabmates.features.tabgroup.domain.models.ExchangeRate
+import de.tabmates.features.tabgroup.domain.models.TabEntry
+import de.tabmates.features.tabgroup.presentation.navigation.addexpense.EntryKind
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
@@ -21,6 +23,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 
@@ -101,6 +104,30 @@ class ExpenseDetailViewModelTest {
             assertTrue(state.isForeignCurrency)
             assertTrue(state.ratesByCurrency.isEmpty())
             assertEquals(null, state.ratesLastUpdatedAt)
+        }
+
+    @Test
+    fun incomeEntryIsExposedWithIncomeKind() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit(
+                "g1",
+                listOf(
+                    Fixtures.income(
+                        id = "e1",
+                        groupId = "g1",
+                        splits = listOf(Fixtures.split(tabEntryId = "e1")),
+                    ),
+                ),
+            )
+            val viewModel = createViewModel(tabEntryRepository = tabEntryRepo)
+            activateState(viewModel)
+
+            val state = viewModel.state.value
+            assertFalse(state.isLoading)
+            assertEquals(EntryKind.INCOME, state.entryKind)
+            assertIs<TabEntry.Income>(state.entry)
+            assertEquals(1, state.splits.size)
         }
 
     private fun TestScope.activateState(viewModel: ExpenseDetailViewModel) {

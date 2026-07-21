@@ -84,6 +84,31 @@ class AddExpenseViewModelTest {
         }
 
     @Test
+    fun creatingIncomeAddsIncomeEntry() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            val viewModel = createViewModel(groupId = "g1", tabEntryRepository = tabEntryRepo)
+            val events = collectEvents(viewModel)
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            viewModel.onKindChange(EntryKind.INCOME)
+            viewModel.state.value.titleTextState
+                .setTextAndPlaceCursorAtEnd("Refund")
+            viewModel.state.value.amountTextState
+                .setTextAndPlaceCursorAtEnd("30")
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+
+            val entries = tabEntryRepo.getTabEntriesForGroup("g1").first()
+            assertEquals(1, entries.size)
+            val income = assertIs<TabEntry.Income>(entries.first())
+            assertEquals("Refund", income.title)
+            assertEquals(30.0, income.amount)
+            assertEquals(AddExpenseEvent.ExpenseCreated, events.last())
+        }
+
+    @Test
     fun missingAmountEmitsErrorAndDoesNotCreate() =
         runTest(testDispatcher) {
             val tabEntryRepo = FakeTabEntryRepository()
@@ -185,6 +210,35 @@ class AddExpenseViewModelTest {
             val expense = assertIs<TabEntry.Expense>(entries.first())
             assertEquals("e1", expense.tabEntryId)
             assertEquals("New title", expense.title)
+            assertEquals(AddExpenseEvent.ExpenseCreated, events.last())
+        }
+
+    @Test
+    fun editingIncomeLocksKindAndUpdatesInPlace() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit("g1", listOf(existingIncome()))
+            val viewModel = createViewModel(groupId = "g1", expenseId = "i1", tabEntryRepository = tabEntryRepo)
+            val events = collectEvents(viewModel)
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            assertTrue(viewModel.state.value.isEditing)
+            assertEquals(EntryKind.INCOME, viewModel.state.value.entryKind)
+            // Kind is locked while editing — attempts to flip it are ignored.
+            viewModel.onKindChange(EntryKind.EXPENSE)
+            assertEquals(EntryKind.INCOME, viewModel.state.value.entryKind)
+
+            viewModel.state.value.titleTextState
+                .setTextAndPlaceCursorAtEnd("New income title")
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+
+            val entries = tabEntryRepo.getTabEntriesForGroup("g1").first()
+            assertEquals(1, entries.size)
+            val income = assertIs<TabEntry.Income>(entries.first())
+            assertEquals("i1", income.tabEntryId)
+            assertEquals("New income title", income.title)
             assertEquals(AddExpenseEvent.ExpenseCreated, events.last())
         }
 
@@ -367,6 +421,19 @@ class AddExpenseViewModelTest {
                         Fixtures.split(tabEntryId = "e1", participantId = "user-1", resolvedAmount = 100.0),
                     ),
             ).copy(title = "Old title", description = "Old note")
+
+    private fun existingIncome(): TabEntry.Income =
+        Fixtures
+            .income(
+                id = "i1",
+                groupId = "g1",
+                amount = 100.0,
+                paidByUserId = "user-1",
+                splits =
+                    listOf(
+                        Fixtures.split(tabEntryId = "i1", participantId = "user-1", resolvedAmount = 100.0),
+                    ),
+            ).copy(title = "Old income", description = "note")
 
     private fun TestScope.collectEvents(viewModel: AddExpenseViewModel): List<AddExpenseEvent> {
         val events = mutableListOf<AddExpenseEvent>()

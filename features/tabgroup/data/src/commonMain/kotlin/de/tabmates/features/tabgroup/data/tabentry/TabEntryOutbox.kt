@@ -187,6 +187,89 @@ class TabEntryOutbox(
         applicationScope.launch { drain() }
     }
 
+    suspend fun enqueueCreateIncome(
+        clientRequestId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        exchangeRate: Double?,
+        paidByUserId: String,
+        entryDate: LocalDate,
+        splits: List<NewExpenseSplit>,
+    ) {
+        logger.debug(TAG, "Outbox enqueue create income id=$clientRequestId")
+        val payload =
+            NewTabEntryWsPayload.Income(
+                id = clientRequestId,
+                groupId = groupId,
+                paidByUserId = paidByUserId,
+                title = title,
+                description = description,
+                amount = amount,
+                currency = currencyCode,
+                exchangeRate = exchangeRate,
+                entryDate = entryDate,
+                splits = buildSplitPayloads(splits, amount),
+            )
+        val envelope =
+            WebSocketMessageDto(
+                type = WsMessageType.NEW_TAB_ENTRY,
+                payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
+            )
+        database.pendingOutboxDao.upsert(
+            PendingOutboxEntity(
+                id = clientRequestId,
+                type = OUTBOX_TYPE_NEW_TAB_ENTRY,
+                payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
+                createdAt = Clock.System.now().toEpochMilliseconds(),
+            ),
+        )
+        applicationScope.launch { drain() }
+    }
+
+    suspend fun enqueueUpdateIncome(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        exchangeRate: Double?,
+        paidByUserId: String,
+        entryDate: LocalDate,
+        splits: List<NewExpenseSplit>,
+    ) {
+        val payload =
+            NewTabEntryWsPayload.Income(
+                id = tabEntryId,
+                groupId = groupId,
+                paidByUserId = paidByUserId,
+                title = title,
+                description = description,
+                amount = amount,
+                currency = currencyCode,
+                exchangeRate = exchangeRate,
+                entryDate = entryDate,
+                splits = buildSplitPayloads(splits, amount),
+            )
+        val envelope =
+            WebSocketMessageDto(
+                type = WsMessageType.UPDATED_TAB_ENTRY,
+                payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
+            )
+        database.pendingOutboxDao.upsert(
+            PendingOutboxEntity(
+                id = "$UPDATE_ID_PREFIX$tabEntryId",
+                type = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
+                payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
+                createdAt = Clock.System.now().toEpochMilliseconds(),
+            ),
+        )
+        applicationScope.launch { drain() }
+    }
+
     suspend fun enqueueUpdateSettlement(
         tabEntryId: String,
         groupId: String,

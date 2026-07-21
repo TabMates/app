@@ -37,6 +37,31 @@ interface TabEntryRepository {
         splits: List<NewExpenseSplit>,
     ): Result<TabEntry.Expense, DataError.Remote>
 
+    suspend fun createIncome(
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        exchangeRate: Double?,
+        paidByUserId: String,
+        entryDate: LocalDate,
+        splits: List<NewExpenseSplit>,
+    ): Result<TabEntry.Income, DataError.Remote>
+
+    suspend fun updateIncome(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        exchangeRate: Double?,
+        paidByUserId: String,
+        entryDate: LocalDate,
+        splits: List<NewExpenseSplit>,
+    ): Result<TabEntry.Income, DataError.Remote>
+
     suspend fun createSettlement(
         groupId: String,
         title: String,

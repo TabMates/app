@@ -67,7 +67,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_open_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_across_people
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_add_expense
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_add_entry
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_empty_expenses
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_gets_back
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite
@@ -83,10 +83,14 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_paid_by_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_badge
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_not_claimed
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_received_by
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_received_by_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_row_no_balance
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_row_not_involved
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_row_you_borrowed
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_row_you_lent
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_row_you_owe
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_row_you_receive
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_paid_other
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_paid_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_you_paid
@@ -106,6 +110,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_content_copy
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_link
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_redeem
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_refresh
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_restaurant
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_send
@@ -324,7 +329,7 @@ private fun HeaderActions(
             onClick = onAddExpenseClick,
             modifier = Modifier.weight(1f, fill = false),
         ) {
-            Text("+ ${stringResource(Res.string.groups_detail_add_expense)}")
+            Text("+ ${stringResource(Res.string.groups_detail_add_entry)}")
         }
     }
 }
@@ -384,7 +389,17 @@ private fun ExpensesTab(
                         )
                     }
 
-                    is TabEntry.Income -> {}
+                    is TabEntry.Income -> {
+                        IncomeRow(
+                            income = entry,
+                            currentUserId = currentUserId,
+                            payerName = payerById[entry.paidByUserId]?.username.orEmpty(),
+                            item = item,
+                            currency = currencyByCode[entry.currencyCode],
+                            ratesByCurrency = ratesByCurrency,
+                            onClick = { onExpenseClick(entry.tabEntryId) },
+                        )
+                    }
                 }
             }
         }
@@ -481,8 +496,116 @@ private fun ExpenseRow(
                         style = MaterialTheme.typography.bodySmall,
                         color = netColor,
                     )
+                    val sign = if (net > 0) "+" else "−"
                     Text(
-                        text = shareAmountLabel(abs(net), expense, item, currency, ratesByCurrency),
+                        text = "$sign${shareAmountLabel(abs(net), expense, item, currency, ratesByCurrency)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = netColor,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IncomeRow(
+    income: TabEntry.Income,
+    currentUserId: String,
+    payerName: String,
+    item: GroupOverviewItem,
+    currency: Currency?,
+    ratesByCurrency: Map<String, Double>,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 24.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        EntryIcon(
+            icon = Res.drawable.ic_redeem,
+            containerColor = MaterialTheme.colorScheme.extended.positiveContainer,
+            contentColor = MaterialTheme.colorScheme.extended.onPositiveContainer,
+        )
+        HorizontalSpacer(12.dp)
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = income.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (income.isPendingSync) {
+                    HorizontalSpacer(8.dp)
+                    SyncStatusChip()
+                }
+            }
+            val amountLabel = entryAmountLabel(income, item, currency, ratesByCurrency)
+            val subtitle =
+                if (income.paidByUserId == currentUserId) {
+                    stringResource(Res.string.groups_detail_received_by_you, amountLabel)
+                } else {
+                    stringResource(Res.string.groups_detail_received_by, payerName.ifEmpty { "?" }, amountLabel)
+                }
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        HorizontalSpacer(8.dp)
+        Column(horizontalAlignment = Alignment.End) {
+            val involved =
+                income.paidByUserId == currentUserId ||
+                    income.splits.any { it.participantId == currentUserId }
+            val net = UserBalanceCalculator.entryNet(income, currentUserId)
+            when {
+                !involved -> {
+                    Text(
+                        text = stringResource(Res.string.groups_detail_row_not_involved),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                net == 0.0 -> {
+                    Text(
+                        text = stringResource(Res.string.groups_detail_row_no_balance),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                else -> {
+                    val netColor =
+                        if (net > 0) {
+                            MaterialTheme.colorScheme.extended.positive
+                        } else {
+                            MaterialTheme.colorScheme.extended.negative
+                        }
+                    Text(
+                        text =
+                            stringResource(
+                                if (net > 0) {
+                                    Res.string.groups_detail_row_you_receive
+                                } else {
+                                    Res.string.groups_detail_row_you_owe
+                                },
+                            ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = netColor,
+                    )
+                    val sign = if (net > 0) "+" else "−"
+                    Text(
+                        text = "$sign${shareAmountLabel(abs(net), income, item, currency, ratesByCurrency)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = netColor,
@@ -511,6 +634,7 @@ private fun SettlementRow(
     val iconContainerColor: Color
     val iconContentColor: Color
     val amountColor: Color
+    val amountPrefix: String
     when (currentUserId) {
         settlement.paidByUserId -> {
             subtitle =
@@ -521,6 +645,7 @@ private fun SettlementRow(
             iconContainerColor = extended.negativeContainer
             iconContentColor = extended.onNegativeContainer
             amountColor = extended.negative
+            amountPrefix = "−"
         }
 
         settlement.receivedByUserId -> {
@@ -532,6 +657,7 @@ private fun SettlementRow(
             iconContainerColor = extended.positiveContainer
             iconContentColor = extended.onPositiveContainer
             amountColor = extended.positive
+            amountPrefix = "+"
         }
 
         else -> {
@@ -544,6 +670,7 @@ private fun SettlementRow(
             iconContainerColor = extended.settledContainer
             iconContentColor = extended.onSettledContainer
             amountColor = MaterialTheme.colorScheme.onSurface
+            amountPrefix = ""
         }
     }
     Row(
@@ -584,7 +711,7 @@ private fun SettlementRow(
         }
         HorizontalSpacer(8.dp)
         Text(
-            text = entryAmountLabel(settlement, item, currency, ratesByCurrency),
+            text = "$amountPrefix${entryAmountLabel(settlement, item, currency, ratesByCurrency)}",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = amountColor,

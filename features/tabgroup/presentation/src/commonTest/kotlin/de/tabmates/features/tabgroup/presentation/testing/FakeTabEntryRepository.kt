@@ -138,6 +138,100 @@ class FakeTabEntryRepository(
         return Result.Success(expense)
     }
 
+    override suspend fun createIncome(
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        exchangeRate: Double?,
+        paidByUserId: String,
+        entryDate: LocalDate,
+        splits: List<NewExpenseSplit>,
+    ): Result<TabEntry.Income, DataError.Remote> {
+        val id = "fake-${flowByGroupId.values.sumOf { it.value.size } + 1}"
+        val income =
+            TabEntry.Income(
+                tabEntryId = id,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currencyCode,
+                exchangeRate = exchangeRate,
+                creatorId = paidByUserId,
+                paidByUserId = paidByUserId,
+                entryDate = entryDate,
+                createdAt = Clock.System.now(),
+                lastModifiedAt = Clock.System.now(),
+                lastModifiedByUserId = paidByUserId,
+                version = 0,
+                deletedAt = null,
+                deletedByUserId = null,
+                splits =
+                    splits.mapIndexed { index, split ->
+                        TabEntrySplit(
+                            splitId = "$id-split-$index",
+                            tabEntryId = id,
+                            participantId = split.participantId,
+                            splitType = split.splitType,
+                            value = split.value,
+                            resolvedAmount = split.value,
+                        )
+                    },
+            )
+        val flow = flowByGroupId.getOrPut(groupId) { MutableStateFlow(emptyList()) }
+        flow.value = flow.value + income
+        return Result.Success(income)
+    }
+
+    override suspend fun updateIncome(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        exchangeRate: Double?,
+        paidByUserId: String,
+        entryDate: LocalDate,
+        splits: List<NewExpenseSplit>,
+    ): Result<TabEntry.Income, DataError.Remote> {
+        val income =
+            TabEntry.Income(
+                tabEntryId = tabEntryId,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currencyCode,
+                exchangeRate = exchangeRate,
+                creatorId = paidByUserId,
+                paidByUserId = paidByUserId,
+                entryDate = entryDate,
+                createdAt = Clock.System.now(),
+                lastModifiedAt = Clock.System.now(),
+                lastModifiedByUserId = paidByUserId,
+                version = 0,
+                deletedAt = null,
+                deletedByUserId = null,
+                splits =
+                    splits.mapIndexed { index, split ->
+                        TabEntrySplit(
+                            splitId = "$tabEntryId-split-$index",
+                            tabEntryId = tabEntryId,
+                            participantId = split.participantId,
+                            splitType = split.splitType,
+                            value = split.value,
+                            resolvedAmount = split.value,
+                        )
+                    },
+            )
+        val flow = flowByGroupId.getOrPut(groupId) { MutableStateFlow(emptyList()) }
+        flow.value = flow.value.map { if (it.tabEntryId == tabEntryId) income else it }
+        return Result.Success(income)
+    }
+
     override suspend fun createSettlement(
         groupId: String,
         title: String,
