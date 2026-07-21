@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,6 +17,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,9 +28,13 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,7 +42,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -68,6 +79,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_y
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_open_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_across_people
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_add_entry
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_back_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_empty_expenses
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_gets_back
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite
@@ -106,6 +118,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_exp
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_member_count_singular
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_members_count
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_status_settled
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_arrow_back
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_content_copy
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_link
@@ -118,9 +131,14 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_setting
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_swap_horiz
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_action
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private enum class DetailTab { TRANSACTIONS, BALANCES, MEMBERS, SETTINGS }
 
+/** Bottom space reserved so the last row can scroll clear of the host "Add Entry" FAB. */
+private val FabBottomClearance = 96.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun GroupDetailPane(
     item: GroupOverviewItem,
@@ -133,6 +151,7 @@ internal fun GroupDetailPane(
     currencyByCode: Map<String, Currency>,
     ratesByCurrency: Map<String, Double>,
     onRotateInvite: () -> Unit,
+    onBack: () -> Unit = {},
     onSettingsClick: () -> Unit,
     onAddEntryClick: () -> Unit = {},
     onSettleUpClick: () -> Unit = {},
@@ -170,14 +189,63 @@ internal fun GroupDetailPane(
             showResultSnackbar(linkSharer.share(inviteUrl))
         }
     }
-    Column(modifier = modifier) {
-        DetailHeader(
-            item = item,
-            isExpanded = isExpanded,
-            onInviteClick = onShareInvite,
-            onSettingsClick = onSettingsClick,
-            onAddEntryClick = onAddEntryClick,
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    var headerHeightPx by remember { mutableIntStateOf(0) }
+    LaunchedEffect(headerHeightPx) {
+        if (headerHeightPx > 0) {
+            scrollBehavior.state.heightOffsetLimit = -headerHeightPx.toFloat()
+        }
+    }
+    // Re-expand the header when switching tabs so a shorter tab can't leave it stranded collapsed.
+    LaunchedEffect(selectedTab) { scrollBehavior.state.heightOffset = 0f }
+
+    Column(modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection)) {
+        TopAppBar(
+            title = {
+                Text(
+                    text = item.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.graphicsLayer { alpha = scrollBehavior.state.collapsedFraction },
+                )
+            },
+            windowInsets = WindowInsets(0),
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_arrow_back),
+                        contentDescription = stringResource(Res.string.groups_detail_back_cd),
+                    )
+                }
+            },
         )
+        // Collapsing header: measured at full height, then slides up and fades as the user scrolls.
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clipToBounds()
+                    .layout { measurable, constraints ->
+                        val placeable = measurable.measure(constraints)
+                        val collapse = (-scrollBehavior.state.heightOffset).roundToInt()
+                        val visibleHeight = (placeable.height - collapse).coerceIn(0, placeable.height)
+                        layout(placeable.width, visibleHeight) {
+                            placeable.place(0, -collapse)
+                        }
+                    },
+        ) {
+            DetailHeader(
+                item = item,
+                isExpanded = isExpanded,
+                onInviteClick = onShareInvite,
+                onSettingsClick = onSettingsClick,
+                onAddEntryClick = onAddEntryClick,
+                modifier =
+                    Modifier
+                        .onSizeChanged { headerHeightPx = it.height }
+                        .graphicsLayer { alpha = 1f - scrollBehavior.state.collapsedFraction },
+            )
+        }
         PrimaryTabRow(
             selectedTabIndex = visibleTabs.indexOf(selectedTab).coerceAtLeast(0),
             containerColor = MaterialTheme.colorScheme.surface,
@@ -246,10 +314,11 @@ private fun DetailHeader(
     onInviteClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onAddEntryClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 16.dp),
     ) {
@@ -351,7 +420,7 @@ private fun TransactionsTab(
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 12.dp),
+                .padding(bottom = FabBottomClearance),
     ) {
         VerticalSpacer(16.dp)
         StatCardsRow(item = item, modifier = Modifier.padding(horizontal = 24.dp))
@@ -813,7 +882,7 @@ private fun BalancesTab(
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+                .padding(start = 24.dp, end = 24.dp, bottom = FabBottomClearance),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         VerticalSpacer(16.dp)
@@ -998,7 +1067,7 @@ private fun MembersTab(
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+                .padding(start = 24.dp, end = 24.dp, bottom = FabBottomClearance),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         VerticalSpacer(16.dp)

@@ -161,9 +161,8 @@ data object CreateGroup : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
 }
 
 @Serializable
-data class GroupDetail(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, ScreenWithFab {
-    override val topBarTitle: UiText get() = UiText.DynamicString("")
-    override val topBarAction: TopBarAction get() = TopBarAction.Back
+data class GroupDetail(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithFab {
+    // Owns its own collapsing top bar (see GroupDetailPane), so it opts out of ScreenWithTopBar.
     override val fabAction: FabAction = FabAction.AddEntry(groupId)
 }
 
