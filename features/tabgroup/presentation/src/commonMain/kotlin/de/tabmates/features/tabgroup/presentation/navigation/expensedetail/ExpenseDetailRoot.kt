@@ -44,9 +44,11 @@ import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.components.formatRate
 import de.tabmates.features.tabgroup.presentation.components.rateUpdatedLabel
+import de.tabmates.features.tabgroup.presentation.navigation.addexpense.EntryKind
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.formatExpenseDate
 import de.tabmates.features.tabgroup.presentation.navigation.addexpense.rememberMonthAbbreviations
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -67,7 +69,11 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_de
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_split_between_section
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_delete
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_edit
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_redeem
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_restaurant
+import tabmatesapp.features.tabgroup.presentation.generated.resources.income_detail_delete_dialog_message
+import tabmatesapp.features.tabgroup.presentation.generated.resources.income_detail_delete_dialog_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.income_detail_received_by_section
 
 @Composable
 fun ExpenseDetailRoot(
@@ -96,6 +102,7 @@ fun ExpenseDetailRoot(
 
     if (showDeleteDialog) {
         DeleteConfirmDialog(
+            entryKind = state.entryKind,
             onConfirm = {
                 showDeleteDialog = false
                 viewModel.onConfirmDelete()
@@ -131,10 +138,11 @@ private fun ExpenseDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val monthLabels = rememberMonthAbbreviations()
-    val expense = state.expense
+    val entry = state.entry
+    val isIncome = state.entryKind == EntryKind.INCOME
 
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        if (expense == null) {
+        if (entry == null) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(48.dp),
                 contentAlignment = Alignment.Center,
@@ -145,16 +153,17 @@ private fun ExpenseDetailScreen(
         }
         VerticalSpacer(8.dp)
         HeroSection(
-            title = expense.title,
+            icon = if (isIncome) Res.drawable.ic_redeem else Res.drawable.ic_restaurant,
+            title = entry.title,
             amountFormatted =
                 formatMoney(
                     state.expenseCurrencySymbol,
-                    expense.amount,
+                    entry.amount,
                     state.expenseCurrencyDecimalDigits,
                 ),
-            dateText = formatExpenseDate(expense.entryDate, monthLabels),
-            description = expense.description,
-            isPendingSync = expense.isPendingSync,
+            dateText = formatExpenseDate(entry.entryDate, monthLabels),
+            description = entry.description,
+            isPendingSync = entry.isPendingSync,
         )
         if (state.isForeignCurrency) {
             VerticalSpacer(4.dp)
@@ -163,11 +172,18 @@ private fun ExpenseDetailScreen(
         VerticalSpacer(24.dp)
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             SectionLabel(
-                text = stringResource(Res.string.expense_detail_paid_by_section),
+                text =
+                    stringResource(
+                        if (isIncome) {
+                            Res.string.income_detail_received_by_section
+                        } else {
+                            Res.string.expense_detail_paid_by_section
+                        },
+                    ),
                 fontWeight = FontWeight.SemiBold,
             )
             VerticalSpacer(8.dp)
-            val payer = state.membersById[expense.paidByUserId]
+            val payer = state.membersById[entry.paidByUserId]
             val payerName =
                 when {
                     payer == null -> stringResource(Res.string.expense_detail_removed_member)
@@ -178,7 +194,7 @@ private fun ExpenseDetailScreen(
                 initials = payer?.initials ?: "?",
                 primary = payerName,
                 trailingValue =
-                    formatMoney(state.expenseCurrencySymbol, expense.amount, state.expenseCurrencyDecimalDigits),
+                    formatMoney(state.expenseCurrencySymbol, entry.amount, state.expenseCurrencyDecimalDigits),
                 isRemoved = payer == null,
             )
             VerticalSpacer(20.dp)
@@ -187,7 +203,7 @@ private fun ExpenseDetailScreen(
                 fontWeight = FontWeight.SemiBold,
             )
             VerticalSpacer(8.dp)
-            expense.splits.forEach { split ->
+            state.splits.forEach { split ->
                 SplitRow(
                     split = split,
                     state = state,
@@ -201,6 +217,7 @@ private fun ExpenseDetailScreen(
 
 @Composable
 private fun HeroSection(
+    icon: DrawableResource,
     title: String,
     amountFormatted: String,
     dateText: String,
@@ -223,7 +240,7 @@ private fun HeroSection(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = vectorResource(Res.drawable.ic_restaurant),
+                imageVector = vectorResource(icon),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.size(40.dp),
@@ -260,10 +277,10 @@ private fun HeroSection(
 
 @Composable
 private fun ForeignCurrencyDetails(state: ExpenseDetailState) {
-    val expense = state.expense ?: return
-    // The rate locked in when the expense was added wins over the live table; only legacy
+    val entry = state.entry ?: return
+    // The rate locked in when the entry was added wins over the live table; only legacy
     // entries without a snapshot fall back to live rates (and show when those were updated).
-    val lockedRate = expense.exchangeRate
+    val lockedRate = entry.exchangeRate
     val effectiveRate =
         lockedRate
             ?: CurrencyConverter.convert(
@@ -272,7 +289,7 @@ private fun ForeignCurrencyDetails(state: ExpenseDetailState) {
                 to = state.groupCurrencyCode,
                 rates = state.ratesByCurrency,
             )
-    val converted = effectiveRate?.let { expense.amount * it }
+    val converted = effectiveRate?.let { entry.amount * it }
     val rateText = effectiveRate?.let { formatRate(it) }
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -378,13 +395,35 @@ private fun SplitRow(
 
 @Composable
 private fun DeleteConfirmDialog(
+    entryKind: EntryKind,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val isIncome = entryKind == EntryKind.INCOME
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.expense_detail_delete_dialog_title)) },
-        text = { Text(stringResource(Res.string.expense_detail_delete_dialog_message)) },
+        title = {
+            Text(
+                stringResource(
+                    if (isIncome) {
+                        Res.string.income_detail_delete_dialog_title
+                    } else {
+                        Res.string.expense_detail_delete_dialog_title
+                    },
+                ),
+            )
+        },
+        text = {
+            Text(
+                stringResource(
+                    if (isIncome) {
+                        Res.string.income_detail_delete_dialog_message
+                    } else {
+                        Res.string.expense_detail_delete_dialog_message
+                    },
+                ),
+            )
+        },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(stringResource(Res.string.expense_detail_delete_dialog_confirm))

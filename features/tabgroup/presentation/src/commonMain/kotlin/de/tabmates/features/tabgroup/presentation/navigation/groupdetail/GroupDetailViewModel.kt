@@ -35,7 +35,7 @@ data class GroupDetailState(
     val item: GroupOverviewItem? = null,
     val currentUserId: String = "",
     val members: List<GroupParticipant> = emptyList(),
-    /** Entries shown in the transaction list: expenses and settlements, newest first. */
+    /** Entries shown in the transaction list: expenses, incomes and settlements, newest first. */
     val entries: List<TabEntry> = emptyList(),
     val perPersonBalances: Map<String, Double> = emptyMap(),
     /** Each member's overall net in the group (positive = gets money back, negative = owes). */
@@ -89,8 +89,9 @@ class GroupDetailViewModel(
                 members = group?.participants?.toList().orEmpty(),
                 entries =
                     visibleEntries
-                        .filter { it is TabEntry.Expense || it is TabEntry.Settlement }
-                        .sortedWith(
+                        .filter {
+                            it is TabEntry.Expense || it is TabEntry.Settlement || it is TabEntry.Income
+                        }.sortedWith(
                             compareByDescending<TabEntry> { it.entryDate }
                                 .thenByDescending { it.createdAt },
                         ),

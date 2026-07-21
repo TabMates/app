@@ -11,6 +11,7 @@ import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.presentation.navigation.addexpense.EntryKind
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -53,16 +54,35 @@ class ExpenseDetailViewModel(
             isDeleting,
         ) { entry, groups, currencies, rates, deleting ->
             val group = groups.firstOrNull { it.id == groupId }
-            val expense = entry as? TabEntry.Expense
-            val expenseCurrencyCode = expense?.currencyCode ?: group?.defaultCurrencyCode.orEmpty()
+            // This screen renders split-carrying entries only (expense/income). A settlement id
+            // lands here as null, matching the previous expense-only behaviour.
+            val detailEntry =
+                when (entry) {
+                    is TabEntry.Expense, is TabEntry.Income -> entry
+                    else -> null
+                }
+            val entryKind =
+                when (detailEntry) {
+                    is TabEntry.Income -> EntryKind.INCOME
+                    else -> EntryKind.EXPENSE
+                }
+            val splits =
+                when (detailEntry) {
+                    is TabEntry.Expense -> detailEntry.splits
+                    is TabEntry.Income -> detailEntry.splits
+                    else -> emptyList()
+                }
+            val expenseCurrencyCode = detailEntry?.currencyCode ?: group?.defaultCurrencyCode.orEmpty()
             val expenseCurrency = currencies.firstOrNull { it.code == expenseCurrencyCode }
             val groupCurrencyCode = group?.defaultCurrencyCode.orEmpty()
             val groupCurrency = currencies.firstOrNull { it.code == groupCurrencyCode }
             ExpenseDetailState(
                 expenseId = expenseId,
-                isLoading = entry == null,
+                isLoading = detailEntry == null,
                 isDeleting = deleting,
-                expense = expense,
+                entry = detailEntry,
+                entryKind = entryKind,
+                splits = splits,
                 currentUserId = currentUserId,
                 expenseCurrencyCode = expenseCurrencyCode,
                 expenseCurrencySymbol = expenseCurrency?.nativeSymbol ?: expenseCurrencyCode,

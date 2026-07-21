@@ -120,7 +120,8 @@
     <string name="groups_detail_placeholder_caption">Pick a group on the left to see details.</string>
     <string name="groups_detail_invite">Invite</string>
     <string name="groups_detail_add_expense">Add expense</string>
-    <string name="groups_detail_tab_expenses">Expenses</string>
+    <string name="groups_detail_add_entry">Add entry</string>
+    <string name="groups_detail_tab_expenses">Transactions</string>
     <string name="groups_detail_tab_balances">Balances</string>
     <string name="groups_detail_tab_members">Members</string>
     <string name="groups_detail_tab_settings">Settings</string>
@@ -135,6 +136,10 @@
     <string name="groups_detail_paid_by">%1$s paid %2$s</string>
     <string name="groups_detail_row_you_borrowed">you borrowed</string>
     <string name="groups_detail_row_you_lent">you lent</string>
+    <string name="groups_detail_row_you_receive">you receive</string>
+    <string name="groups_detail_row_you_owe">you owe</string>
+    <string name="groups_detail_received_by_you">You received %1$s</string>
+    <string name="groups_detail_received_by">%1$s received %2$s</string>
     <string name="groups_detail_row_not_involved">not involved</string>
     <string name="groups_detail_row_no_balance">no balance</string>
     <string name="groups_detail_settlement_you_paid">You paid %1$s</string>
@@ -193,6 +198,12 @@
 
     <string name="add_expense_title">Add expense</string>
     <string name="edit_expense_title">Edit expense</string>
+    <string name="add_entry_title">New entry</string>
+    <string name="edit_entry_title">Edit entry</string>
+    <string name="add_entry_kind_expense">Expense</string>
+    <string name="add_entry_kind_income">Income</string>
+    <string name="add_expense_received_by_label">Received by</string>
+    <string name="add_expense_received_by_sheet_title">Received by</string>
     <string name="add_expense_save">Save</string>
     <string name="add_expense_close_cd">Close</string>
     <string name="add_expense_currency_cd">Change currency</string>
@@ -248,6 +259,9 @@
     <string name="expense_detail_delete_dialog_message">This expense will be removed from the group. This cannot be undone.</string>
     <string name="expense_detail_delete_dialog_confirm">Delete</string>
     <string name="expense_detail_delete_dialog_cancel">Cancel</string>
+    <string name="income_detail_received_by_section">RECEIVED BY</string>
+    <string name="income_detail_delete_dialog_title">Delete income?</string>
+    <string name="income_detail_delete_dialog_message">This income will be removed from the group. This cannot be undone.</string>
 
     <string name="settlement_detail_received_by_section">RECEIVED BY</string>
     <string name="settlement_detail_delete_dialog_title">Delete settlement?</string>

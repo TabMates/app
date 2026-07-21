@@ -133,17 +133,36 @@ class AddExpenseViewModel(
         }
     }
 
+    fun onKindChange(kind: EntryKind) {
+        // Kind is locked once editing an existing entry — the server has separate update paths.
+        if (isEditing) return
+        _state.update { it.copy(entryKind = kind) }
+    }
+
     private fun loadInitialData() {
         viewModelScope.launch {
             val group = groupRepository.getGroups().first().firstOrNull { it.id == groupId }
             val currencies = currencyRepository.getCurrencies().first()
             val rates = exchangeRateRepository.getExchangeRates().first()
             val activeMembers = group?.participants.orEmpty().toList()
+            // Edit mode loads an existing split-carrying entry (expense OR income); its kind is
+            // then fixed for the rest of the edit. Create mode starts from the toggle default.
             val existing =
                 if (isEditing) {
-                    tabEntryRepository.getTabEntryById(expenseId).first() as? TabEntry.Expense
+                    tabEntryRepository.getTabEntryById(expenseId).first()
                 } else {
                     null
+                }
+            val existingKind =
+                when (existing) {
+                    is TabEntry.Income -> EntryKind.INCOME
+                    else -> EntryKind.EXPENSE
+                }
+            val existingSplits =
+                when (existing) {
+                    is TabEntry.Expense -> existing.splits
+                    is TabEntry.Income -> existing.splits
+                    else -> emptyList()
                 }
             val baseCurrencyCode = group?.defaultCurrencyCode.orEmpty()
             val baseCurrency = currencies.firstOrNull { it.code == baseCurrencyCode }
@@ -155,10 +174,11 @@ class AddExpenseViewModel(
                 existing?.paidByUserId
                     ?: activeMembers.firstOrNull { it.userId == currentUserId }?.userId
                     ?: activeMembers.firstOrNull()?.userId.orEmpty()
-            val splitsByParticipant = existing?.splits?.associateBy { it.participantId }.orEmpty()
+            val splitsByParticipant = existingSplits.associateBy { it.participantId }
             _state.update {
                 it.copy(
                     isLoading = false,
+                    entryKind = existingKind,
                     members = activeMembers,
                     paidByUserId = defaultPaidBy,
                     expenseCurrencyCode = expenseCurrencyCode,
@@ -173,7 +193,7 @@ class AddExpenseViewModel(
                     originalCurrencyCode = existing?.currencyCode.orEmpty(),
                     originalExchangeRate = existing?.exchangeRate,
                     entryDate = existing?.entryDate ?: it.entryDate,
-                    splitType = existing?.splits?.firstOrNull()?.splitType ?: it.splitType,
+                    splitType = existingSplits.firstOrNull()?.splitType ?: it.splitType,
                     titleTextState = TextFieldState(existing?.title.orEmpty()),
                     descriptionTextState = TextFieldState(existing?.description.orEmpty()),
                     amountTextState =
@@ -315,32 +335,66 @@ class AddExpenseViewModel(
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true) }
+            val isIncome = current.entryKind == EntryKind.INCOME
             val result =
-                if (isEditing) {
-                    tabEntryRepository.updateExpense(
-                        tabEntryId = expenseId,
-                        groupId = current.groupId,
-                        title = title,
-                        description = description,
-                        amount = amount,
-                        currencyCode = current.expenseCurrencyCode,
-                        exchangeRate = exchangeRate,
-                        paidByUserId = current.paidByUserId,
-                        entryDate = current.entryDate,
-                        splits = splits,
-                    )
-                } else {
-                    tabEntryRepository.createExpense(
-                        groupId = current.groupId,
-                        title = title,
-                        description = description,
-                        amount = amount,
-                        currencyCode = current.expenseCurrencyCode,
-                        exchangeRate = exchangeRate,
-                        paidByUserId = current.paidByUserId,
-                        entryDate = current.entryDate,
-                        splits = splits,
-                    )
+                when {
+                    isEditing && isIncome -> {
+                        tabEntryRepository.updateIncome(
+                            tabEntryId = expenseId,
+                            groupId = current.groupId,
+                            title = title,
+                            description = description,
+                            amount = amount,
+                            currencyCode = current.expenseCurrencyCode,
+                            exchangeRate = exchangeRate,
+                            paidByUserId = current.paidByUserId,
+                            entryDate = current.entryDate,
+                            splits = splits,
+                        )
+                    }
+
+                    isEditing -> {
+                        tabEntryRepository.updateExpense(
+                            tabEntryId = expenseId,
+                            groupId = current.groupId,
+                            title = title,
+                            description = description,
+                            amount = amount,
+                            currencyCode = current.expenseCurrencyCode,
+                            exchangeRate = exchangeRate,
+                            paidByUserId = current.paidByUserId,
+                            entryDate = current.entryDate,
+                            splits = splits,
+                        )
+                    }
+
+                    isIncome -> {
+                        tabEntryRepository.createIncome(
+                            groupId = current.groupId,
+                            title = title,
+                            description = description,
+                            amount = amount,
+                            currencyCode = current.expenseCurrencyCode,
+                            exchangeRate = exchangeRate,
+                            paidByUserId = current.paidByUserId,
+                            entryDate = current.entryDate,
+                            splits = splits,
+                        )
+                    }
+
+                    else -> {
+                        tabEntryRepository.createExpense(
+                            groupId = current.groupId,
+                            title = title,
+                            description = description,
+                            amount = amount,
+                            currencyCode = current.expenseCurrencyCode,
+                            exchangeRate = exchangeRate,
+                            paidByUserId = current.paidByUserId,
+                            entryDate = current.entryDate,
+                            splits = splits,
+                        )
+                    }
                 }
             result
                 .onSuccess {

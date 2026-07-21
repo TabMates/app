@@ -70,7 +70,7 @@ class OfflineFirstTabEntryRepository(
                 isPendingSync = true,
             )
 
-        insertLocal(expense)
+        insertLocal(expense, resolvedSplits)
         outbox.enqueueCreateExpense(
             clientRequestId = localId,
             groupId = groupId,
@@ -142,6 +142,116 @@ class OfflineFirstTabEntryRepository(
             splits = splits,
         )
         return Result.Success(expense)
+    }
+
+    override suspend fun createIncome(
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        exchangeRate: Double?,
+        paidByUserId: String,
+        entryDate: LocalDate,
+        splits: List<NewExpenseSplit>,
+    ): Result<TabEntry.Income, DataError.Remote> {
+        val localId = generateLocalId()
+        val now = Clock.System.now()
+        val resolvedSplits = resolveSplits(localId, splits, amount)
+        val income =
+            TabEntry.Income(
+                tabEntryId = localId,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currencyCode,
+                exchangeRate = exchangeRate,
+                creatorId = paidByUserId,
+                paidByUserId = paidByUserId,
+                entryDate = entryDate,
+                createdAt = now,
+                lastModifiedAt = now,
+                lastModifiedByUserId = paidByUserId,
+                version = 0,
+                deletedAt = null,
+                deletedByUserId = null,
+                splits = resolvedSplits,
+                isPendingSync = true,
+            )
+
+        insertLocal(income, resolvedSplits)
+        outbox.enqueueCreateIncome(
+            clientRequestId = localId,
+            groupId = groupId,
+            title = title,
+            description = description,
+            amount = amount,
+            currencyCode = currencyCode,
+            exchangeRate = exchangeRate,
+            paidByUserId = paidByUserId,
+            entryDate = entryDate,
+            splits = splits,
+        )
+        return Result.Success(income)
+    }
+
+    override suspend fun updateIncome(
+        tabEntryId: String,
+        groupId: String,
+        title: String,
+        description: String,
+        amount: Double,
+        currencyCode: String,
+        exchangeRate: Double?,
+        paidByUserId: String,
+        entryDate: LocalDate,
+        splits: List<NewExpenseSplit>,
+    ): Result<TabEntry.Income, DataError.Remote> {
+        // Preserve server-owned fields from the existing row; the server reconciles the rest on echo.
+        val existing = database.tabEntryDao.getTabEntryById(tabEntryId)?.toDomain() as? TabEntry.Income
+        val now = Clock.System.now()
+        val resolvedSplits = resolveSplits(tabEntryId, splits, amount)
+        val income =
+            TabEntry.Income(
+                tabEntryId = tabEntryId,
+                groupId = groupId,
+                title = title,
+                description = description,
+                amount = amount,
+                currencyCode = currencyCode,
+                exchangeRate = exchangeRate,
+                creatorId = existing?.creatorId ?: paidByUserId,
+                paidByUserId = paidByUserId,
+                entryDate = entryDate,
+                createdAt = existing?.createdAt ?: now,
+                lastModifiedAt = now,
+                lastModifiedByUserId = paidByUserId,
+                version = existing?.version ?: 0,
+                deletedAt = null,
+                deletedByUserId = null,
+                splits = resolvedSplits,
+                isPendingSync = true,
+            )
+
+        database.tabEntryDao.replaceTabEntryWithSplits(
+            entry = income.toEntity(pendingSync = true),
+            splits = resolvedSplits.map { it.toEntity() },
+            splitDao = database.tabEntrySplitDao,
+        )
+        outbox.enqueueUpdateIncome(
+            tabEntryId = tabEntryId,
+            groupId = groupId,
+            title = title,
+            description = description,
+            amount = amount,
+            currencyCode = currencyCode,
+            exchangeRate = exchangeRate,
+            paidByUserId = paidByUserId,
+            entryDate = entryDate,
+            splits = splits,
+        )
+        return Result.Success(income)
     }
 
     override suspend fun createSettlement(
@@ -264,10 +374,13 @@ class OfflineFirstTabEntryRepository(
         return Result.Success(Unit)
     }
 
-    private suspend fun insertLocal(expense: TabEntry.Expense) {
-        database.tabEntryDao.upsertTabEntry(expense.toEntity(pendingSync = true))
-        if (expense.splits.isNotEmpty()) {
-            database.tabEntrySplitDao.upsertSplits(expense.splits.map { it.toEntity() })
+    private suspend fun insertLocal(
+        entry: TabEntry,
+        splits: List<TabEntrySplit>,
+    ) {
+        database.tabEntryDao.upsertTabEntry(entry.toEntity(pendingSync = true))
+        if (splits.isNotEmpty()) {
+            database.tabEntrySplitDao.upsertSplits(splits.map { it.toEntity() })
         }
     }
 

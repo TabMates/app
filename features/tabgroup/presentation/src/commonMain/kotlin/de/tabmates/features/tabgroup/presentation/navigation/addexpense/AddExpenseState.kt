@@ -13,6 +13,9 @@ import kotlin.time.Instant
 data class AddExpenseState(
     val groupId: String = "",
     val isEditing: Boolean = false,
+    // Expense vs. income. Switchable via the on-screen toggle while creating; fixed to the loaded
+    // entry's kind while editing. Drives which repository method is called and a few labels.
+    val entryKind: EntryKind = EntryKind.EXPENSE,
     val isLoading: Boolean = true,
     val isSubmitting: Boolean = false,
     // The currency the expense is paid in (defaults to the group's base currency). Amount + splits

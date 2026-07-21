@@ -31,6 +31,9 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -86,6 +89,8 @@ import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_kind_expense
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_kind_income
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_amount_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_amount_placeholder
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_currency_cd
@@ -100,6 +105,8 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expens
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_people_plural
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_people_singular
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_rate_unavailable
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_received_by_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_received_by_sheet_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_save
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_expense_split_summary_equal
@@ -170,6 +177,7 @@ fun AddExpenseRoot(
     AddExpenseScreen(
         state = state,
         currencyPickerState = currencyPickerState,
+        onKindChange = viewModel::onKindChange,
         onPaidByClick = viewModel::onPaidByClick,
         onPaidByPickerDismiss = viewModel::onPaidByPickerDismiss,
         onPaidBySelected = viewModel::onPaidBySelected,
@@ -192,6 +200,7 @@ fun AddExpenseRoot(
 internal fun AddExpenseScreen(
     state: AddExpenseState,
     currencyPickerState: CurrencyPickerUiState,
+    onKindChange: (EntryKind) -> Unit,
     onPaidByClick: () -> Unit,
     onPaidByPickerDismiss: () -> Unit,
     onPaidBySelected: (String) -> Unit,
@@ -228,6 +237,13 @@ internal fun AddExpenseScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         VerticalSpacer(8.dp)
+        EntryKindToggle(
+            selected = state.entryKind,
+            // Locked once editing — the entry's kind cannot change on update.
+            enabled = !state.isEditing,
+            onKindChange = onKindChange,
+        )
+        VerticalSpacer(8.dp)
         AmountInput(
             amountState = state.amountTextState,
             symbol = state.expenseCurrencySymbol,
@@ -259,7 +275,12 @@ internal fun AddExpenseScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             FieldRow(
-                label = stringResource(Res.string.add_expense_paid_by_label),
+                label =
+                    if (state.entryKind == EntryKind.INCOME) {
+                        stringResource(Res.string.add_expense_received_by_label)
+                    } else {
+                        stringResource(Res.string.add_expense_paid_by_label)
+                    },
                 value = paidByDisplay(state),
                 onClick = onPaidByClick,
                 leadingIcon = null,
@@ -285,6 +306,7 @@ internal fun AddExpenseScreen(
             members = state.members,
             currentUserId = state.currentUserId,
             selectedUserId = state.paidByUserId,
+            isIncome = state.entryKind == EntryKind.INCOME,
             onSelect = onPaidBySelected,
             onDismiss = onPaidByPickerDismiss,
         )
@@ -350,6 +372,37 @@ private fun rememberTextWidth(
     val density = LocalDensity.current
     val measured = remember(text, style) { measurer.measure(text, style).size.width }
     return with(density) { measured.toDp() }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EntryKindToggle(
+    selected: EntryKind,
+    enabled: Boolean,
+    onKindChange: (EntryKind) -> Unit,
+) {
+    val kinds = EntryKind.entries
+    SingleChoiceSegmentedButtonRow(
+        modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().padding(horizontal = 16.dp),
+    ) {
+        kinds.forEachIndexed { index, kind ->
+            SegmentedButton(
+                selected = kind == selected,
+                onClick = { onKindChange(kind) },
+                enabled = enabled,
+                shape = SegmentedButtonDefaults.itemShape(index, kinds.size),
+                label = {
+                    Text(
+                        text =
+                            when (kind) {
+                                EntryKind.EXPENSE -> stringResource(Res.string.add_entry_kind_expense)
+                                EntryKind.INCOME -> stringResource(Res.string.add_entry_kind_income)
+                            },
+                    )
+                },
+            )
+        }
+    }
 }
 
 @Composable
@@ -615,6 +668,7 @@ private fun PaidByPickerSheet(
     members: List<GroupParticipant>,
     currentUserId: String,
     selectedUserId: String,
+    isIncome: Boolean,
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -627,7 +681,12 @@ private fun PaidByPickerSheet(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             Text(
-                text = stringResource(Res.string.add_expense_paid_by_sheet_title),
+                text =
+                    if (isIncome) {
+                        stringResource(Res.string.add_expense_received_by_sheet_title)
+                    } else {
+                        stringResource(Res.string.add_expense_paid_by_sheet_title)
+                    },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
