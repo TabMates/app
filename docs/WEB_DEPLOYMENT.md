@@ -35,6 +35,41 @@ root service-worker scope, the Firebase messaging worker is registered under a d
 sub-scope in `firebase-init.js` — never register another service worker without an explicit
 non-root scope, or COOP/COEP injection silently dies on the next reload.
 
+## PWA: installability & offline app shell
+
+The web build is an installable, offline-capable PWA (Add to Home Screen / Install on
+Android, iOS and desktop). Two pieces provide this, both shipped as static resources under
+`composeApp/src/wasmJsMain/resources/` (auto-bundled into the dist, no workflow change):
+
+- **Web app manifest** — `manifest.webmanifest` (linked from `index.html`, plus `theme-color`,
+  `apple-touch-icon` and the `apple-mobile-web-app-*` tags iOS needs since it ignores the
+  manifest). Icons live in `icons/` (192/512 `any`, a 512 `maskable` on the brand background, a
+  180 apple-touch-icon, a 32 favicon). `theme_color` is the brand primary `#b05530`,
+  `background_color` `#fffbff`. The manifest and its same-origin PNG icons satisfy the deploy CSP
+  (`default-src`/`img-src 'self'`) as-is. `.webmanifest` is served `application/manifest+json` by
+  Pages; if a host serves it wrong, rename to `manifest.json`.
+- **Offline app-shell cache** — folded **into `coi-serviceworker.js`**, not a second worker,
+  because the root scope must stay with the COOP/COEP injector (see above). Its `fetch` handler
+  caches same-origin GETs (stale-while-revalidate for assets, network-first with a cached-`/`
+  fallback for navigations) and passes **every** served response — network or cache — through
+  `withCoiHeaders()`, so cross-origin isolation (and therefore OPFS/SQLite) still holds on an
+  offline launch. Cross-origin requests (gstatic Firebase) and non-GETs keep the original
+  network-only path and are never cached. Updates are silent: content-hashed bundle filenames plus
+  `skipWaiting()`/`clients.claim()` mean a new deploy is picked up on the next launch. Bump
+  `SHELL_CACHE` (`tabmates-shell-vN`) to force-invalidate the shell cache; the `activate` handler
+  deletes older `tabmates-shell-*` caches.
+
+Because the offline data layer (Room in OPFS, durable outbox, delta + reconnect sync) is already
+shared `commonMain` code, once a user has loaded and logged in online the installed PWA works
+offline and syncs on reconnect — the same behaviour as Android. Firebase push is the one thing
+that needs the network: `firebase-init.js` (same-origin, cached) guards the missing cross-origin
+SDK and installs no-op glue so an offline launch still boots; push resumes on the next online run.
+
+Verify after a build (`:composeApp:wasmJsBrowserDistribution`, served over HTTPS/localhost):
+DevTools → Application → Manifest is installable with no errors, the service worker is
+*activated and controlling*, `crossOriginIsolated === true`, and with Network → Offline a reload
+still renders the app shell.
+
 ## Content-Security-Policy
 
 The web session/tokens live in `localStorage` (KSafe), which any script on the origin can read,

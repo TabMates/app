@@ -7,9 +7,23 @@
          See the "Web hosting requirements" section in README.md. -->
     <script src="coi-serviceworker.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>TabMates</title>
     <link type="text/css" rel="stylesheet" href="styles.css">
+
+    <!-- PWA: installable to the launcher on Android/iOS/desktop. The manifest and its same-origin
+         PNG icons are covered by the deploy CSP (default-src/img-src 'self'). Offline app-shell
+         caching is provided by coi-serviceworker.js (above) — the root service worker also runs a
+         cache, so no separate registration is needed here. See docs/WEB_DEPLOYMENT.md. -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#b05530">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <!-- iOS ignores the manifest; these give it standalone display + a home-screen title/icon. -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TabMates">
 </head>
 <body style="text-align: center; align-content: center">
 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 50 50" role="presentation">
