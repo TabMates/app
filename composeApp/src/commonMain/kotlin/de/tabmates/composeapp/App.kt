@@ -49,6 +49,7 @@ import de.tabmates.composeapp.deeplink.DeepLinkHandler
 import de.tabmates.composeapp.deeplink.navDeepLink
 import de.tabmates.composeapp.deeplink.resolveDeepLink
 import de.tabmates.composeapp.di.TabMatesKoinApp
+import de.tabmates.composeapp.navigation.PlatformBackHandler
 import de.tabmates.composeapp.navigation.rememberScreenTopBarNavEntryDecorator
 import de.tabmates.composeapp.sync.CurrencySyncCoordinator
 import de.tabmates.composeapp.sync.GroupSyncCoordinator
@@ -187,6 +188,14 @@ fun App() {
             val startDestination = if (isLoggedIn) Home else Welcome
             val backStack = rememberNavBackStack(configuration = savedStateConfiguration, startDestination)
             val currentKey = backStack.lastOrNull()
+
+            // Bridge the browser Back button to the Nav3 back stack (web only; no-op on other
+            // targets). Enabled only when there is something to pop — at the root, Back keeps
+            // the user in the app instead of unloading it.
+            PlatformBackHandler(
+                enabled = backStack.size > 1,
+                onBack = { backStack.removeLastOrNull() },
+            )
 
             // Navigate to Welcome when session is invalidated (e.g. token refresh failed).
             ObserveAsEvents(mainViewModel.isLoggedIn) {
