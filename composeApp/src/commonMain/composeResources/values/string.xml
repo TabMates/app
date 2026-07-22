@@ -14,4 +14,12 @@
     <string name="connectivity_banner_offline_hours">Offline · last synced %1$d h ago</string>
     <string name="connectivity_banner_offline_days">Offline · last synced %1$d d ago</string>
     <string name="connectivity_banner_offline_unsynced">Offline · not yet synced</string>
+    <string name="app_lock_title">TabMates is locked</string>
+    <string name="app_lock_subtitle">Verify it's you to continue</string>
+    <string name="app_lock_unlock">Unlock</string>
+    <string name="app_lock_error">Couldn\'t verify you. Please try again.</string>
+    <string name="app_lock_sign_out">Sign out instead</string>
+    <string name="app_lock_prompt_title">Unlock TabMates</string>
+    <string name="app_lock_prompt_subtitle">Use your biometrics or device PIN to unlock</string>
+    <string name="app_lock_prompt_cancel">Cancel</string>
 </resources>

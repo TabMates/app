@@ -25,6 +25,10 @@ class DefaultLocaleProviderTest {
         override fun appLanguage(): Flow<AppLanguage> = flowOf(language)
 
         override suspend fun setAppLanguage(language: AppLanguage) = Unit
+
+        override fun biometricUnlockEnabled(): Flow<Boolean> = flowOf(false)
+
+        override suspend fun setBiometricUnlockEnabled(enabled: Boolean) = Unit
     }
 
     @Test

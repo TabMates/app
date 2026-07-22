@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,8 +21,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import de.tabmates.composeapp.App
 import de.tabmates.composeapp.deeplink.DeepLinkHandler
+import de.tabmates.core.data.biometric.CurrentActivityHolder
 
 /** Which notification-permission prompt to surface, if any. */
 private enum class NotificationPermissionPrompt {
@@ -34,7 +35,8 @@ private enum class NotificationPermissionPrompt {
     SETTINGS,
 }
 
-class MainActivity : ComponentActivity() {
+// FragmentActivity (not plain ComponentActivity) so androidx.biometric's BiometricPrompt can attach.
+class MainActivity : FragmentActivity() {
     private var notificationPrompt by mutableStateOf<NotificationPermissionPrompt?>(null)
 
     private val requestNotificationPermission =
@@ -56,6 +58,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // Expose this activity to the shared graph so the biometric prompt can attach to it.
+        CurrentActivityHolder.set(this)
 
         handleIntent(intent)
         requestNotificationPermissionIfNeeded()
@@ -92,6 +97,11 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIntent(intent)
+    }
+
+    override fun onDestroy() {
+        CurrentActivityHolder.clear(this)
+        super.onDestroy()
     }
 
     private fun handleIntent(intent: Intent) {

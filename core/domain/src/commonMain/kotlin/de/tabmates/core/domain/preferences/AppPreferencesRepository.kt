@@ -15,4 +15,9 @@ interface AppPreferencesRepository {
     fun appLanguage(): Flow<AppLanguage>
 
     suspend fun setAppLanguage(language: AppLanguage)
+
+    /** Whether the app requires biometric (or device-credential) authentication to unlock. */
+    fun biometricUnlockEnabled(): Flow<Boolean>
+
+    suspend fun setBiometricUnlockEnabled(enabled: Boolean)
 }

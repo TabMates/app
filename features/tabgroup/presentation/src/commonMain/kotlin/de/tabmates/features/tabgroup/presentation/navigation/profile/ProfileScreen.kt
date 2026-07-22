@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.domain.biometric.BiometricPromptStrings
 import de.tabmates.core.domain.preferences.ThemeMode
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.presentation.components.SectionLabel
@@ -46,6 +47,12 @@ import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_alternate_email
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_biometric_prompt_cancel
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_biometric_prompt_subtitle
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_biometric_prompt_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_biometric_unavailable
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_biometric_unlock
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_biometric_unlock_caption
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_dark_mode
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_info
@@ -64,6 +71,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_fo
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_about
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_appearance
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_notifications
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_security
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_notifications
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_notifications_blocked
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_notifications_caption
@@ -74,6 +82,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_pa
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_about
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_account
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_appearance
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_security
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_settings_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_subtitle
@@ -99,10 +108,18 @@ fun ProfileRoot(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    // Re-check the OS permission whenever the screen resumes (user may grant it in settings).
+    // Re-check OS-level state whenever the screen resumes (user may change it in system settings).
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshNotificationPermission()
+        viewModel.refreshBiometricAvailability()
     }
+
+    val biometricPromptStrings =
+        BiometricPromptStrings(
+            title = stringResource(Res.string.profile_biometric_prompt_title),
+            subtitle = stringResource(Res.string.profile_biometric_prompt_subtitle),
+            cancel = stringResource(Res.string.profile_biometric_prompt_cancel),
+        )
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
@@ -119,6 +136,9 @@ fun ProfileRoot(
         onThemeSelected = viewModel::onThemeSelected,
         onNotificationsToggle = viewModel::onNotificationsToggle,
         onOpenNotificationSettings = viewModel::onOpenNotificationSettings,
+        onBiometricUnlockToggle = { enabled ->
+            viewModel.onBiometricUnlockToggle(enabled, biometricPromptStrings)
+        },
         onEditUsername = onEditUsername,
         onChangePassword = onChangePassword,
         onChangeEmail = onChangeEmail,
@@ -136,6 +156,7 @@ internal fun ProfileScreen(
     onThemeSelected: (ThemeMode) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onBiometricUnlockToggle: (Boolean) -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
@@ -153,6 +174,7 @@ internal fun ProfileScreen(
             onThemeSelected = onThemeSelected,
             onNotificationsToggle = onNotificationsToggle,
             onOpenNotificationSettings = onOpenNotificationSettings,
+            onBiometricUnlockToggle = onBiometricUnlockToggle,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
             onChangeEmail = onChangeEmail,
@@ -167,6 +189,7 @@ internal fun ProfileScreen(
             onThemeSelected = onThemeSelected,
             onNotificationsToggle = onNotificationsToggle,
             onOpenNotificationSettings = onOpenNotificationSettings,
+            onBiometricUnlockToggle = onBiometricUnlockToggle,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
             onChangeEmail = onChangeEmail,
@@ -184,6 +207,7 @@ private fun ProfilePhonePane(
     onThemeSelected: (ThemeMode) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onBiometricUnlockToggle: (Boolean) -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
@@ -214,6 +238,7 @@ private fun ProfilePhonePane(
             onThemeSelected = onThemeSelected,
             onNotificationsToggle = onNotificationsToggle,
             onOpenNotificationSettings = onOpenNotificationSettings,
+            onBiometricUnlockToggle = onBiometricUnlockToggle,
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
             onChangeEmail = onChangeEmail,
@@ -241,6 +266,7 @@ private fun SettingsTwoPane(
     onThemeSelected: (ThemeMode) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onBiometricUnlockToggle: (Boolean) -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
@@ -255,6 +281,7 @@ private fun SettingsTwoPane(
             onSectionSelected = onSectionSelected,
             onDeleteAccount = onDeleteAccount,
             onSignOut = onSignOut,
+            showSecurity = state.biometricSupported,
             modifier = Modifier.width(280.dp).fillMaxSize(),
         )
         VerticalDivider()
@@ -286,6 +313,7 @@ private fun SettingsTwoPane(
                         onThemeSelected = onThemeSelected,
                         onNotificationsToggle = onNotificationsToggle,
                         onOpenNotificationSettings = onOpenNotificationSettings,
+                        onBiometricUnlockToggle = onBiometricUnlockToggle,
                         onEditUsername = onEditUsername,
                         onChangePassword = onChangePassword,
                         onChangeEmail = onChangeEmail,
@@ -305,6 +333,15 @@ private fun SettingsTwoPane(
                         permissionBlocked = state.notificationsPermissionBlocked,
                         onToggle = onNotificationsToggle,
                         onOpenSettings = onOpenNotificationSettings,
+                    )
+                }
+
+                SettingsSection.SECURITY -> {
+                    SectionLabel(stringResource(Res.string.profile_section_security))
+                    SecurityCard(
+                        enabled = state.biometricUnlockEnabled,
+                        available = state.biometricAvailable,
+                        onToggle = onBiometricUnlockToggle,
                     )
                 }
 
@@ -336,6 +373,7 @@ private fun SettingsMaster(
     onSectionSelected: (SettingsSection) -> Unit,
     onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
+    showSecurity: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.padding(16.dp)) {
@@ -364,6 +402,14 @@ private fun SettingsMaster(
             selected = state.selectedSection == SettingsSection.NOTIFICATIONS,
             onClick = { onSectionSelected(SettingsSection.NOTIFICATIONS) },
         )
+        if (showSecurity) {
+            SettingsNavItem(
+                iconRes = Res.drawable.ic_lock,
+                label = stringResource(Res.string.profile_nav_security),
+                selected = state.selectedSection == SettingsSection.SECURITY,
+                onClick = { onSectionSelected(SettingsSection.SECURITY) },
+            )
+        }
         SettingsNavItem(
             iconRes = Res.drawable.ic_info,
             label = stringResource(Res.string.profile_nav_about),
@@ -415,6 +461,7 @@ private fun ProfileAccountAndAppearance(
     onThemeSelected: (ThemeMode) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onBiometricUnlockToggle: (Boolean) -> Unit,
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
@@ -491,6 +538,15 @@ private fun ProfileAccountAndAppearance(
         onToggle = onNotificationsToggle,
         onOpenSettings = onOpenNotificationSettings,
     )
+    if (state.biometricSupported) {
+        VerticalSpacer(4.dp)
+        SectionLabel(stringResource(Res.string.profile_section_security))
+        SecurityCard(
+            enabled = state.biometricUnlockEnabled,
+            available = state.biometricAvailable,
+            onToggle = onBiometricUnlockToggle,
+        )
+    }
     VerticalSpacer(4.dp)
     SectionLabel(stringResource(Res.string.profile_section_about))
     AccountRow(
@@ -762,6 +818,64 @@ private fun NotificationsCard(
         }
         if (permissionBlocked) {
             NotificationPermissionBanner(onOpenSettings = onOpenSettings)
+        }
+    }
+}
+
+@Composable
+private fun SecurityCard(
+    enabled: Boolean,
+    available: Boolean,
+    onToggle: (Boolean) -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_lock),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(22.dp),
+                )
+                HorizontalSpacer(12.dp)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(Res.string.profile_biometric_unlock),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = stringResource(Res.string.profile_biometric_unlock_caption),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                HorizontalSpacer(8.dp)
+                Switch(
+                    // No enrolled biometric/credential -> keep off and disabled; the hint explains why.
+                    checked = enabled && available,
+                    onCheckedChange = onToggle,
+                    enabled = available,
+                )
+            }
+        }
+        if (!available) {
+            Text(
+                text = stringResource(Res.string.profile_biometric_unavailable),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
         }
     }
 }

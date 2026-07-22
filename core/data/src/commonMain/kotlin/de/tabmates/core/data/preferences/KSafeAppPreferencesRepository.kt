@@ -38,9 +38,16 @@ class KSafeAppPreferencesRepository(
         prefs.put(KEY_APP_LANGUAGE, language.name, KSafeWriteMode.Plain)
     }
 
+    override fun biometricUnlockEnabled(): Flow<Boolean> = prefs.getFlow(KEY_BIOMETRIC_UNLOCK, false)
+
+    override suspend fun setBiometricUnlockEnabled(enabled: Boolean) {
+        prefs.put(KEY_BIOMETRIC_UNLOCK, enabled, KSafeWriteMode.Plain)
+    }
+
     private companion object {
         private const val KEY_THEME_MODE = "themeMode"
         private const val KEY_NOTIFICATIONS = "notificationsEnabled"
         private const val KEY_APP_LANGUAGE = "appLanguage"
+        private const val KEY_BIOMETRIC_UNLOCK = "biometricUnlockEnabled"
     }
 }

@@ -49,6 +49,9 @@ import de.tabmates.composeapp.deeplink.DeepLinkHandler
 import de.tabmates.composeapp.deeplink.navDeepLink
 import de.tabmates.composeapp.deeplink.resolveDeepLink
 import de.tabmates.composeapp.di.TabMatesKoinApp
+import de.tabmates.composeapp.lock.AppLockViewModel
+import de.tabmates.composeapp.lock.BiometricLockGate
+import de.tabmates.composeapp.lock.rememberAppLockViewModel
 import de.tabmates.composeapp.navigation.rememberScreenTopBarNavEntryDecorator
 import de.tabmates.composeapp.sync.CurrencySyncCoordinator
 import de.tabmates.composeapp.sync.GroupSyncCoordinator
@@ -140,7 +143,6 @@ private val predictivePopTransition: ContentTransform
                 ) + fadeOut(tween(NAV_TRANSITION_DURATION_MS)),
         )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
     KoinApplication(
@@ -158,177 +160,196 @@ fun App() {
         // the in-app `ThemeMode` override (Light/Dark/System) instead of the OS dark-mode flag.
         ApplySystemBars(darkTheme = darkTheme)
         TabMatesTheme(darkTheme = darkTheme) {
-            // Checks for app updates on launch: native Play in-app update on eligible Android
-            // devices, store-redirect dialog everywhere else.
-            AppUpdateGate()
-
-            val isLoggedIn by mainViewModel.isLoggedIn.collectAsStateWithLifecycle()
-
-            // Start sync coordinators off the main thread, post-first-frame.
-            // Keeps KSafe construction + repository graph off the startup critical path.
-            val koin = getKoin()
-            LaunchedEffect(Unit) {
-                withContext(Dispatchers.Default) {
-                    koin.get<GroupSyncCoordinator>()
-                    koin.get<CurrencySyncCoordinator>()
-                    koin.get<NotificationsSyncCoordinator>()
-                }
+            val appLockViewModel = rememberAppLockViewModel()
+            // Gates all app content behind the biometric lock when the user has enabled it.
+            BiometricLockGate(viewModel = appLockViewModel) {
+                AppRoot(
+                    mainViewModel = mainViewModel,
+                    appLockViewModel = appLockViewModel,
+                )
             }
+        }
+    }
+}
 
-            // Forward deep links from clicked notifications to the deep-link handler.
-            LaunchedEffect(Unit) {
-                koin.get<NotificationDeepLinkBus>().deepLinks.collect { uri ->
-                    DeepLinkHandler.onDeepLink(uri)
-                }
-            }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AppRoot(
+    mainViewModel: MainViewModel,
+    appLockViewModel: AppLockViewModel,
+) {
+    // Checks for app updates on launch: native Play in-app update on eligible Android
+    // devices, store-redirect dialog everywhere else.
+    AppUpdateGate()
 
-            val startDestination = if (isLoggedIn) Home else Welcome
-            val backStack = rememberNavBackStack(configuration = savedStateConfiguration, startDestination)
-            val currentKey = backStack.lastOrNull()
+    val isLoggedIn by mainViewModel.isLoggedIn.collectAsStateWithLifecycle()
 
-            // Navigate to Welcome when session is invalidated (e.g. token refresh failed).
-            ObserveAsEvents(mainViewModel.isLoggedIn) {
-                if (!it && currentKey is LoggedIn) {
-                    backStack.clear()
+    // Start sync coordinators off the main thread, post-first-frame.
+    // Keeps KSafe construction + repository graph off the startup critical path.
+    val koin = getKoin()
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.Default) {
+            koin.get<GroupSyncCoordinator>()
+            koin.get<CurrencySyncCoordinator>()
+            koin.get<NotificationsSyncCoordinator>()
+        }
+    }
+
+    // Forward deep links from clicked notifications to the deep-link handler.
+    LaunchedEffect(Unit) {
+        koin.get<NotificationDeepLinkBus>().deepLinks.collect { uri ->
+            DeepLinkHandler.onDeepLink(uri)
+        }
+    }
+
+    val startDestination = if (isLoggedIn) Home else Welcome
+    val backStack = rememberNavBackStack(configuration = savedStateConfiguration, startDestination)
+    val currentKey = backStack.lastOrNull()
+
+    // Navigate to Welcome when session is invalidated (e.g. token refresh failed).
+    ObserveAsEvents(mainViewModel.isLoggedIn) {
+        if (!it && currentKey is LoggedIn) {
+            backStack.clear()
+            backStack.add(Welcome)
+        }
+    }
+
+    DisposableEffect(Unit) {
+        DeepLinkHandler.listener = listener@{ uri ->
+            val navKey = resolveDeepLink(uri, deepLinks) ?: return@listener
+            if (navKey is LoggedIn && !mainViewModel.isLoggedIn.value) {
+                mainViewModel.setPendingPostAuthNavKey(navKey)
+                backStack.clear()
+                backStack.add(Welcome)
+            } else {
+                backStack.clear()
+                if (navKey is LoggedIn) {
+                    backStack.add(Home)
+                } else {
                     backStack.add(Welcome)
                 }
+                backStack.add(navKey)
             }
+        }
+        onDispose {
+            DeepLinkHandler.listener = null
+        }
+    }
 
-            DisposableEffect(Unit) {
-                DeepLinkHandler.listener = listener@{ uri ->
-                    val navKey = resolveDeepLink(uri, deepLinks) ?: return@listener
-                    if (navKey is LoggedIn && !mainViewModel.isLoggedIn.value) {
-                        mainViewModel.setPendingPostAuthNavKey(navKey)
-                        backStack.clear()
-                        backStack.add(Welcome)
-                    } else {
-                        backStack.clear()
-                        if (navKey is LoggedIn) {
-                            backStack.add(Home)
-                        } else {
-                            backStack.add(Welcome)
-                        }
-                        backStack.add(navKey)
-                    }
-                }
-                onDispose {
-                    DeepLinkHandler.listener = null
-                }
-            }
+    val topLevelTabs = remember { listOf(Home, Activity, Group, Profile) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val appScope = rememberCoroutineScope()
 
-            val topLevelTabs = remember { listOf(Home, Activity, Group, Profile) }
-            val snackbarHostState = remember { SnackbarHostState() }
-            val appScope = rememberCoroutineScope()
-
-            if (currentKey is LoggedIn) {
-                val topBarActions = remember { TopBarActionsController() }
-                val navigationSuiteType =
-                    NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfoV2())
-                NavigationSuiteScaffold(
-                    navigationSuiteType = navigationSuiteType,
-                    navigationItems = {
-                        topLevelTabs.forEach { tab ->
-                            val selected = currentKey == tab
-                            NavigationSuiteItem(
-                                selected = selected,
-                                onClick = {
-                                    backStack.removeAll { it is TopLevelTab }
-                                    backStack.add(tab)
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = if (selected) tab.selectedIcon else tab.icon,
-                                        contentDescription = tab.label.asString(),
-                                    )
-                                },
-                                label = { Text(tab.label.asString()) },
+    if (currentKey is LoggedIn) {
+        val topBarActions = remember { TopBarActionsController() }
+        val navigationSuiteType =
+            NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfoV2())
+        NavigationSuiteScaffold(
+            navigationSuiteType = navigationSuiteType,
+            navigationItems = {
+                topLevelTabs.forEach { tab ->
+                    val selected = currentKey == tab
+                    NavigationSuiteItem(
+                        selected = selected,
+                        onClick = {
+                            backStack.removeAll { it is TopLevelTab }
+                            backStack.add(tab)
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = if (selected) tab.selectedIcon else tab.icon,
+                                contentDescription = tab.label.asString(),
                             )
-                        }
-                    },
-                    primaryActionContent = {
-                        val fabScreen = currentKey as? ScreenWithFab
-                        if (fabScreen != null) {
-                            FloatingActionButton(
-                                modifier = Modifier.padding(start = 16.dp),
-                                onClick = {
-                                    when (val action = fabScreen.fabAction) {
-                                        FabAction.CreateGroup -> backStack.add(CreateGroup)
-                                        is FabAction.AddEntry -> backStack.add(AddEntry(action.groupId))
-                                    }
-                                },
-                            ) {
-                                Icon(
-                                    imageVector = vectorResource(Res.drawable.ic_add),
-                                    contentDescription = when (fabScreen.fabAction) {
-                                        FabAction.CreateGroup -> stringResource(Res.string.create_group)
-                                        is FabAction.AddEntry -> stringResource(Res.string.add_entry)
-                                    },
-                                )
-                            }
-                        } else if (navigationSuiteType != NavigationSuiteType.NavigationBar) {
-                            // Reserve the FAB's footprint so the navigation rail/drawer items don't
-                            // jump vertically when the FAB is shown/hidden across tabs.
-                            Spacer(modifier = Modifier.padding(start = 16.dp).size(56.dp))
-                        }
-                    },
-                ) {
-                    Scaffold(
-                        snackbarHost = { SnackbarHost(snackbarHostState) },
-                    ) { paddingValues ->
-                        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                            ConnectivityBannerRoot(modifier = Modifier.fillMaxWidth())
-                            CompositionLocalProvider(LocalTopBarActionsController provides topBarActions) {
-                                NavDisplay(
-                                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                                    backStack = backStack,
-                                    onBack = { backStack.removeLastOrNull() },
-                                    entryDecorators = rememberEntryDecorators(backStack),
-                                    transitionSpec = { navTransition },
-                                    popTransitionSpec = { navTransition },
-                                    predictivePopTransitionSpec = { _ -> predictivePopTransition },
-                                    entryProvider = entryProvider {
-                                        mainGraph(
-                                            backStack = backStack,
-                                            snackbarHostState = snackbarHostState,
-                                            appScope = appScope,
-                                        )
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
-            } else {
-                Scaffold(
-                    snackbarHost = { SnackbarHost(snackbarHostState) },
-                ) {
-                    NavDisplay(
-                        modifier = Modifier.fillMaxSize().padding(it),
-                        backStack = backStack,
-                        entryDecorators = rememberEntryDecorators(backStack),
-                        transitionSpec = { navTransition },
-                        popTransitionSpec = { navTransition },
-                        predictivePopTransitionSpec = { _ -> predictivePopTransition },
-                        onBack = { backStack.removeLastOrNull() },
-                        entryProvider = entryProvider {
-                            authGraph(
-                                backStack = backStack,
-                                onGuestClick = {
-                                    backStack.clear()
-                                    backStack.add(Home)
-                                    mainViewModel.consumePendingPostAuthNavKey()?.let(backStack::add)
-                                },
-                                onLoginSuccess = {
-                                    backStack.clear()
-                                    backStack.add(Home)
-                                    mainViewModel.consumePendingPostAuthNavKey()?.let(backStack::add)
-                                },
-                                snackbarHostState = snackbarHostState,
-                            )
-                        }
+                        },
+                        label = { Text(tab.label.asString()) },
                     )
                 }
+            },
+            primaryActionContent = {
+                val fabScreen = currentKey as? ScreenWithFab
+                if (fabScreen != null) {
+                    FloatingActionButton(
+                        modifier = Modifier.padding(start = 16.dp),
+                        onClick = {
+                            when (val action = fabScreen.fabAction) {
+                                FabAction.CreateGroup -> backStack.add(CreateGroup)
+                                is FabAction.AddEntry -> backStack.add(AddEntry(action.groupId))
+                            }
+                        },
+                    ) {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.ic_add),
+                            contentDescription = when (fabScreen.fabAction) {
+                                FabAction.CreateGroup -> stringResource(Res.string.create_group)
+                                is FabAction.AddEntry -> stringResource(Res.string.add_entry)
+                            },
+                        )
+                    }
+                } else if (navigationSuiteType != NavigationSuiteType.NavigationBar) {
+                    // Reserve the FAB's footprint so the navigation rail/drawer items don't
+                    // jump vertically when the FAB is shown/hidden across tabs.
+                    Spacer(modifier = Modifier.padding(start = 16.dp).size(56.dp))
+                }
+            },
+        ) {
+            Scaffold(
+                snackbarHost = { SnackbarHost(snackbarHostState) },
+            ) { paddingValues ->
+                Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                    ConnectivityBannerRoot(modifier = Modifier.fillMaxWidth())
+                    CompositionLocalProvider(LocalTopBarActionsController provides topBarActions) {
+                        NavDisplay(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            backStack = backStack,
+                            onBack = { backStack.removeLastOrNull() },
+                            entryDecorators = rememberEntryDecorators(backStack),
+                            transitionSpec = { navTransition },
+                            popTransitionSpec = { navTransition },
+                            predictivePopTransitionSpec = { _ -> predictivePopTransition },
+                            entryProvider = entryProvider {
+                                mainGraph(
+                                    backStack = backStack,
+                                    snackbarHostState = snackbarHostState,
+                                    appScope = appScope,
+                                )
+                            },
+                        )
+                    }
+                }
             }
+        }
+    } else {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+        ) {
+            NavDisplay(
+                modifier = Modifier.fillMaxSize().padding(it),
+                backStack = backStack,
+                entryDecorators = rememberEntryDecorators(backStack),
+                transitionSpec = { navTransition },
+                popTransitionSpec = { navTransition },
+                predictivePopTransitionSpec = { _ -> predictivePopTransition },
+                onBack = { backStack.removeLastOrNull() },
+                entryProvider = entryProvider {
+                    authGraph(
+                        backStack = backStack,
+                        onGuestClick = {
+                            // Mark unlocked so the just-authenticated session isn't re-locked.
+                            appLockViewModel.onSignedIn()
+                            backStack.clear()
+                            backStack.add(Home)
+                            mainViewModel.consumePendingPostAuthNavKey()?.let(backStack::add)
+                        },
+                        onLoginSuccess = {
+                            appLockViewModel.onSignedIn()
+                            backStack.clear()
+                            backStack.add(Home)
+                            mainViewModel.consumePendingPostAuthNavKey()?.let(backStack::add)
+                        },
+                        snackbarHostState = snackbarHostState,
+                    )
+                }
+            )
         }
     }
 }

@@ -6,7 +6,9 @@ android-sdk-min = "26"
 android-sdk-target = "36"
 androidx-activity = "1.13.0"
 androidx-appcompat = "1.7.1"
+androidx-biometric = "1.1.0"
 androidx-core = "1.19.0"
+androidx-fragment = "1.8.6"
 androidx-espresso = "3.7.0"
 androidx-testExt = "1.3.0"
 buildkonfig = "0.22.0"
@@ -51,6 +53,8 @@ robolectric = "4.16.1"
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "androidx-biometric" }
+androidx-fragment = { module = "androidx.fragment:fragment-ktx", version.ref = "androidx-fragment" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }

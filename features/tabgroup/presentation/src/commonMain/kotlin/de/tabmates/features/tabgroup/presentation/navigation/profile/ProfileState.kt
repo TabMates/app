@@ -7,6 +7,7 @@ enum class SettingsSection {
     PROFILE,
     APPEARANCE,
     NOTIFICATIONS,
+    SECURITY,
     ABOUT,
 }
 
@@ -21,5 +22,10 @@ data class ProfileState(
     val notificationsEnabled: Boolean = true,
     // OS notification permission is denied -> disable the toggle and show a banner.
     val notificationsPermissionBlocked: Boolean = false,
+    // Device has biometric/credential hardware -> show the Security section.
+    val biometricSupported: Boolean = false,
+    // Biometrics (or a device credential) are enrolled -> the toggle can be turned on.
+    val biometricAvailable: Boolean = false,
+    val biometricUnlockEnabled: Boolean = false,
     val selectedSection: SettingsSection = SettingsSection.PROFILE,
 )

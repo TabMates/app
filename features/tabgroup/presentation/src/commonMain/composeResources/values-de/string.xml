@@ -315,7 +315,16 @@
     <string name="profile_delete_account">Konto löschen</string>
     <string name="profile_nav_appearance">Erscheinungsbild</string>
     <string name="profile_nav_notifications">Benachrichtigungen</string>
+    <string name="profile_nav_security">Sicherheit</string>
     <string name="profile_nav_about">Über</string>
+    <string name="profile_section_security">SICHERHEIT</string>
+    <string name="profile_biometric_unlock">Biometrische Entsperrung</string>
+    <string name="profile_biometric_unlock_caption">Fingerabdruck, Gesicht oder Geräte-PIN zum Öffnen von TabMates verlangen</string>
+    <string name="profile_biometric_unavailable">Richte einen Fingerabdruck, eine Gesichtserkennung oder eine Geräte-PIN in den Systemeinstellungen ein, um dies zu verwenden.</string>
+    <string name="profile_biometric_prompt_title">Bestätige, dass du es bist</string>
+    <string name="profile_biometric_prompt_subtitle">Bestätige, um die biometrische Entsperrung zu aktivieren</string>
+    <string name="profile_biometric_prompt_cancel">Abbrechen</string>
+    <string name="profile_security_error">Verifizierung fehlgeschlagen. Die biometrische Entsperrung wurde nicht aktiviert.</string>
     <string name="profile_footer">TabMates</string>
 
     <string name="home_title">TabMates</string>

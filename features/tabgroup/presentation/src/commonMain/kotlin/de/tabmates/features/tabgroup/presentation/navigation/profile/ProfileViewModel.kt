@@ -4,8 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.auth.UserType
+import de.tabmates.core.domain.biometric.BiometricAuthenticator
+import de.tabmates.core.domain.biometric.BiometricAvailability
+import de.tabmates.core.domain.biometric.BiometricPromptStrings
+import de.tabmates.core.domain.biometric.BiometricResult
 import de.tabmates.core.domain.preferences.AppPreferencesRepository
 import de.tabmates.core.domain.preferences.ThemeMode
+import de.tabmates.core.presentation.util.UiText
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.notifications.domain.NotificationPermissionController
 import de.tabmates.features.notifications.domain.NotificationPermissionStatus
@@ -21,6 +26,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
+import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_security_error
 import kotlin.time.Duration.Companion.seconds
 
 @KoinViewModel
@@ -30,17 +37,31 @@ class ProfileViewModel(
     private val authService: AuthService,
     private val notificationPermissionController: NotificationPermissionController,
     private val pushNotificationController: PushNotificationController,
+    private val biometricAuthenticator: BiometricAuthenticator,
 ) : ViewModel() {
     private val selectedSection = MutableStateFlow(SettingsSection.PROFILE)
+
+    // Hardware/enrollment state; refreshed on resume since the user may enroll in system settings.
+    private val biometricAvailability = MutableStateFlow(biometricAuthenticator.availability())
+
+    // Local preferences are grouped so the outer combine stays within its 5-argument limit.
+    private val preferences =
+        combine(
+            appPreferencesRepository.themeMode(),
+            appPreferencesRepository.notificationsEnabled(),
+            appPreferencesRepository.biometricUnlockEnabled(),
+        ) { themeMode, notificationsEnabled, biometricUnlockEnabled ->
+            Preferences(themeMode, notificationsEnabled, biometricUnlockEnabled)
+        }
 
     val state: StateFlow<ProfileState> =
         combine(
             sessionStorage.authState,
-            appPreferencesRepository.themeMode(),
-            appPreferencesRepository.notificationsEnabled(),
+            preferences,
             selectedSection,
             notificationPermissionController.status,
-        ) { auth, themeMode, notificationsEnabled, section, permissionStatus ->
+            biometricAvailability,
+        ) { auth, prefs, section, permissionStatus, biometric ->
             val user = auth?.user
             ProfileState(
                 isLoading = false,
@@ -53,9 +74,13 @@ class ProfileViewModel(
                         ?.uppercase()
                         .orEmpty(),
                 isRegistered = user?.userType == UserType.REGISTERED,
-                themeMode = themeMode,
-                notificationsEnabled = notificationsEnabled,
+                themeMode = prefs.themeMode,
+                notificationsEnabled = prefs.notificationsEnabled,
                 notificationsPermissionBlocked = permissionStatus == NotificationPermissionStatus.DENIED,
+                biometricSupported = biometric != BiometricAvailability.UNSUPPORTED &&
+                    biometric != BiometricAvailability.NO_HARDWARE,
+                biometricAvailable = biometric == BiometricAvailability.AVAILABLE,
+                biometricUnlockEnabled = prefs.biometricUnlockEnabled,
                 selectedSection = section,
             )
         }.stateIn(
@@ -72,6 +97,40 @@ class ProfileViewModel(
     fun refreshNotificationPermission() {
         viewModelScope.launch { notificationPermissionController.refresh() }
     }
+
+    /** Re-read biometric hardware/enrollment state (call when the screen resumes). */
+    fun refreshBiometricAvailability() {
+        biometricAvailability.value = biometricAuthenticator.availability()
+    }
+
+    /**
+     * Toggle the biometric app-lock. Enabling first requires a successful authentication, both to
+     * confirm the hardware works and to avoid locking the user out with an unusable credential.
+     * [strings] are resolved by the UI so the OS prompt is localized.
+     */
+    fun onBiometricUnlockToggle(
+        enabled: Boolean,
+        strings: BiometricPromptStrings,
+    ) {
+        viewModelScope.launch {
+            if (!enabled) {
+                appPreferencesRepository.setBiometricUnlockEnabled(false)
+                return@launch
+            }
+            when (biometricAuthenticator.authenticate(strings)) {
+                BiometricResult.Success -> appPreferencesRepository.setBiometricUnlockEnabled(true)
+                BiometricResult.Cancelled -> Unit // Leave the toggle off; no error to surface.
+                is BiometricResult.Error ->
+                    eventChannel.send(ProfileEvent.Error(UiText.Resource(Res.string.profile_security_error)))
+            }
+        }
+    }
+
+    private data class Preferences(
+        val themeMode: ThemeMode,
+        val notificationsEnabled: Boolean,
+        val biometricUnlockEnabled: Boolean,
+    )
 
     fun onOpenNotificationSettings() {
         notificationPermissionController.openSettings()

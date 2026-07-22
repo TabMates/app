@@ -315,7 +315,16 @@
     <string name="profile_delete_account">Delete account</string>
     <string name="profile_nav_appearance">Appearance</string>
     <string name="profile_nav_notifications">Notifications</string>
+    <string name="profile_nav_security">Security</string>
     <string name="profile_nav_about">About</string>
+    <string name="profile_section_security">SECURITY</string>
+    <string name="profile_biometric_unlock">Biometric unlock</string>
+    <string name="profile_biometric_unlock_caption">Require your fingerprint, face or device PIN to open TabMates</string>
+    <string name="profile_biometric_unavailable">Set up a fingerprint, face unlock or device PIN in your system settings to use this.</string>
+    <string name="profile_biometric_prompt_title">Confirm it\'s you</string>
+    <string name="profile_biometric_prompt_subtitle">Verify to turn on biometric unlock</string>
+    <string name="profile_biometric_prompt_cancel">Cancel</string>
+    <string name="profile_security_error">Couldn\'t verify you. Biometric unlock was not turned on.</string>
     <string name="profile_footer">TabMates</string>
 
     <string name="home_title">TabMates</string>

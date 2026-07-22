@@ -1,5 +1,7 @@
 package de.tabmates.core.data.di
 
+import de.tabmates.core.data.biometric.UnsupportedBiometricAuthenticator
+import de.tabmates.core.domain.biometric.BiometricAuthenticator
 import eu.anifantakis.lib.ksafe.KSafe
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -13,6 +15,9 @@ import org.koin.core.annotation.Single
 actual class PlatformCoreDataModule {
     @Single
     fun provideHttpClientEngine(): HttpClientEngine = OkHttp.create()
+
+    @Single
+    fun provideBiometricAuthenticator(): BiometricAuthenticator = UnsupportedBiometricAuthenticator()
 
     @Single
     @Named("prefs")

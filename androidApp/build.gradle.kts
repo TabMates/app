@@ -60,8 +60,10 @@ android {
 
 dependencies {
     implementation(projects.composeApp)
+    implementation(projects.core.data)
 
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.fragment)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)

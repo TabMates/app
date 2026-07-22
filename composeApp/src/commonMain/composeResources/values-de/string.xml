@@ -14,4 +14,12 @@
     <string name="connectivity_banner_offline_hours">Offline · vor %1$d Std. synchronisiert</string>
     <string name="connectivity_banner_offline_days">Offline · vor %1$d Tagen synchronisiert</string>
     <string name="connectivity_banner_offline_unsynced">Offline · noch nicht synchronisiert</string>
+    <string name="app_lock_title">TabMates ist gesperrt</string>
+    <string name="app_lock_subtitle">Bestätige, dass du es bist, um fortzufahren</string>
+    <string name="app_lock_unlock">Entsperren</string>
+    <string name="app_lock_error">Verifizierung fehlgeschlagen. Bitte versuche es erneut.</string>
+    <string name="app_lock_sign_out">Stattdessen abmelden</string>
+    <string name="app_lock_prompt_title">TabMates entsperren</string>
+    <string name="app_lock_prompt_subtitle">Verwende deine Biometrie oder deine Geräte-PIN zum Entsperren</string>
+    <string name="app_lock_prompt_cancel">Abbrechen</string>
 </resources>
