@@ -70,8 +70,14 @@ class WebPushNotificationController(
     }
 }
 
+// Guarded against the Firebase glue being absent (e.g. an offline PWA launch where the
+// cross-origin Firebase SDK failed to load): fall back to a no-op / null token so startup never
+// throws. firebase-init.js normally installs real implementations.
 private fun fcmInit() {
-    js("window.tabmatesFcmInit()")
+    js("(typeof window.tabmatesFcmInit === 'function') && window.tabmatesFcmInit()")
 }
 
-private fun fcmRequestToken(): Promise<JsString?> = js("window.tabmatesFcmRequestToken()")
+private fun fcmRequestToken(): Promise<JsString?> =
+    js(
+        "(typeof window.tabmatesFcmRequestToken === 'function' ? window.tabmatesFcmRequestToken() : Promise.resolve(null))",
+    )

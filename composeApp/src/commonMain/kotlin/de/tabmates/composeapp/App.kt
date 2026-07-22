@@ -158,6 +158,8 @@ fun App() {
         // the in-app `ThemeMode` override (Light/Dark/System) instead of the OS dark-mode flag.
         ApplySystemBars(darkTheme = darkTheme)
         TabMatesTheme(darkTheme = darkTheme) {
+            if (!rememberResourcesPrimed()) return@TabMatesTheme
+
             // Checks for app updates on launch: native Play in-app update on eligible Android
             // devices, store-redirect dialog everywhere else.
             AppUpdateGate()

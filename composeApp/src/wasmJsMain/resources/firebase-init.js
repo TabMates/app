@@ -13,6 +13,15 @@ const firebaseConfig = {
 // Cloud Messaging -> Web configuration -> "Web Push certificates" key pair.
 const VAPID_KEY = "REPLACE_ME";
 
+// The Firebase compat SDK is loaded cross-origin from gstatic.com, which is unreachable when the
+// installed PWA launches offline. This file is same-origin (cached + served by the app-shell
+// service worker), so it still runs — guard against the missing SDK and expose no-op glue so the
+// Wasm app boots normally offline. Push simply stays unavailable until the next online launch.
+if (typeof firebase === "undefined" || typeof firebase.messaging !== "function") {
+  window.tabmatesFcmInit = function () {};
+  window.tabmatesFcmRequestToken = function () { return Promise.resolve(null); };
+} else {
+
 const firebaseApp = firebase.initializeApp(firebaseConfig);
 // Disable Firebase telemetry; only Cloud Messaging is used (no getAnalytics()).
 firebaseApp.automaticDataCollectionEnabled = false;
@@ -49,3 +58,5 @@ window.tabmatesFcmRequestToken = function () {
       return null;
     });
 };
+
+}

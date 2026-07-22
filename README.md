@@ -48,7 +48,7 @@ TabMates is a Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) app for t
 | Android | `:androidApp` |
 | iOS | `iosApp` (SwiftUI host) |
 | Desktop (JVM) | `:composeApp` desktop entry |
-| Web (WasmJS) | `:composeApp` web entry |
+| Web (WasmJS) | `:composeApp` web entry — installable, offline-capable PWA |
 
 ## Quick start
 
