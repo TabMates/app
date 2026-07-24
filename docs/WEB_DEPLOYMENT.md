@@ -50,26 +50,40 @@ Android, iOS and desktop). Two pieces provide this, both shipped as static resou
   (`default-src`/`img-src 'self'`) as-is. `.webmanifest` is served `application/manifest+json` by
   Pages; if a host serves it wrong, rename to `manifest.json`.
 - **Offline app-shell cache** — folded **into `coi-serviceworker.js`**, not a second worker,
-  because the root scope must stay with the COOP/COEP injector (see above). Its `fetch` handler
-  caches same-origin GETs (stale-while-revalidate for assets, network-first with a cached-`/`
-  fallback for navigations) and passes **every** served response — network or cache — through
-  `withCoiHeaders()`, so cross-origin isolation (and therefore OPFS/SQLite) still holds on an
-  offline launch. Cross-origin requests (gstatic Firebase) and non-GETs keep the original
-  network-only path and are never cached. Updates are silent: content-hashed bundle filenames plus
-  `skipWaiting()`/`clients.claim()` mean a new deploy is picked up on the next launch. Bump
-  `SHELL_CACHE` (`tabmates-shell-vN`) to force-invalidate the shell cache; the `activate` handler
-  deletes older `tabmates-shell-*` caches.
+  because the root scope must stay with the COOP/COEP injector (see above). Its `install` handler
+  eagerly precaches every entry in `PRECACHE_MANIFEST` — a list of every real file in the
+  production dist, injected into the worker's own source by the deploy workflow right after
+  `:composeApp:wasmJsBrowserDistribution` (see "Deploying to GitHub Pages" below) — so the whole
+  app shell is cached up front, not just whatever screens a user happens to visit. The manifest is
+  embedded **inline in the service worker's own script**, not fetched from a side file: a browser
+  only re-runs `install` when the service worker's own script bytes change, so a separate manifest
+  file's contents wouldn't reliably trigger a re-cache. Precaching is best-effort (one failed asset
+  can't abort `install`) and self-pruning (entries no longer in the manifest, e.g. a prior deploy's
+  content-hashed `.wasm` filename, are deleted on every install), so `SHELL_CACHE` stays current
+  automatically on routine deploys. The `fetch` handler still backs this up at runtime
+  (stale-while-revalidate for assets, network-first with a cached-`/` fallback for navigations),
+  and passes **every** served response — network or cache — through `withCoiHeaders()`, so
+  cross-origin isolation (and therefore OPFS/SQLite) still holds on an offline launch. Cross-origin
+  requests (gstatic Firebase) and non-GETs keep the original network-only path and are never
+  cached. Bump `SHELL_CACHE` (`tabmates-shell-vN`) only to force a full manual reset (e.g. a
+  caching-strategy change) — it's no longer the routine invalidation path.
 
 Because the offline data layer (Room in OPFS, durable outbox, delta + reconnect sync) is already
-shared `commonMain` code, once a user has loaded and logged in online the installed PWA works
-offline and syncs on reconnect — the same behaviour as Android. Firebase push is the one thing
-that needs the network: `firebase-init.js` (same-origin, cached) guards the missing cross-origin
-SDK and installs no-op glue so an offline launch still boots; push resumes on the next online run.
+shared `commonMain` code, and the app shell is now precached in full on install, the installed PWA
+works offline for every screen immediately after the first successful visit — not just ones
+already opened — and syncs on reconnect, the same behaviour as Android. Firebase push is the one
+thing that needs the network: `firebase-init.js` (same-origin, cached) guards the missing
+cross-origin SDK and installs no-op glue so an offline launch still boots; push resumes on the next
+online run.
 
 Verify after a build (`:composeApp:wasmJsBrowserDistribution`, served over HTTPS/localhost):
 DevTools → Application → Manifest is installable with no errors, the service worker is
-*activated and controlling*, `crossOriginIsolated === true`, and with Network → Offline a reload
-still renders the app shell.
+*activated and controlling*, `crossOriginIsolated === true`, Cache Storage → `tabmates-shell-v1`
+holds the full asset list, and with Network → Offline you can navigate directly to a screen **not
+yet visited this session** and have it render fully — not just reload `/`. Note a locally-served
+raw Gradle dist ships an empty `PRECACHE_MANIFEST` (only the deploy workflow injects it), so
+testing the real eager-precache path requires either running that workflow step's `find`/`jq`/`sed`
+snippet locally against the dist first, or testing a deployed build.
 
 ## Content-Security-Policy
 
@@ -124,7 +138,8 @@ therefore appear in reverse-proxy access logs — redact query strings for `/ws/
 ## Deploying to GitHub Pages
 
 `.github/workflows/deploy-web.yml` builds `:composeApp:wasmJsBrowserDistribution` on every tag
-push (and manually via *Run workflow*), injects the CSP meta tag and `CNAME`, and publishes to
+push (and manually via *Run workflow*), injects the offline precache manifest, the CSP meta tag
+and `CNAME`, and publishes to
 GitHub Pages at `app.tabmates.de`. One-time setup:
 
 - **Secrets**: `BASE_URL_HTTP_WEB` / `BASE_URL_WS_WEB` → the target backend

@@ -45,6 +45,29 @@ jobs:
       - name: Build wasmJs production distribution
         run: ./gradlew :composeApp:wasmJsBrowserDistribution --stacktrace
 
+      - name: Inject offline precache manifest into the service worker
+        # coi-serviceworker.js also runs the offline app-shell cache (see docs/WEB_DEPLOYMENT.md);
+        # this lists every real build output so `install` can precache the whole app, not just
+        # pages a user happened to visit online. Embedded directly in the service worker's own
+        # script rather than a fetch()'d/imported side file: browsers only re-run `install` when
+        # the service worker's own script bytes change, so a side manifest file would silently
+        # stop taking effect on deploys that don't touch this file's source.
+        run: |
+          DIST=composeApp/build/dist/wasmJs/productionExecutable
+          MANIFEST_JSON=$(cd "$DIST" && find . -type f \
+              ! -name "*.map" \
+              ! -name "*.LICENSE.txt" \
+              ! -name "404.html" \
+              ! -path "./.well-known/*" \
+              -printf '%P\n' | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "$MANIFEST_JSON" | jq empty
+          COUNT=$(echo "$MANIFEST_JSON" | jq 'length')
+          echo "Precaching $COUNT asset(s)"
+          sed -i "s#const PRECACHE_MANIFEST = \[\];#const PRECACHE_MANIFEST = $MANIFEST_JSON;#" "$DIST/coi-serviceworker.js"
+          grep -q 'const PRECACHE_MANIFEST = \["' "$DIST/coi-serviceworker.js"
+          NEW_COUNT=$(sed -n 's/^.*const PRECACHE_MANIFEST = \(\[.*\]\);.*$/\1/p' "$DIST/coi-serviceworker.js" | jq 'length')
+          [ "$COUNT" = "$NEW_COUNT" ]
+
       - name: Inject Content-Security-Policy meta tag
         # Pages cannot serve a CSP header; a <meta> tag covers everything except
         # frame-ancestors. Injected only into the deployed bundle so the dev server
