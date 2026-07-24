@@ -80,8 +80,12 @@ Handling per platform:
   secret, so committing dummy IDs is fine.
 - **iOS** — `GoogleService-Info.plist` is git-ignored (it's a runtime resource for the Xcode app
   and doesn't block Gradle builds); each contributor adds their own to the Xcode target.
-- **Web** — config is served to the browser, so it can't be hidden — keep `REPLACE_ME`
-  placeholders and fill them at deploy/build; restrict the API key by HTTP referrer + App Check.
+- **Web** — `firebaseConfig` (apiKey/authDomain/projectId/etc.) is committed directly in
+  `firebase-init.js`/`firebase-messaging-sw.js` — it's served to the browser either way, so
+  there's nothing to gain by templating it; restrict the API key by HTTP referrer + App Check
+  instead. `FCM_VAPID_KEY` is injected via BuildKonfig (env var / `local.properties`) rather than
+  hardcoded, mainly so CI/local/staging can point at different Firebase projects without editing
+  source.
 
 ## Telemetry
 
@@ -141,9 +145,11 @@ No FCM on desktop. The app opens a WebSocket to `${BASE_URL_WS}/api/notification
 Real browser push via the Firebase **JS** SDK — independent of kmpnotifier.
 1. Create a Firebase Web app; copy its config into **both**
    `composeApp/src/wasmJsMain/resources/firebase-init.js` and `firebase-messaging-sw.js`
-   (replace the `REPLACE_ME` placeholders).
+   (replace the placeholders).
 2. Generate a **Web Push certificate (VAPID key)** in Firebase Console → Cloud Messaging →
-   Web configuration, and set `VAPID_KEY` in `firebase-init.js`.
+   Web configuration, and set it as the `FCM_VAPID_KEY` build property (`local.properties` or
+   CI env var — see root README). It's injected via BuildKonfig and passed into
+   `tabmatesFcmRequestToken()` at call time, not hardcoded in `firebase-init.js`.
 3. `firebase-messaging-sw.js` must be served from the web root (it already lives in
    `wasmJsMain/resources`). `index.html` loads the Firebase compat SDK + `firebase-init.js`.
 4. Web push requires HTTPS (or `localhost`).

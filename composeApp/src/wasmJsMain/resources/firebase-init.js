@@ -1,17 +1,15 @@
 // Firebase Cloud Messaging (web) glue, driven from Kotlin/Wasm (WebPushNotificationController).
 // Loaded by index.html after the Firebase compat SDK scripts.
-// TODO: replace the placeholders with your Firebase web app config + Web Push VAPID key.
+// The Web Push VAPID key is not hardcoded here — it's injected at build time via BuildKonfig
+// (FCM_VAPID_KEY) and passed into tabmatesFcmRequestToken() below.
 
 const firebaseConfig = {
-  apiKey: "REPLACE_ME",
-  authDomain: "REPLACE_ME.firebaseapp.com",
-  projectId: "REPLACE_ME",
-  messagingSenderId: "REPLACE_ME",
-  appId: "REPLACE_ME",
+  apiKey: "AIzaSyD9dQByxdT0_fHCO2FmfrVmvJTi_GyeQDk",
+  authDomain: "tabmates-app.firebaseapp.com",
+  projectId: "tabmates-app",
+  messagingSenderId: "72203045436",
+  appId: "1:72203045436:web:8aaceca23465a81c929139"
 };
-
-// Cloud Messaging -> Web configuration -> "Web Push certificates" key pair.
-const VAPID_KEY = "REPLACE_ME";
 
 // The Firebase compat SDK is loaded cross-origin from gstatic.com, which is unreachable when the
 // installed PWA launches offline. This file is same-origin (cached + served by the app-shell
@@ -42,7 +40,8 @@ window.tabmatesFcmInit = function () {
 };
 
 // Requests notification permission and returns the FCM web token (or null). Returns a Promise.
-window.tabmatesFcmRequestToken = function () {
+// vapidKey comes from Kotlin (BuildKonfig.FCM_VAPID_KEY) — see WebPushNotificationController.
+window.tabmatesFcmRequestToken = function (vapidKey) {
   // Explicit non-root scope: the root scope belongs to coi-serviceworker.js (COOP/COEP
   // injection); registering here without a scope would silently replace it.
   return navigator.serviceWorker
@@ -50,7 +49,7 @@ window.tabmatesFcmRequestToken = function () {
     .then(function (registration) {
       return Notification.requestPermission().then(function (permission) {
         if (permission !== "granted") return null;
-        return messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+        return messaging.getToken({ vapidKey: vapidKey, serviceWorkerRegistration: registration });
       });
     })
     .catch(function (error) {
