@@ -14,16 +14,17 @@ these headers on **every** response (the dev server already does, see
 
 ```
 Cross-Origin-Opener-Policy: same-origin
-Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Embedder-Policy: credentialless
 ```
 
 Without them `crossOriginIsolated` is false, the SQLite worker cannot initialize OPFS, and the
-app runs without local persistence. HTTPS is also required (secure context). The Firebase
-scripts loaded from gstatic.com are compatible with these headers (verified: they are served
-with `Cross-Origin-Resource-Policy: cross-origin`, so `require-corp` is fine — if a future
-gstatic change drops that header, switch the production COEP to `credentialless` or self-host
-the scripts); any *new* cross-origin `<script>`/`<img>`/font added to `index.html` must likewise
-send CORP or be loaded with CORS, or the browser will block it under COEP.
+app runs without local persistence. HTTPS is also required (secure context). COEP is
+`credentialless` rather than `require-corp` because the Cloudflare **Turnstile** widget (an iframe
+from `challenges.cloudflare.com`, used for the auth bot-check) fails under `require-corp`;
+`credentialless` still yields `crossOriginIsolated`, so OPFS/SQLite is unaffected. Under
+`credentialless` a cross-origin no-cors subresource (the gstatic Firebase scripts) loads without
+credentials and needs no CORP header; a *new* cross-origin `<script>`/`<img>`/font that must send
+credentials still needs CORS or CORP, or the browser will block it.
 
 On hosts that cannot set response headers (GitHub Pages), the vendored
 `composeApp/src/wasmJsMain/resources/coi-serviceworker.js` (first script in `index.html`)
@@ -83,13 +84,17 @@ same-origin, which `'self'` does not reliably cover. Baseline:
 
 ```
 default-src 'self';
-script-src 'self' 'wasm-unsafe-eval' https://www.gstatic.com;   # wasm-unsafe-eval is REQUIRED for Compose/WasmJS
+script-src 'self' 'wasm-unsafe-eval' https://www.gstatic.com https://challenges.cloudflare.com;   # wasm-unsafe-eval is REQUIRED for Compose/WasmJS; cloudflare = Turnstile api.js
+frame-src https://challenges.cloudflare.com;                    # the Turnstile challenge iframe
 worker-src 'self' blob:;                                        # the SQLite web worker
 connect-src 'self' https://<api-host> wss://<api-host>;         # this environment's API http + ws origins
 img-src 'self' data:;
 style-src 'self' 'unsafe-inline';
 frame-ancestors 'none';
 ```
+
+There is no `frame-src` fallback to `'self'` here — without an explicit `frame-src` it falls back to
+`default-src 'self'`, which would block the Turnstile iframe even after the COEP fix.
 
 Omitting `wasm-unsafe-eval` prevents the WasmJS bundle from loading at all; omitting the API
 origin from `connect-src` breaks every API/websocket call. Verify no CSP violations appear in
@@ -110,10 +115,11 @@ authenticated request succeeds, and the `wss` `/ws/group` upgrade connects. The 
 build must set `BASE_URL_HTTP_WEB` / `BASE_URL_WS_WEB` to the real API origin (there is no proxy
 in production).
 
-Browsers cannot set headers on a WebSocket handshake, so `WebSocketTransport` also sends the
-credentials as `access_token`/`api_key` query parameters, which the server accepts on `/ws/group`
-only (native clients keep using the headers). The token can therefore appear in reverse-proxy
-access logs — redact query strings for `/ws/group` there.
+Browsers cannot set headers on a WebSocket handshake, so `WebSocketTransport` sends the JWT as an
+`access_token` query parameter, which the server accepts on `/ws/group` only. On **web** that is the
+only query param (no `api_key`; the server recognizes the browser by its allow-listed origin);
+**native** clients additionally send the `api_key` query param and the header pair. The token can
+therefore appear in reverse-proxy access logs — redact query strings for `/ws/group` there.
 
 ## Deploying to GitHub Pages
 
@@ -130,9 +136,14 @@ GitHub Pages at `app.tabmates.de`. One-time setup:
 - **Backend**: add `https://app.tabmates.de` to `TABMATES_CORS_ALLOWED_ORIGINS` on the target
   environment and restart it.
 
-The `API_KEY` is compiled into the JS bundle, so on web it is **public** — treat it as a client
-identifier, not a secret. Real authorization is the JWT; the api-key only shields the public
-auth/register endpoints, so no endpoint may rely on it alone.
+The web bundle **no longer ships `x-api-key`** (the wasmJs BuildKonfig nulls it, so neither the REST
+header nor the `/ws/group` `api_key` param is sent). That key was never secret in a browser
+(readable in DevTools, replayable), so the server now recognizes browser traffic by its allow-listed
+`Origin` instead, and gates the abuse-prone unauthenticated auth endpoints with a Cloudflare
+Turnstile bot-check (`cf-turnstile-response`, from an invisible widget — see the Turnstile CSP/COEP
+notes above). Real authorization is still the per-user JWT. **Native** clients keep sending the
+real api-key and are Turnstile-exempt. The web `API_KEY` CI secret is left in place for now
+(harmless, unused by web) until native no longer shares the pipeline expectation.
 
 ## Deep links & Android App Links
 

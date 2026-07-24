@@ -14,6 +14,10 @@ sealed interface DataError : Error {
         SERVER_ERROR,
         SERVICE_UNAVAILABLE,
         SERIALIZATION,
+
+        // Web-only: 403 with body { "code": "TURNSTILE_VERIFICATION_FAILED" } on the auth
+        // endpoints; distinguished from FORBIDDEN by reading the response body.
+        TURNSTILE_FAILED,
         UNKNOWN,
     }
 

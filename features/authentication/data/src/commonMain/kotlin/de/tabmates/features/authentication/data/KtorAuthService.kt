@@ -24,9 +24,12 @@ import de.tabmates.features.authentication.data.dto.requests.LoginRequest
 import de.tabmates.features.authentication.data.dto.requests.RegisterAnonymousRequest
 import de.tabmates.features.authentication.data.dto.requests.RegisterRequest
 import de.tabmates.features.authentication.data.dto.requests.ResetPasswordRequest
+import de.tabmates.features.authentication.data.dto.turnstileErrorOrNull
 import de.tabmates.features.authentication.domain.AuthService
+import de.tabmates.features.authentication.domain.TurnstileTokenProvider
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.auth.clearAuthTokens
+import io.ktor.client.request.header
 import io.ktor.client.request.setBody
 import org.koin.core.annotation.Single
 
@@ -34,12 +37,15 @@ import org.koin.core.annotation.Single
 class KtorAuthService(
     private val httpClient: HttpClient,
     private val sessionStorage: SessionStorage,
+    // Web-only Cloudflare Turnstile token; no-op (null) on native, so the header is omitted there.
+    private val turnstileTokenProvider: TurnstileTokenProvider,
 ) : AuthService {
     override suspend fun register(
         email: String,
         username: String,
         password: String,
     ): EmptyResult<DataError.Remote> {
+        val turnstileToken = turnstileTokenProvider.getToken()
         return httpClient.post(
             route = "/api/auth/register",
             body =
@@ -48,10 +54,13 @@ class KtorAuthService(
                     username = username,
                     password = password,
                 ),
+            mapKnownError = { it.turnstileErrorOrNull() },
+            builder = { turnstileToken?.let { token -> header("cf-turnstile-response", token) } },
         )
     }
 
     override suspend fun registerAnonymous(username: String): Result<AuthInfo, DataError.Remote> {
+        val turnstileToken = turnstileTokenProvider.getToken()
         return httpClient
             .post<RegisterAnonymousRequest, AuthInfoSerializable>(
                 route = "/api/auth/register-anonymous",
@@ -59,6 +68,8 @@ class KtorAuthService(
                     RegisterAnonymousRequest(
                         username = username,
                     ),
+                mapKnownError = { it.turnstileErrorOrNull() },
+                builder = { turnstileToken?.let { token -> header("cf-turnstile-response", token) } },
             ).map { authInfoSerializable ->
                 authInfoSerializable.toDomain()
             }.onSuccess { authInfo ->
@@ -70,6 +81,7 @@ class KtorAuthService(
         email: String,
         password: String,
     ): Result<AuthInfo, DataError.Remote> {
+        val turnstileToken = turnstileTokenProvider.getToken()
         return httpClient
             .post<LoginRequest, AuthInfoSerializable>(
                 route = "/api/auth/login",
@@ -78,6 +90,8 @@ class KtorAuthService(
                         email = email,
                         password = password,
                     ),
+                mapKnownError = { it.turnstileErrorOrNull() },
+                builder = { turnstileToken?.let { token -> header("cf-turnstile-response", token) } },
             ).map { authInfoSerializable ->
                 authInfoSerializable.toDomain()
             }.onSuccess { authInfo ->
@@ -119,9 +133,12 @@ class KtorAuthService(
     }
 
     override suspend fun forgotPassword(email: String): EmptyResult<DataError.Remote> {
+        val turnstileToken = turnstileTokenProvider.getToken()
         return httpClient.post<EmailRequest, Unit>(
             route = "/api/auth/forgot-password",
             body = EmailRequest(email),
+            mapKnownError = { it.turnstileErrorOrNull() },
+            builder = { turnstileToken?.let { token -> header("cf-turnstile-response", token) } },
         )
     }
 

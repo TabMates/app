@@ -480,6 +480,9 @@ class TabEntryOutbox(
                     DataError.Remote.CONFLICT,
                     DataError.Remote.PAYLOAD_TOO_LARGE,
                     DataError.Remote.SERIALIZATION,
+                    // Turnstile only gates the auth endpoints, never this delete; classify as
+                    // permanent for exhaustiveness (it would never clear on retry anyway).
+                    DataError.Remote.TURNSTILE_FAILED,
                     -> DispatchResult.Permanent(result.error.name.lowercase())
                 }
             }

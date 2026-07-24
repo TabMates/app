@@ -1,5 +1,5 @@
 /*! coi-serviceworker v0.1.7 - Guido Zuidhof and contributors, licensed under MIT */
-let coepCredentialless = false;
+let coepCredentialless = true;
 // TabMates note: this file is the vendored coi-serviceworker (COOP/COEP injection so OPFS/SQLite
 // works on header-less hosts like GitHub Pages) PLUS an app-shell offline cache added below. The
 // caching lives here — not in a second worker — because only one worker can own the root scope and

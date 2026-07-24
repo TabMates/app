@@ -42,7 +42,11 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
             extensions.configure<BuildKonfigExtension> {
                 packageName = target.pathToPackageName()
                 defaultConfigs {
-                    buildConfigField(FieldSpec.Type.STRING, "API_KEY", requireProperty("API_KEY"))
+                    // Nullable so the wasmJs override can null it out (web no longer ships the
+                    // api-key; the server allow-lists the browser Origin instead). Native targets
+                    // are still populated with the real key at runtime — only the compile-time
+                    // type becomes String?, so every consumer must null-guard it.
+                    buildConfigField(FieldSpec.Type.STRING, "API_KEY", requireProperty("API_KEY"), nullable = true)
                     buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", requireProperty("BASE_URL_HTTP"))
                     buildConfigField(FieldSpec.Type.STRING, "BASE_URL_WS", requireProperty("BASE_URL_WS"))
                     // User-facing host for shareable links / deep links (e.g. https://app.tabmates.de),
@@ -50,6 +54,15 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                     // deep-link host is always explicit; same value on all targets.
                     buildConfigField(FieldSpec.Type.STRING, "BASE_URL_PUBLIC", requireProperty("BASE_URL_PUBLIC"))
                     buildConfigField(FieldSpec.Type.STRING, "APP_VERSION", appVersion)
+                    // Cloudflare Turnstile site key (a public identifier). Optional: only the web
+                    // auth build renders the widget and reads it; every other target/module leaves
+                    // it null. Nullable + optionalProperty so it is never a required build property.
+                    buildConfigField(
+                        FieldSpec.Type.STRING,
+                        "TURNSTILE_SITE_KEY",
+                        optionalProperty("TURNSTILE_SITE_KEY"),
+                        nullable = true,
+                    )
                     buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "false")
                 }
                 targetConfigs {
@@ -70,6 +83,9 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                         }
                     }
                     create("wasmJs") {
+                        // Web sends no x-api-key / api_key: the server recognizes browser traffic by
+                        // its allow-listed Origin. Null here; consumers guard with ?.let { }.
+                        buildConfigField(FieldSpec.Type.STRING, "API_KEY", null, nullable = true)
                         optionalProperty("BASE_URL_HTTP_WEB")?.let {
                             buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", it)
                         }

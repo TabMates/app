@@ -31,11 +31,12 @@ class WebSocketTransport(
                         // Browser WebSockets cannot carry custom headers, so the credentials
                         // also travel as query parameters; the server accepts either.
                         parameters.append("access_token", accessToken)
-                        parameters.append("api_key", BuildKonfig.API_KEY)
+                        // Null on web (server allow-lists the Origin instead); real key on native.
+                        BuildKonfig.API_KEY?.let { parameters.append("api_key", it) }
                     }.buildString(),
         ) {
             header("Authorization", "Bearer $accessToken")
-            header("x-api-key", BuildKonfig.API_KEY)
+            BuildKonfig.API_KEY?.let { header("x-api-key", it) }
         }
 
     suspend fun decode(text: String): WebSocketMessageDto? =

@@ -34,6 +34,10 @@
                           repeatCount="indefinite"/>
     </circle>
 </svg>
+<!-- Cloudflare Turnstile renders its (invisible) challenge into this hidden container; the widget
+     itself is an iframe from challenges.cloudflare.com, allow-listed via script-src + frame-src in
+     the deploy CSP. Requires COEP credentialless (not require-corp) — see headers.js / WEB_DEPLOYMENT.md. -->
+<div id="turnstile-container" style="display:none"></div>
 <!-- Cross-origin scripts: OK under COEP require-corp only because gstatic sends
      Cross-Origin-Resource-Policy: cross-origin, and must be allow-listed in script-src if a
      Content-Security-Policy is served. Any new cross-origin resource needs the same. See the
@@ -41,6 +45,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 <script src="firebase-init.js"></script>
+<!-- Turnstile: ?render=explicit so turnstile.js controls when the invisible widget renders. -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
+<script src="turnstile.js"></script>
 <script type="application/javascript" src="composeApp.js"></script>
 </body>
 </html>
