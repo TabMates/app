@@ -63,6 +63,15 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                         optionalProperty("TURNSTILE_SITE_KEY"),
                         nullable = true,
                     )
+                    // Firebase Web Push certificate key (a public identifier, not a secret —
+                    // see features/notifications/README.md). Optional: only the web push
+                    // controller reads it; every other target/module leaves it null.
+                    buildConfigField(
+                        FieldSpec.Type.STRING,
+                        "FCM_VAPID_KEY",
+                        optionalProperty("FCM_VAPID_KEY"),
+                        nullable = true,
+                    )
                     buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "false")
                 }
                 targetConfigs {

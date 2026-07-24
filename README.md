@@ -81,6 +81,9 @@ BASE_URL_WS_WEB=ws://localhost:8081/ws
 # Optional, web-only: Cloudflare Turnstile site key (a public identifier) for the invisible bot
 # check on the auth endpoints. Unset = no widget/token; harmless until the backend enforces it.
 TURNSTILE_SITE_KEY=your-site-key
+# Optional, web-only: Firebase Web Push certificate (VAPID) key for FCM push notifications.
+# Unset = no push token requested; see features/notifications/README.md.
+FCM_VAPID_KEY=your-vapid-key
 ```
 
 The web dev server always proxies `/api` and `/ws` to the backend (`composeApp/webpack.config.d/proxy.js`) because the backend serves no CORS headers; the proxy target follows the active `BASE_URL_HTTP`, so switching it points the web dev build at that environment too.

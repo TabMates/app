@@ -18,6 +18,7 @@ env:
   BASE_URL_HTTP_WEB: ${{ secrets.BASE_URL_HTTP_WEB }}
   BASE_URL_WS_WEB: ${{ secrets.BASE_URL_WS_WEB }}
   TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+  FCM_VAPID_KEY: ${{ secrets.FCM_VAPID_KEY }}
   WEB_DOMAIN: app.tabmates.de
   BASE_URL_PUBLIC: https://app.tabmates.de
 

@@ -63,7 +63,13 @@ class WebPushNotificationController(
             .onFailure { logger.warning(TAG, "Device registration failed: $it") }
     }
 
-    private suspend fun requestToken(): String? = fcmRequestToken().await()?.toString()
+    // No VAPID key configured (unset FCM_VAPID_KEY) means push can't be subscribed to yet;
+    // treat it the same as the Firebase glue being absent rather than calling into JS with
+    // a missing key.
+    private suspend fun requestToken(): String? {
+        val vapidKey = BuildKonfig.FCM_VAPID_KEY ?: return null
+        return fcmRequestToken(vapidKey).await()?.toString()
+    }
 
     private companion object {
         private const val TAG = "PushNotifications"
@@ -77,7 +83,7 @@ private fun fcmInit() {
     js("(typeof window.tabmatesFcmInit === 'function') && window.tabmatesFcmInit()")
 }
 
-private fun fcmRequestToken(): Promise<JsString?> =
+private fun fcmRequestToken(vapidKey: String): Promise<JsString?> =
     js(
-        "(typeof window.tabmatesFcmRequestToken === 'function' ? window.tabmatesFcmRequestToken() : Promise.resolve(null))",
+        "(typeof window.tabmatesFcmRequestToken === 'function' ? window.tabmatesFcmRequestToken(vapidKey) : Promise.resolve(null))",
     )
