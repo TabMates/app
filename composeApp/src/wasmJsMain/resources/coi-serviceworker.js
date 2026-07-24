@@ -7,12 +7,62 @@ let coepCredentialless = true;
 // response (network OR cache) is passed through withCoiHeaders() so cross-origin isolation holds
 // for offline launches too.
 if (typeof window === 'undefined') {
-    // Bump this to invalidate the offline app-shell cache on the next activation.
+    // Bump this to force a full reset of the offline app-shell cache (e.g. a caching-strategy
+    // change). Routine deploys don't need it: precacheShell() below refreshes every entry and
+    // prunes stale ones on each new service-worker install.
     const SHELL_CACHE = "tabmates-shell-v1";
     // Key the navigation fallback under the app root (start_url is "/").
     const APP_SHELL_URL = "/";
+    // Every real static asset in the production dist, injected here by CI right after
+    // :composeApp:wasmJsBrowserDistribution (see .github/workflows/deploy-web.yml). Stays empty
+    // in source control and in any dist that wasn't built through that CI step (e.g. a local
+    // static server used for manual QA of the raw Gradle output) — precacheShell() then no-ops
+    // and install falls back to the lazy stale-while-revalidate caching below, unchanged.
+    const PRECACHE_MANIFEST = [];
 
-    self.addEventListener("install", () => self.skipWaiting());
+    // Eagerly fetch + cache every manifest entry at install time so a feature that was never
+    // visited online still works offline. Best-effort: one slow/failed asset must never abort
+    // install (Promise.allSettled, not cache.addAll()'s all-or-nothing failure mode), and
+    // {cache:"reload"} bypasses the HTTP disk cache so we always store this build's real bytes
+    // (GitHub Pages sends Cache-Control: max-age=600, which could otherwise return a stale
+    // response for non-hashed filenames shortly after a deploy).
+    async function precacheShell() {
+        if (!PRECACHE_MANIFEST.length) return;
+        const cache = await caches.open(SHELL_CACHE);
+        const keep = new Set(PRECACHE_MANIFEST.map((p) => new URL(p, self.location.origin).href));
+        keep.add(new URL(APP_SHELL_URL, self.location.origin).href);
+
+        const results = await Promise.allSettled(
+            PRECACHE_MANIFEST.map(async (path) => {
+                const response = await fetch(path, { cache: "reload" });
+                if (!response.ok) throw new Error(`${response.status} ${path}`);
+                await cache.put(path, response.clone());
+                // index.html is what GitHub Pages serves for "/" — seed the navigation fallback
+                // from the same response instead of a second network round trip.
+                if (path === "index.html") await cache.put(APP_SHELL_URL, response.clone());
+            })
+        );
+        const failed = results.filter((r) => r.status === "rejected");
+        if (failed.length) {
+            console.warn(
+                `[tabmates-sw] precache: ${failed.length}/${results.length} asset(s) failed, ` +
+                "will retry lazily and on the next deploy",
+                failed.map((r) => r.reason && r.reason.message)
+            );
+        }
+
+        // Drop entries that fell out of this build (e.g. last deploy's content-hashed .wasm
+        // filenames) so the cache doesn't grow unbounded across deploys without a manual bump.
+        const cached = await cache.keys();
+        await Promise.all(
+            cached.filter((req) => !keep.has(req.url)).map((req) => cache.delete(req))
+        );
+    }
+
+    self.addEventListener("install", (event) => {
+        self.skipWaiting();
+        event.waitUntil(precacheShell());
+    });
     self.addEventListener("activate", (event) =>
         event.waitUntil(
             (async () => {
