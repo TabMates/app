@@ -26,9 +26,13 @@ suspend inline fun <reified Request, reified Response : Any> HttpClient.post(
     route: String,
     body: Request,
     queryParams: Map<String, Any> = mapOf(),
+    // Optional per-call error mapper inspected before the generic status handling. When it
+    // returns non-null the call short-circuits to that failure (e.g. the auth turnstile 403,
+    // which needs the response body to be distinguished from a plain FORBIDDEN).
+    noinline mapKnownError: (suspend (HttpResponse) -> DataError.Remote?)? = null,
     crossinline builder: HttpRequestBuilder.() -> Unit = {},
 ): Result<Response, DataError.Remote> {
-    return safeCall {
+    return safeCall(mapKnownError = mapKnownError) {
         post {
             url(constructRoute(route))
             queryParams.forEach { (key, value) ->
@@ -109,12 +113,18 @@ suspend inline fun <reified Request, reified Response : Any> HttpClient.patch(
 }
 
 suspend inline fun <reified T> safeCall(
+    noinline mapKnownError: (suspend (HttpResponse) -> DataError.Remote?)? = null,
     noinline execute: suspend () -> HttpResponse,
 ): Result<T, DataError.Remote> {
     return platformSafeCall(
         execute = execute,
     ) { response ->
-        responseToResult(response)
+        val knownError = mapKnownError?.invoke(response)
+        if (knownError != null) {
+            Result.Failure(knownError)
+        } else {
+            responseToResult(response)
+        }
     }
 }
 

@@ -57,7 +57,8 @@ class HttpClientFactory(
                 pingIntervalMillis = 20_000L
             }
             defaultRequest {
-                header("x-api-key", BuildKonfig.API_KEY)
+                // Null on web (server allow-lists the Origin instead); real key on native.
+                BuildKonfig.API_KEY?.let { header("x-api-key", it) }
                 contentType(ContentType.Application.Json)
             }
 

@@ -78,6 +78,9 @@ BASE_URL_HTTP_ANDROID=http://10.0.2.2:8080
 BASE_URL_WS_ANDROID=ws://10.0.2.2:8080/ws
 BASE_URL_HTTP_WEB=http://localhost:8081
 BASE_URL_WS_WEB=ws://localhost:8081/ws
+# Optional, web-only: Cloudflare Turnstile site key (a public identifier) for the invisible bot
+# check on the auth endpoints. Unset = no widget/token; harmless until the backend enforces it.
+TURNSTILE_SITE_KEY=your-site-key
 ```
 
 The web dev server always proxies `/api` and `/ws` to the backend (`composeApp/webpack.config.d/proxy.js`) because the backend serves no CORS headers; the proxy target follows the active `BASE_URL_HTTP`, so switching it points the web dev build at that environment too.
