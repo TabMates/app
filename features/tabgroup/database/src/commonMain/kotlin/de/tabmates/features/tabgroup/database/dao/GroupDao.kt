@@ -27,13 +27,13 @@ interface GroupDao {
         SELECT g.*
         FROM groupentity g
         LEFT JOIN (
-            SELECT groupId, MAX(entryDate) AS lastEntryDate, MAX(createdAt) AS lastCreatedAt
+            SELECT groupId, MAX(lastModifiedAt) AS lastEntryModifiedAt
             FROM tabentryentity
             GROUP BY groupId
         ) lm ON g.groupId = lm.groupId
         ORDER BY
-            COALESCE(lm.lastEntryDate, date(g.lastModifiedAt / 1000, 'unixepoch')) DESC,
-            COALESCE(lm.lastCreatedAt, g.lastModifiedAt) DESC
+            MAX(g.lastModifiedAt, COALESCE(lm.lastEntryModifiedAt, 0)) DESC,
+            g.groupId
     """,
     )
     fun getGroupsWithParticipants(): Flow<List<GroupWithParticipants>>

@@ -14,6 +14,7 @@ import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.byMostRecentActivity
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.toUiItem
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.withStats
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -121,7 +122,7 @@ class HomeViewModel(
             contributingGroupCount = contributing.size,
             topGroups =
                 itemsByGroup
-                    .sortedByDescending { (group, _) -> group.lastActivityAt }
+                    .sortedWith(compareBy(byMostRecentActivity) { (_, item) -> item })
                     .take(MAX_TOP_GROUPS)
                     .map { (group, item) ->
                         HomeGroup(

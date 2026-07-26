@@ -239,6 +239,79 @@ class GroupOverviewViewModelTest {
         }
 
     @Test
+    fun freshEntryLiftsGroupAboveGroupWithNewerServerTimestamp() =
+        runTest(testDispatcher) {
+            // g1 was touched later server-side, but g2 has a just-added (still pending) expense —
+            // nothing bumps Group.lastActivityAt locally, so the entry has to drive the order.
+            val groupRepo =
+                FakeGroupRepository(
+                    initialGroups =
+                        listOf(
+                            Fixtures.group(id = "g1", title = "Stale", activityEpochMs = 500),
+                            Fixtures.group(id = "g2", title = "Fresh", activityEpochMs = 100),
+                        ),
+                )
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit(
+                groupId = "g2",
+                entries =
+                    listOf(
+                        Fixtures.expense(
+                            id = "e1",
+                            groupId = "g2",
+                            isPendingSync = true,
+                            lastModifiedEpochMs = 900,
+                        ),
+                    ),
+            )
+            val viewModel =
+                createViewModel(groupRepository = groupRepo, tabEntryRepository = tabEntryRepo)
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf("Fresh", "Stale"),
+                viewModel.state.value.displayedItems
+                    .map { it.title },
+            )
+
+            // Adding an even newer entry to the other group flips the order back.
+            tabEntryRepo.emit(
+                groupId = "g1",
+                entries = listOf(Fixtures.expense(id = "e2", groupId = "g1", lastModifiedEpochMs = 1_500)),
+            )
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf("Stale", "Fresh"),
+                viewModel.state.value.displayedItems
+                    .map { it.title },
+            )
+        }
+
+    @Test
+    fun equalTimestampsKeepStableOrderById() =
+        runTest(testDispatcher) {
+            val groupRepo =
+                FakeGroupRepository(
+                    initialGroups =
+                        listOf(
+                            Fixtures.group(id = "g2", title = "Second", activityEpochMs = 100),
+                            Fixtures.group(id = "g1", title = "First", activityEpochMs = 100),
+                        ),
+                )
+            val viewModel = createViewModel(groupRepository = groupRepo)
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf("First", "Second"),
+                viewModel.state.value.displayedItems
+                    .map { it.title },
+            )
+        }
+
+    @Test
     fun onGroupSelectedUpdatesSelectedGroupId() =
         runTest(testDispatcher) {
             val groupRepo =

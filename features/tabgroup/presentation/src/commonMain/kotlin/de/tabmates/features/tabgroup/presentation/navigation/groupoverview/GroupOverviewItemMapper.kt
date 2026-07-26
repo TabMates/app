@@ -7,7 +7,15 @@ import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.TabEntry
+import de.tabmates.features.tabgroup.domain.models.latestActivityAt
 import de.tabmates.features.tabgroup.presentation.components.deriveGroupAvatarKey
+
+/**
+ * Most recently changed group first. The id tie-break keeps the order stable across re-emissions
+ * when timestamps are equal, so the list doesn't shuffle while per-group entry flows arrive.
+ */
+internal val byMostRecentActivity: Comparator<GroupOverviewItem> =
+    compareByDescending<GroupOverviewItem> { it.lastActivityAt }.thenBy { it.id }
 
 internal fun Group.toUiItem(currency: Currency?): GroupOverviewItem {
     val (iconKey, colorKey) = deriveGroupAvatarKey(id)
@@ -46,5 +54,6 @@ internal fun GroupOverviewItem.withStats(
         totalSpent = totalSpent,
         balance = GroupBalance.fromNet(net),
         hasPendingSync = entries.any { it.isPendingSync },
+        lastActivityAt = latestActivityAt(lastActivityAt, entries),
     )
 }
