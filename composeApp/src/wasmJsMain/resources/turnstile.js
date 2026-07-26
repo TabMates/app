@@ -5,13 +5,35 @@
 // launches offline. This file is same-origin (cached + served by the app-shell service worker), so
 // it still runs — every entry point guards against a missing/blocked api.js and falls back to a null
 // token, so the Wasm app boots normally and auth calls simply omit the cf-turnstile-response header.
+//
+// The widget container is created here rather than declared in index.html: ComposeViewport mounts
+// into document.body and clears its children, so any node written in the HTML body is gone by the
+// time the app runs (see composeApp/src/webMain/kotlin/de/tabmates/composeapp/main.kt).
 (function () {
+  var CONTAINER_ID = "turnstile-container";
+  // Hard cap on a single challenge. Turnstile's timeout-callback only covers challenges it knows
+  // expired — a challenge that simply never returns would otherwise leave getToken() suspended
+  // forever and the submit button spinning.
+  var EXECUTE_TIMEOUT_MS = 15000;
+
   var widgetId = null;
+  var container = null;
+  // The container widgetId was rendered into, so a Compose-dropped container forces a re-render.
+  var renderedIn = null;
   var sitekey = null;
   // Resolver for the challenge currently in flight; Turnstile delivers the token via callback.
   var pendingResolve = null;
+  var pendingTimer = null;
+
+  function warn(reason) {
+    console.warn("[turnstile] no token: " + reason);
+  }
 
   function settle(value) {
+    if (pendingTimer !== null) {
+      clearTimeout(pendingTimer);
+      pendingTimer = null;
+    }
     if (pendingResolve) {
       var resolve = pendingResolve;
       pendingResolve = null;
@@ -19,21 +41,59 @@
     }
   }
 
-  // Renders the invisible widget once. Returns false if the api.js/container are not ready yet.
+  // Returns the hidden container, (re-)creating it if it was never made or Compose removed it.
+  function getContainer() {
+    if (container && document.body.contains(container)) return container;
+    if (!document.body) return null;
+    container = document.createElement("div");
+    container.id = CONTAINER_ID;
+    // The invisible widget sizes/positions itself; this only keeps it out of the layout.
+    container.style.display = "none";
+    document.body.appendChild(container);
+    return container;
+  }
+
+  // Renders the invisible widget once. Returns false if the api.js/DOM are not ready yet.
   function ensureRendered() {
+    var target = getContainer();
+    if (!target) {
+      warn("document.body not ready");
+      return false;
+    }
+    // A container we already rendered into can be dropped by Compose; re-render into the new one.
+    if (renderedIn !== target) widgetId = null;
     if (widgetId !== null) return true;
-    if (typeof window.turnstile === "undefined" || !sitekey) return false;
-    var container = document.getElementById("turnstile-container");
-    if (!container) return false;
-    widgetId = window.turnstile.render(container, {
-      sitekey: sitekey,
-      size: "invisible",
-      // Challenge runs only when execute() is called (on submit), not at render time.
-      execution: "execute",
-      callback: function (token) { settle(token); },
-      "error-callback": function () { settle(null); return true; },
-      "timeout-callback": function () { settle(null); },
-    });
+    if (typeof window.turnstile === "undefined") {
+      warn("api.js unavailable (offline or blocked)");
+      return false;
+    }
+    if (!sitekey) {
+      warn("no site key (TURNSTILE_SITE_KEY unset for this build)");
+      return false;
+    }
+    try {
+      widgetId = window.turnstile.render(target, {
+        sitekey: sitekey,
+        size: "invisible",
+        // Challenge runs only when execute() is called (on submit), not at render time.
+        execution: "execute",
+        callback: function (token) { settle(token); },
+        "error-callback": function () { settle(null); return true; },
+        "timeout-callback": function () { settle(null); },
+      });
+    } catch (e) {
+      widgetId = null;
+      warn("render() threw: " + e);
+      return false;
+    }
+    // render() returns undefined when it declines to render; undefined !== null, so normalise it
+    // or the widget would count as rendered forever.
+    if (widgetId === undefined || widgetId === null) {
+      widgetId = null;
+      warn("render() returned no widget id");
+      return false;
+    }
+    renderedIn = target;
     return true;
   }
 
@@ -55,10 +115,15 @@
       // Abandon any prior in-flight challenge before starting a new one.
       settle(null);
       pendingResolve = resolve;
+      pendingTimer = setTimeout(function () {
+        warn("challenge timed out after " + EXECUTE_TIMEOUT_MS + "ms");
+        settle(null);
+      }, EXECUTE_TIMEOUT_MS);
       try {
         window.turnstile.reset(widgetId);
         window.turnstile.execute(widgetId);
       } catch (e) {
+        warn("execute() threw: " + e);
         settle(null);
       }
     });
