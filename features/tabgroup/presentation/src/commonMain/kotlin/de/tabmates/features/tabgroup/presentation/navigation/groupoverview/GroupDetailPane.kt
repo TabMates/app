@@ -789,9 +789,9 @@ private fun SettlementRow(
 }
 
 /**
- * Amount shown on a transaction row. For a foreign-currency entry, the converted amount in the
- * group's base currency leads, followed by the original amount in brackets
- * (e.g. `€18.40 - ($20.00)`). Same-currency entries just show the single amount, and if no rate
+ * Amount shown on a transaction row. For a foreign-currency entry, the amount actually booked
+ * leads, followed by the converted amount in the group's base currency in brackets
+ * (e.g. `$20.00 (≈ €18.40)`). Same-currency entries just show the single amount, and if no rate
  * is available the original amount is shown on its own. The entry's locked-in rate wins over the
  * live rate table, so displayed values match the balance math and don't drift with rate updates.
  */
@@ -807,7 +807,7 @@ private fun entryAmountLabel(
     if (entry.currencyCode == item.currencyCode) return original
 
     val converted = convertEntryAmount(entry.amount, entry, item, ratesByCurrency) ?: return original
-    return "${formatAmount(item, converted)} ≈ ($original)"
+    return "$original (≈ ${formatAmount(item, converted)})"
 }
 
 /**
