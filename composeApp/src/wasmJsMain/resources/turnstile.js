@@ -41,19 +41,25 @@
     }
   }
 
-  // Returns the hidden container, (re-)creating it if it was never made or Compose removed it.
+  // Returns the widget container, (re-)creating it if it was never made or Compose removed it.
+  // Not display:none — an interaction-only widget collapses to nothing on its own while the
+  // challenge is silent, but must be able to show itself on the rare challenge that needs a click.
+  // Fixed + centered so that one lands on top of the Compose canvas instead of inside its layout.
   function getContainer() {
     if (container && document.body.contains(container)) return container;
     if (!document.body) return null;
     container = document.createElement("div");
     container.id = CONTAINER_ID;
-    // The invisible widget sizes/positions itself; this only keeps it out of the layout.
-    container.style.display = "none";
+    container.style.position = "fixed";
+    container.style.left = "50%";
+    container.style.top = "50%";
+    container.style.transform = "translate(-50%, -50%)";
+    container.style.zIndex = "2147483647";
     document.body.appendChild(container);
     return container;
   }
 
-  // Renders the invisible widget once. Returns false if the api.js/DOM are not ready yet.
+  // Renders the widget once. Returns false if the api.js/DOM are not ready yet.
   function ensureRendered() {
     var target = getContainer();
     if (!target) {
@@ -74,7 +80,9 @@
     try {
       widgetId = window.turnstile.render(target, {
         sitekey: sitekey,
-        size: "invisible",
+        // "invisible" is NOT a valid size (only compact/flexible/normal) — passing it makes
+        // render() throw. Invisible-until-needed is appearance:interaction-only instead.
+        appearance: "interaction-only",
         // Challenge runs only when execute() is called (on submit), not at render time.
         execution: "execute",
         callback: function (token) { settle(token); },
