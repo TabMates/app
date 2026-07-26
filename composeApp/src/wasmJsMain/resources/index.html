@@ -34,10 +34,11 @@
                           repeatCount="indefinite"/>
     </circle>
 </svg>
-<!-- Cloudflare Turnstile renders its (invisible) challenge into this hidden container; the widget
-     itself is an iframe from challenges.cloudflare.com, allow-listed via script-src + frame-src in
-     the deploy CSP. Requires COEP credentialless (not require-corp) — see headers.js / WEB_DEPLOYMENT.md. -->
-<div id="turnstile-container" style="display:none"></div>
+<!-- Cloudflare Turnstile's hidden container is NOT declared here: ComposeViewport mounts into
+     document.body and clears its children, so anything in this body is removed once the app starts
+     (that is also what hides the spinner above). turnstile.js creates the container itself instead.
+     The widget is an iframe from challenges.cloudflare.com, allow-listed via script-src + frame-src
+     in the deploy CSP. Requires COEP credentialless (not require-corp) — see headers.js / WEB_DEPLOYMENT.md. -->
 <!-- Cross-origin scripts: OK under COEP require-corp only because gstatic sends
      Cross-Origin-Resource-Policy: cross-origin, and must be allow-listed in script-src if a
      Content-Security-Policy is served. Any new cross-origin resource needs the same. See the

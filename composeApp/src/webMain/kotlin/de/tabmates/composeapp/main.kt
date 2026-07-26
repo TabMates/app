@@ -26,6 +26,8 @@ fun main() {
     // index.html keeps its loading spinner up until the first frame.
     MainScope().launch {
         awaitSecureStorageReady()
+        // Mounts into document.body and clears its children, so nothing declared in index.html's
+        // body survives this call (turnstile.js therefore creates its container from JS).
         ComposeViewport {
             App()
         }
