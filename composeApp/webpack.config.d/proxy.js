@@ -23,11 +23,14 @@
       }
       dir = path.dirname(dir);
     }
-    console.log('[tabmates-proxy] forwarding /api and /ws to ' + target);
+    console.log('[tabmates-proxy] forwarding /api and /ws/group to ' + target);
 
     config.devServer.proxy = [
       {
-        context: ['/api', '/ws'],
+        // /ws/group, not /ws: webpack-dev-server's own HMR socket is ws://localhost:8081/ws, and a
+        // '/ws' context prefix-matches it too — the dev server would then proxy its own live-reload
+        // socket to the backend, which answers with "Invalid frame header" and kills HMR.
+        context: ['/api', '/ws/group'],
         target: target,
         ws: true,
         // Rewrite the Host header to the target's — required for name-based
