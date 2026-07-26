@@ -10,7 +10,7 @@ if (typeof window === 'undefined') {
     // Bump this to force a full reset of the offline app-shell cache (e.g. a caching-strategy
     // change). Routine deploys don't need it: precacheShell() below refreshes every entry and
     // prunes stale ones on each new service-worker install.
-    const SHELL_CACHE = "tabmates-shell-v1";
+    const SHELL_CACHE = "tabmates-shell-v2";
     // Key the navigation fallback under the app root (start_url is "/").
     const APP_SHELL_URL = "/";
     // Every real static asset in the production dist, injected here by CI right after
