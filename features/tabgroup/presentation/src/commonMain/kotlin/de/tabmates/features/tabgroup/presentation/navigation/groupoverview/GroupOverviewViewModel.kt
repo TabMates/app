@@ -54,7 +54,7 @@ class GroupOverviewViewModel(
             val currencyByCode = currencies.associateBy { it.code }
             groups
                 .map { group -> group.toUiItem(currencyByCode[group.defaultCurrencyCode]) }
-                .sortedByDescending { it.lastActivityAt }
+                .sortedWith(byMostRecentActivity)
         }.flatMapLatest { items ->
             if (items.isEmpty()) {
                 flowOf(items)
@@ -84,7 +84,7 @@ class GroupOverviewViewModel(
             pairs
                 .map { (item, entries) ->
                     item.withStats(entries, currentUserId, CurrencyConversion.from(item.currencyCode, rates))
-                }.sortedByDescending { it.lastActivityAt }
+                }.sortedWith(byMostRecentActivity)
         }.onStart { emit(baseItems) }
     }
 

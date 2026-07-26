@@ -48,6 +48,7 @@ object Fixtures {
         splits: List<TabEntrySplit> = emptyList(),
         entryDate: LocalDate = LocalDate.parse("1970-01-01"),
         isPendingSync: Boolean = false,
+        lastModifiedEpochMs: Long = 0L,
     ): TabEntry.Expense =
         TabEntry.Expense(
             tabEntryId = id,
@@ -60,7 +61,7 @@ object Fixtures {
             paidByUserId = paidByUserId,
             entryDate = entryDate,
             createdAt = Instant.fromEpochMilliseconds(0),
-            lastModifiedAt = Instant.fromEpochMilliseconds(0),
+            lastModifiedAt = Instant.fromEpochMilliseconds(lastModifiedEpochMs),
             lastModifiedByUserId = paidByUserId,
             version = 1,
             deletedAt = null,
