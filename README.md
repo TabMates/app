@@ -171,8 +171,6 @@ Hosting the web (WasmJS) build in production has extra requirements: cross-origi
 - [`AGENTS.md`](AGENTS.md) — architecture, patterns and conventions in depth
 - [`docs/WEB_DEPLOYMENT.md`](docs/WEB_DEPLOYMENT.md) — web hosting, CSP, CORS, GitHub Pages
 - [`features/notifications/README.md`](features/notifications/README.md) — push notification setup per platform
-- [`PRIVACY.md`](PRIVACY.md) — privacy policy
-- [`docs/ACCOUNT_DELETION.md`](docs/ACCOUNT_DELETION.md) — account deletion process
 
 ## License
 
