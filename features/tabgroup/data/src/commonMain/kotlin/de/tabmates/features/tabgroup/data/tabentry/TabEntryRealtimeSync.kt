@@ -58,6 +58,9 @@ class TabEntryRealtimeSync(
 
                 WsMessageType.GROUP_METADATA_CHANGED -> handleGroupMetadataChanged(message.payload)
 
+                // Owned by ActivityRealtimeSync; named here only to keep it out of the unknown-type log.
+                WsMessageType.ACTIVITY_EVENT -> Unit
+
                 WsMessageType.ERROR -> handleError(message.payload)
 
                 else -> logger.warning(TAG, "Unknown WS message type=${message.type}")

@@ -5,11 +5,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -66,6 +69,10 @@ import de.tabmates.features.tabgroup.domain.models.ParticipantType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
 import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
+import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivitySection
+import de.tabmates.features.tabgroup.presentation.navigation.activity.LoadMoreOnApproachingEnd
+import de.tabmates.features.tabgroup.presentation.navigation.activity.activityFeed
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.rememberMonthAbbreviations
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.buildInviteUrl
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.shortInviteUrl
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
@@ -107,6 +114,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_paid_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_you_paid
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_balances
+import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_history
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_members
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_settings
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_transactions
@@ -133,7 +141,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-private enum class DetailTab { TRANSACTIONS, BALANCES, MEMBERS, SETTINGS }
+private enum class DetailTab { TRANSACTIONS, HISTORY, BALANCES, MEMBERS, SETTINGS }
 
 /** Bottom space reserved so the last row can scroll clear of the host "Add Entry" FAB. */
 private val FabBottomClearance = 96.dp
@@ -150,6 +158,9 @@ internal fun GroupDetailPane(
     hasOutstandingDebts: Boolean,
     currencyByCode: Map<String, Currency>,
     ratesByCurrency: Map<String, Double>,
+    historySections: List<ActivitySection>,
+    canLoadMoreHistory: Boolean,
+    onLoadMoreHistory: () -> Unit,
     onRotateInvite: () -> Unit,
     onBack: () -> Unit = {},
     onSettingsClick: () -> Unit,
@@ -267,6 +278,16 @@ internal fun GroupDetailPane(
                     entries = entries,
                     currencyByCode = currencyByCode,
                     ratesByCurrency = ratesByCurrency,
+                    onEntryClick = onEntryClick,
+                    onSettlementClick = onSettlementClick,
+                )
+            }
+
+            DetailTab.HISTORY -> {
+                HistoryTab(
+                    sections = historySections,
+                    canLoadMore = canLoadMoreHistory,
+                    onLoadMore = onLoadMoreHistory,
                     onEntryClick = onEntryClick,
                     onSettlementClick = onSettlementClick,
                 )
@@ -400,6 +421,41 @@ private fun HeaderActions(
         ) {
             Text("+ ${stringResource(Res.string.groups_detail_add_entry)}")
         }
+    }
+}
+
+/**
+ * This group's slice of the activity log — the same rows as the account-wide Activity tab, filtered
+ * to this group and without repeating its name in every subtitle.
+ */
+@Composable
+private fun HistoryTab(
+    sections: List<ActivitySection>,
+    canLoadMore: Boolean,
+    onLoadMore: () -> Unit,
+    onEntryClick: (String) -> Unit,
+    onSettlementClick: (String) -> Unit,
+) {
+    val monthLabels = rememberMonthAbbreviations()
+    val listState = rememberLazyListState()
+    LoadMoreOnApproachingEnd(listState, canLoadMore, onLoadMore)
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding =
+            PaddingValues(
+                top = 8.dp,
+                bottom = FabBottomClearance,
+            ),
+    ) {
+        activityFeed(
+            sections = sections,
+            isLoading = false,
+            monthLabels = monthLabels,
+            // Every row here belongs to this group already, so the id that travels with it is moot.
+            onEntryClick = { _, entryId -> onEntryClick(entryId) },
+            onSettlementClick = { _, settlementId -> onSettlementClick(settlementId) },
+        )
     }
 }
 
@@ -1404,6 +1460,7 @@ private fun EmptyTabHint(
 private fun DetailTab.label(): String =
     when (this) {
         DetailTab.TRANSACTIONS -> stringResource(Res.string.groups_detail_tab_transactions)
+        DetailTab.HISTORY -> stringResource(Res.string.groups_detail_tab_history)
         DetailTab.BALANCES -> stringResource(Res.string.groups_detail_tab_balances)
         DetailTab.MEMBERS -> stringResource(Res.string.groups_detail_tab_members)
         DetailTab.SETTINGS -> stringResource(Res.string.groups_detail_tab_settings)

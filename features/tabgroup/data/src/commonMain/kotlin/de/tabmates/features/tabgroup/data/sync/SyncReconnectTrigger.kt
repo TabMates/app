@@ -3,8 +3,10 @@ package de.tabmates.features.tabgroup.data.sync
 import de.tabmates.core.data.di.APPLICATION_SCOPE
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.util.onFailure
+import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.tabgroup.data.network.ConnectionState
 import de.tabmates.features.tabgroup.data.network.KtorWebSocketConnector
+import de.tabmates.features.tabgroup.domain.activity.ActivityRepository
 import de.tabmates.features.tabgroup.domain.sync.SyncRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filter
@@ -23,6 +25,7 @@ import org.koin.core.annotation.Single
 class SyncReconnectTrigger(
     webSocketConnector: KtorWebSocketConnector,
     private val syncRepository: SyncRepository,
+    private val activityRepository: ActivityRepository,
     private val logger: TabMatesLogger,
     @Named(APPLICATION_SCOPE) applicationScope: CoroutineScope,
 ) {
@@ -33,7 +36,13 @@ class SyncReconnectTrigger(
             .onEach {
                 syncRepository
                     .sync()
-                    .onFailure { error -> logger.warning(TAG, "Reconnect delta sync failed: $error") }
+                    // Activity events foreign-key onto their group, so the mirror can only be
+                    // written once group sync has landed the groups themselves.
+                    .onSuccess {
+                        activityRepository
+                            .sync()
+                            .onFailure { error -> logger.warning(TAG, "Reconnect activity sync failed: $error") }
+                    }.onFailure { error -> logger.warning(TAG, "Reconnect delta sync failed: $error") }
             }.launchIn(applicationScope)
     }
 

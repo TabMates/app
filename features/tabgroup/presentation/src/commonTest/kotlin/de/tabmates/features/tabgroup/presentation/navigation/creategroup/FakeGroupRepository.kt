@@ -16,6 +16,7 @@ import kotlin.time.Instant
 class FakeGroupRepository(
     var createGroupResult: Result<Group, DataError.Remote> = Result.Success(DEFAULT_GROUP),
     initialGroups: List<Group> = emptyList(),
+    initialAllParticipants: List<GroupParticipant> = emptyList(),
 ) : GroupRepository {
     data class CreateGroupCall(
         val title: String,
@@ -27,6 +28,7 @@ class FakeGroupRepository(
     val createGroupCalls: MutableList<CreateGroupCall> = mutableListOf()
 
     private val groupsFlow = MutableStateFlow(initialGroups)
+    private val allParticipantsFlow = MutableStateFlow(initialAllParticipants)
 
     fun emitGroups(groups: List<Group>) {
         groupsFlow.value = groups
@@ -36,6 +38,8 @@ class FakeGroupRepository(
 
     override fun getActiveParticipantsByGroupId(groupId: String): Flow<List<GroupParticipant>> =
         flowOf(emptyList())
+
+    override fun getAllParticipants(): Flow<List<GroupParticipant>> = allParticipantsFlow
 
     override suspend fun fetchGroupById(groupId: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
 

@@ -22,6 +22,7 @@ object WsMessageType {
     // Incoming (server -> client)
     const val TAB_ENTRY_DELETED = "TAB_ENTRY_DELETED"
     const val GROUP_METADATA_CHANGED = "GROUP_METADATA_CHANGED"
+    const val ACTIVITY_EVENT = "ACTIVITY_EVENT"
     const val ERROR = "ERROR"
 }
 

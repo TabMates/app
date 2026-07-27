@@ -74,6 +74,7 @@ class TabEntryOutbox(
         paidByUserId: String,
         entryDate: LocalDate,
         splits: List<NewTabEntrySplit>,
+        expectedVersion: Int?,
     ) {
         logger.debug(TAG, "Outbox enqueue create id=$clientRequestId")
         val payload =
@@ -100,6 +101,7 @@ class TabEntryOutbox(
                 type = OUTBOX_TYPE_NEW_TAB_ENTRY,
                 payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
+                expectedVersion = expectedVersion,
             ),
         )
         applicationScope.launch { drain() }
@@ -116,6 +118,7 @@ class TabEntryOutbox(
         paidByUserId: String,
         receivedByUserId: String,
         entryDate: LocalDate,
+        expectedVersion: Int?,
     ) {
         val payload =
             NewTabEntryWsPayload.Settlement(
@@ -141,6 +144,7 @@ class TabEntryOutbox(
                 type = OUTBOX_TYPE_NEW_TAB_ENTRY,
                 payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
+                expectedVersion = expectedVersion,
             ),
         )
         applicationScope.launch { drain() }
@@ -157,6 +161,7 @@ class TabEntryOutbox(
         paidByUserId: String,
         entryDate: LocalDate,
         splits: List<NewTabEntrySplit>,
+        expectedVersion: Int?,
     ) {
         val payload =
             NewTabEntryWsPayload.Expense(
@@ -182,6 +187,7 @@ class TabEntryOutbox(
                 type = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
                 payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
+                expectedVersion = expectedVersion,
             ),
         )
         applicationScope.launch { drain() }
@@ -198,6 +204,7 @@ class TabEntryOutbox(
         paidByUserId: String,
         entryDate: LocalDate,
         splits: List<NewTabEntrySplit>,
+        expectedVersion: Int?,
     ) {
         logger.debug(TAG, "Outbox enqueue create income id=$clientRequestId")
         val payload =
@@ -224,6 +231,7 @@ class TabEntryOutbox(
                 type = OUTBOX_TYPE_NEW_TAB_ENTRY,
                 payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
+                expectedVersion = expectedVersion,
             ),
         )
         applicationScope.launch { drain() }
@@ -240,6 +248,7 @@ class TabEntryOutbox(
         paidByUserId: String,
         entryDate: LocalDate,
         splits: List<NewTabEntrySplit>,
+        expectedVersion: Int?,
     ) {
         val payload =
             NewTabEntryWsPayload.Income(
@@ -265,6 +274,7 @@ class TabEntryOutbox(
                 type = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
                 payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
+                expectedVersion = expectedVersion,
             ),
         )
         applicationScope.launch { drain() }
@@ -281,6 +291,7 @@ class TabEntryOutbox(
         paidByUserId: String,
         receivedByUserId: String,
         entryDate: LocalDate,
+        expectedVersion: Int?,
     ) {
         val payload =
             NewTabEntryWsPayload.Settlement(
@@ -306,6 +317,7 @@ class TabEntryOutbox(
                 type = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
                 payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
+                expectedVersion = expectedVersion,
             ),
         )
         applicationScope.launch { drain() }
@@ -333,12 +345,34 @@ class TabEntryOutbox(
             true
         }
 
-    suspend fun enqueueDeleteTabEntry(tabEntryId: String) {
+    /**
+     * Queues a remote delete, carrying a snapshot of what is being deleted.
+     *
+     * The caller must read the snapshot *before* wiping the local row: nothing else survives the
+     * delete, so without it the activity feed's pending row has no title or amount to show.
+     */
+    suspend fun enqueueDeleteTabEntry(
+        tabEntryId: String,
+        groupId: String? = null,
+        title: String? = null,
+        amount: Double? = null,
+        currencyCode: String? = null,
+        entryType: String? = null,
+    ) {
+        val payload =
+            PendingDeletePayload(
+                tabEntryId = tabEntryId,
+                groupId = groupId,
+                title = title,
+                amount = amount,
+                currencyCode = currencyCode,
+                entryType = entryType,
+            )
         database.pendingOutboxDao.upsert(
             PendingOutboxEntity(
                 id = "$DELETE_ID_PREFIX$tabEntryId",
                 type = OUTBOX_TYPE_TAB_ENTRY_DELETE,
-                payload = tabEntryId,
+                payload = json.encodeToString(PendingDeletePayload.serializer(), payload),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
             ),
         )
@@ -427,7 +461,7 @@ class TabEntryOutbox(
                 }
 
                 OUTBOX_TYPE_TAB_ENTRY_DELETE -> {
-                    dispatchDelete(item.payload)
+                    dispatchDelete(json.decodePendingDeletePayload(item.payload).tabEntryId)
                 }
 
                 else -> {
@@ -509,13 +543,17 @@ class TabEntryOutbox(
         data class Permanent(val reason: String) : DispatchResult()
     }
 
-    private companion object {
+    /**
+     * The id scheme and type tags are read back by the activity feed's merge layer, which recovers a
+     * write's `tabEntryId` by stripping these prefixes, so they are shared rather than private.
+     */
+    internal companion object {
         private const val TAG = "TabEntryOutbox"
-        private const val DELETE_ID_PREFIX = "delete:"
-        private const val UPDATE_ID_PREFIX = "update:"
         private const val MAX_ATTEMPTS = 10
-        private const val OUTBOX_TYPE_NEW_TAB_ENTRY = "new_tab_entry"
-        private const val OUTBOX_TYPE_TAB_ENTRY_UPDATE = "tab_entry.update"
-        private const val OUTBOX_TYPE_TAB_ENTRY_DELETE = "tab_entry.delete"
+        const val DELETE_ID_PREFIX = "delete:"
+        const val UPDATE_ID_PREFIX = "update:"
+        const val OUTBOX_TYPE_NEW_TAB_ENTRY = "new_tab_entry"
+        const val OUTBOX_TYPE_TAB_ENTRY_UPDATE = "tab_entry.update"
+        const val OUTBOX_TYPE_TAB_ENTRY_DELETE = "tab_entry.delete"
     }
 }

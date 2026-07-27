@@ -125,6 +125,7 @@
     <string name="groups_detail_tab_balances">Salden</string>
     <string name="groups_detail_tab_members">Mitglieder</string>
     <string name="groups_detail_tab_settings">Einstellungen</string>
+    <string name="groups_detail_tab_history">Verlauf</string>
     <string name="groups_detail_youre_owed">Du hast verliehen</string>
     <string name="groups_detail_you_owe">Du hast geliehen</string>
     <string name="groups_detail_total_spent">Gesamtausgaben</string>
@@ -338,6 +339,21 @@
     <string name="activity_settled_with_you">hat mit dir ausgeglichen</string>
     <string name="activity_settled_with">hat ausgeglichen mit</string>
     <string name="activity_empty">Noch keine Aktivität</string>
+    <string name="activity_action_group_updated">aktualisiert</string>
+    <string name="activity_action_member_joined">ist beigetreten</string>
+    <string name="activity_action_member_left">hat verlassen</string>
+    <string name="activity_action_member_removed">hat entfernt</string>
+    <string name="activity_field_title">Titel</string>
+    <string name="activity_field_description">Beschreibung</string>
+    <string name="activity_field_amount">Betrag</string>
+    <string name="activity_field_currency">Währung</string>
+    <string name="activity_field_exchange_rate">Wechselkurs</string>
+    <string name="activity_field_entry_date">Datum</string>
+    <string name="activity_field_paid_by">Bezahlt von</string>
+    <string name="activity_field_received_by">Erhalten von</string>
+    <string name="activity_field_splits">Aufteilung</string>
+    <string name="activity_field_default_currency">Standardwährung</string>
+    <string name="activity_diff_splits_changed">Aufteilung geändert</string>
 
     <string name="account_save">Speichern</string>
     <string name="edit_username_title">Benutzername</string>

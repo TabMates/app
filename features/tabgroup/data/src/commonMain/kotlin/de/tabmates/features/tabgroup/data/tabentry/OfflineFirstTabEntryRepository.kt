@@ -82,6 +82,7 @@ class OfflineFirstTabEntryRepository(
             paidByUserId = paidByUserId,
             entryDate = entryDate,
             splits = splits,
+            expectedVersion = 0,
         )
         return Result.Success(expense)
     }
@@ -140,6 +141,7 @@ class OfflineFirstTabEntryRepository(
             paidByUserId = paidByUserId,
             entryDate = entryDate,
             splits = splits,
+            expectedVersion = (existing?.version ?: 0) + 1,
         )
         return Result.Success(expense)
     }
@@ -192,6 +194,7 @@ class OfflineFirstTabEntryRepository(
             paidByUserId = paidByUserId,
             entryDate = entryDate,
             splits = splits,
+            expectedVersion = 0,
         )
         return Result.Success(income)
     }
@@ -250,6 +253,7 @@ class OfflineFirstTabEntryRepository(
             paidByUserId = paidByUserId,
             entryDate = entryDate,
             splits = splits,
+            expectedVersion = (existing?.version ?: 0) + 1,
         )
         return Result.Success(income)
     }
@@ -301,6 +305,7 @@ class OfflineFirstTabEntryRepository(
             paidByUserId = paidByUserId,
             receivedByUserId = receivedByUserId,
             entryDate = entryDate,
+            expectedVersion = 0,
         )
         return Result.Success(settlement)
     }
@@ -354,6 +359,7 @@ class OfflineFirstTabEntryRepository(
             paidByUserId = paidByUserId,
             receivedByUserId = receivedByUserId,
             entryDate = entryDate,
+            expectedVersion = (existing?.version ?: 0) + 1,
         )
         return Result.Success(settlement)
     }
@@ -363,9 +369,19 @@ class OfflineFirstTabEntryRepository(
         // remote delete here would only 404 — and could race the still-pending create's echo,
         // resurrecting the entry on the server after it's gone locally.
         if (!outbox.cancelPendingCreate(tabEntryId)) {
+            // Snapshot before the wipe below: once the row is gone nothing else remembers what was
+            // deleted, and the activity feed's pending row needs a title and amount to show.
+            val existing = database.tabEntryDao.getTabEntryById(tabEntryId)?.tabEntry
             // Persist intent first so a crash between enqueue and local delete still drives the
             // remote delete on next drain. Outbox upsert by id is idempotent.
-            outbox.enqueueDeleteTabEntry(tabEntryId)
+            outbox.enqueueDeleteTabEntry(
+                tabEntryId = tabEntryId,
+                groupId = existing?.groupId,
+                title = existing?.title,
+                amount = existing?.amount,
+                currencyCode = existing?.currencyCode,
+                entryType = existing?.entryType?.name,
+            )
         }
         database.tabEntryDao.deleteTabEntryAndSplits(
             tabEntryId = tabEntryId,

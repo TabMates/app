@@ -3,6 +3,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.groupdetail
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeActivityRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
@@ -244,6 +245,7 @@ class GroupDetailViewModelTest {
         tabEntryRepository: FakeTabEntryRepository = FakeTabEntryRepository(),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
         exchangeRateRepository: FakeExchangeRateRepository = FakeExchangeRateRepository(),
+        activityRepository: FakeActivityRepository = FakeActivityRepository(),
         sessionStorage: FakeSessionStorage = FakeSessionStorage(),
     ): GroupDetailViewModel =
         GroupDetailViewModel(
@@ -252,6 +254,7 @@ class GroupDetailViewModelTest {
             tabEntryRepository = tabEntryRepository,
             currencyRepository = currencyRepository,
             exchangeRateRepository = exchangeRateRepository,
+            activityRepository = activityRepository,
             sessionStorage = sessionStorage,
         )
 }
