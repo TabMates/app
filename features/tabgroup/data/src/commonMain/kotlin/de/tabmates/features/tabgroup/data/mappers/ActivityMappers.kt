@@ -22,9 +22,9 @@ fun ActivityEventDto.toDomain(): ActivityEvent =
         groupId = groupId,
         occurredAt = occurredAt,
         actorUserId = actorUserId,
-        type = type.toActivityEventType(),
+        type = type,
         tabEntryId = tabEntryId,
-        entryType = entryType?.toActivityEntryType(),
+        entryType = entryType,
         entryTitle = entryTitle,
         amount = amount,
         currencyCode = currencyCode,
@@ -36,7 +36,7 @@ fun ActivityEventDto.toDomain(): ActivityEvent =
 
 fun ActivityChangeDto.toDomain(): ActivityFieldChange =
     ActivityFieldChange(
-        field = field.toActivityField(),
+        field = field,
         oldValue = oldValue,
         newValue = newValue,
     )
@@ -100,15 +100,9 @@ fun ActivityEventWithChanges.toDomain(): ActivityEvent =
     )
 
 /**
- * Widens a wire string to the domain enum. An unrecognised value lands on `UNKNOWN` rather than
- * throwing, which is the whole reason the wire format is a string.
+ * Widens the entry type held in a queued delete's snapshot payload, which is a plain string rather
+ * than a serialized enum. The wire DTOs need no equivalent — their serializers already fall back.
  */
-fun String.toActivityEventType(): ActivityEventType =
-    ActivityEventType.entries.firstOrNull { it.name == this } ?: ActivityEventType.UNKNOWN
-
-fun String.toActivityField(): ActivityField =
-    ActivityField.entries.firstOrNull { it.name == this } ?: ActivityField.UNKNOWN
-
 fun String.toActivityEntryType(): ActivityEntryType =
     ActivityEntryType.entries.firstOrNull { it.name == this } ?: ActivityEntryType.UNKNOWN
 
