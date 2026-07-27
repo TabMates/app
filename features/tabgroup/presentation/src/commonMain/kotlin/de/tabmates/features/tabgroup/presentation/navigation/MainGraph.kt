@@ -75,6 +75,12 @@ fun EntryProviderScope<NavKey>.mainGraph(
     entry<Activity> {
         ActivityRoot(
             onGroupClick = { groupId -> backStack.add(GroupDetail(groupId)) },
+            onEntryClick = { groupId, entryId ->
+                backStack.add(EntryDetail(entryId = entryId, groupId = groupId))
+            },
+            onSettlementClick = { groupId, settlementId ->
+                backStack.add(SettlementDetail(settlementId = settlementId, groupId = groupId))
+            },
         )
     }
 

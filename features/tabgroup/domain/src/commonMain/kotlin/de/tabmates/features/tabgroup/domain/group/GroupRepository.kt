@@ -13,6 +13,13 @@ interface GroupRepository {
 
     fun getActiveParticipantsByGroupId(groupId: String): Flow<List<GroupParticipant>>
 
+    /**
+     * Everyone the client has ever seen, in any group and whether or not they are still a member.
+     * [getGroups] carries active members only, so this is what resolves the *old* side of a
+     * `PAID_BY` activity diff naming someone who has since left.
+     */
+    fun getAllParticipants(): Flow<List<GroupParticipant>>
+
     suspend fun fetchGroupById(groupId: String): EmptyResult<DataError.Remote>
 
     suspend fun createGroup(

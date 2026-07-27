@@ -125,6 +125,7 @@
     <string name="groups_detail_tab_balances">Balances</string>
     <string name="groups_detail_tab_members">Members</string>
     <string name="groups_detail_tab_settings">Settings</string>
+    <string name="groups_detail_tab_history">History</string>
     <string name="groups_detail_youre_owed">You lent</string>
     <string name="groups_detail_you_owe">You borrowed</string>
     <string name="groups_detail_total_spent">Total spent</string>
@@ -338,6 +339,21 @@
     <string name="activity_settled_with_you">settled up with you</string>
     <string name="activity_settled_with">settled up with</string>
     <string name="activity_empty">No activity yet</string>
+    <string name="activity_action_group_updated">updated</string>
+    <string name="activity_action_member_joined">joined</string>
+    <string name="activity_action_member_left">left</string>
+    <string name="activity_action_member_removed">removed</string>
+    <string name="activity_field_title">Title</string>
+    <string name="activity_field_description">Description</string>
+    <string name="activity_field_amount">Amount</string>
+    <string name="activity_field_currency">Currency</string>
+    <string name="activity_field_exchange_rate">Exchange rate</string>
+    <string name="activity_field_entry_date">Date</string>
+    <string name="activity_field_paid_by">Paid by</string>
+    <string name="activity_field_received_by">Received by</string>
+    <string name="activity_field_splits">Split</string>
+    <string name="activity_field_default_currency">Default currency</string>
+    <string name="activity_diff_splits_changed">Split changed</string>
 
     <string name="account_save">Save</string>
     <string name="edit_username_title">Username</string>

@@ -52,6 +52,12 @@ class OfflineFirstGroupRepository(
             }
     }
 
+    override fun getAllParticipants(): Flow<List<GroupParticipant>> {
+        return database.groupParticipantDao
+            .observeAllParticipants()
+            .map { participants -> participants.map { it.toDomain() } }
+    }
+
     override fun getActiveParticipantsByGroupId(groupId: String): Flow<List<GroupParticipant>> {
         return database.groupDao
             .getActiveParticipantsByGroupId(groupId)
