@@ -21,4 +21,13 @@ data class PendingOutboxEntity(
     val attemptCount: Int = 0,
     val lastAttemptAt: Long? = null,
     val lastError: String? = null,
+    /**
+     * The `TabEntryEntity.version` this write will produce once the server applies it — 0 for a
+     * create, the current version + 1 for an update, null for a delete (which is terminal, so no
+     * version math is needed).
+     *
+     * Exists so the activity feed can retire the synthesized "Not synced" row for this write the
+     * moment the server's own event for it arrives, rather than showing the change twice.
+     */
+    val expectedVersion: Int? = null,
 )
