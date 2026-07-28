@@ -181,5 +181,5 @@ common
 - **Tests:** `./gradlew allTests` (all targets) or narrower, e.g. `:androidApp:testDebugUnitTest`.
 - **Compiler warnings:** CI checks build log against `.github/compiler-warnings-baseline.txt` via `.github/check-compiler-warnings.sh` — new warnings fail the PR pipeline. Don't introduce any.
 - **CI parity:** `.github/workflows/pr_pipeline.yml` = ktlint + `:androidApp:assembleDebug lintDebug testDebugUnitTest` + `:composeApp:desktopJar` + wasm distribution + `allTests`.
-- **Local Config:** `local.properties` must have `API_KEY`.
+- **Local Config:** `local.properties` must have `API_KEY`. `CLIENT_BUILD_TOKEN` is optional (see README) — once the backend enables its version gate, native builds without a matching one get `426`.
 - **Sync:** `./gradlew help` (triggers sync).

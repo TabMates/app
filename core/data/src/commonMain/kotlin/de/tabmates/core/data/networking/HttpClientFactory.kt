@@ -1,5 +1,6 @@
 package de.tabmates.core.data.networking
 
+import de.tabmates.core.data.AppBuildInfo
 import de.tabmates.core.data.BuildKonfig
 import de.tabmates.core.data.dto.AuthInfoSerializable
 import de.tabmates.core.data.dto.requests.RefreshRequest
@@ -59,6 +60,11 @@ class HttpClientFactory(
             defaultRequest {
                 // Null on web (server allow-lists the Origin instead); real key on native.
                 BuildKonfig.API_KEY?.let { header("x-api-key", it) }
+                // Every /api/** and /ws/** call must declare its version or the server answers 426.
+                // Set here rather than per call so a new endpoint cannot forget it.
+                header("X-Client-Version", AppBuildInfo.clientVersionHeader)
+                // Null on web, and on any build whose pipeline did not mint one.
+                AppBuildInfo.buildToken?.let { header("X-Client-Token", it) }
                 contentType(ContentType.Application.Json)
             }
 

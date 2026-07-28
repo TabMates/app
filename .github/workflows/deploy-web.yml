@@ -8,6 +8,11 @@ name: Deploy Web
 
 on:
   workflow_call:
+    inputs:
+      app_version:
+        description: 'Version this build reports, without the leading v. Resolved by release-pipeline.yml.'
+        required: true
+        type: string
 
 env:
   # BuildKonfig requires all three defaults even though the *_WEB overrides
@@ -42,8 +47,13 @@ jobs:
         with:
           cache-read-only: true
 
+      # Without app_version the bundle ships the gradle.properties fallback, which the backend's
+      # client-version gate has never heard of. Same input release-android.yml gets, so the web
+      # build always reports the version Android reports.
       - name: Build wasmJs production distribution
         run: ./gradlew :composeApp:wasmJsBrowserDistribution --stacktrace
+        env:
+          ORG_GRADLE_PROJECT_APP_VERSION: ${{ inputs.app_version }}
 
       - name: Inject offline precache manifest into the service worker
         # coi-serviceworker.js also runs the offline app-shell cache (see docs/WEB_DEPLOYMENT.md);

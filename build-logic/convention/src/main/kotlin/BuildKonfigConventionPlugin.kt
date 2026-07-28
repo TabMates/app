@@ -1,6 +1,7 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import com.codingfeline.buildkonfig.compiler.FieldSpec
 import com.codingfeline.buildkonfig.gradle.BuildKonfigExtension
+import de.tabmates.convention.appVersion
 import de.tabmates.convention.findPluginId
 import de.tabmates.convention.libs
 import de.tabmates.convention.pathToPackageName
@@ -32,12 +33,8 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
 
             fun optionalProperty(key: String): String? = System.getenv(key) ?: localProperties.getProperty(key)
 
-            // App version exposed cross-platform for the in-app update check.
-            val appVersion: String =
-                System.getenv("APP_VERSION")
-                    ?: localProperties.getProperty("APP_VERSION")
-                    ?: findProperty("APP_VERSION")?.toString()
-                    ?: "0.1.0"
+            // Shared with androidApp's versionName/versionCode — see Project.appVersion.
+            val resolvedAppVersion: String = target.appVersion
 
             extensions.configure<BuildKonfigExtension> {
                 packageName = target.pathToPackageName()
@@ -47,13 +44,24 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                     // are still populated with the real key at runtime — only the compile-time
                     // type becomes String?, so every consumer must null-guard it.
                     buildConfigField(FieldSpec.Type.STRING, "API_KEY", requireProperty("API_KEY"), nullable = true)
+                    // Per-release token for the backend's client-version gate:
+                    // base64url(HMAC-SHA256(secret, "<platform>|<version>")). CI mints it and passes
+                    // only the result — the secret never reaches Gradle or the artifact, which is
+                    // the whole point (unlike API_KEY, which ships verbatim and is extractable).
+                    // Optional so PR and local builds work without it.
+                    buildConfigField(
+                        FieldSpec.Type.STRING,
+                        "CLIENT_BUILD_TOKEN",
+                        optionalProperty("CLIENT_BUILD_TOKEN"),
+                        nullable = true,
+                    )
                     buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", requireProperty("BASE_URL_HTTP"))
                     buildConfigField(FieldSpec.Type.STRING, "BASE_URL_WS", requireProperty("BASE_URL_WS"))
                     // User-facing host for shareable links / deep links (e.g. https://app.tabmates.de),
                     // decoupled from the backend API host above. Required (like BASE_URL_HTTP) so the
                     // deep-link host is always explicit; same value on all targets.
                     buildConfigField(FieldSpec.Type.STRING, "BASE_URL_PUBLIC", requireProperty("BASE_URL_PUBLIC"))
-                    buildConfigField(FieldSpec.Type.STRING, "APP_VERSION", appVersion)
+                    buildConfigField(FieldSpec.Type.STRING, "APP_VERSION", resolvedAppVersion)
                     // Cloudflare Turnstile site key (a public identifier). Optional: only the web
                     // auth build renders the widget and reads it; every other target/module leaves
                     // it null. Nullable + optionalProperty so it is never a required build property.
@@ -95,6 +103,10 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                         // Web sends no x-api-key / api_key: the server recognizes browser traffic by
                         // its allow-listed Origin. Null here; consumers guard with ?.let { }.
                         buildConfigField(FieldSpec.Type.STRING, "API_KEY", null, nullable = true)
+                        // Same reasoning for the build token: a secret-derived value in a browser
+                        // bundle is not secret. The server expects web to send none, and rejects any
+                        // native platform claim that arrives with a browser Origin.
+                        buildConfigField(FieldSpec.Type.STRING, "CLIENT_BUILD_TOKEN", null, nullable = true)
                         optionalProperty("BASE_URL_HTTP_WEB")?.let {
                             buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", it)
                         }
