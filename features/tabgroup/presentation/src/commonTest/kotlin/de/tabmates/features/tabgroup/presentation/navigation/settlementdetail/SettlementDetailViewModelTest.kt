@@ -100,6 +100,36 @@ class SettlementDetailViewModelTest {
         return events
     }
 
+    @Test
+    fun aSettlementThatIsNotThereIsReportedInsteadOfSpinningForever() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            val events = mutableListOf<SettlementDetailEvent>()
+            backgroundScope.launch { viewModel.events.collect { events.add(it) } }
+            activateState(viewModel)
+
+            val state = viewModel.state.value
+            assertFalse(state.isLoading)
+            assertTrue(state.isMissing)
+            assertEquals(listOf<SettlementDetailEvent>(SettlementDetailEvent.SettlementUnavailable), events)
+        }
+
+    @Test
+    fun deletingFromThisScreenReportsDeletedRatherThanUnavailable() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit("g1", listOf(Fixtures.settlement(id = "s1", groupId = "g1")))
+            val viewModel = createViewModel(tabEntryRepository = tabEntryRepo)
+            val events = mutableListOf<SettlementDetailEvent>()
+            backgroundScope.launch { viewModel.events.collect { events.add(it) } }
+            activateState(viewModel)
+
+            viewModel.onConfirmDelete()
+            advanceUntilIdle()
+
+            assertEquals(listOf<SettlementDetailEvent>(SettlementDetailEvent.SettlementDeleted), events)
+        }
+
     private fun TestScope.activateState(viewModel: SettlementDetailViewModel) {
         backgroundScope.launch { viewModel.state.collect {} }
         advanceUntilIdle()

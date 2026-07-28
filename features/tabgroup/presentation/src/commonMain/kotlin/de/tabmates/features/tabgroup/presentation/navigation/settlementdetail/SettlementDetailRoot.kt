@@ -49,6 +49,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.entry_detail_unavailable
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_dialog_cancel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_dialog_confirm
@@ -79,11 +80,23 @@ fun SettlementDetailRoot(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+    // Resolved here because the event lambda below is not composable.
+    val unavailableMessage = stringResource(Res.string.entry_detail_unavailable)
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            SettlementDetailEvent.SettlementDeleted -> onBack()
-            is SettlementDetailEvent.Error -> snackbarHostState.showSnackbar(event.message.asStringAsync())
+            SettlementDetailEvent.SettlementDeleted -> {
+                onBack()
+            }
+
+            SettlementDetailEvent.SettlementUnavailable -> {
+                onBack()
+                snackbarHostState.showSnackbar(unavailableMessage)
+            }
+
+            is SettlementDetailEvent.Error -> {
+                snackbarHostState.showSnackbar(event.message.asStringAsync())
+            }
         }
     }
 

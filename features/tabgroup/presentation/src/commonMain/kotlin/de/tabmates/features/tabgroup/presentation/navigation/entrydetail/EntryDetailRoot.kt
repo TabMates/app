@@ -61,6 +61,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_r
 import tabmatesapp.features.tabgroup.presentation.generated.resources.entry_detail_delete_dialog_message
 import tabmatesapp.features.tabgroup.presentation.generated.resources.entry_detail_delete_dialog_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.entry_detail_received_by_section
+import tabmatesapp.features.tabgroup.presentation.generated.resources.entry_detail_unavailable
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_dialog_cancel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_delete_dialog_confirm
@@ -92,11 +93,23 @@ fun EntryDetailRoot(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+    // Resolved here because the event lambda below is not composable.
+    val unavailableMessage = stringResource(Res.string.entry_detail_unavailable)
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            EntryDetailEvent.EntryDeleted -> onBack()
-            is EntryDetailEvent.Error -> snackbarHostState.showSnackbar(event.message.asStringAsync())
+            EntryDetailEvent.EntryDeleted -> {
+                onBack()
+            }
+
+            EntryDetailEvent.EntryUnavailable -> {
+                onBack()
+                snackbarHostState.showSnackbar(unavailableMessage)
+            }
+
+            is EntryDetailEvent.Error -> {
+                snackbarHostState.showSnackbar(event.message.asStringAsync())
+            }
         }
     }
 

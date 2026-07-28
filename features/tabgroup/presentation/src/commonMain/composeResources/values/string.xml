@@ -257,6 +257,7 @@
     <string name="expense_detail_delete_dialog_confirm">Delete</string>
     <string name="expense_detail_delete_dialog_cancel">Cancel</string>
     <string name="entry_detail_received_by_section">RECEIVED BY</string>
+    <string name="entry_detail_unavailable">This entry no longer exists</string>
     <string name="entry_detail_delete_dialog_title">Delete income?</string>
     <string name="entry_detail_delete_dialog_message">This income will be removed from the group. This cannot be undone.</string>
 

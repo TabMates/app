@@ -130,6 +130,51 @@ class EntryDetailViewModelTest {
             assertEquals(1, state.splits.size)
         }
 
+    @Test
+    fun anEntryThatIsNotThereIsReportedInsteadOfSpinningForever() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            val events = mutableListOf<EntryDetailEvent>()
+            backgroundScope.launch { viewModel.events.collect { events.add(it) } }
+            activateState(viewModel)
+
+            val state = viewModel.state.value
+            assertFalse(state.isLoading)
+            assertTrue(state.isMissing)
+            assertEquals(listOf<EntryDetailEvent>(EntryDetailEvent.EntryUnavailable), events)
+        }
+
+    @Test
+    fun anEntryThatLoadsIsNeverReportedAsUnavailable() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit("g1", listOf(Fixtures.expense(id = "e1", groupId = "g1")))
+            val viewModel = createViewModel(tabEntryRepository = tabEntryRepo)
+            val events = mutableListOf<EntryDetailEvent>()
+            backgroundScope.launch { viewModel.events.collect { events.add(it) } }
+            activateState(viewModel)
+
+            assertFalse(viewModel.state.value.isMissing)
+            assertTrue(events.isEmpty())
+        }
+
+    @Test
+    fun deletingFromThisScreenReportsDeletedRatherThanUnavailable() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit("g1", listOf(Fixtures.expense(id = "e1", groupId = "g1")))
+            val viewModel = createViewModel(tabEntryRepository = tabEntryRepo)
+            val events = mutableListOf<EntryDetailEvent>()
+            backgroundScope.launch { viewModel.events.collect { events.add(it) } }
+            activateState(viewModel)
+
+            viewModel.onConfirmDelete()
+            advanceUntilIdle()
+
+            // The row is gone now, but the screen already knows why.
+            assertEquals(listOf<EntryDetailEvent>(EntryDetailEvent.EntryDeleted), events)
+        }
+
     private fun TestScope.activateState(viewModel: EntryDetailViewModel) {
         backgroundScope.launch { viewModel.state.collect {} }
         advanceUntilIdle()
