@@ -54,7 +54,10 @@ data class ActivityDiff(
     val newValue: String? = null,
 )
 
-/** Where a row navigates. `ENTRY_DELETED` rows and unrecognised event types resolve to [None]. */
+/**
+ * Where a row navigates. Every row of an entry that has since been deleted resolves to [None] — not
+ * just the deletion row — as do unrecognised event types.
+ */
 sealed interface ActivityClickTarget {
     /** [groupId] travels with the id because entry detail routes are scoped to their group. */
     data class Entry(

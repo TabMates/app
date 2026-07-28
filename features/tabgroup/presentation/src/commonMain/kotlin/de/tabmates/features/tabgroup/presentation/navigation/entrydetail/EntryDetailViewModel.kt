@@ -12,12 +12,15 @@ import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.EntryKind
+import de.tabmates.features.tabgroup.presentation.util.EntryLookup
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -45,14 +48,31 @@ class EntryDetailViewModel(
             .orEmpty()
     private val isDeleting = MutableStateFlow(false)
 
+    /**
+     * Sticky, unlike [isDeleting]: deleting the entry from this screen empties the row the state
+     * reads, so without this the screen would report the entry as missing on top of the
+     * [EntryDetailEvent.EntryDeleted] it already sends.
+     */
+    private var deleteRequested = false
+
+    /** The state recombines on every upstream change; the screen only needs telling once. */
+    private var notifiedUnavailable = false
+
+    private val eventChannel = Channel<EntryDetailEvent>()
+    val events = eventChannel.receiveAsFlow()
+
     val state: StateFlow<EntryDetailState> =
         combine(
-            tabEntryRepository.getTabEntryById(entryId).onStart { emit(null) },
+            tabEntryRepository
+                .getTabEntryById(entryId)
+                .map<TabEntry?, EntryLookup> { EntryLookup.Loaded(it) }
+                .onStart { emit(EntryLookup.Loading) },
             groupRepository.getGroups().onStart { emit(emptyList()) },
             currencyRepository.getCurrencies().onStart { emit(emptyList()) },
             exchangeRateRepository.getExchangeRates().onStart { emit(emptyList()) },
             isDeleting,
-        ) { entry, groups, currencies, rates, deleting ->
+        ) { lookup, groups, currencies, rates, deleting ->
+            val entry = (lookup as? EntryLookup.Loaded)?.entry
             val group = groups.firstOrNull { it.id == groupId }
             // This screen renders split-carrying entries only (expense/income). A settlement id
             // lands here as null, matching the previous expense-only behaviour.
@@ -78,7 +98,8 @@ class EntryDetailViewModel(
             val groupCurrency = currencies.firstOrNull { it.code == groupCurrencyCode }
             EntryDetailState(
                 entryId = entryId,
-                isLoading = detailEntry == null,
+                isLoading = lookup is EntryLookup.Loading,
+                isMissing = lookup is EntryLookup.Loaded && detailEntry == null,
                 isDeleting = deleting,
                 entry = detailEntry,
                 entryKind = entryKind,
@@ -96,17 +117,22 @@ class EntryDetailViewModel(
                     group?.participants?.associateBy { it.userId }
                         ?: emptyMap(),
             )
+        }.onEach { state ->
+            // Sits before stateIn so the check only runs while the screen is actually collecting,
+            // which also keeps it from opening a second subscription on the entry query.
+            if (state.isMissing && !deleteRequested && !notifiedUnavailable) {
+                notifiedUnavailable = true
+                eventChannel.send(EntryDetailEvent.EntryUnavailable)
+            }
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5.seconds),
             initialValue = EntryDetailState(entryId = entryId, currentUserId = currentUserId),
         )
 
-    private val eventChannel = Channel<EntryDetailEvent>()
-    val events = eventChannel.receiveAsFlow()
-
     fun onConfirmDelete() {
         if (isDeleting.value) return
+        deleteRequested = true
         viewModelScope.launch {
             isDeleting.update { true }
             tabEntryRepository

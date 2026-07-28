@@ -257,6 +257,7 @@
     <string name="expense_detail_delete_dialog_confirm">Löschen</string>
     <string name="expense_detail_delete_dialog_cancel">Abbrechen</string>
     <string name="entry_detail_received_by_section">ERHALTEN VON</string>
+    <string name="entry_detail_unavailable">Dieser Eintrag existiert nicht mehr</string>
     <string name="entry_detail_delete_dialog_title">Einnahme löschen?</string>
     <string name="entry_detail_delete_dialog_message">Diese Einnahme wird aus der Gruppe entfernt. Dies kann nicht rückgängig gemacht werden.</string>
 

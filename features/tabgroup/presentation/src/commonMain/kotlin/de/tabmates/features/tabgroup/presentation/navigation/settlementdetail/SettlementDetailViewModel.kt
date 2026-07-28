@@ -10,12 +10,15 @@ import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.presentation.util.EntryLookup
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -42,20 +45,37 @@ class SettlementDetailViewModel(
             .orEmpty()
     private val isDeleting = MutableStateFlow(false)
 
+    /**
+     * Sticky, unlike [isDeleting]: deleting the settlement from this screen empties the row the
+     * state reads, so without this the screen would report it as missing on top of the
+     * [SettlementDetailEvent.SettlementDeleted] it already sends.
+     */
+    private var deleteRequested = false
+
+    /** The state recombines on every upstream change; the screen only needs telling once. */
+    private var notifiedUnavailable = false
+
+    private val eventChannel = Channel<SettlementDetailEvent>()
+    val events = eventChannel.receiveAsFlow()
+
     val state: StateFlow<SettlementDetailState> =
         combine(
-            tabEntryRepository.getTabEntryById(settlementId).onStart { emit(null) },
+            tabEntryRepository
+                .getTabEntryById(settlementId)
+                .map<TabEntry?, EntryLookup> { EntryLookup.Loaded(it) }
+                .onStart { emit(EntryLookup.Loading) },
             groupRepository.getGroups().onStart { emit(emptyList()) },
             currencyRepository.getCurrencies().onStart { emit(emptyList()) },
             isDeleting,
-        ) { entry, groups, currencies, deleting ->
+        ) { lookup, groups, currencies, deleting ->
             val group = groups.firstOrNull { it.id == groupId }
-            val settlement = entry as? TabEntry.Settlement
+            val settlement = (lookup as? EntryLookup.Loaded)?.entry as? TabEntry.Settlement
             val currencyCode = settlement?.currencyCode ?: group?.defaultCurrencyCode.orEmpty()
             val currency = currencies.firstOrNull { it.code == currencyCode }
             SettlementDetailState(
                 settlementId = settlementId,
-                isLoading = entry == null,
+                isLoading = lookup is EntryLookup.Loading,
+                isMissing = lookup is EntryLookup.Loaded && settlement == null,
                 isDeleting = deleting,
                 settlement = settlement,
                 currentUserId = currentUserId,
@@ -65,17 +85,22 @@ class SettlementDetailViewModel(
                     group?.participants?.associateBy { it.userId }
                         ?: emptyMap(),
             )
+        }.onEach { state ->
+            // Sits before stateIn so the check only runs while the screen is actually collecting,
+            // which also keeps it from opening a second subscription on the entry query.
+            if (state.isMissing && !deleteRequested && !notifiedUnavailable) {
+                notifiedUnavailable = true
+                eventChannel.send(SettlementDetailEvent.SettlementUnavailable)
+            }
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5.seconds),
             initialValue = SettlementDetailState(settlementId = settlementId, currentUserId = currentUserId),
         )
 
-    private val eventChannel = Channel<SettlementDetailEvent>()
-    val events = eventChannel.receiveAsFlow()
-
     fun onConfirmDelete() {
         if (isDeleting.value) return
+        deleteRequested = true
         viewModelScope.launch {
             isDeleting.update { true }
             tabEntryRepository

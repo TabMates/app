@@ -167,6 +167,88 @@ class ActivityViewModelTest {
         }
 
     @Test
+    fun rowsOfAnEntryDeletedLaterStopLinkingToIt() =
+        runTest(testDispatcher) {
+            val activityRepo =
+                FakeActivityRepository(
+                    listOf(
+                        persisted(id = "a3", seq = 3, occurredAt = now, type = ActivityEventType.ENTRY_DELETED),
+                        persisted(id = "a2", seq = 2, occurredAt = now, type = ActivityEventType.ENTRY_UPDATED),
+                        persisted(id = "a1", seq = 1, occurredAt = now),
+                    ),
+                )
+            val viewModel = createViewModel(activityRepo)
+            activateState(viewModel)
+
+            val items =
+                viewModel.state.value.sections
+                    .single()
+                    .items
+                    .associateBy { it.id }
+            assertTrue(items.values.all { it.clickTarget == ActivityClickTarget.None })
+            // Only the deletion row is struck through; the add/edit rows keep their normal look.
+            assertEquals(listOf(false, false, true), listOf("a1", "a2", "a3").map { items.getValue(it).isDeleted })
+        }
+
+    @Test
+    fun aPendingDeleteAlsoRetiresTheConfirmedRows() =
+        runTest(testDispatcher) {
+            val activityRepo =
+                FakeActivityRepository(
+                    listOf(
+                        ActivityFeedItem.Pending(
+                            outboxId = "o1",
+                            tabEntryId = "e1",
+                            type = ActivityEventType.ENTRY_DELETED,
+                            groupId = "g1",
+                            occurredAt = now,
+                            entryType = ActivityEntryType.EXPENSE,
+                            entryTitle = "Dinner",
+                            amount = 12.5,
+                            currencyCode = "EUR",
+                        ),
+                        persisted(id = "a1", seq = 1, occurredAt = now),
+                    ),
+                )
+            val viewModel = createViewModel(activityRepo)
+            activateState(viewModel)
+
+            val items =
+                viewModel.state.value.sections
+                    .single()
+                    .items
+            assertTrue(items.all { it.clickTarget == ActivityClickTarget.None })
+        }
+
+    @Test
+    fun aDeleteLeavesUnrelatedEntriesClickable() =
+        runTest(testDispatcher) {
+            val activityRepo =
+                FakeActivityRepository(
+                    listOf(
+                        persisted(
+                            id = "a2",
+                            seq = 2,
+                            occurredAt = now,
+                            type = ActivityEventType.ENTRY_DELETED,
+                            tabEntryId = "e2",
+                        ),
+                        persisted(id = "a1", seq = 1, occurredAt = now),
+                    ),
+                )
+            val viewModel = createViewModel(activityRepo)
+            activateState(viewModel)
+
+            val targets =
+                viewModel.state.value.sections
+                    .single()
+                    .items
+                    .associate { it.id to it.clickTarget }
+            assertEquals("e1", assertIs<ActivityClickTarget.Entry>(targets["a1"]).tabEntryId)
+            assertEquals(ActivityClickTarget.None, targets["a2"])
+        }
+
+    @Test
     fun memberEventsPointAtTheGroup() =
         runTest(testDispatcher) {
             val activityRepo =

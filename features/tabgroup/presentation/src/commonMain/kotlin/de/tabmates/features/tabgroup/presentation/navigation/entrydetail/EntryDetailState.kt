@@ -9,6 +9,9 @@ import kotlin.time.Instant
 data class EntryDetailState(
     val entryId: String = "",
     val isLoading: Boolean = true,
+    // The lookup came back empty: the entry was deleted, or the id names something this screen can't
+    // render. Drives EntryDetailEvent.EntryUnavailable rather than any UI of its own.
+    val isMissing: Boolean = false,
     val isDeleting: Boolean = false,
     // The entry being shown — an expense or an income (both split-carrying). Null while loading or
     // for an entry kind this screen doesn't render (e.g. a settlement, which has its own screen).
