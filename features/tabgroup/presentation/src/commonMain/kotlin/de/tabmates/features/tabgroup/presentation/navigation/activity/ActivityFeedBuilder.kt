@@ -47,6 +47,7 @@ internal object ActivityFeedBuilder {
                 monthNames = monthNames,
                 now = now,
                 includeGroupName = includeGroupName,
+                deletedEntryIds = deletedEntryIds(items),
             )
 
         // Keyed rather than sequential: pending rows sit on top unconditionally, so a pending write
@@ -65,6 +66,24 @@ internal object ActivityFeedBuilder {
         return byBucket.map { (bucket, bucketItems) -> ActivitySection(bucket, bucketItems) }
     }
 
+    /**
+     * The entries this feed reports as gone, so their earlier "added"/"edited" rows stop linking to
+     * a detail screen that no longer has anything to show.
+     *
+     * Scanning the loaded window is enough: a delete always carries a higher `seq` than the create
+     * and edits it follows, and the feed is the newest rows by `seq`, so a create can never be in
+     * the window without its delete. Pending outbox rows are exempt from the window's limit
+     * entirely, which covers a delete that has not reached the server yet.
+     */
+    private fun deletedEntryIds(items: List<ActivityFeedItem>): Set<String> =
+        items.mapNotNullTo(mutableSetOf()) { feedItem ->
+            if (feedItem.type != ActivityEventType.ENTRY_DELETED) return@mapNotNullTo null
+            when (feedItem) {
+                is ActivityFeedItem.Persisted -> feedItem.event.tabEntryId
+                is ActivityFeedItem.Pending -> feedItem.tabEntryId
+            }
+        }
+
     private class RenderContext(
         val currentUserId: String,
         val groupTitles: Map<String, String>,
@@ -73,6 +92,7 @@ internal object ActivityFeedBuilder {
         val monthNames: List<String>,
         val now: Instant,
         val includeGroupName: Boolean,
+        val deletedEntryIds: Set<String>,
     ) {
         fun render(event: ActivityEvent): ActivityItem {
             val groupTitle = groupTitles[event.groupId]
@@ -170,8 +190,10 @@ internal object ActivityFeedBuilder {
             entryType: ActivityEntryType?,
         ): ActivityClickTarget =
             when {
-                // The entry is gone; opening its detail would show an empty shell.
-                type == ActivityEventType.ENTRY_DELETED -> {
+                // The entry is gone; opening its detail would show an empty shell. This covers the
+                // deletion row itself *and* the entry's earlier add/edit rows, which outlive it.
+                type == ActivityEventType.ENTRY_DELETED ||
+                    (tabEntryId != null && tabEntryId in deletedEntryIds) -> {
                     ActivityClickTarget.None
                 }
 
