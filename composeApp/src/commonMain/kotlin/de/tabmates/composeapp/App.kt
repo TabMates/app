@@ -8,8 +8,12 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -233,9 +238,21 @@ fun App() {
 
             if (currentKey is LoggedIn) {
                 val topBarActions = remember { TopBarActionsController() }
+                // Hide the navigation bar while typing: the keyboard already owns the bottom of
+                // the screen, and stacking the bar on top of it would eat another ~88dp from the
+                // screen the user is filling in.
+                val isKeyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
                 val navigationSuiteType =
-                    NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfoV2())
+                    if (isKeyboardOpen) {
+                        NavigationSuiteType.None
+                    } else {
+                        NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfoV2())
+                    }
                 NavigationSuiteScaffold(
+                    // Lifts the whole shell above the keyboard. Applied here, at the node flush
+                    // with the window, so the padding equals the keyboard height exactly; further
+                    // in it would sit above the navigation bar and over-pad by that bar's height.
+                    modifier = Modifier.imePadding(),
                     navigationSuiteType = navigationSuiteType,
                     navigationItems = {
                         topLevelTabs.forEach { tab ->
@@ -312,6 +329,9 @@ fun App() {
             } else {
                 Scaffold(
                     snackbarHost = { SnackbarHost(snackbarHostState) },
+                    // safeDrawing covers the keyboard as well as the system bars, so the auth
+                    // screens keep their content above whichever is showing.
+                    contentWindowInsets = WindowInsets.safeDrawing,
                 ) {
                     NavDisplay(
                         modifier = Modifier.fillMaxSize().padding(it),
