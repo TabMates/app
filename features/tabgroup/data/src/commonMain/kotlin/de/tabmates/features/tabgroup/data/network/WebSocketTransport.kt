@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.data.network
 
+import de.tabmates.core.data.AppBuildInfo
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.features.tabgroup.data.BuildKonfig
 import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
@@ -23,6 +24,11 @@ class WebSocketTransport(
     private val json: Json,
     private val logger: TabMatesLogger,
 ) {
+    /**
+     * A 426 here surfaces only as a failed handshake, not as the forced-update prompt: the gate
+     * rejects the upgrade before there is a session to report on. Acceptable because the app always
+     * issues plain HTTP calls too, and those trip `UpgradeRequiredNotifier` first.
+     */
     suspend fun openSession(accessToken: String): WebSocketSession =
         httpClient.webSocketSession(
             urlString =
@@ -33,10 +39,18 @@ class WebSocketTransport(
                         parameters.append("access_token", accessToken)
                         // Null on web (server allow-lists the Origin instead); real key on native.
                         BuildKonfig.API_KEY?.let { parameters.append("api_key", it) }
+                        // The handshake is version-gated like any other request, and browsers
+                        // cannot set headers on it — so the version has to travel as a parameter.
+                        // The token deliberately does not: only native builds have one, and native
+                        // already sends it as a header below. A query parameter would only add it
+                        // to server access logs, proxy logs and browser history for nothing.
+                        parameters.append("client_version", AppBuildInfo.clientVersionHeader)
                     }.buildString(),
         ) {
             header("Authorization", "Bearer $accessToken")
             BuildKonfig.API_KEY?.let { header("x-api-key", it) }
+            header("X-Client-Version", AppBuildInfo.clientVersionHeader)
+            AppBuildInfo.buildToken?.let { header("X-Client-Token", it) }
         }
 
     suspend fun decode(text: String): WebSocketMessageDto? =

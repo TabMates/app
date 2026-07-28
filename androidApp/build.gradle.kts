@@ -1,3 +1,5 @@
+import de.tabmates.convention.appVersion
+
 plugins {
     alias(libs.plugins.tabmates.convention.android.application.compose)
     alias(libs.plugins.google.services)
@@ -16,7 +18,9 @@ fun versionNameToCode(name: String): Int {
 android {
     namespace = "de.tabmates.androidapp"
 
-    val appVersion = providers.gradleProperty("APP_VERSION").get()
+    // Same resolver BuildKonfig.APP_VERSION uses, so versionName can never disagree with the
+    // version the app reports to the backend.
+    val appVersion = project.appVersion
 
     // Release builds in CI are signed with the upload keystore; local builds fall back to debug.
     val runsCIReleaseBuild = System.getenv("SIGNING_STORE_PASSWORD") != null

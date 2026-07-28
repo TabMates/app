@@ -2,6 +2,11 @@ name: Release
 
 on:
   workflow_call:
+    inputs:
+      app_version:
+        description: 'Version this build reports, without the leading v. Resolved by release-pipeline.yml.'
+        required: true
+        type: string
 
 env:
   API_KEY: ${{ secrets.API_KEY }}
@@ -29,8 +34,36 @@ jobs:
         with:
           cache-read-only: true
 
-      - id: get_version
-        uses: battila7/get-version-action@v2
+      # Proves to the backend's client-version gate that this artifact really is the version it
+      # claims. The secret stays here; only the derived token is baked into the AAB, so extracting
+      # a released build yields a token for that one version and nothing else. `printf`, not `echo`:
+      # a trailing newline changes the HMAC and the server would reject every request.
+      # The canonical message "<platform>|<version>" must match ClientVersion.canonical() on the
+      # server byte for byte.
+      - name: Mint client build token
+        id: build_token
+        env:
+          CLIENT_BUILD_SECRET: ${{ secrets.CLIENT_BUILD_SECRET }}
+          VERSION: ${{ inputs.app_version }}
+        run: |
+          # An unset secret is the dangerous case: `openssl -hmac ""` succeeds and produces a
+          # perfectly well-formed token that the server will reject, so the release ships broken
+          # and nothing in this log says why.
+          if [[ -z "$CLIENT_BUILD_SECRET" ]]; then
+            echo "::error::CLIENT_BUILD_SECRET is not set — the minted token would not verify."
+            exit 1
+          fi
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::app_version input is empty."
+            exit 1
+          fi
+          TOKEN=$(printf 'android|%s' "$VERSION" \
+            | openssl dgst -sha256 -hmac "$CLIENT_BUILD_SECRET" -binary \
+            | basenc --base64url | tr -d '=')
+          # Only registered secrets are masked automatically, and this one is derived — without
+          # this it prints in plain text anywhere a later step happens to dump the environment.
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: Decode Keystore
         uses: timheuer/base64-to-file@v2
@@ -52,7 +85,8 @@ jobs:
       - name: Build AppBundle
         run: ./gradlew :androidApp:bundleRelease --no-daemon --no-configuration-cache --no-build-cache -x test
         env:
-          ORG_GRADLE_PROJECT_APP_VERSION: ${{ steps.get_version.outputs.version-without-v }}
+          ORG_GRADLE_PROJECT_APP_VERSION: ${{ inputs.app_version }}
+          CLIENT_BUILD_TOKEN: ${{ steps.build_token.outputs.token }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PLAY_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_PLAY_STORE_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PLAY_STORE_PASSWORD }}

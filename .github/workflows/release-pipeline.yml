@@ -1,24 +1,65 @@
 name: Release Pipeline
 
+# A release tag is the only way in, for both platforms. workflow_dispatch is here so web can be
+# re-published without cutting a new release (a Pages, CSP or service-worker change touches nothing
+# the app builds from) — but it must be run against a tag, so the version web reports is still one
+# Android actually shipped. Running it from a branch fails in resolve-version.
 on:
   push:
     tags:
-      - '*'
+      # Releases are vX.Y.Z. Anything else pushed as a tag is not a release, and letting it
+      # through here would mint an artifact claiming a version that does not exist.
+      - 'v*'
   workflow_dispatch:
 
 jobs:
+  # One version for every platform, resolved once here and handed to both builds. Resolving it
+  # separately per workflow is how web and Android drift apart: the two would have to agree on
+  # the same ref-parsing rules forever.
+  resolve-version:
+    name: Resolve app version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - name: Resolve version
+        id: resolve
+        run: |
+          # "Use workflow from" offers branches as well as tags, and a branch has no version to
+          # report. Refusing here is the whole reason web can never claim a version that was
+          # never released.
+          if [[ "$GITHUB_REF" != refs/tags/* ]]; then
+            echo "::error::Run this workflow from a release tag, not '$GITHUB_REF'."
+            exit 1
+          fi
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          # This single number becomes versionName, versionCode, the message the build token is
+          # signed over, and the version both artifacts report. A tag that is not vX.Y.Z yields
+          # versionCode 0 (androidApp/build.gradle.kts parses the parts with toIntOrNull() ?: 0)
+          # and a token the backend will never accept — neither of which fails loudly on its own.
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Resolved version '$VERSION' (from tag '$TAG') is not vX.Y.Z."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
   android-release:
     name: Android · AppBundle Release
-    # Manual dispatch has no tag ref, so get-version-action / the release flow
-    # would be meaningless — only run this chain on an actual tag push.
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    # Tag push only. A manual run is for re-publishing web; Play would reject the rebuilt bundle
+    # anyway, because its versionCode is derived from the version and that one is already taken.
+    if: github.event_name == 'push'
+    needs: [resolve-version]
     permissions:
       contents: write
     uses: ./.github/workflows/release-android.yml
+    with:
+      app_version: ${{ needs.resolve-version.outputs.version }}
     secrets: inherit
 
   web-deploy:
     name: Web · Deploy to Pages
+    needs: [resolve-version]
     permissions:
       contents: read
       pages: write
@@ -27,4 +68,6 @@ jobs:
       group: pages
       cancel-in-progress: false
     uses: ./.github/workflows/deploy-web.yml
+    with:
+      app_version: ${{ needs.resolve-version.outputs.version }}
     secrets: inherit

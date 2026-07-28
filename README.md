@@ -84,6 +84,13 @@ TURNSTILE_SITE_KEY=your-site-key
 # Optional, web-only: Firebase Web Push certificate (VAPID) key for FCM push notifications.
 # Unset = no push token requested; see features/notifications/README.md.
 FCM_VAPID_KEY=your-vapid-key
+# Optional, native-only: per-release token for the backend's client-version gate. Release CI mints
+# it from a secret this repo never contains; for local dev against a dev backend, mint it yourself:
+#   printf 'desktop|0.0.24' | openssl dgst -sha256 -hmac dev-client-secret -binary \
+#     | basenc --base64url | tr -d '='
+# The platform and version must match the build you are running (see APP_VERSION), or the backend
+# answers 426. Unset = no token; harmless until the backend enables the gate.
+CLIENT_BUILD_TOKEN=your-build-token
 ```
 
 The web dev server always proxies `/api` and `/ws` to the backend (`composeApp/webpack.config.d/proxy.js`) because the backend serves no CORS headers; the proxy target follows the active `BASE_URL_HTTP`, so switching it points the web dev build at that environment too.

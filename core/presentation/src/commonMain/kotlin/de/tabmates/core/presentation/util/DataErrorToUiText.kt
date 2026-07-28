@@ -18,6 +18,7 @@ import tabmatesapp.core.presentation.generated.resources.error_too_many_requests
 import tabmatesapp.core.presentation.generated.resources.error_turnstile_retry
 import tabmatesapp.core.presentation.generated.resources.error_unauthorized
 import tabmatesapp.core.presentation.generated.resources.error_unknown
+import tabmatesapp.core.presentation.generated.resources.error_upgrade_required
 
 fun DataError.toUiText(): UiText {
     val resource =
@@ -38,6 +39,7 @@ fun DataError.toUiText(): UiText {
             DataError.Remote.SERVICE_UNAVAILABLE -> Res.string.error_service_unavailable
             DataError.Remote.SERIALIZATION -> Res.string.error_serialization
             DataError.Remote.TURNSTILE_FAILED -> Res.string.error_turnstile_retry
+            DataError.Remote.UPGRADE_REQUIRED -> Res.string.error_upgrade_required
             DataError.Remote.UNKNOWN -> Res.string.error_unknown
             DataError.Connection.NOT_CONNECTED -> Res.string.error_no_internet
             DataError.Connection.MESSAGE_SEND_FAILED -> Res.string.error_message_send_failed

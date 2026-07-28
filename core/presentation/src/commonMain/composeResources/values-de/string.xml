@@ -16,4 +16,5 @@
     <string name="error_serialization">Serialisierungsfehler</string>
     <string name="error_message_send_failed">Nachricht konnte nicht gesendet werden</string>
     <string name="error_turnstile_retry">Verifizierung fehlgeschlagen. Bitte versuche es erneut.</string>
+    <string name="error_upgrade_required">Diese TabMates-Version wird nicht mehr unterstützt. Bitte aktualisiere die App.</string>
 </resources>

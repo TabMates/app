@@ -166,6 +166,10 @@ suspend inline fun <reified T> responseToResult(response: HttpResponse): Result<
             Result.Failure(DataError.Remote.PAYLOAD_TOO_LARGE)
         }
 
+        426 -> {
+            Result.Failure(DataError.Remote.UPGRADE_REQUIRED)
+        }
+
         429 -> {
             Result.Failure(DataError.Remote.TOO_MANY_REQUESTS)
         }

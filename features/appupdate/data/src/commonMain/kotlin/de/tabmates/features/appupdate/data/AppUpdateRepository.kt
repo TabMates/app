@@ -1,6 +1,8 @@
 package de.tabmates.features.appupdate.data
 
 import de.tabmates.core.data.AppBuildInfo
+import de.tabmates.core.data.WEB_PLATFORM
+import de.tabmates.core.data.clientPlatform
 import de.tabmates.core.data.networking.get
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.appupdate.domain.AppUpdateStatus
@@ -18,10 +20,10 @@ class AppUpdateRepository(
     private val httpClient: HttpClient,
 ) {
     suspend fun check(): AppUpdateStatus {
-        if (appUpdatePlatform == WEB_PLATFORM) return AppUpdateStatus.UpToDate
+        if (clientPlatform == WEB_PLATFORM) return AppUpdateStatus.UpToDate
 
         val dto =
-            when (val result = httpClient.get<AppVersionDto>(ROUTE, mapOf("platform" to appUpdatePlatform))) {
+            when (val result = httpClient.get<AppVersionDto>(ROUTE, mapOf("platform" to clientPlatform))) {
                 is Result.Success -> result.data
                 is Result.Failure -> return AppUpdateStatus.UpToDate
             }
@@ -30,8 +32,8 @@ class AppUpdateRepository(
 
     private fun AppVersionDto.toStatus(current: String): AppUpdateStatus =
         when {
-            isVersionLower(current, minSupportedVersion) -> AppUpdateStatus.Forced(updateUrl)
-            isVersionLower(current, latestVersion) -> AppUpdateStatus.Optional(updateUrl)
+            isVersionLower(current, minSupportedVersion) -> AppUpdateStatus.Forced(updateUrl, latestVersion)
+            isVersionLower(current, latestVersion) -> AppUpdateStatus.Optional(updateUrl, latestVersion)
             else -> AppUpdateStatus.UpToDate
         }
 
