@@ -9,6 +9,8 @@
     <string name="update_dialog_message_forced">This version of TabMates is no longer supported. Please update to continue.</string>
     <string name="update_dialog_confirm">Update</string>
     <string name="update_dialog_dismiss">Later</string>
+    <string name="update_dialog_version_current">Installed %1$s</string>
+    <string name="update_dialog_version_latest">Latest %1$s</string>
     <string name="connectivity_banner_offline_now">Offline · last synced just now</string>
     <string name="connectivity_banner_offline_minutes">Offline · last synced %1$d min ago</string>
     <string name="connectivity_banner_offline_hours">Offline · last synced %1$d h ago</string>

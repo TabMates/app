@@ -503,6 +503,10 @@ class TabEntryOutbox(
                     DataError.Remote.SERVICE_UNAVAILABLE,
                     DataError.Remote.TOO_MANY_REQUESTS,
                     DataError.Remote.UNKNOWN,
+                    // 426 never clears for *this* build, but it does clear once the user updates —
+                    // and the update prompt is already on screen by then. Keeping it pending is the
+                    // difference between the delete landing after the update and being lost.
+                    DataError.Remote.UPGRADE_REQUIRED,
                     -> DispatchResult.Transient(result.error.name.lowercase())
 
                     // 404 on delete: entry is already gone on the server, treat as success.

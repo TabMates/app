@@ -7,6 +7,7 @@ import de.tabmates.core.data.dto.requests.RefreshRequest
 import de.tabmates.core.data.mappers.toDomain
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.logging.TabMatesLogger
+import de.tabmates.core.domain.update.UpgradeRequiredNotifier
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
@@ -21,10 +22,12 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.observer.ResponseObserver
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.header
 import io.ktor.client.statement.request
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -35,11 +38,21 @@ class HttpClientFactory(
     private val tabMatesLogger: TabMatesLogger,
     private val sessionStorage: SessionStorage,
     private val json: Json,
+    private val upgradeRequiredNotifier: UpgradeRequiredNotifier,
 ) {
     fun create(engine: HttpClientEngine): HttpClient {
         return HttpClient(engine) {
             install(ContentNegotiation) {
                 json(json = json)
+            }
+            // Catches the version gate's 426 for every endpoint at once, so a new call site cannot
+            // forget it — same reasoning as the X-Client-Version header below.
+            install(ResponseObserver) {
+                onResponse { response ->
+                    if (response.status == HttpStatusCode.UpgradeRequired) {
+                        upgradeRequiredNotifier.notifyUpgradeRequired()
+                    }
+                }
             }
             install(HttpTimeout) {
                 socketTimeoutMillis = 20_000L

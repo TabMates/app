@@ -32,8 +32,8 @@ class AppUpdateRepository(
 
     private fun AppVersionDto.toStatus(current: String): AppUpdateStatus =
         when {
-            isVersionLower(current, minSupportedVersion) -> AppUpdateStatus.Forced(updateUrl)
-            isVersionLower(current, latestVersion) -> AppUpdateStatus.Optional(updateUrl)
+            isVersionLower(current, minSupportedVersion) -> AppUpdateStatus.Forced(updateUrl, latestVersion)
+            isVersionLower(current, latestVersion) -> AppUpdateStatus.Optional(updateUrl, latestVersion)
             else -> AppUpdateStatus.UpToDate
         }
 
