@@ -23,10 +23,18 @@
 TabMates is a Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) app for tracking who paid for what in a group and settling up. The UI, business logic and data layer are shared across all targets; only thin platform shells differ.
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="24%" alt="Home — groups and net balance">
-  <img src="docs/screenshots/group-expenses.png" width="24%" alt="Group expenses">
-  <img src="docs/screenshots/balances.png" width="24%" alt="Balances and settle up">
-  <img src="docs/screenshots/activity.png" width="24%" alt="Activity feed">
+  <img src="docs/screenshots/home-light.png" width="19%" alt="Home — groups and net balance">
+  <img src="docs/screenshots/group-expenses-light.png" width="19%" alt="Group expenses">
+  <img src="docs/screenshots/add-entry-light.png" width="19%" alt="Add an expense">
+  <img src="docs/screenshots/balances-light.png" width="19%" alt="Balances and settle up">
+  <img src="docs/screenshots/activity-light.png" width="19%" alt="Activity feed">
+</p>
+<p align="center">
+  <img src="docs/screenshots/home-dark.png" width="19%" alt="Home in dark theme">
+  <img src="docs/screenshots/group-expenses-dark.png" width="19%" alt="Group expenses in dark theme">
+  <img src="docs/screenshots/add-entry-dark.png" width="19%" alt="Add an expense in dark theme">
+  <img src="docs/screenshots/balances-dark.png" width="19%" alt="Balances in dark theme">
+  <img src="docs/screenshots/activity-dark.png" width="19%" alt="Activity feed in dark theme">
 </p>
 
 ## Features
