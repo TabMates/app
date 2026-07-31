@@ -195,10 +195,6 @@ class OfflineFirstGroupRepository(
             }
     }
 
-    override suspend fun deleteAllGroups() {
-        database.groupDao.deleteAllGroups()
-    }
-
     private suspend fun List<GroupParticipantEntity>.onlyActive(groupId: String): List<GroupParticipantEntity> {
         val activeParticipantIds =
             database

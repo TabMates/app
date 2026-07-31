@@ -56,6 +56,4 @@ interface GroupRepository {
         token: String,
         claimPlaceholderId: String?,
     ): Result<Group, DataError.Remote>
-
-    suspend fun deleteAllGroups()
 }

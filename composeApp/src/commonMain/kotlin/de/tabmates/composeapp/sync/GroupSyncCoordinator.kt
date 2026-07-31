@@ -1,21 +1,18 @@
 package de.tabmates.composeapp.sync
 
+import de.tabmates.core.data.di.APPLICATION_SCOPE
 import de.tabmates.core.domain.auth.SessionStorage
-import de.tabmates.core.domain.sync.ActivityCursorStore
-import de.tabmates.core.domain.sync.LastServerContactStore
-import de.tabmates.core.domain.sync.PendingTabEntryBackfillStore
-import de.tabmates.core.domain.sync.SyncCursorStore
+import de.tabmates.core.domain.auth.StaleSessionStore
+import de.tabmates.core.domain.sync.LocalDataResetter
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.tabgroup.domain.activity.ActivityRepository
-import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.sync.SyncRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @Single
@@ -23,33 +20,48 @@ class GroupSyncCoordinator(
     sessionStorage: SessionStorage,
     private val syncRepository: SyncRepository,
     private val activityRepository: ActivityRepository,
-    private val groupRepository: GroupRepository,
-    private val syncCursorStore: SyncCursorStore,
-    private val activityCursorStore: ActivityCursorStore,
-    private val lastServerContactStore: LastServerContactStore,
-    private val pendingBackfillStore: PendingTabEntryBackfillStore,
+    private val staleSessionStore: StaleSessionStore,
+    private val localDataResetter: LocalDataResetter,
+    @Named(APPLICATION_SCOPE) scope: CoroutineScope,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
     init {
         sessionStorage.authState
-            .map { it != null }
+            .map { it?.user?.id }
             .distinctUntilChanged()
-            .onEach { loggedIn ->
-                if (loggedIn) {
-                    // One `/api/sync` call pulls groups and all their tab entries (full snapshot on
-                    // first login, delta once a cursor exists), replacing the per-group fetch loop.
-                    // Activity events foreign-key onto their group, so their mirror is only safe to
-                    // write once those groups exist locally — hence the chain rather than a parallel
-                    // coordinator.
-                    syncRepository.sync().onSuccess { activityRepository.sync() }
+            .onEach { userId ->
+                if (userId != null) {
+                    onSignedIn(userId)
                 } else {
-                    syncCursorStore.clear()
-                    activityCursorStore.clear()
-                    lastServerContactStore.clear()
-                    pendingBackfillStore.clearAll()
-                    groupRepository.deleteAllGroups()
+                    onSignedOut()
                 }
             }.launchIn(scope)
+    }
+
+    private suspend fun onSignedIn(userId: String) {
+        // Local data belongs to whoever last synced it. Signing in as someone else while an
+        // expired session still owns that data must not sync: pulling this account's groups into
+        // the other's database would mix the two. The re-auth screen rejects the mismatch and
+        // signs straight back out; switching accounts for real goes through an explicit,
+        // warned wipe, which clears the record below and leaves nothing to collide with.
+        val staleUserId = staleSessionStore.get()?.userId
+        if (staleUserId != null && staleUserId != userId) return
+
+        staleSessionStore.clear()
+
+        // One `/api/sync` call pulls groups and all their tab entries (full snapshot on
+        // first login, delta once a cursor exists), replacing the per-group fetch loop.
+        // Activity events foreign-key onto their group, so their mirror is only safe to
+        // write once those groups exist locally — hence the chain rather than a parallel
+        // coordinator.
+        syncRepository.sync().onSuccess { activityRepository.sync() }
+    }
+
+    private suspend fun onSignedOut() {
+        // An expired session is not a sign-out. The account is recorded, its unsynced writes are
+        // still queued, and it can be asked back in — so everything stays exactly where it is
+        // until the user either signs back in or explicitly chooses a different account.
+        if (staleSessionStore.get() != null) return
+
+        localDataResetter.resetLocalData()
     }
 }
