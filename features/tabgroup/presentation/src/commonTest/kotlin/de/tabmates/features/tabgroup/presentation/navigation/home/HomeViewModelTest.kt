@@ -2,8 +2,8 @@ package de.tabmates.features.tabgroup.presentation.navigation.home
 
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeCurrentAccount
 import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
-import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
 import kotlinx.coroutines.Dispatchers
@@ -120,13 +120,13 @@ class HomeViewModelTest {
         tabEntryRepository: FakeTabEntryRepository = FakeTabEntryRepository(),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
         exchangeRateRepository: FakeExchangeRateRepository = FakeExchangeRateRepository(),
-        sessionStorage: FakeSessionStorage = FakeSessionStorage(),
+        currentAccount: FakeCurrentAccount = FakeCurrentAccount(),
     ): HomeViewModel =
         HomeViewModel(
             groupRepository = groupRepository,
             tabEntryRepository = tabEntryRepository,
             currencyRepository = currencyRepository,
             exchangeRateRepository = exchangeRateRepository,
-            sessionStorage = sessionStorage,
+            currentAccount = currentAccount,
         )
 }

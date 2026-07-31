@@ -22,4 +22,7 @@ data class ProfileState(
     // OS notification permission is denied -> disable the toggle and show a banner.
     val notificationsPermissionBlocked: Boolean = false,
     val selectedSection: SettingsSection = SettingsSection.PROFILE,
+    // Signing out wipes local data, so anything still queued is about to be lost.
+    val pendingWriteCount: Int = 0,
+    val showSignOutDialog: Boolean = false,
 )

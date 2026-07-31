@@ -3,7 +3,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.editsettlement
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.auth.CurrentAccount
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.core.presentation.util.UiText
@@ -41,14 +41,10 @@ class EditSettlementViewModel(
     private val tabEntryRepository: TabEntryRepository,
     private val groupRepository: GroupRepository,
     private val currencyRepository: CurrencyRepository,
-    sessionStorage: SessionStorage,
+    currentAccount: CurrentAccount,
 ) : ViewModel() {
     private val currentUserId =
-        sessionStorage
-            .get()
-            ?.user
-            ?.id
-            .orEmpty()
+        currentAccount.userId().orEmpty()
     private val _state =
         MutableStateFlow(EditSettlementState(settlementId = settlementId, currentUserId = currentUserId))
     private var hasLoadedInitialData = false

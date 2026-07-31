@@ -32,6 +32,16 @@ interface AuthService {
 
     suspend fun logout(refreshToken: String): EmptyResult<DataError.Remote>
 
+    /**
+     * Drops the access token the HTTP client is holding in memory.
+     *
+     * The client only reads the session back from storage once its own cache is empty, so a token
+     * that is not dropped keeps authenticating requests as the account it was issued to — even
+     * after that session is gone. [logout] and [deleteAccount] already do this; call it directly
+     * on any other path that ends a session without going through them.
+     */
+    fun clearCachedTokens()
+
     suspend fun resetPassword(
         newPassword: String,
         token: String,

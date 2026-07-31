@@ -17,6 +17,12 @@ interface PendingOutboxDao {
     @Query("SELECT * FROM PendingOutboxEntity ORDER BY createdAt ASC")
     fun observeAll(): Flow<List<PendingOutboxEntity>>
 
+    @Query("SELECT COUNT(*) FROM PendingOutboxEntity")
+    fun observeCount(): Flow<Int>
+
     @Query("DELETE FROM PendingOutboxEntity WHERE id = :id")
     suspend fun deleteById(id: String)
+
+    @Query("DELETE FROM PendingOutboxEntity")
+    suspend fun deleteAll()
 }

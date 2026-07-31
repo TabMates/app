@@ -124,8 +124,6 @@ class FakeGroupRepository(
         return joinGroupResult
     }
 
-    override suspend fun deleteAllGroups() = Unit
-
     companion object {
         private val FAKE_PARTICIPANT =
             GroupParticipant(

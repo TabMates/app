@@ -2,7 +2,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.auth.CurrentAccount
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
@@ -36,14 +36,10 @@ class HomeViewModel(
     tabEntryRepository: TabEntryRepository,
     currencyRepository: CurrencyRepository,
     exchangeRateRepository: ExchangeRateRepository,
-    sessionStorage: SessionStorage,
+    currentAccount: CurrentAccount,
 ) : ViewModel() {
     private val currentUserId =
-        sessionStorage
-            .get()
-            ?.user
-            ?.id
-            .orEmpty()
+        currentAccount.userId().orEmpty()
 
     val state: StateFlow<HomeState> =
         combine(

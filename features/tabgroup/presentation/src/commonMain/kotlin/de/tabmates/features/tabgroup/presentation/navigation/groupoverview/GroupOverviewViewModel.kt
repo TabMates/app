@@ -4,7 +4,7 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.auth.CurrentAccount
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
@@ -35,10 +35,9 @@ class GroupOverviewViewModel(
     tabEntryRepository: TabEntryRepository,
     currencyRepository: CurrencyRepository,
     exchangeRateRepository: ExchangeRateRepository,
-    sessionStorage: SessionStorage,
+    currentAccount: CurrentAccount,
 ) : ViewModel() {
-    private val currentUser = sessionStorage.get()?.user
-    private val currentUserId = currentUser?.id.orEmpty()
+    private val currentUserId = currentAccount.userId().orEmpty()
 
     private val searchQueryState = TextFieldState()
     private val searchQueryFlow = snapshotFlow { searchQueryState.text.toString() }

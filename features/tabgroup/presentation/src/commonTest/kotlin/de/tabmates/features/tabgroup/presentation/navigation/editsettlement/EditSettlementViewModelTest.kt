@@ -4,7 +4,7 @@ import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
-import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
+import de.tabmates.features.tabgroup.presentation.testing.FakeCurrentAccount
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
 import kotlinx.coroutines.Dispatchers
@@ -173,7 +173,7 @@ class EditSettlementViewModelTest {
                     ),
             ),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
-        sessionStorage: FakeSessionStorage = FakeSessionStorage(),
+        currentAccount: FakeCurrentAccount = FakeCurrentAccount(),
     ): EditSettlementViewModel =
         EditSettlementViewModel(
             groupId = groupId,
@@ -181,6 +181,6 @@ class EditSettlementViewModelTest {
             tabEntryRepository = tabEntryRepository,
             groupRepository = groupRepository,
             currencyRepository = currencyRepository,
-            sessionStorage = sessionStorage,
+            currentAccount = currentAccount,
         )
 }

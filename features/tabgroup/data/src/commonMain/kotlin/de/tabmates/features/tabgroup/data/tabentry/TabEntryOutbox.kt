@@ -1,6 +1,7 @@
 package de.tabmates.features.tabgroup.data.tabentry
 
 import de.tabmates.core.data.di.APPLICATION_SCOPE
+import de.tabmates.core.domain.auth.StaleSessionStore
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.Result
@@ -41,6 +42,7 @@ class TabEntryOutbox(
     private val database: TabMatesDatabase,
     private val webSocketConnector: KtorWebSocketConnector,
     private val service: TabEntryService,
+    private val staleSessionStore: StaleSessionStore,
     private val json: Json,
     private val logger: TabMatesLogger,
     @Named(APPLICATION_SCOPE) private val applicationScope: CoroutineScope,
@@ -396,6 +398,17 @@ class TabEntryOutbox(
     }
 
     private suspend fun drain() {
+        // An expired session is in re-auth limbo, and re-auth has to sign in before it can compare
+        // the account id — so for that moment the app holds a *different* account's token, and the
+        // socket opens off exactly that. Dispatching here would send this account's queued writes
+        // as someone else; a send counts as success and deletes the row, so they would be lost
+        // rather than retried. Drains resume the moment the matching account signs back in and the
+        // record is cleared.
+        if (staleSessionStore.get() != null) {
+            logger.debug(TAG, "Outbox drain skipped: session expired, awaiting re-auth")
+            return
+        }
+
         // No connection → nothing to attempt. Drain will re-run on next CONNECTED edge.
         if (webSocketConnector.connectionState.value != ConnectionState.CONNECTED) {
             logger.debug(

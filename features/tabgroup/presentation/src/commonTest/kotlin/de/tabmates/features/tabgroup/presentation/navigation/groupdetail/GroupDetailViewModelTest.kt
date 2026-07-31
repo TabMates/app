@@ -4,8 +4,8 @@ import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeActivityRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeCurrentAccount
 import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
-import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
 import kotlinx.coroutines.Dispatchers
@@ -246,7 +246,7 @@ class GroupDetailViewModelTest {
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
         exchangeRateRepository: FakeExchangeRateRepository = FakeExchangeRateRepository(),
         activityRepository: FakeActivityRepository = FakeActivityRepository(),
-        sessionStorage: FakeSessionStorage = FakeSessionStorage(),
+        currentAccount: FakeCurrentAccount = FakeCurrentAccount(),
     ): GroupDetailViewModel =
         GroupDetailViewModel(
             groupId = groupId,
@@ -255,6 +255,6 @@ class GroupDetailViewModelTest {
             currencyRepository = currencyRepository,
             exchangeRateRepository = exchangeRateRepository,
             activityRepository = activityRepository,
-            sessionStorage = sessionStorage,
+            currentAccount = currentAccount,
         )
 }

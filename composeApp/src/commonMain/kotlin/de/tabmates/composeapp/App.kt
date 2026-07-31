@@ -56,6 +56,8 @@ import de.tabmates.composeapp.deeplink.resolveDeepLink
 import de.tabmates.composeapp.di.TabMatesKoinApp
 import de.tabmates.composeapp.navigation.PlatformBackHandler
 import de.tabmates.composeapp.navigation.rememberScreenTopBarNavEntryDecorator
+import de.tabmates.composeapp.session.ReauthRoot
+import de.tabmates.composeapp.session.SessionExpiredBanner
 import de.tabmates.composeapp.sync.CurrencySyncCoordinator
 import de.tabmates.composeapp.sync.GroupSyncCoordinator
 import de.tabmates.composeapp.sync.NotificationsSyncCoordinator
@@ -69,7 +71,10 @@ import de.tabmates.core.presentation.navigation.ScreenWithFab
 import de.tabmates.core.presentation.navigation.TopBarActionsController
 import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.core.presentation.util.ObserveAsEvents
+import de.tabmates.features.authentication.presentation.forgotpassword.ForgotPasswordScreenRoot
 import de.tabmates.features.authentication.presentation.navigation.EmailVerification
+import de.tabmates.features.authentication.presentation.navigation.Reauth
+import de.tabmates.features.authentication.presentation.navigation.ReauthForgotPassword
 import de.tabmates.features.authentication.presentation.navigation.ResetPassword
 import de.tabmates.features.authentication.presentation.navigation.Welcome
 import de.tabmates.features.authentication.presentation.navigation.authGraph
@@ -170,7 +175,7 @@ fun App() {
             // devices, store-redirect dialog everywhere else.
             AppUpdateGate()
 
-            val isLoggedIn by mainViewModel.isLoggedIn.collectAsStateWithLifecycle()
+            val sessionState by mainViewModel.sessionState.collectAsStateWithLifecycle()
 
             // Start sync coordinators off the main thread, post-first-frame.
             // Keeps KSafe construction + repository graph off the startup critical path.
@@ -190,7 +195,9 @@ fun App() {
                 }
             }
 
-            val startDestination = if (isLoggedIn) Home else Welcome
+            // An expired session still counts: its data is on the device, so the app opens on it
+            // rather than throwing the user back to the welcome screen.
+            val startDestination = if (sessionState.hasLocalSession) Home else Welcome
             val backStack = rememberNavBackStack(configuration = savedStateConfiguration, startDestination)
             val currentKey = backStack.lastOrNull()
 
@@ -202,9 +209,12 @@ fun App() {
                 onBack = { backStack.removeLastOrNull() },
             )
 
-            // Navigate to Welcome when session is invalidated (e.g. token refresh failed).
-            ObserveAsEvents(mainViewModel.isLoggedIn) {
-                if (!it && currentKey is LoggedIn) {
+            // Navigate to Welcome when the account is really gone (signed out, deleted). An
+            // *expired* session deliberately does not land here: the shell branch below keys off
+            // `currentKey is LoggedIn`, so staying put is what keeps the app usable on local data
+            // behind the re-auth banner.
+            ObserveAsEvents(mainViewModel.sessionState) {
+                if (!it.hasLocalSession && currentKey is LoggedIn) {
                     backStack.clear()
                     backStack.add(Welcome)
                 }
@@ -213,7 +223,7 @@ fun App() {
             DisposableEffect(Unit) {
                 DeepLinkHandler.listener = listener@{ uri ->
                     val navKey = resolveDeepLink(uri, deepLinks) ?: return@listener
-                    if (navKey is LoggedIn && !mainViewModel.isLoggedIn.value) {
+                    if (navKey is LoggedIn && !mainViewModel.sessionState.value.hasLocalSession) {
                         mainViewModel.setPendingPostAuthNavKey(navKey)
                         backStack.clear()
                         backStack.add(Welcome)
@@ -304,7 +314,14 @@ fun App() {
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                     ) { paddingValues ->
                         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                            ConnectivityBannerRoot(modifier = Modifier.fillMaxWidth())
+                            if (sessionState == SessionShellState.Stale) {
+                                SessionExpiredBanner(
+                                    onSignInClick = { backStack.add(Reauth) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            } else {
+                                ConnectivityBannerRoot(modifier = Modifier.fillMaxWidth())
+                            }
                             CompositionLocalProvider(LocalTopBarActionsController provides topBarActions) {
                                 NavDisplay(
                                     modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -320,6 +337,18 @@ fun App() {
                                             snackbarHostState = snackbarHostState,
                                             appScope = appScope,
                                         )
+                                        // Registered here rather than in `authGraph`: re-auth is
+                                        // reached *from* the logged-in shell, which is served by
+                                        // this entry provider.
+                                        entry<Reauth> {
+                                            ReauthRoot(
+                                                backStack = backStack,
+                                                snackbarHostState = snackbarHostState,
+                                            )
+                                        }
+                                        entry<ReauthForgotPassword> {
+                                            ForgotPasswordScreenRoot()
+                                        }
                                     },
                                 )
                             }

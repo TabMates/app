@@ -2,6 +2,8 @@ package de.tabmates.core.data.networking
 
 import de.tabmates.core.data.AppBuildInfo
 import de.tabmates.core.domain.auth.AuthInfo
+import de.tabmates.core.domain.auth.SessionInvalidationReason
+import de.tabmates.core.domain.auth.SessionInvalidator
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.update.UpgradeRequiredNotifier
@@ -51,6 +53,10 @@ class UpgradeRequiredTest {
         override fun set(info: AuthInfo?) = Unit
     }
 
+    private class NoOpSessionInvalidator : SessionInvalidator {
+        override fun invalidate(reason: SessionInvalidationReason) = Unit
+    }
+
     private fun clientRespondingWith(
         status: HttpStatusCode,
         notifier: UpgradeRequiredNotifier,
@@ -59,6 +65,7 @@ class UpgradeRequiredTest {
         sessionStorage = EmptySessionStorage(),
         json = Json { ignoreUnknownKeys = true },
         upgradeRequiredNotifier = notifier,
+        sessionInvalidator = NoOpSessionInvalidator(),
     ).create(MockEngine { respondError(status) })
 
     @Test

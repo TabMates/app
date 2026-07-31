@@ -1,12 +1,14 @@
 package de.tabmates.features.authentication.presentation.emailverification
 
 import de.tabmates.core.domain.auth.AuthInfo
+import de.tabmates.core.domain.auth.SessionInvalidationReason
 import de.tabmates.core.domain.auth.User
 import de.tabmates.core.domain.auth.UserType
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.authentication.testing.FakeAuthService
+import de.tabmates.features.authentication.testing.FakeSessionInvalidator
 import de.tabmates.features.authentication.testing.FakeSessionStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -87,15 +89,20 @@ class EmailVerificationViewModelTest {
     }
 
     @Test
-    fun `successful verification clears the cached session`() =
+    fun `successful verification clears the cached session as an email change`() =
         runTest(testDispatcher) {
             val sessionStorage = FakeSessionStorage(initial = authInfo())
+            val sessionInvalidator = FakeSessionInvalidator(sessionStorage)
             createViewModel(
                 authService = FakeAuthService(verifyEmailResult = Result.Success(Unit)),
                 sessionStorage = sessionStorage,
+                sessionInvalidator = sessionInvalidator,
             )
 
             assertNull(sessionStorage.get())
+            // EMAIL_CHANGED rather than TOKEN_REJECTED: the stored address is now the old one, so
+            // the re-auth screen must ask for the new one instead of locking the stale value in.
+            assertEquals(listOf(SessionInvalidationReason.EMAIL_CHANGED), sessionInvalidator.reasons)
         }
 
     @Test
@@ -127,12 +134,13 @@ class EmailVerificationViewModelTest {
     private fun TestScope.createViewModel(
         authService: FakeAuthService = FakeAuthService(),
         sessionStorage: FakeSessionStorage = FakeSessionStorage(),
+        sessionInvalidator: FakeSessionInvalidator = FakeSessionInvalidator(sessionStorage),
         token: String = "test-token",
     ): EmailVerificationViewModel {
         val viewModel =
             EmailVerificationViewModel(
                 authService = authService,
-                sessionStorage = sessionStorage,
+                sessionInvalidator = sessionInvalidator,
                 token = token,
             )
         activateState(viewModel)

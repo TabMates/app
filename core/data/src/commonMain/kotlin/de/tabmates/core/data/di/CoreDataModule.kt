@@ -2,6 +2,7 @@ package de.tabmates.core.data.di
 
 import de.tabmates.core.data.BuildKonfig
 import de.tabmates.core.data.networking.HttpClientFactory
+import de.tabmates.core.domain.auth.SessionInvalidator
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.update.UpgradeRequiredNotifier
@@ -48,5 +49,13 @@ class CoreDataModule {
         json: Json,
         engine: HttpClientEngine,
         upgradeRequiredNotifier: UpgradeRequiredNotifier,
-    ): HttpClient = HttpClientFactory(logger, sessionStorage, json, upgradeRequiredNotifier).create(engine)
+        sessionInvalidator: SessionInvalidator,
+    ): HttpClient =
+        HttpClientFactory(
+            logger,
+            sessionStorage,
+            json,
+            upgradeRequiredNotifier,
+            sessionInvalidator,
+        ).create(engine)
 }

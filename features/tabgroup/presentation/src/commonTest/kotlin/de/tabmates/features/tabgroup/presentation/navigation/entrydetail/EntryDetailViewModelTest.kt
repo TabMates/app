@@ -5,8 +5,8 @@ import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.EntryKind
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeCurrentAccount
 import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
-import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
 import kotlinx.coroutines.Dispatchers
@@ -186,7 +186,7 @@ class EntryDetailViewModelTest {
             FakeGroupRepository(initialGroups = listOf(Fixtures.group(id = "g1", currency = "EUR"))),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
         exchangeRateRepository: FakeExchangeRateRepository = FakeExchangeRateRepository(),
-        sessionStorage: FakeSessionStorage = FakeSessionStorage(),
+        currentAccount: FakeCurrentAccount = FakeCurrentAccount(),
     ): EntryDetailViewModel =
         EntryDetailViewModel(
             entryId = "e1",
@@ -195,6 +195,6 @@ class EntryDetailViewModelTest {
             groupRepository = groupRepository,
             currencyRepository = currencyRepository,
             exchangeRateRepository = exchangeRateRepository,
-            sessionStorage = sessionStorage,
+            currentAccount = currentAccount,
         )
 }
