@@ -5,6 +5,8 @@ import de.tabmates.core.data.BuildKonfig
 import de.tabmates.core.data.dto.AuthInfoSerializable
 import de.tabmates.core.data.dto.requests.RefreshRequest
 import de.tabmates.core.data.mappers.toDomain
+import de.tabmates.core.domain.auth.SessionInvalidationReason
+import de.tabmates.core.domain.auth.SessionInvalidator
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.update.UpgradeRequiredNotifier
@@ -39,6 +41,7 @@ class HttpClientFactory(
     private val sessionStorage: SessionStorage,
     private val json: Json,
     private val upgradeRequiredNotifier: UpgradeRequiredNotifier,
+    private val sessionInvalidator: SessionInvalidator,
 ) {
     fun create(engine: HttpClientEngine): HttpClient {
         return HttpClient(engine) {
@@ -122,7 +125,9 @@ class HttpClientFactory(
                                     )
                             }.onFailure {
                                 if (it.isAuthRejection()) {
-                                    sessionStorage.set(null)
+                                    // Records who just got logged out before dropping the session,
+                                    // so the shell can keep their local data and ask them back in.
+                                    sessionInvalidator.invalidate(SessionInvalidationReason.TOKEN_REJECTED)
                                 }
                             }
 
