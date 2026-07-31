@@ -50,7 +50,21 @@ fun StatusBanner(
     Surface(
         color = containerColor,
         contentColor = contentColor,
-        modifier = modifier,
+        // On the Surface, not the Text: the strip is full-bleed but the label is not, so anchoring
+        // the gesture to the text would shrink the target to the glyph bounds — too small for what
+        // is the only route back to a working session.
+        modifier =
+            modifier.then(
+                if (onClick != null) {
+                    Modifier.clickable(
+                        onClick = onClick,
+                        onClickLabel = contentDescription,
+                        role = Role.Button,
+                    )
+                } else {
+                    Modifier
+                },
+            ),
     ) {
         Text(
             text = text,
@@ -59,18 +73,7 @@ fun StatusBanner(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .then(
-                        if (onClick != null) {
-                            Modifier
-                                .clickable(
-                                    onClick = onClick,
-                                    onClickLabel = contentDescription,
-                                    role = Role.Button,
-                                )
-                        } else {
-                            Modifier
-                        },
-                    ).padding(horizontal = 16.dp, vertical = 6.dp),
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
         )
     }
 }
