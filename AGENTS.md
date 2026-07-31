@@ -92,7 +92,7 @@ Not all features have all layers (`:features:appupdate` = domain + data only). S
 - **Theme:** `TabMatesTheme` (built on Material3).
 - **Tokens:** In `:core:designsystem`. Use `MaterialTheme.colorScheme` or custom `TabMatesTheme` properties.
 - **Resources:** Use `Res.string.key` or `Res.drawable.key` via Compose Resources.
-- **Localization:** Managed in `composeResources/values/strings.xml` within each module.
+- **Localization:** Managed in `composeResources/values/string.xml` (+ `values-de/string.xml`) within each module. Write bare apostrophes/quotes — Compose Resources renders Android-style `\'` escaping literally.
 
 ---
 
@@ -183,3 +183,69 @@ common
 - **CI parity:** `.github/workflows/pr_pipeline.yml` = ktlint + `:androidApp:assembleDebug lintDebug testDebugUnitTest` + `:composeApp:desktopJar` + wasm distribution + `allTests`.
 - **Local Config:** `local.properties` must have `API_KEY`. `CLIENT_BUILD_TOKEN` is optional (see README) — once the backend enables its version gate, native builds without a matching one get `426`.
 - **Sync:** `./gradlew help` (triggers sync).
+
+### Command Reference
+
+| Task | Command |
+|---|---|
+| Format | `./gradlew ktlintFormat` |
+| Lint (CI parity) | `./gradlew ktlintCheck :build-logic:convention:ktlintCheck` |
+| Compile one module | `./gradlew :features:tabgroup:domain:compileKotlinJvm` |
+| Android debug build | `./gradlew :androidApp:assembleDebug` |
+| Android unit tests | `./gradlew :androidApp:testDebugUnitTest` |
+| All tests, all targets | `./gradlew allTests` |
+| Desktop jar | `./gradlew :composeApp:desktopJar` |
+| Gradle sync | `./gradlew help` |
+
+---
+
+## 12. Adding a New Module or Feature
+
+1. Create `:features:<name>:domain` (+ `data`, `presentation`, and optionally `database` / `testing`); add every module to `settings.gradle.kts`.
+2. Apply convention plugins — `kmp.library` for domain/data, `cmp.feature` for presentation, plus `koin`, `room`, `cmp.resources` where needed. Never configure KMP/Android by hand.
+3. Wire dependencies with typesafe accessors (`projects.core.domain`) and respect the layer rules: `presentation → domain ← data`, no cross-feature dependencies.
+4. Add `@Module @Configuration @ComponentScan("<package>")` per layer that needs DI — the Koin compiler plugin aggregates them automatically.
+5. Define `NavKey` routes and an `EntryProviderScope<NavKey>.<feature>Graph` extension in `presentation`; register the graph and the `SerializersModule` entries in `composeApp/.../App.kt`.
+6. Add tests in `commonTest` (Room/repository tests may live in `desktopTest`); put shared fakes in `:features:<name>:testing`.
+7. Run `./gradlew ktlintFormat` and build the touched modules before opening a PR.
+
+Details live in the `android-module-structure` and `android-navigation` skills.
+
+---
+
+## 13. Rules
+
+- **Keep this file updated.** Whenever the architecture, tech stack, or project structure changes — a new module, a new convention plugin, a swapped library, a changed layer rule — update `AGENTS.md` in the same change.
+- Never configure KMP/Android/Compose manually; use a `de.tabmates.convention.*` plugin.
+- Never hardcode dependency versions; everything goes through `gradle/libs.versions.toml`.
+- Never use the Koin DSL; this project is Koin Annotations only.
+- Never let data-layer types (DTOs, `*Entity`, `*Serializable`) cross into `presentation`.
+- Never throw across a layer boundary — return `Result.Failure` / `EmptyResult`. Always rethrow `CancellationException`.
+- Never introduce a new compiler warning; CI diffs against `.github/compiler-warnings-baseline.txt`.
+- Never commit `REVIEW(` comments left over from a code review.
+
+---
+
+## Agent Tooling Layout
+
+This repo is set up for **Claude Code** and **opencode**. Both read the same skills and the same reviewer brief — opencode loads `.claude/skills/<name>/SKILL.md` for Claude Code compatibility, so the skills are written once.
+
+```
+.claude/
+  skills/<name>/SKILL.md          # shared by both tools — architecture skills + code-review
+  skills/code-review/
+    SKILL.md                      # orchestrator workflow
+    reviewer-instructions.md      # canonical reviewer brief (single source of truth)
+  agents/code-reviewer.md         # Claude Code subagent (thin wrapper)
+.opencode/
+  agents/code-reviewer.md         # opencode subagent (thin wrapper)
+  commands/code-review.md         # opencode /code-review slash command
+```
+
+| | Claude Code | opencode |
+|---|---|---|
+| Skills | `.claude/skills/` (native) | `.claude/skills/` (compat loader) |
+| Reviewer agent | `.claude/agents/code-reviewer.md` | `.opencode/agents/code-reviewer.md` |
+| Run a review | `/code-review [base]` (skill) | `/code-review [base]` (command, `subtask: true`) |
+
+Never add a `.opencode/skills/` copy of an existing skill — it forks the source of truth. Add skills under `.claude/skills/` only.
