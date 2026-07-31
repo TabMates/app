@@ -17,6 +17,11 @@
     <string name="connectivity_banner_offline_days">Offline · last synced %1$d d ago</string>
     <string name="connectivity_banner_offline_unsynced">Offline · not yet synced</string>
 
+    <!-- Android app promo (web client only) -->
+    <string name="app_promo_banner_text">TabMates works better as an app</string>
+    <string name="app_promo_banner_cd">Open the TabMates app, or get it on Google Play</string>
+    <string name="app_promo_banner_dismiss">Dismiss</string>
+
     <!-- Expired session -->
     <string name="session_banner_expired">Session expired · tap to sign in and sync</string>
     <string name="session_banner_expired_cd">Sign in again</string>

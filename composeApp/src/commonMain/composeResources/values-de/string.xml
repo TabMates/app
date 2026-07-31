@@ -17,6 +17,11 @@
     <string name="connectivity_banner_offline_days">Offline · vor %1$d Tagen synchronisiert</string>
     <string name="connectivity_banner_offline_unsynced">Offline · noch nicht synchronisiert</string>
 
+    <!-- Werbung für die Android-App (nur Web-Client) -->
+    <string name="app_promo_banner_text">TabMates funktioniert besser als App</string>
+    <string name="app_promo_banner_cd">TabMates-App öffnen oder bei Google Play holen</string>
+    <string name="app_promo_banner_dismiss">Ausblenden</string>
+
     <!-- Abgelaufene Sitzung -->
     <string name="session_banner_expired">Sitzung abgelaufen · zum Anmelden und Synchronisieren tippen</string>
     <string name="session_banner_expired_cd">Erneut anmelden</string>

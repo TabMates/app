@@ -46,6 +46,11 @@
                 <data android:pathPrefix="/api/auth/verify" />
                 <data android:pathPrefix="/api/auth/reset-password" />
                 <data android:pathPrefix="/j/" />
+                <!-- Stateless "open the app" target. Carries no data: it exists so the web
+                     client's intent:// promo has a path this app claims, and so a plain
+                     https://app.tabmates.de/open link opens the app when it is installed.
+                     Not "/" — claiming the bare host would swallow every web-client link. -->
+                <data android:pathPrefix="/open" />
             </intent-filter>
 
             <intent-filter>
@@ -59,6 +64,7 @@
                 <data android:pathPrefix="/api/auth/verify" />
                 <data android:pathPrefix="/api/auth/reset-password" />
                 <data android:pathPrefix="/j/" />
+                <data android:pathPrefix="/open" />
             </intent-filter>
         </activity>
     </application>
