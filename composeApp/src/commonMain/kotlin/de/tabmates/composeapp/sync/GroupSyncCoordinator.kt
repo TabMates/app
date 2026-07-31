@@ -9,8 +9,8 @@ import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.tabgroup.domain.activity.ActivityRepository
 import de.tabmates.features.tabgroup.domain.sync.SyncRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -33,15 +33,19 @@ class GroupSyncCoordinator(
             .map { it?.user?.id }
             .distinctUntilChanged()
             .onEach { userId ->
-                if (userId != null) {
-                    onSignedIn(userId)
-                } else {
-                    onSignedOut()
+                // Caught per emission rather than with `catch`, which would end the collection:
+                // one unexpected throw would leave the app looking signed in while nothing ever
+                // synced again, and the next sign-out would never wipe.
+                try {
+                    if (userId != null) {
+                        onSignedIn(userId)
+                    } else {
+                        onSignedOut()
+                    }
+                } catch (throwable: Throwable) {
+                    if (throwable is CancellationException) throw throwable
+                    logger.error(TAG, "Session sync coordination failed", throwable)
                 }
-            }.catch { throwable ->
-                // Without this the collector dies on the first unexpected throw and never
-                // restarts: the app would keep looking signed in while nothing ever synced again.
-                logger.error(TAG, "Session sync coordination failed", throwable)
             }.launchIn(scope)
     }
 

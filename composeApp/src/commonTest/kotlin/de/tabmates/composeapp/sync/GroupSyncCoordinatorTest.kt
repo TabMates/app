@@ -103,6 +103,28 @@ class GroupSyncCoordinatorTest {
             assertEquals(null, staleSessionStore.get())
         }
 
+    @Test
+    fun anUnexpectedFailureDoesNotStopTheCoordinatorSeeingTheNextChange() =
+        runTest(testDispatcher) {
+            val sessionStorage = FakeSessionStorage(authInfo("user-1"))
+            val staleSessionStore = FakeStaleSessionStore()
+            val localDataResetter = FakeLocalDataResetter()
+            createCoordinator(
+                sessionStorage,
+                staleSessionStore,
+                localDataResetter,
+                FakeSyncRepository(throwOnSync = true),
+            )
+            advanceUntilIdle()
+
+            // The sign-out after the blow-up still has to wipe: a collector that ended on the
+            // throw would leave the previous account's data on the device.
+            sessionStorage.set(null)
+            advanceUntilIdle()
+
+            assertEquals(1, localDataResetter.resetCalls)
+        }
+
     private fun TestScope.createCoordinator(
         sessionStorage: FakeSessionStorage,
         staleSessionStore: FakeStaleSessionStore,
@@ -149,12 +171,15 @@ private class NoOpLogger : TabMatesLogger {
     ) = Unit
 }
 
-private class FakeSyncRepository : SyncRepository {
+private class FakeSyncRepository(
+    private val throwOnSync: Boolean = false,
+) : SyncRepository {
     var syncCalls: Int = 0
         private set
 
     override suspend fun sync(): EmptyResult<DataError.Remote> {
         syncCalls += 1
+        if (throwOnSync) error("sync blew up")
         return Result.Success(Unit)
     }
 }
