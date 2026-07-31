@@ -34,6 +34,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
+import de.tabmates.core.data.AppBuildInfo
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.domain.preferences.ThemeMode
@@ -59,6 +60,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_setting
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_email
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_password
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_username
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_app_version
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_delete_account
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_footer
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_nav_about
@@ -310,6 +312,7 @@ private fun SettingsTwoPane(
 
                 SettingsSection.ABOUT -> {
                     SectionLabel(stringResource(Res.string.profile_section_about))
+                    AppVersionRow()
                     AccountRow(
                         iconRes = Res.drawable.ic_info,
                         title = stringResource(Res.string.profile_oss_licenses),
@@ -493,12 +496,25 @@ private fun ProfileAccountAndAppearance(
     )
     VerticalSpacer(4.dp)
     SectionLabel(stringResource(Res.string.profile_section_about))
+    AppVersionRow()
     AccountRow(
         iconRes = Res.drawable.ic_info,
         title = stringResource(Res.string.profile_oss_licenses),
         subtitle = stringResource(Res.string.profile_oss_licenses_caption),
         onClick = onOpenOssLicenses,
         showChevron = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun AppVersionRow() {
+    AccountRow(
+        iconRes = Res.drawable.ic_info,
+        title = stringResource(Res.string.profile_app_version),
+        subtitle = AppBuildInfo.version,
+        onClick = null,
+        showChevron = false,
         modifier = Modifier.fillMaxWidth(),
     )
 }

@@ -294,6 +294,7 @@
     <string name="profile_section_account">KONTO</string>
     <string name="profile_section_appearance">ERSCHEINUNGSBILD</string>
     <string name="profile_section_about">ÜBER</string>
+    <string name="profile_app_version">Version</string>
     <string name="profile_oss_licenses">Open-Source-Lizenzen</string>
     <string name="profile_oss_licenses_caption">Bibliotheken von Drittanbietern</string>
     <string name="oss_licenses_title">Open-Source-Lizenzen</string>
