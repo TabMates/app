@@ -1,12 +1,15 @@
 package de.tabmates.core.designsystem.banner
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -27,6 +30,10 @@ enum class StatusBannerTone {
  *
  * Pass [onClick] when the state is actionable; the strip then behaves as a button, so it needs a
  * [contentDescription] that says what tapping does rather than repeating [text].
+ *
+ * [trailingContent] takes a secondary action pinned to the end — a dismiss button, typically. It is
+ * a slot rather than a callback because the icon has to come from the caller's module: this one
+ * ships no close icon, and generated `Res` classes do not cross module boundaries.
  */
 @Composable
 fun StatusBanner(
@@ -35,6 +42,7 @@ fun StatusBanner(
     tone: StatusBannerTone = StatusBannerTone.Info,
     onClick: (() -> Unit)? = null,
     contentDescription: String? = null,
+    trailingContent: (@Composable () -> Unit)? = null,
 ) {
     val (containerColor, contentColor) =
         when (tone) {
@@ -66,15 +74,23 @@ fun StatusBanner(
                 },
             ),
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            textAlign = TextAlign.Center,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Padding stays on the Text, not the Row: the trailing slot brings its own touch
+            // target, and padding it again would make the strip taller than it needs to be.
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                textAlign = TextAlign.Center,
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+            )
+            trailingContent?.invoke()
+        }
     }
 }
 
@@ -83,6 +99,20 @@ fun StatusBanner(
 private fun StatusBannerPreview() {
     TabMatesTheme {
         StatusBanner(text = "Offline · last synced 2 h ago")
+    }
+}
+
+@PreviewThemes
+@Composable
+private fun StatusBannerTrailingContentPreview() {
+    TabMatesTheme {
+        StatusBanner(
+            text = "Get the TabMates app",
+            onClick = {},
+            trailingContent = {
+                IconButton(onClick = {}) { Text(text = "✕") }
+            },
+        )
     }
 }
 
