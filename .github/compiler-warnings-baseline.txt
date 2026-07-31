@@ -29,3 +29,5 @@ KLIB resolver: The same 'unique_name=lifecycle-viewmodel-navigation3_commonMain'
 
 Deprecated Gradle Property 'kotlin.mpp.import.enableKgpDependencyResolution' Used
 w: ⚠️ Native task 'iosSimulatorArm64Test' is disabled
+
+[Koin] compile-safety validation skipped — no Koin entry point in this compilation.
