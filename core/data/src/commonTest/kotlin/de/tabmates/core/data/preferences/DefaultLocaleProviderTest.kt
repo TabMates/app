@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 
 class DefaultLocaleProviderTest {
     private class FakeAppPreferencesRepository(
@@ -25,6 +26,10 @@ class DefaultLocaleProviderTest {
         override fun appLanguage(): Flow<AppLanguage> = flowOf(language)
 
         override suspend fun setAppLanguage(language: AppLanguage) = Unit
+
+        override fun androidAppPromoSnoozedUntil(): Flow<Instant?> = flowOf(null)
+
+        override suspend fun snoozeAndroidAppPromo(until: Instant) = Unit
     }
 
     @Test

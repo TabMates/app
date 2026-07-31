@@ -56,6 +56,8 @@ import de.tabmates.composeapp.deeplink.resolveDeepLink
 import de.tabmates.composeapp.di.TabMatesKoinApp
 import de.tabmates.composeapp.navigation.PlatformBackHandler
 import de.tabmates.composeapp.navigation.rememberScreenTopBarNavEntryDecorator
+import de.tabmates.composeapp.promo.AppPromoBannerRoot
+import de.tabmates.composeapp.promo.isAndroidBrowser
 import de.tabmates.composeapp.session.ReauthRoot
 import de.tabmates.composeapp.session.SessionExpiredBanner
 import de.tabmates.composeapp.sync.CurrencySyncCoordinator
@@ -245,6 +247,7 @@ fun App() {
             val topLevelTabs = remember { listOf(Home, Activity, Group, Profile) }
             val snackbarHostState = remember { SnackbarHostState() }
             val appScope = rememberCoroutineScope()
+            val isAndroidBrowser = remember { isAndroidBrowser() }
 
             if (currentKey is LoggedIn) {
                 val topBarActions = remember { TopBarActionsController() }
@@ -321,6 +324,12 @@ fun App() {
                                 )
                             } else {
                                 ConnectivityBannerRoot(modifier = Modifier.fillMaxWidth())
+                            }
+                            // Web-only, and never while the session is stale: the re-auth banner
+                            // above is the one thing the user has to act on, so nothing else gets
+                            // to ask for a tap at the same time.
+                            if (isAndroidBrowser && sessionState != SessionShellState.Stale) {
+                                AppPromoBannerRoot(modifier = Modifier.fillMaxWidth())
                             }
                             CompositionLocalProvider(LocalTopBarActionsController provides topBarActions) {
                                 NavDisplay(
