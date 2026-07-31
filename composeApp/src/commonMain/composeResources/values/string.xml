@@ -16,4 +16,31 @@
     <string name="connectivity_banner_offline_hours">Offline · last synced %1$d h ago</string>
     <string name="connectivity_banner_offline_days">Offline · last synced %1$d d ago</string>
     <string name="connectivity_banner_offline_unsynced">Offline · not yet synced</string>
+
+    <!-- Expired session -->
+    <string name="session_banner_expired">Session expired · tap to sign in and sync</string>
+    <string name="session_banner_expired_cd">Sign in again</string>
+
+    <!-- Re-authentication after an expired session -->
+    <string name="reauth_title">Session expired</string>
+    <string name="reauth_desc_registered">You were signed out while offline. Sign back in to the same account so the changes made on this device can sync.</string>
+    <string name="reauth_desc_email_changed">Your email address changed, which signed you out everywhere. Sign in with your new address to keep the changes made on this device.</string>
+    <string name="reauth_desc_guest">Guest sessions can\'t be restored once they expire, so this device has to start over. Create an account next time to keep your data safe.</string>
+    <string name="reauth_email_hint">Email</string>
+    <string name="reauth_email_locked_hint">Locked so your changes sync to the account that made them</string>
+    <string name="reauth_password_hint">Password</string>
+    <string name="reauth_forgot_password">Forgot Password?</string>
+    <string name="reauth_sign_in">Login</string>
+    <string name="reauth_unsynced_one">1 change on this device hasn\'t reached the server yet.</string>
+    <string name="reauth_unsynced_other">%1$d changes on this device haven\'t reached the server yet.</string>
+    <string name="reauth_switch_account">Use a different account</string>
+    <string name="reauth_start_over">Start over</string>
+    <string name="reauth_error_invalid_credentials">The email or password is incorrect</string>
+    <string name="reauth_error_different_account">That\'s a different account. To switch, choose \"Use a different account\".</string>
+    <string name="reauth_dialog_title">Delete this device\'s data?</string>
+    <string name="reauth_dialog_text_none">The groups and entries stored on this device will be removed. This can\'t be undone.</string>
+    <string name="reauth_dialog_text_one">1 change on this device hasn\'t been synced and will be lost, along with the groups and entries stored here. This can\'t be undone.</string>
+    <string name="reauth_dialog_text_other">%1$d changes on this device haven\'t been synced and will be lost, along with the groups and entries stored here. This can\'t be undone.</string>
+    <string name="reauth_dialog_confirm">Delete and continue</string>
+    <string name="reauth_dialog_dismiss">Cancel</string>
 </resources>

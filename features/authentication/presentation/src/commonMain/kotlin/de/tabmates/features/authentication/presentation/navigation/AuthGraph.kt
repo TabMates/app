@@ -21,6 +21,8 @@ val authSerializersModule =
         polymorphic(NavKey::class) {
             subclass(Welcome::class)
             subclass(Login::class)
+            subclass(Reauth::class)
+            subclass(ReauthForgotPassword::class)
             subclass(Register::class)
             subclass(RegisterSuccess::class)
             subclass(EmailVerification::class)

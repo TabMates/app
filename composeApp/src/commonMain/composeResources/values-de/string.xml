@@ -16,4 +16,31 @@
     <string name="connectivity_banner_offline_hours">Offline · vor %1$d Std. synchronisiert</string>
     <string name="connectivity_banner_offline_days">Offline · vor %1$d Tagen synchronisiert</string>
     <string name="connectivity_banner_offline_unsynced">Offline · noch nicht synchronisiert</string>
+
+    <!-- Abgelaufene Sitzung -->
+    <string name="session_banner_expired">Sitzung abgelaufen · zum Anmelden und Synchronisieren tippen</string>
+    <string name="session_banner_expired_cd">Erneut anmelden</string>
+
+    <!-- Erneute Anmeldung nach abgelaufener Sitzung -->
+    <string name="reauth_title">Sitzung abgelaufen</string>
+    <string name="reauth_desc_registered">Du wurdest offline abgemeldet. Melde dich wieder mit demselben Konto an, damit die Änderungen auf diesem Gerät synchronisiert werden können.</string>
+    <string name="reauth_desc_email_changed">Deine E-Mail-Adresse wurde geändert, dadurch wurdest du überall abgemeldet. Melde dich mit deiner neuen Adresse an, um die Änderungen auf diesem Gerät zu behalten.</string>
+    <string name="reauth_desc_guest">Gast-Sitzungen lassen sich nach Ablauf nicht wiederherstellen, dieses Gerät muss also neu beginnen. Erstelle beim nächsten Mal ein Konto, damit deine Daten sicher sind.</string>
+    <string name="reauth_email_hint">E-Mail</string>
+    <string name="reauth_email_locked_hint">Gesperrt, damit deine Änderungen zum richtigen Konto synchronisiert werden</string>
+    <string name="reauth_password_hint">Passwort</string>
+    <string name="reauth_forgot_password">Passwort vergessen?</string>
+    <string name="reauth_sign_in">Anmelden</string>
+    <string name="reauth_unsynced_one">1 Änderung auf diesem Gerät wurde noch nicht an den Server übertragen.</string>
+    <string name="reauth_unsynced_other">%1$d Änderungen auf diesem Gerät wurden noch nicht an den Server übertragen.</string>
+    <string name="reauth_switch_account">Anderes Konto verwenden</string>
+    <string name="reauth_start_over">Neu beginnen</string>
+    <string name="reauth_error_invalid_credentials">E-Mail-Adresse oder Passwort ist falsch</string>
+    <string name="reauth_error_different_account">Das ist ein anderes Konto. Wähle „Anderes Konto verwenden“, um zu wechseln.</string>
+    <string name="reauth_dialog_title">Daten dieses Geräts löschen?</string>
+    <string name="reauth_dialog_text_none">Die auf diesem Gerät gespeicherten Gruppen und Einträge werden entfernt. Das lässt sich nicht rückgängig machen.</string>
+    <string name="reauth_dialog_text_one">1 Änderung auf diesem Gerät wurde noch nicht synchronisiert und geht zusammen mit den hier gespeicherten Gruppen und Einträgen verloren. Das lässt sich nicht rückgängig machen.</string>
+    <string name="reauth_dialog_text_other">%1$d Änderungen auf diesem Gerät wurden noch nicht synchronisiert und gehen zusammen mit den hier gespeicherten Gruppen und Einträgen verloren. Das lässt sich nicht rückgängig machen.</string>
+    <string name="reauth_dialog_confirm">Löschen und fortfahren</string>
+    <string name="reauth_dialog_dismiss">Abbrechen</string>
 </resources>
