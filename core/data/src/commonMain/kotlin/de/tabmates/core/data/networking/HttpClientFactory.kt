@@ -32,6 +32,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 
 private const val TAG = "HttpClientFactory"
@@ -43,6 +45,9 @@ class HttpClientFactory(
     private val upgradeRequiredNotifier: UpgradeRequiredNotifier,
     private val sessionInvalidator: SessionInvalidator,
 ) {
+    /** Serializes token refreshes; see the comment in `refreshTokens`. */
+    private val refreshMutex = Mutex()
+
     fun create(engine: HttpClientEngine): HttpClient {
         return HttpClient(engine) {
             install(ContentNegotiation) {
@@ -100,38 +105,56 @@ class HttpClientFactory(
                         ) {
                             return@refreshTokens null
                         }
-                        val localAuthInfo = sessionStorage.get()
-                        if (localAuthInfo?.refreshToken.isNullOrBlank()) {
+                        // Snapshot the token this attempt is based on before queueing behind the
+                        // mutex. Ktor does not serialize concurrent refreshes, so several 401s can
+                        // arrive at once; the server rotates the refresh token, meaning whoever
+                        // loses the race would present an already-spent token, get a 401, and
+                        // invalidate a session that was just successfully renewed.
+                        val attemptedWith = sessionStorage.get()?.refreshToken
+                        if (attemptedWith.isNullOrBlank()) {
                             return@refreshTokens null
                         }
 
-                        var bearerTokens: BearerTokens? = null
-                        client
-                            .post<RefreshRequest, AuthInfoSerializable>(
-                                route = "/api/auth/refresh",
-                                body =
-                                    RefreshRequest(
-                                        refreshToken = localAuthInfo.refreshToken,
-                                    ),
-                                builder = {
-                                    markAsRefreshTokenRequest()
-                                },
-                            ).onSuccess { newAuthInfo ->
-                                sessionStorage.set(newAuthInfo.toDomain())
-                                bearerTokens =
-                                    BearerTokens(
-                                        accessToken = newAuthInfo.accessToken,
-                                        refreshToken = newAuthInfo.refreshToken,
-                                    )
-                            }.onFailure {
-                                if (it.isAuthRejection()) {
-                                    // Records who just got logged out before dropping the session,
-                                    // so the shell can keep their local data and ask them back in.
-                                    sessionInvalidator.invalidate(SessionInvalidationReason.TOKEN_REJECTED)
-                                }
+                        refreshMutex.withLock {
+                            val current = sessionStorage.get() ?: return@refreshTokens null
+                            if (current.refreshToken != attemptedWith) {
+                                // Someone else rotated it while this call waited. Their tokens are
+                                // the live ones.
+                                return@refreshTokens BearerTokens(
+                                    accessToken = current.accessToken,
+                                    refreshToken = current.refreshToken,
+                                )
                             }
 
-                        bearerTokens
+                            var bearerTokens: BearerTokens? = null
+                            client
+                                .post<RefreshRequest, AuthInfoSerializable>(
+                                    route = "/api/auth/refresh",
+                                    body =
+                                        RefreshRequest(
+                                            refreshToken = current.refreshToken,
+                                        ),
+                                    builder = {
+                                        markAsRefreshTokenRequest()
+                                    },
+                                ).onSuccess { newAuthInfo ->
+                                    sessionStorage.set(newAuthInfo.toDomain())
+                                    bearerTokens =
+                                        BearerTokens(
+                                            accessToken = newAuthInfo.accessToken,
+                                            refreshToken = newAuthInfo.refreshToken,
+                                        )
+                                }.onFailure {
+                                    if (it.isAuthRejection()) {
+                                        // Records who just got logged out before dropping the
+                                        // session, so the shell can keep their local data and ask
+                                        // them back in.
+                                        sessionInvalidator.invalidate(SessionInvalidationReason.TOKEN_REJECTED)
+                                    }
+                                }
+
+                            bearerTokens
+                        }
                     }
                 }
             }
