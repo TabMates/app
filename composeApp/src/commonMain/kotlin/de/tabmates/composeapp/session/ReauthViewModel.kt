@@ -183,6 +183,12 @@ class ReauthViewModel(
             // Reset first: clearing the record is what tells the rest of the app this is a real
             // sign-out, so it must not happen while the data is still there to be adopted.
             localDataResetter.resetLocalData()
+            // This path never calls logout, so nothing else drops the token the client still holds
+            // for the account being left behind. An expired session does not always mean an expired
+            // access token — an email change revokes the refresh token while the access token lives
+            // on — and a token that outlives its session authenticates the next account's requests
+            // as the previous one.
+            authService.clearCachedTokens()
             staleSessionStore.clear()
             // No navigation here — dropping the record leaves the app with no session at all,
             // which the shell already handles by returning to the welcome screen.

@@ -142,8 +142,10 @@ class ReauthViewModelTest {
         runTest(testDispatcher) {
             val staleSessionStore = FakeStaleSessionStore(staleSession())
             val localDataResetter = FakeLocalDataResetter()
+            val authService = FakeAuthService(loginResult = Result.Success(authInfo()))
             val viewModel =
                 createViewModel(
+                    authService = authService,
                     staleSessionStore = staleSessionStore,
                     localDataResetter = localDataResetter,
                 )
@@ -157,6 +159,9 @@ class ReauthViewModelTest {
             assertEquals(1, localDataResetter.resetCalls)
             assertNull(staleSessionStore.get())
             assertFalse(viewModel.state.value.showSwitchAccountDialog)
+            // Nothing calls logout on this path, so the token of the account being left behind is
+            // only dropped here — otherwise it authenticates the next account's first sync.
+            assertEquals(1, authService.clearCachedTokensCalls)
         }
 
     @Test

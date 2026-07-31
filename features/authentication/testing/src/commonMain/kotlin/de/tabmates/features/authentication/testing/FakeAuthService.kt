@@ -50,6 +50,9 @@ open class FakeAuthService(
     var resetPasswordCalls: Int = 0
         private set
 
+    var clearCachedTokensCalls: Int = 0
+        private set
+
     override suspend fun register(
         email: String,
         username: String,
@@ -98,8 +101,13 @@ open class FakeAuthService(
         return forgotPasswordResult
     }
 
+    override fun clearCachedTokens() {
+        clearCachedTokensCalls += 1
+    }
+
     override suspend fun logout(refreshToken: String): EmptyResult<DataError.Remote> {
         logoutCalls += refreshToken
+        clearCachedTokens()
         return logoutResult
     }
 

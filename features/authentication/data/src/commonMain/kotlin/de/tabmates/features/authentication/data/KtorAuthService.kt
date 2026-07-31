@@ -142,14 +142,24 @@ class KtorAuthService(
         )
     }
 
+    override fun clearCachedTokens() {
+        httpClient.clearAuthTokens()
+    }
+
     override suspend fun logout(refreshToken: String): EmptyResult<DataError.Remote> {
-        return httpClient
-            .post<RefreshRequest, Unit>(
+        // Cleared after the call, and regardless of how it went: the revoke is allowed to fail
+        // (offline sign-out still signs out), but the cached token must not survive it. Ktor only
+        // reloads tokens from storage once its cache is empty, so a token left behind here keeps
+        // authenticating as the account that just left — the next account's first sync would then
+        // pull that account's groups into the freshly wiped database. Clearing when the request
+        // failed costs nothing: while the session still exists the very next call reloads it.
+        val result =
+            httpClient.post<RefreshRequest, Unit>(
                 route = "/api/auth/logout",
                 body = RefreshRequest(refreshToken = refreshToken),
-            ).onSuccess {
-                httpClient.clearAuthTokens()
-            }
+            )
+        clearCachedTokens()
+        return result
     }
 
     override suspend fun resetPassword(
@@ -210,13 +220,14 @@ class KtorAuthService(
     }
 
     override suspend fun deleteAccount(password: String?): EmptyResult<DataError.Remote> {
-        return httpClient
-            .delete<Unit>(
+        val result =
+            httpClient.delete<Unit>(
                 route = "/api/auth/account",
                 // Registered users confirm with their password; anonymous users send no body.
                 builder = { password?.let { setBody(DeleteAccountRequest(password = it)) } },
-            ).onSuccess {
-                httpClient.clearAuthTokens()
-            }
+            )
+        // Same reasoning as in `logout`.
+        clearCachedTokens()
+        return result
     }
 }
