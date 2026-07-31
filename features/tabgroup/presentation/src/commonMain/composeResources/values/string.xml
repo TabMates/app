@@ -155,8 +155,8 @@
 
     <!-- Sign-out confirmation when local writes are still queued -->
     <string name="profile_sign_out_dialog_title">Sign out with unsynced changes?</string>
-    <string name="profile_sign_out_dialog_text_one">1 change on this device hasn\'t reached the server yet. Signing out deletes it along with the rest of this device\'s data.</string>
-    <string name="profile_sign_out_dialog_text_other">%1$d changes on this device haven\'t reached the server yet. Signing out deletes them along with the rest of this device\'s data.</string>
+    <string name="profile_sign_out_dialog_text_one">1 change on this device hasn't reached the server yet. Signing out deletes it along with the rest of this device's data.</string>
+    <string name="profile_sign_out_dialog_text_other">%1$d changes on this device haven't reached the server yet. Signing out deletes them along with the rest of this device's data.</string>
     <string name="profile_sign_out_dialog_confirm">Sign out anyway</string>
     <string name="profile_sign_out_dialog_dismiss">Cancel</string>
     <string name="groups_detail_invite_share_cd">Share invite</string>
