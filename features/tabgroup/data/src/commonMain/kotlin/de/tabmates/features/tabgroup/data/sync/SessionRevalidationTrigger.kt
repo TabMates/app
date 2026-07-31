@@ -14,25 +14,30 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * Breaks the stale-token dead-end.
  *
- * A WebSocket handshake made with an expired access token is rejected with a 401. That surfaces as
- * a plain connection error — Android and iOS classify it as non-retriable so the flow terminates,
- * and the browser hides the handshake status from wasm entirely — leaving the app looking
- * permanently offline: the socket cannot connect, and because [SyncReconnectTrigger] only fires on
- * `CONNECTED`, no HTTP request is ever made either. Ktor's `Auth` plugin therefore never gets the
- * 401 it needs to refresh or invalidate the session, and the outbox never drains.
+ * A WebSocket handshake made with an expired access token is rejected with a 401, but nothing here
+ * ever sees that status: the connector reports only `ERROR_NETWORK`/`ERROR_UNKNOWN`, Android and
+ * iOS classify the underlying exception as non-retriable so the flow terminates, and the browser
+ * withholds the handshake response from wasm entirely. The app is then stuck looking permanently
+ * offline — the socket cannot connect, and because [SyncReconnectTrigger] only fires on
+ * `CONNECTED`, no HTTP request follows either, so Ktor's `Auth` plugin never gets the 401 it needs
+ * to refresh or invalidate. The outbox never drains.
  *
- * So: whenever the socket lands in an error state while the device *does* have connectivity and a
- * session exists, make one throttled authenticated HTTP call. That call either refreshes the
- * tokens — the new session re-triggers the socket with a fresh token — or gets the refresh token
- * rejected, which puts the app into the recoverable expired-session state. Doing it over HTTP
- * keeps the recovery identical on every platform, independent of how each classifies socket errors.
+ * This trigger deliberately does *not* try to tell an auth failure from a network one, because at
+ * this layer it cannot. It fires on any socket error while the device has connectivity and a
+ * session exists, and makes one throttled authenticated HTTP call to ask the question where the
+ * answer is legible. That call either refreshes the tokens — the new session re-triggers the
+ * socket — or gets the refresh rejected, which puts the app into the recoverable expired state. A
+ * genuine network outage simply fails the probe and changes nothing.
+ *
+ * The collector is never cancelled: it is bound to the process-wide application scope by design,
+ * so recovery keeps working regardless of which screen is up. Do not re-scope it to a ViewModel.
  */
 @Single(createdAtStart = true)
 class SessionRevalidationTrigger(
@@ -43,7 +48,11 @@ class SessionRevalidationTrigger(
     private val logger: TabMatesLogger,
     @Named(APPLICATION_SCOPE) applicationScope: CoroutineScope,
 ) {
-    private var lastAttemptAt: Instant? = null
+    /**
+     * Monotonic rather than wall-clock: a device that corrects its clock (or crosses a DST/timezone
+     * jump) must not be able to widen or collapse the throttle window.
+     */
+    private var lastAttemptAt: TimeMark? = null
 
     init {
         webSocketConnector
@@ -59,10 +68,9 @@ class SessionRevalidationTrigger(
         // A socket error with the device genuinely offline is just an offline device.
         if (!connectionGate.isConnected.value) return
 
-        val now = Clock.System.now()
         val last = lastAttemptAt
-        if (last != null && now - last < THROTTLE) return
-        lastAttemptAt = now
+        if (last != null && last.elapsedNow() < THROTTLE) return
+        lastAttemptAt = TimeSource.Monotonic.markNow()
 
         logger.info(TAG, "Socket errored while online — probing the session over HTTP")
         syncRepository

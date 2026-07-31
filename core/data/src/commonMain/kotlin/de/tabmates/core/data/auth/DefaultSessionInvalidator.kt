@@ -12,8 +12,14 @@ class DefaultSessionInvalidator(
     private val sessionStorage: SessionStorage,
     private val staleSessionStore: StaleSessionStore,
 ) : SessionInvalidator {
+    /**
+     * Order matters and is not arbitrary. The session is the only place the account identity
+     * lives, so it has to be read before it is dropped — and the record has to be *written* first
+     * too: a crash between the two steps then leaves a stale record with no session, which reads
+     * as an expired session and keeps the data. Clearing first would lose the record and make the
+     * next launch wipe the device.
+     */
     override fun invalidate(reason: SessionInvalidationReason) {
-        // Read before clearing: the session is the only place the account identity lives.
         sessionStorage.get()?.user?.let { user ->
             staleSessionStore.set(
                 StaleSession(

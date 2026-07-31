@@ -137,7 +137,9 @@ class ProfileViewModel(
             // bearer token, and both calls below clear it. Doing this after would 401 and silently
             // leave a stale token on the server, so the device would keep receiving pushes.
             pushNotificationController.stop()
-            // Always clear the local session so sign-out works even if the network call fails.
+            // Result intentionally ignored: a failed revoke leaves the refresh token live on the
+            // server until it expires, which is the accepted cost of sign-out always working —
+            // stranding the user in a signed-in app because the network was down is worse.
             authService.logout(sessionStorage.get()?.refreshToken.orEmpty())
             sessionStorage.set(null)
             eventChannel.send(ProfileEvent.SignedOut)
