@@ -152,6 +152,13 @@
     <string name="groups_detail_pending_not_claimed">Einladung noch nicht angenommen</string>
     <string name="sync_status_pending_badge">Nicht synchronisiert</string>
     <string name="sync_status_pending_cd">Noch nicht mit dem Server synchronisiert</string>
+
+    <!-- Abmelde-Bestätigung bei noch nicht synchronisierten Änderungen -->
+    <string name="profile_sign_out_dialog_title">Mit nicht synchronisierten Änderungen abmelden?</string>
+    <string name="profile_sign_out_dialog_text_one">1 Änderung auf diesem Gerät wurde noch nicht an den Server übertragen. Beim Abmelden wird sie zusammen mit den übrigen Daten dieses Geräts gelöscht.</string>
+    <string name="profile_sign_out_dialog_text_other">%1$d Änderungen auf diesem Gerät wurden noch nicht an den Server übertragen. Beim Abmelden werden sie zusammen mit den übrigen Daten dieses Geräts gelöscht.</string>
+    <string name="profile_sign_out_dialog_confirm">Trotzdem abmelden</string>
+    <string name="profile_sign_out_dialog_dismiss">Abbrechen</string>
     <string name="groups_detail_invite_share_cd">Einladung teilen</string>
     <string name="groups_detail_invite_link_title">Einladungslink</string>
     <string name="groups_detail_invite_copy">Kopieren</string>

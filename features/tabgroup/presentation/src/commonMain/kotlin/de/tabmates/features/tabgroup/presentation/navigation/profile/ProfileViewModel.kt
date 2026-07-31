@@ -6,6 +6,7 @@ import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.auth.UserType
 import de.tabmates.core.domain.preferences.AppPreferencesRepository
 import de.tabmates.core.domain.preferences.ThemeMode
+import de.tabmates.core.domain.sync.PendingWrites
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.notifications.domain.NotificationPermissionController
 import de.tabmates.features.notifications.domain.NotificationPermissionStatus
@@ -30,10 +31,13 @@ class ProfileViewModel(
     private val authService: AuthService,
     private val notificationPermissionController: NotificationPermissionController,
     private val pushNotificationController: PushNotificationController,
+    pendingWrites: PendingWrites,
 ) : ViewModel() {
     private val selectedSection = MutableStateFlow(SettingsSection.PROFILE)
 
-    val state: StateFlow<ProfileState> =
+    private val showSignOutDialog = MutableStateFlow(false)
+
+    private val accountState =
         combine(
             sessionStorage.authState,
             appPreferencesRepository.themeMode(),
@@ -57,6 +61,20 @@ class ProfileViewModel(
                 notificationsEnabled = notificationsEnabled,
                 notificationsPermissionBlocked = permissionStatus == NotificationPermissionStatus.DENIED,
                 selectedSection = section,
+            )
+        }
+
+    // Layered onto the account state rather than folded in: `combine` tops out at five typed
+    // sources and the block above already uses all five.
+    val state: StateFlow<ProfileState> =
+        combine(
+            accountState,
+            pendingWrites.observeCount(),
+            showSignOutDialog,
+        ) { account, pendingWriteCount, showDialog ->
+            account.copy(
+                pendingWriteCount = pendingWriteCount,
+                showSignOutDialog = showDialog,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -92,7 +110,28 @@ class ProfileViewModel(
         viewModelScope.launch { appPreferencesRepository.setNotificationsEnabled(enabled) }
     }
 
-    fun onSignOut() {
+    /**
+     * Signing out wipes this device's local data, including writes that never reached the server,
+     * so anything still queued has to be confirmed away rather than silently dropped.
+     */
+    fun onSignOutClick() {
+        if (state.value.pendingWriteCount > 0) {
+            showSignOutDialog.update { true }
+        } else {
+            signOut()
+        }
+    }
+
+    fun onDismissSignOutDialog() {
+        showSignOutDialog.update { false }
+    }
+
+    fun onConfirmSignOut() {
+        showSignOutDialog.update { false }
+        signOut()
+    }
+
+    private fun signOut() {
         viewModelScope.launch {
             // Unregister the device token while the session is still valid — the DELETE needs the
             // bearer token, and both calls below clear it. Doing this after would 401 and silently

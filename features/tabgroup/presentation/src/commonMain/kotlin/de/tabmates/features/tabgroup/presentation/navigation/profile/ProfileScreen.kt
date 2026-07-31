@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
@@ -78,6 +79,11 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_se
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_appearance
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_settings_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_dialog_confirm
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_dialog_dismiss
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_dialog_text_one
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_dialog_text_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_dialog_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_subtitle
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_theme
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_theme_caption_dark
@@ -126,7 +132,9 @@ fun ProfileRoot(
         onChangeEmail = onChangeEmail,
         onOpenOssLicenses = onOpenOssLicenses,
         onDeleteAccount = onDeleteAccount,
-        onSignOut = viewModel::onSignOut,
+        onSignOut = viewModel::onSignOutClick,
+        onDismissSignOutDialog = viewModel::onDismissSignOutDialog,
+        onConfirmSignOut = viewModel::onConfirmSignOut,
         modifier = modifier,
     )
 }
@@ -144,6 +152,8 @@ internal fun ProfileScreen(
     onOpenOssLicenses: () -> Unit,
     onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
+    onDismissSignOutDialog: () -> Unit = {},
+    onConfirmSignOut: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val isExpanded =
@@ -176,6 +186,36 @@ internal fun ProfileScreen(
             onDeleteAccount = onDeleteAccount,
             onSignOut = onSignOut,
             modifier = modifier,
+        )
+    }
+
+    if (state.showSignOutDialog) {
+        AlertDialog(
+            onDismissRequest = onDismissSignOutDialog,
+            title = { Text(text = stringResource(Res.string.profile_sign_out_dialog_title)) },
+            text = {
+                Text(
+                    text =
+                        if (state.pendingWriteCount == 1) {
+                            stringResource(Res.string.profile_sign_out_dialog_text_one)
+                        } else {
+                            stringResource(
+                                Res.string.profile_sign_out_dialog_text_other,
+                                state.pendingWriteCount,
+                            )
+                        },
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = onConfirmSignOut) {
+                    Text(text = stringResource(Res.string.profile_sign_out_dialog_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissSignOutDialog) {
+                    Text(text = stringResource(Res.string.profile_sign_out_dialog_dismiss))
+                }
+            },
         )
     }
 }
