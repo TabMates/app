@@ -5,6 +5,7 @@ import de.tabmates.composeapp.session.FakeStaleSessionStore
 import de.tabmates.composeapp.session.staleSession
 import de.tabmates.composeapp.session.user
 import de.tabmates.core.domain.auth.AuthInfo
+import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
@@ -113,6 +114,7 @@ class GroupSyncCoordinatorTest {
         activityRepository = FakeActivityRepository(),
         staleSessionStore = staleSessionStore,
         localDataResetter = localDataResetter,
+        logger = NoOpLogger(),
         scope = backgroundScope,
     )
 
@@ -122,6 +124,29 @@ class GroupSyncCoordinatorTest {
             refreshToken = "refresh",
             user = user(id = userId),
         )
+}
+
+private class NoOpLogger : TabMatesLogger {
+    override fun debug(
+        tag: String,
+        message: String,
+    ) = Unit
+
+    override fun info(
+        tag: String,
+        message: String,
+    ) = Unit
+
+    override fun warning(
+        tag: String,
+        message: String,
+    ) = Unit
+
+    override fun error(
+        tag: String,
+        message: String,
+        throwable: Throwable?,
+    ) = Unit
 }
 
 private class FakeSyncRepository : SyncRepository {
