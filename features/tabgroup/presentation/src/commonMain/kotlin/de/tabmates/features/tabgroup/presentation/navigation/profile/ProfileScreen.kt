@@ -426,7 +426,7 @@ private fun ProfileAccountAndAppearance(
             AccountRow(
                 iconRes = Res.drawable.ic_alternate_email,
                 title = stringResource(Res.string.profile_account_username),
-                subtitle = "@${state.username}",
+                subtitle = state.username,
                 onClick = onEditUsername,
                 showChevron = true,
                 modifier = Modifier.weight(1f),
@@ -456,7 +456,7 @@ private fun ProfileAccountAndAppearance(
         AccountRow(
             iconRes = Res.drawable.ic_alternate_email,
             title = stringResource(Res.string.profile_account_username),
-            subtitle = "@${state.username}",
+            subtitle = state.username,
             onClick = onEditUsername,
             showChevron = true,
             modifier = Modifier.fillMaxWidth(),
@@ -531,18 +531,15 @@ private fun ProfileHeaderCard(state: ProfileState) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                VerticalSpacer(2.dp)
-                Text(
-                    text =
-                        if (state.email.isBlank()) {
-                            "@${state.username}"
-                        } else {
-                            "@${state.username} · ${state.email}"
-                        },
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                if (state.email.isNotBlank()) {
+                    VerticalSpacer(2.dp)
+                    Text(
+                        text = state.email,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
     }
