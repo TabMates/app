@@ -5,7 +5,7 @@ import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.auth.CurrentAccount
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.core.presentation.util.UiText
@@ -50,14 +50,10 @@ class SettleUpViewModel(
     private val groupRepository: GroupRepository,
     private val currencyRepository: CurrencyRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
-    sessionStorage: SessionStorage,
+    currentAccount: CurrentAccount,
 ) : ViewModel() {
     private val currentUserId =
-        sessionStorage
-            .get()
-            ?.user
-            ?.id
-            .orEmpty()
+        currentAccount.userId().orEmpty()
 
     // Payer→receiver pairs with an in-flight settlement request, so their row shows a
     // spinner / disables. Pair-keyed because several plan rows can share a payer or receiver.

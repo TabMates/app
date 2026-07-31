@@ -2,7 +2,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.settlementdetail
 
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
-import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
+import de.tabmates.features.tabgroup.presentation.testing.FakeCurrentAccount
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
 import kotlinx.coroutines.Dispatchers
@@ -142,7 +142,7 @@ class SettlementDetailViewModelTest {
         groupRepository: FakeGroupRepository =
             FakeGroupRepository(initialGroups = listOf(Fixtures.group(id = "g1"))),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
-        sessionStorage: FakeSessionStorage = FakeSessionStorage(),
+        currentAccount: FakeCurrentAccount = FakeCurrentAccount(),
     ): SettlementDetailViewModel =
         SettlementDetailViewModel(
             settlementId = settlementId,
@@ -150,6 +150,6 @@ class SettlementDetailViewModelTest {
             tabEntryRepository = tabEntryRepository,
             groupRepository = groupRepository,
             currencyRepository = currencyRepository,
-            sessionStorage = sessionStorage,
+            currentAccount = currentAccount,
         )
 }

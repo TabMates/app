@@ -2,7 +2,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.settlementdetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.auth.CurrentAccount
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.core.presentation.util.toUiText
@@ -35,14 +35,10 @@ class SettlementDetailViewModel(
     private val tabEntryRepository: TabEntryRepository,
     groupRepository: GroupRepository,
     currencyRepository: CurrencyRepository,
-    sessionStorage: SessionStorage,
+    currentAccount: CurrentAccount,
 ) : ViewModel() {
     private val currentUserId =
-        sessionStorage
-            .get()
-            ?.user
-            ?.id
-            .orEmpty()
+        currentAccount.userId().orEmpty()
     private val isDeleting = MutableStateFlow(false)
 
     /**

@@ -2,7 +2,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.groupdetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.auth.CurrentAccount
 import de.tabmates.features.tabgroup.domain.activity.ActivityFeedItem
 import de.tabmates.features.tabgroup.domain.activity.ActivityRepository
 import de.tabmates.features.tabgroup.domain.balance.PerPersonBalanceCalculator
@@ -66,10 +66,9 @@ class GroupDetailViewModel(
     currencyRepository: CurrencyRepository,
     exchangeRateRepository: ExchangeRateRepository,
     activityRepository: ActivityRepository,
-    sessionStorage: SessionStorage,
+    currentAccount: CurrentAccount,
 ) : ViewModel() {
-    private val currentUser = sessionStorage.get()?.user
-    private val currentUserId = currentUser?.id.orEmpty()
+    private val currentUserId = currentAccount.userId().orEmpty()
     private val isRotatingInvite = MutableStateFlow(false)
     private val historyPageSize = MutableStateFlow(INITIAL_HISTORY_PAGE_SIZE)
 

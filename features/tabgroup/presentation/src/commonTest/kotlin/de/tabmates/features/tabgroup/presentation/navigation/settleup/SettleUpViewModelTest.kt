@@ -5,8 +5,8 @@ import de.tabmates.core.domain.util.DataError
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeCurrentAccount
 import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
-import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
 import kotlinx.coroutines.CompletableDeferred
@@ -320,7 +320,7 @@ class SettleUpViewModelTest {
             ),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
         exchangeRateRepository: FakeExchangeRateRepository = FakeExchangeRateRepository(),
-        sessionStorage: FakeSessionStorage = FakeSessionStorage(),
+        currentAccount: FakeCurrentAccount = FakeCurrentAccount(),
     ): SettleUpViewModel =
         SettleUpViewModel(
             groupId = GROUP_ID,
@@ -328,7 +328,7 @@ class SettleUpViewModelTest {
             groupRepository = groupRepository,
             currencyRepository = currencyRepository,
             exchangeRateRepository = exchangeRateRepository,
-            sessionStorage = sessionStorage,
+            currentAccount = currentAccount,
         )
 
     private companion object {

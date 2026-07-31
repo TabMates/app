@@ -9,7 +9,7 @@ import de.tabmates.features.tabgroup.domain.activity.ActivityFieldChange
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeActivityRepository
-import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
+import de.tabmates.features.tabgroup.presentation.testing.FakeCurrentAccount
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -358,6 +358,6 @@ class ActivityViewModelTest {
                         ),
                 ),
             currencyRepository = FakeCurrencyRepository(),
-            sessionStorage = FakeSessionStorage(),
+            currentAccount = FakeCurrentAccount(),
         )
 }

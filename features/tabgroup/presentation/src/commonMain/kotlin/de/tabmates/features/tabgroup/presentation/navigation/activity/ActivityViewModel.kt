@@ -2,7 +2,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.activity
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.auth.CurrentAccount
 import de.tabmates.features.tabgroup.domain.activity.ActivityFeedItem
 import de.tabmates.features.tabgroup.domain.activity.ActivityRepository
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
@@ -32,14 +32,10 @@ class ActivityViewModel(
     activityRepository: ActivityRepository,
     groupRepository: GroupRepository,
     currencyRepository: CurrencyRepository,
-    sessionStorage: SessionStorage,
+    currentAccount: CurrentAccount,
 ) : ViewModel() {
     private val currentUserId =
-        sessionStorage
-            .get()
-            ?.user
-            ?.id
-            .orEmpty()
+        currentAccount.userId().orEmpty()
 
     private val pageSize = MutableStateFlow(INITIAL_PAGE_SIZE)
 
