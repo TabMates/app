@@ -1,9 +1,9 @@
 package de.tabmates.core.data.di
 
-import de.tabmates.core.data.BuildKonfig
 import de.tabmates.core.data.networking.HttpClientFactory
 import de.tabmates.core.domain.auth.SessionInvalidator
 import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.environment.EnvironmentRepository
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.update.UpgradeRequiredNotifier
 import io.ktor.client.HttpClient
@@ -19,7 +19,6 @@ import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 const val APPLICATION_SCOPE = "applicationScope"
-const val WS_BASE_URL = "wsBaseUrl"
 
 @Module
 @Configuration
@@ -36,10 +35,6 @@ class CoreDataModule {
     fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @Single
-    @Named(WS_BASE_URL)
-    fun provideWsBaseUrl(): String = BuildKonfig.BASE_URL_WS
-
-    @Single
     fun provideUpgradeRequiredNotifier(): UpgradeRequiredNotifier = UpgradeRequiredNotifier()
 
     @Single
@@ -50,6 +45,7 @@ class CoreDataModule {
         engine: HttpClientEngine,
         upgradeRequiredNotifier: UpgradeRequiredNotifier,
         sessionInvalidator: SessionInvalidator,
+        environmentRepository: EnvironmentRepository,
     ): HttpClient =
         HttpClientFactory(
             logger,
@@ -57,5 +53,6 @@ class CoreDataModule {
             json,
             upgradeRequiredNotifier,
             sessionInvalidator,
+            environmentRepository,
         ).create(engine)
 }

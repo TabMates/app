@@ -1,6 +1,5 @@
 package de.tabmates.core.data.networking
 
-import de.tabmates.core.data.BuildKonfig
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.Result
 import io.ktor.client.HttpClient
@@ -34,7 +33,7 @@ suspend inline fun <reified Request, reified Response : Any> HttpClient.post(
 ): Result<Response, DataError.Remote> {
     return safeCall(mapKnownError = mapKnownError) {
         post {
-            url(constructRoute(route))
+            url(routeForRequest(route))
             queryParams.forEach { (key, value) ->
                 parameter(key, value)
             }
@@ -51,7 +50,7 @@ suspend inline fun <reified Response : Any> HttpClient.get(
 ): Result<Response, DataError.Remote> {
     return safeCall {
         get {
-            url(constructRoute(route))
+            url(routeForRequest(route))
             queryParams.forEach { (key, value) ->
                 parameter(key, value)
             }
@@ -67,7 +66,7 @@ suspend inline fun <reified Response : Any> HttpClient.delete(
 ): Result<Response, DataError.Remote> {
     return safeCall {
         delete {
-            url(constructRoute(route))
+            url(routeForRequest(route))
             queryParams.forEach { (key, value) ->
                 parameter(key, value)
             }
@@ -84,7 +83,7 @@ suspend inline fun <reified Request, reified Response : Any> HttpClient.put(
 ): Result<Response, DataError.Remote> {
     return safeCall {
         put {
-            url(constructRoute(route))
+            url(routeForRequest(route))
             queryParams.forEach { (key, value) ->
                 parameter(key, value)
             }
@@ -102,7 +101,7 @@ suspend inline fun <reified Request, reified Response : Any> HttpClient.patch(
 ): Result<Response, DataError.Remote> {
     return safeCall {
         patch {
-            url(constructRoute(route))
+            url(routeForRequest(route))
             queryParams.forEach { (key, value) ->
                 parameter(key, value)
             }
@@ -188,10 +187,17 @@ suspend inline fun <reified T> responseToResult(response: HttpResponse): Result<
     }
 }
 
-fun constructRoute(route: String): String {
-    return when {
-        route.contains(BuildKonfig.BASE_URL_HTTP) -> route
-        route.startsWith("/") -> "${BuildKonfig.BASE_URL_HTTP}$route"
-        else -> "${BuildKonfig.BASE_URL_HTTP}/$route"
-    }
-}
+/**
+ * Prepares a route for [io.ktor.client.request.HttpRequestBuilder.url], which treats it one of two
+ * ways:
+ *
+ * - A path (`/api/groups`, `api/groups`) has its leading slash stripped so it stays *relative* and
+ *   Ktor's `DefaultRequest` resolves it against the active environment's base URL (see
+ *   [HttpClientFactory]) — that indirection is what lets the backend be switched at runtime
+ *   without rebuilding the client. A leading slash would resolve against the host root instead and
+ *   drop any path prefix the base URL carries.
+ * - A route that already carries a scheme and host is passed through unchanged: an absolute URL
+ *   always wins over the default, which is what a caller asking for a foreign host wants.
+ */
+@PublishedApi
+internal fun routeForRequest(route: String): String = route.removePrefix("/")

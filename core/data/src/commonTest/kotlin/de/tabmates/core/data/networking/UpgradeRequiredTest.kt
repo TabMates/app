@@ -9,6 +9,7 @@ import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.update.UpgradeRequiredNotifier
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.Result
+import de.tabmates.core.testing.environment.FakeEnvironmentRepository
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respondError
 import io.ktor.http.HttpStatusCode
@@ -66,6 +67,7 @@ class UpgradeRequiredTest {
         json = Json { ignoreUnknownKeys = true },
         upgradeRequiredNotifier = notifier,
         sessionInvalidator = NoOpSessionInvalidator(),
+        environmentRepository = FakeEnvironmentRepository(),
     ).create(MockEngine { respondError(status) })
 
     @Test
