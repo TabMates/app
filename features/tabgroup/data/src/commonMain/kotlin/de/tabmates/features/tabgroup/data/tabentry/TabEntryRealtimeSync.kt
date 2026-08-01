@@ -50,6 +50,12 @@ class TabEntryRealtimeSync(
             when (message.type) {
                 WsMessageType.NEW_TAB_ENTRY,
                 WsMessageType.UPDATED_TAB_ENTRY,
+                // An ack carries the same canonical TabEntryDto, and on a *replayed* one it is the
+                // only thing that does: the server does not repeat the broadcast for a write it
+                // already applied, so a client retrying after a lost ack is brought up to date by
+                // this frame alone. The upsert is idempotent, so applying both on the normal path
+                // costs nothing. Clearing the outbox row is TabEntryOutbox's half of the same frame.
+                WsMessageType.ACK,
                 -> handleUpsert(message.payload)
 
                 WsMessageType.TAB_ENTRY_DELETED -> handleDeleted(message.payload)
@@ -113,9 +119,13 @@ class TabEntryRealtimeSync(
             }
     }
 
+    // Diagnostic only — TabEntryOutbox owns what an error does to the write that caused it.
     private fun handleError(payload: String) {
         val error = json.decodeFromString(WsErrorPayload.serializer(), payload)
-        logger.warning(TAG, "Server WS error code=${error.code} message=${error.message}")
+        logger.warning(
+            TAG,
+            "Server WS error code=${error.code} retryable=${error.retryable} message=${error.message}",
+        )
     }
 
     private companion object {

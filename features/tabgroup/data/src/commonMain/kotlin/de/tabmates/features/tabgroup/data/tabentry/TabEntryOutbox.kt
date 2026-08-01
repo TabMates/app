@@ -7,18 +7,21 @@ import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.data.mappers.toWsSplit
 import de.tabmates.features.tabgroup.data.network.ConnectionState
-import de.tabmates.features.tabgroup.data.network.KtorWebSocketConnector
+import de.tabmates.features.tabgroup.data.network.WebSocketChannel
 import de.tabmates.features.tabgroup.data.network.dto.NewTabEntrySplitWsPayload
 import de.tabmates.features.tabgroup.data.network.dto.NewTabEntryWsPayload
 import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
+import de.tabmates.features.tabgroup.data.network.dto.WsErrorPayload
 import de.tabmates.features.tabgroup.data.network.dto.WsMessageType
+import de.tabmates.features.tabgroup.data.sync.GroupTabEntryBackfiller
+import de.tabmates.features.tabgroup.data.tabentry.TabEntryOutbox.Companion.ACK_TIMEOUT_MS
+import de.tabmates.features.tabgroup.data.tabentry.TabEntryOutbox.Companion.MAX_ATTEMPTS
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import de.tabmates.features.tabgroup.database.entities.PendingOutboxEntity
 import de.tabmates.features.tabgroup.domain.tabentry.NewTabEntrySplit
 import de.tabmates.features.tabgroup.domain.tabentry.SplitResolver
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryService
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -33,17 +36,26 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
- * Durable outbox for tab-entry writes. The repository enqueues every write here; the outbox
- * tries to dispatch it when the WS is CONNECTED. If dispatch fails transiently (offline, server
- * 5xx) the row is left untouched and re-drained on the next CONNECTED tick. Only PERMANENT
- * failures (server rejection, bad payload, auth) count toward [MAX_ATTEMPTS]; once reached, the
- * row is parked and skipped on subsequent drains.
+ * Durable outbox for tab-entry writes. The repository enqueues every write here; the outbox tries
+ * to dispatch it when the WS is CONNECTED.
+ *
+ * **A row is deleted only when the server acknowledges it**, never when the frame is handed to the
+ * socket. A write sitting in a send buffer on a connection that dies before the server commits is
+ * not a write that happened, and deleting the row on send is how those vanished without a trace.
+ * Sending moves the row to [inFlight] instead; the `ACK` that names its
+ * [PendingOutboxEntity.requestId] is what removes it.
+ *
+ * Transient dispatch failures (offline, server 5xx) leave the row untouched for the next CONNECTED
+ * tick. Only PERMANENT failures count toward [MAX_ATTEMPTS]; once reached, the row is parked and
+ * skipped on subsequent drains. A write the server rejects as non-retryable is rolled back — the
+ * row goes, and so does the optimistic local entry it was going to produce.
  */
 @Single(createdAtStart = true)
 class TabEntryOutbox(
     private val database: TabMatesDatabase,
-    private val webSocketConnector: KtorWebSocketConnector,
+    private val webSocketConnector: WebSocketChannel,
     private val service: TabEntryService,
+    private val backfiller: GroupTabEntryBackfiller,
     private val staleSessionStore: StaleSessionStore,
     private val json: Json,
     private val logger: TabMatesLogger,
@@ -59,11 +71,31 @@ class TabEntryOutbox(
      */
     private val sessionAttempts = mutableMapOf<String, Int>()
 
+    /**
+     * Writes sent on the current connection and still waiting for their verdict, keyed by
+     * [PendingOutboxEntity.requestId]. Purely an optimisation and a re-send guard — the rows
+     * themselves are durable, so anything lost here (a process death, a dropped socket) is
+     * recovered by the next drain. Always accessed under [mutex].
+     */
+    private val inFlight = mutableMapOf<String, Long>()
+
     init {
         webSocketConnector
             .connectionState
-            .filter { it == ConnectionState.CONNECTED }
-            .onEach { drain() }
+            .onEach { state ->
+                if (state == ConnectionState.CONNECTED) {
+                    drain()
+                } else {
+                    // Nothing sent on a socket that is gone can still be acknowledged on it. Clear
+                    // the claims so the next CONNECTED edge re-sends those rows; the server answers
+                    // a repeat of a requestId it already applied from its replay cache.
+                    mutex.withLock { inFlight.clear() }
+                }
+            }.launchIn(applicationScope)
+
+        webSocketConnector
+            .messages
+            .onEach { message -> onServerFrame(message) }
             .launchIn(applicationScope)
     }
 
@@ -318,11 +350,15 @@ class TabEntryOutbox(
 
     /**
      * Cancels a not-yet-dispatched create for [tabEntryId] (and any queued update for it).
-     * Returns `true` when a pending **create** row was present, meaning the entry never reached
-     * the server, so the caller can skip enqueuing a remote delete that would only 404 — and,
-     * worse, could race the create's own echo back onto the server. Runs under [mutex] so it is
-     * atomic against [drain]: if the create has already been dispatched its row is gone and this
-     * returns `false`, letting the caller fall back to a normal remote delete.
+     * Returns `true` when such a row was present, meaning the entry never reached the server, so
+     * the caller can skip enqueuing a remote delete that would only 404 — and, worse, could race
+     * the create's own echo back onto the server.
+     *
+     * Runs under [mutex] so it is atomic against [drain]. **Not dispatched** is the condition, not
+     * merely "has a row": since a row now survives until the server acknowledges it, a create that
+     * is already in flight may well be committed by the time this is called. Cancelling that one
+     * locally would strand it on the server, so it is left alone and the caller falls back to a
+     * remote delete, which runs after the create it is deleting.
      */
     suspend fun cancelPendingCreate(tabEntryId: String): Boolean =
         mutex.withLock {
@@ -330,11 +366,18 @@ class TabEntryOutbox(
             val createRow =
                 pending.firstOrNull { it.id == tabEntryId && it.type == OUTBOX_TYPE_NEW_TAB_ENTRY }
                     ?: return@withLock false
+            if (createRow.requestId?.let { it in inFlight } == true) {
+                logger.debug(TAG, "Create $tabEntryId is in flight; deleting it remotely instead")
+                return@withLock false
+            }
             database.pendingOutboxDao.deleteById(createRow.id)
             sessionAttempts.remove(createRow.id)
             val updateId = "$UPDATE_ID_PREFIX$tabEntryId"
-            database.pendingOutboxDao.deleteById(updateId)
-            sessionAttempts.remove(updateId)
+            pending.firstOrNull { it.id == updateId }?.let { updateRow ->
+                database.pendingOutboxDao.deleteById(updateId)
+                sessionAttempts.remove(updateId)
+                updateRow.requestId?.let(inFlight::remove)
+            }
             true
         }
 
@@ -392,9 +435,9 @@ class TabEntryOutbox(
         // An expired session is in re-auth limbo, and re-auth has to sign in before it can compare
         // the account id — so for that moment the app holds a *different* account's token, and the
         // socket opens off exactly that. Dispatching here would send this account's queued writes
-        // as someone else; a send counts as success and deletes the row, so they would be lost
-        // rather than retried. Drains resume the moment the matching account signs back in and the
-        // record is cleared.
+        // as someone else, and the server would answer with a rejection this outbox then rolls
+        // back — destroying them rather than holding them. Drains resume the moment the matching
+        // account signs back in and the record is cleared.
         if (staleSessionStore.get() != null) {
             logger.debug(TAG, "Outbox drain skipped: session expired, awaiting re-auth")
             return
@@ -410,6 +453,7 @@ class TabEntryOutbox(
         }
 
         mutex.withLock {
+            val now = Clock.System.now().toEpochMilliseconds()
             val pending = database.pendingOutboxDao.getAll()
             for (item in pending) {
                 val sessionCount = sessionAttempts[item.id] ?: 0
@@ -417,12 +461,17 @@ class TabEntryOutbox(
                     // Parked for this session — will retry on next app launch.
                     continue
                 }
+                if (isAwaitingAck(item, now)) {
+                    continue
+                }
                 when (val result = dispatch(item)) {
+                    is DispatchResult.Sent -> {
+                        logger.debug(TAG, "Outbox sent id=${item.id}; awaiting ack ${result.requestId}")
+                        inFlight[result.requestId] = now
+                    }
+
                     is DispatchResult.Success -> {
-                        logger.debug(
-                            TAG,
-                            "Outbox dispatched id=${item.id} (sent, awaiting echo); deleting row",
-                        )
+                        logger.debug(TAG, "Outbox completed id=${item.id}; deleting row")
                         database.pendingOutboxDao.deleteById(item.id)
                         sessionAttempts.remove(item.id)
                     }
@@ -505,10 +554,30 @@ class TabEntryOutbox(
         return upgraded
     }
 
+    /**
+     * Whether [item] was already sent on this connection and its verdict is still outstanding.
+     *
+     * The [ACK_TIMEOUT_MS] escape hatch covers the one case the connection-state listener misses: a
+     * live socket where the ack itself was dropped. Re-sending is safe — the server answers a
+     * repeated `requestId` from its replay cache rather than writing again.
+     */
+    private fun isAwaitingAck(
+        item: PendingOutboxEntity,
+        now: Long,
+    ): Boolean {
+        val sentAt = item.requestId?.let { inFlight[it] } ?: return false
+        if (now - sentAt < ACK_TIMEOUT_MS) return true
+
+        logger.warning(TAG, "No ack for id=${item.id} within ${ACK_TIMEOUT_MS}ms; re-sending")
+        inFlight.remove(item.requestId)
+        return false
+    }
+
     private suspend fun dispatchNewTabEntry(item: PendingOutboxEntity): DispatchResult =
         when (val result = webSocketConnector.sendMessage(item.payload)) {
             is Result.Success -> {
-                DispatchResult.Success
+                // Sent, not done: the row stays until the server acknowledges it by requestId.
+                DispatchResult.Sent(requireNotNull(item.requestId))
             }
 
             is Result.Failure -> {
@@ -557,6 +626,153 @@ class TabEntryOutbox(
             }
         }
 
+    /**
+     * Applies the server's verdict on one write.
+     *
+     * Only `ACK` and `ERROR` are of interest, and only when they name a request: the errors the
+     * server raises before it has parsed an envelope (`MESSAGE_TOO_LARGE`, `RATE_LIMITED`, an
+     * unusable id) carry no `requestId` because they are not a verdict on any one write. Those are
+     * logged and change nothing, which leaves every queued row pending — the right outcome for
+     * backpressure.
+     */
+    private suspend fun onServerFrame(message: WebSocketMessageDto) {
+        try {
+            when (message.type) {
+                WsMessageType.ACK -> {
+                    message.requestId?.let { onAck(it) }
+                }
+
+                WsMessageType.ERROR -> {
+                    val error = json.decodeFromString(WsErrorPayload.serializer(), message.payload)
+                    val requestId = message.requestId
+                    if (requestId == null) {
+                        logger.warning(
+                            TAG,
+                            "Uncorrelated WS error code=${error.code} retryable=${error.retryable}; keeping every pending write",
+                        )
+                    } else {
+                        onError(requestId, error)
+                    }
+                }
+
+                else -> {}
+            }
+        } catch (e: Throwable) {
+            logger.error(TAG, "Failed to apply server verdict for requestId=${message.requestId}", e)
+        }
+    }
+
+    private suspend fun onAck(requestId: String) {
+        mutex.withLock {
+            val row = resolveRow(requestId) ?: return@withLock
+            logger.debug(TAG, "Ack for id=${row.id}; the write is durable server-side, deleting row")
+            database.pendingOutboxDao.deleteById(row.id)
+            sessionAttempts.remove(row.id)
+        }
+    }
+
+    private suspend fun onError(
+        requestId: String,
+        error: WsErrorPayload,
+    ) {
+        val rejected =
+            mutex.withLock {
+                val row = resolveRow(requestId) ?: return
+
+                if (error.retryable) {
+                    // The write may still land. Keep the row, but spend an attempt so one that
+                    // keeps failing parks instead of retrying on every reconnect all session.
+                    val nextCount = (sessionAttempts[row.id] ?: 0) + 1
+                    sessionAttempts[row.id] = nextCount
+                    logger.warning(
+                        TAG,
+                        "Retryable WS error code=${error.code} for id=${row.id} ($nextCount/$MAX_ATTEMPTS)",
+                    )
+                    recordAttempt(row, lastError = "ws_${error.code.lowercase()}_attempt_$nextCount")
+                    return
+                }
+
+                // Parked before the lock is released: the rollback below runs outside the mutex,
+                // because it can make a network call, and a drain must not re-send the row while
+                // it is being undone.
+                sessionAttempts[row.id] = MAX_ATTEMPTS
+                row
+            }
+
+        logger.error(
+            TAG,
+            "Write id=${rejected.id} rejected as final: code=${error.code} ${error.message}",
+        )
+        // Rolled back *before* the row is dropped. If the app dies in between, the row survives and
+        // is re-sent, re-rejected and rolled back again; dropping the row first would leave the
+        // optimistic entry looking synced with nothing left to correct it.
+        rollBack(rejected, error)
+        mutex.withLock {
+            database.pendingOutboxDao.deleteById(rejected.id)
+            sessionAttempts.remove(rejected.id)
+        }
+    }
+
+    /**
+     * The row a verdict belongs to, releasing its in-flight claim. Callers hold [mutex].
+     *
+     * Resolved from the table rather than from [inFlight], which is only a same-connection cache:
+     * an ack can arrive on a socket opened after the process that sent the write was killed. A
+     * verdict for a row that is already gone is a no-op — that is the same write being answered
+     * twice, not a second write.
+     */
+    private suspend fun resolveRow(requestId: String): PendingOutboxEntity? {
+        inFlight.remove(requestId)
+        return database.pendingOutboxDao.getByRequestId(requestId).also {
+            if (it == null) logger.debug(TAG, "Verdict for unknown requestId=$requestId; ignoring")
+        }
+    }
+
+    /**
+     * Undoes the optimistic local write behind a rejected row, so the UI stops showing something
+     * the server will never hold.
+     *
+     * A create never landed, so the local entry is simply removed. An update did land once and its
+     * server-side version is the truth, so the group is re-read — `TabEntryService` exposes no
+     * per-entry fetch, and the group history is the available source of truth. The exception is an
+     * entry the server says is gone: a backfill cannot remove what it is no longer told about, so
+     * that one is deleted locally like a create.
+     */
+    private suspend fun rollBack(
+        row: PendingOutboxEntity,
+        error: WsErrorPayload,
+    ) {
+        val entryId =
+            when (row.type) {
+                OUTBOX_TYPE_NEW_TAB_ENTRY -> row.id
+                OUTBOX_TYPE_TAB_ENTRY_UPDATE -> row.id.removePrefix(UPDATE_ID_PREFIX)
+                else -> return
+            }
+
+        if (row.type == OUTBOX_TYPE_NEW_TAB_ENTRY || error.code == ERROR_TAB_ENTRY_NOT_FOUND) {
+            logger.warning(TAG, "Rolling back local tab entry $entryId")
+            database.tabEntryDao.deleteTabEntryAndSplits(
+                tabEntryId = entryId,
+                splitDao = database.tabEntrySplitDao,
+            )
+            return
+        }
+
+        val groupId =
+            runCatching {
+                val envelope = json.decodeFromString(WebSocketMessageDto.serializer(), row.payload)
+                json.decodeFromString(NewTabEntryWsPayload.serializer(), envelope.payload).groupId
+            }.getOrNull()
+        if (groupId == null) {
+            logger.error(TAG, "Cannot roll back id=${row.id}: unreadable payload")
+            return
+        }
+
+        logger.warning(TAG, "Rolling back edit of $entryId by refetching group $groupId")
+        // Never throws and never fails its caller; on failure it marks the group for the next sync.
+        backfiller.backfill(groupId)
+    }
+
     private suspend fun recordAttempt(
         item: PendingOutboxEntity,
         lastError: String,
@@ -571,6 +787,14 @@ class TabEntryOutbox(
     }
 
     private sealed class DispatchResult {
+        /**
+         * Handed to the socket and awaiting the server's verdict. The row stays — this is the whole
+         * point of the acknowledgement protocol, and the difference between a write that reached
+         * the server and one that only reached a send buffer.
+         */
+        data class Sent(val requestId: String) : DispatchResult()
+
+        /** Terminal without an ack: the HTTP delete path, and unknown row types. */
         data object Success : DispatchResult()
 
         data class Transient(val reason: String) : DispatchResult()
@@ -585,6 +809,17 @@ class TabEntryOutbox(
     internal companion object {
         private const val TAG = "TabEntryOutbox"
         private const val MAX_ATTEMPTS = 10
+
+        /**
+         * How long a sent write waits for its verdict before it is re-sent on the same connection.
+         * A dropped socket already releases every claim, so this only covers a live socket that
+         * lost the ack itself. Well inside the server's replay window, which answers the repeat
+         * instead of writing again.
+         */
+        private const val ACK_TIMEOUT_MS = 30_000L
+
+        /** Server `ErrorDto.code` for an entry it no longer has; the one update that cannot heal. */
+        private const val ERROR_TAB_ENTRY_NOT_FOUND = "TAB_ENTRY_NOT_FOUND"
         const val DELETE_ID_PREFIX = "delete:"
         const val UPDATE_ID_PREFIX = "update:"
         const val OUTBOX_TYPE_NEW_TAB_ENTRY = "new_tab_entry"

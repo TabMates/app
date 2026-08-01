@@ -38,16 +38,16 @@ import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import kotlin.coroutines.coroutineContext
 
-@Single
+@Single(binds = [WebSocketChannel::class])
 class KtorWebSocketConnector(
     @Named(APPLICATION_SCOPE) private val applicationScope: CoroutineScope,
     private val connectionGate: ConnectionGate,
     private val transport: WebSocketTransport,
     private val connectionRetryHandler: ConnectionRetryHandler,
     private val logger: TabMatesLogger,
-) {
+) : WebSocketChannel {
     private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
-    val connectionState = _connectionState.asStateFlow()
+    override val connectionState = _connectionState.asStateFlow()
 
     private val sessionMutex = Mutex()
     private var currentSession: WebSocketSession? = null
@@ -79,7 +79,7 @@ class KtorWebSocketConnector(
      * `replay = 0` because every frame is applied to the database on arrival; a replayed one would
      * be re-applied for each new subscriber.
      */
-    val messages =
+    override val messages =
         combine(
             connectionGate.authState,
             connectionGate.isConnected,
@@ -205,7 +205,7 @@ class KtorWebSocketConnector(
             }
         }
 
-    suspend fun sendMessage(message: String): EmptyResult<DataError.Connection> {
+    override suspend fun sendMessage(message: String): EmptyResult<DataError.Connection> {
         val session = currentSessionSnapshot()
         if (session == null || connectionState.value != ConnectionState.CONNECTED) {
             return Result.Failure(DataError.Connection.NOT_CONNECTED)
