@@ -7,7 +7,7 @@ import de.tabmates.features.tabgroup.data.dto.TabEntryDto
 import de.tabmates.features.tabgroup.data.mappers.referencedParticipants
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.data.mappers.toEntity
-import de.tabmates.features.tabgroup.data.network.KtorWebSocketConnector
+import de.tabmates.features.tabgroup.data.network.WebSocketChannel
 import de.tabmates.features.tabgroup.data.network.dto.GroupMetadataChangedWsPayload
 import de.tabmates.features.tabgroup.data.network.dto.TabEntryDeletedWsPayload
 import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
@@ -17,7 +17,6 @@ import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.serialization.json.Json
@@ -32,7 +31,7 @@ import org.koin.core.annotation.Single
  */
 @Single(createdAtStart = true)
 class TabEntryRealtimeSync(
-    webSocketConnector: KtorWebSocketConnector,
+    webSocketConnector: WebSocketChannel,
     private val database: TabMatesDatabase,
     private val groupRepository: GroupRepository,
     private val json: Json,
@@ -42,7 +41,6 @@ class TabEntryRealtimeSync(
     init {
         webSocketConnector
             .messages
-            .filterNotNull()
             .onEach { message -> handle(message) }
             .launchIn(applicationScope)
     }
@@ -52,6 +50,12 @@ class TabEntryRealtimeSync(
             when (message.type) {
                 WsMessageType.NEW_TAB_ENTRY,
                 WsMessageType.UPDATED_TAB_ENTRY,
+                // An ack carries the same canonical TabEntryDto, and on a *replayed* one it is the
+                // only thing that does: the server does not repeat the broadcast for a write it
+                // already applied, so a client retrying after a lost ack is brought up to date by
+                // this frame alone. The upsert is idempotent, so applying both on the normal path
+                // costs nothing. Clearing the outbox row is TabEntryOutbox's half of the same frame.
+                WsMessageType.ACK,
                 -> handleUpsert(message.payload)
 
                 WsMessageType.TAB_ENTRY_DELETED -> handleDeleted(message.payload)
@@ -74,6 +78,19 @@ class TabEntryRealtimeSync(
         val dto = json.decodeFromString(TabEntryDto.serializer(), payload)
         val entry = dto.toDomain()
         logger.debug(TAG, "WS echo received id=${entry.tabEntryId}")
+        // A soft-deleted entry is gone as far as this client is concerned, and local queries do not
+        // filter on deletedAt — upserting one would put it back on screen. Reached via a replayed
+        // ACK: the server answers a retry of a write whose entry has since been deleted with the
+        // canonical DTO, deletedAt and all. This mirrors what the paged sync does with its
+        // deletedIds, so both paths agree.
+        if (dto.deletedAt != null) {
+            logger.debug(TAG, "WS frame carries a deleted entry ${entry.tabEntryId}; removing it")
+            database.tabEntryDao.deleteTabEntryAndSplits(
+                tabEntryId = entry.tabEntryId,
+                splitDao = database.tabEntrySplitDao,
+            )
+            return
+        }
         // The entry may reference participants missing locally (ex-members whose old entry got
         // edited, or members whose join event hasn't been applied yet) — persist them first so
         // the split table's participant FK holds.
@@ -115,9 +132,13 @@ class TabEntryRealtimeSync(
             }
     }
 
+    // Diagnostic only — TabEntryOutbox owns what an error does to the write that caused it.
     private fun handleError(payload: String) {
         val error = json.decodeFromString(WsErrorPayload.serializer(), payload)
-        logger.warning(TAG, "Server WS error code=${error.code} message=${error.message}")
+        logger.warning(
+            TAG,
+            "Server WS error code=${error.code} retryable=${error.retryable} message=${error.message}",
+        )
     }
 
     private companion object {

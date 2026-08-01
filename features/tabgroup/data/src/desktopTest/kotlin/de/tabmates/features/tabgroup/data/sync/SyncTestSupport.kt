@@ -52,8 +52,12 @@ class FakeTabEntryService(
         Result.Success(GroupTabEntryHistory(emptyList())),
 ) : TabEntryService {
     val receivedGroupIds: MutableList<String> = mutableListOf()
+    val deletedIds: MutableList<String> = mutableListOf()
 
-    override suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
+    override suspend fun deleteTabEntry(tabEntryId: String): EmptyResult<DataError.Remote> {
+        deletedIds += tabEntryId
+        return Result.Success(Unit)
+    }
 
     override suspend fun getTabEntriesForGroup(groupId: String): Result<GroupTabEntryHistory, DataError.Remote> {
         receivedGroupIds += groupId

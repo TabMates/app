@@ -12,7 +12,6 @@ import de.tabmates.features.tabgroup.data.network.dto.WsMessageType
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.serialization.json.Json
@@ -41,7 +40,6 @@ class ActivityRealtimeSync(
     init {
         webSocketConnector
             .messages
-            .filterNotNull()
             .filter { it.type == WsMessageType.ACTIVITY_EVENT }
             .onEach { message -> handle(message) }
             .launchIn(applicationScope)
