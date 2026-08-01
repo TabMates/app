@@ -4,8 +4,8 @@ description: |
   Code review of the current branch changes compared to a base branch (default main). Delegates the
   review to a fresh-context reviewer agent that checks the diff against the project's architecture
   skills and AGENTS.md — layer responsibility violations, architectural shortcuts, race conditions,
-  leaks, and other misbehavior. Findings are delivered as inline `REVIEW(…)` comments at the
-  offending lines plus a summary report. Use this skill whenever the user asks to review their
+  leaks, and other misbehavior. Findings are delivered as a single markdown report under
+  `.claude/reviews/`; no code is modified. Use this skill whenever the user asks to review their
   changes, branch, or diff against a base branch. Trigger on phrases like "review my changes",
   "code review", "review against main", "review my branch", "check my branch", "pre-MR review",
   "pre-PR review", or "review the diff".
@@ -49,26 +49,28 @@ A `code-reviewer` agent is defined for both supported tools:
   `code-reviewer` agent. Only as a last resort, follow `reviewer-instructions.md` directly in the
   current context.
 
-## 4. Relay the summary report unmodified
+## 4. Relay the report pointer
 
-No softening, no filtering, no reordering, no added praise. The detailed findings live as inline
-`REVIEW(` comments in the code — do not re-paste them into chat.
+The reviewer returns a short block — report path, totals, one-sentence verdict, top 🔴 findings.
+Print it verbatim. No softening, no filtering, no reordering, no added praise.
+
+Do not open the report and re-summarize it in chat: the file is the artifact, and the user reads it
+there.
 
 ## 5. Offer to fix
 
 Offer to fix 🔴 findings; fix 🟡 on request. Fixes happen in the **main context**, not in the
-reviewer. Remove each `REVIEW(` comment as its finding is fixed or dismissed.
+reviewer: read the report file, work through the findings in severity order, and locate each one by
+its **Anchor** excerpt rather than its line number — lines shift as earlier fixes land.
 
-All `REVIEW(` comments must be gone before commit:
-
-```bash
-grep -rn "REVIEW(" --include="*.kt" --include="*.kts" --include="*.toml" --include="*.xml" .
-```
+There is no cleanup step. The reviewer never touched the working tree, so nothing has to be stripped
+before commit.
 
 ## Reviewer contract
 
 The complete reviewer brief — diff computation, path→skill mapping, architecture checklist, bug
-checklist, and output format — lives in **`.claude/skills/code-review/reviewer-instructions.md`**.
+checklist, report path, report format, and return value — lives in
+**`.claude/skills/code-review/reviewer-instructions.md`**.
 
 That file is the **single source of truth**. The tool-specific definitions —
 `.claude/agents/code-reviewer.md`, `.opencode/agents/code-reviewer.md`, and
@@ -81,9 +83,9 @@ copy, and adding one would fork the source of truth.
 
 ## Notes
 
-- The reviewer's **only** permitted modification is inserting `REVIEW(` comment lines. It never
-  edits, deletes, reorders, renames, stages, or commits anything.
+- The reviewer's **only** write is its report file under `.claude/reviews/`. It never edits, deletes,
+  reorders, renames, stages, or commits anything, and never leaves comments in the code.
 - Review covers committed changes since the merge-base **plus** uncommitted working-tree changes
   (staged and unstaged).
 - Scope is the diff only — no "while we're here" refactor proposals.
-- `REVIEW(` comments are temporary artifacts. They must never be committed.
+- Reports are gitignored throwaway artifacts, one per run. Prune `.claude/reviews/` freely.

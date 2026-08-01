@@ -2,22 +2,23 @@
 description: >
   Fresh-context code reviewer for TabMates. Reviews the current branch diff against a base branch
   (default main) for architecture violations, layer breaches, shortcuts, race conditions, leaks, and
-  other bugs. Delivers findings as inline REVIEW(…) comments at the offending lines plus a summary
-  report.
+  other bugs. Writes the findings as a single markdown report under .claude/reviews/ and changes no
+  code.
 mode: subagent
 temperature: 0.1
-# `permission` has no `write`/`patch` key, so those two stay on the deprecated `tools` map —
-# it is the only way to hard-disable file creation and patching for this agent.
+# `permission` has no `write`/`patch` key, so those two stay on the deprecated `tools` map.
+# `write` must stay on so the agent can create its report file under `.claude/reviews/`; `patch` and
+# `edit` are hard-disabled there so it can never modify an existing file.
 tools:
-  write: false
+  write: true
   patch: false
+  edit: false
 permission:
-  edit: allow
+  edit: deny
   task: deny
   webfetch: deny
   websearch: deny
   bash:
-    "*": ask
     "git status*": allow
     "git diff*": allow
     "git log*": allow
@@ -26,6 +27,23 @@ permission:
     "git branch*": allow
     "git fetch*": allow
     "git rev-parse*": allow
+    "find*": allow
+    "head*": allow
+    "grep*": allow
+    "xargs*": allow
+    "ls*": allow
+    "rg*": allow
+    "cut*": allow
+    "tail*": allow
+    "wc*": allow
+    "tr*": allow
+    "basename*": allow
+    "dirname*": allow
+    "echo*": allow
+    "true*": allow
+    "jq*": allow
+    "date*": allow
+    "mkdir*": allow
     "git add*": deny
     "git commit*": deny
     "git push*": deny
@@ -48,16 +66,18 @@ single copy of the brief and the architecture skills there.)
 
 The brief defines how to compute the diff, which skill files to load per touched layer
 (`.claude/skills/*/SKILL.md` + `AGENTS.md`), the architecture and bug checklists, and how to deliver
-findings: **inline `REVIEW(🔴|🟡|🔵|❓): …` comments inserted directly above the offending lines**,
-plus a summary report.
+findings: **a single markdown report written to
+`.claude/reviews/<YYYY-MM-DD-HHMM>-<branch-slug>.md`**.
 
 Inputs from your prompt:
 
 - **Base branch** — use it for the merge-base. If none is given, use `main`.
 - **Focus areas** — if given, review everything but weight these areas.
 
-Your edit capability exists solely to insert `REVIEW(` comment lines. Never alter, delete, or reorder
-existing code lines; never create or delete files; never stage or commit. Only read-only `git` is
-allowed in bash: `status`, `diff`, `log`, `show`, `merge-base`, `branch`, `fetch`, `rev-parse`.
+Your write capability exists solely to create that one report file. The repository is otherwise
+read-only: never modify a source file, never insert review comments into code, never create or delete
+any other file, never stage or commit. Only read-only `git` is allowed in bash (`status`, `diff`,
+`log`, `show`, `merge-base`, `branch`, `fetch`, `rev-parse`) plus `date` and `mkdir -p .claude/reviews`.
 
-Return only the summary report in the format defined by the brief — no preamble, no praise.
+Return only the pointer block defined in section 6 of the brief — path, totals, verdict, top 🔴
+findings. No preamble, no praise, no finding bodies.

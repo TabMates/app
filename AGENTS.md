@@ -222,7 +222,7 @@ Details live in the `android-module-structure` and `android-navigation` skills.
 - Never let data-layer types (DTOs, `*Entity`, `*Serializable`) cross into `presentation`.
 - Never throw across a layer boundary — return `Result.Failure` / `EmptyResult`. Always rethrow `CancellationException`.
 - Never introduce a new compiler warning; CI diffs against `.github/compiler-warnings-baseline.txt`.
-- Never commit `REVIEW(` comments left over from a code review.
+- Never commit a code-review report; they are throwaway artifacts under the gitignored `.claude/reviews/`.
 
 ---
 
@@ -236,6 +236,7 @@ This repo is set up for **Claude Code** and **opencode**. Both read the same ski
   skills/code-review/
     SKILL.md                      # orchestrator workflow
     reviewer-instructions.md      # canonical reviewer brief (single source of truth)
+  reviews/                        # generated review reports (gitignored, one per run)
   agents/code-reviewer.md         # Claude Code subagent (thin wrapper)
 .opencode/
   agents/code-reviewer.md         # opencode subagent (thin wrapper)
