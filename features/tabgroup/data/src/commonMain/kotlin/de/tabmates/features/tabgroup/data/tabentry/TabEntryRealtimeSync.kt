@@ -17,7 +17,6 @@ import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.serialization.json.Json
@@ -42,7 +41,6 @@ class TabEntryRealtimeSync(
     init {
         webSocketConnector
             .messages
-            .filterNotNull()
             .onEach { message -> handle(message) }
             .launchIn(applicationScope)
     }

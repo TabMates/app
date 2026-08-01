@@ -19,6 +19,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.retryWhen
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -63,6 +65,20 @@ class KtorWebSocketConnector(
         }
     }
 
+    /**
+     * The inbound frame stream, **shared**: one socket no matter how many collectors there are.
+     *
+     * Without [shareIn] this is a cold flow, and every collector runs its own
+     * [createWebSocketFlow] — two `createdAtStart` singletons collect it, so the app held two live
+     * sockets per user. Broadcasts hid that (the server fans them out to every session a user has,
+     * and applying one twice is an idempotent upsert), but a unicast frame does not: it arrives on
+     * exactly one socket, and [sendMessage] writes to whichever of the two won the last-writer race
+     * in [setCurrentSession]. A frame addressed to the sender would land in a nondeterministic
+     * collector.
+     *
+     * `replay = 0` because every frame is applied to the database on arrival; a replayed one would
+     * be re-applied for each new subscriber.
+     */
     val messages =
         combine(
             connectionGate.authState,
@@ -139,7 +155,11 @@ class KtorWebSocketConnector(
                         _connectionState.value = connectionRetryHandler.getConnectionStateForError(e)
                     }
             }
-        }
+        }.shareIn(
+            scope = applicationScope,
+            started = SharingStarted.WhileSubscribed(SHARE_STOP_TIMEOUT_MS),
+            replay = 0,
+        )
 
     private fun createWebSocketFlow(accessToken: String) =
         callbackFlow {
@@ -203,5 +223,9 @@ class KtorWebSocketConnector(
 
     private companion object {
         private const val TAG = "KtorWebSocketConnector"
+
+        // Matches ConnectionGate's own stateIn windows, so a brief gap between collectors does not
+        // tear the socket down and immediately redial it.
+        private const val SHARE_STOP_TIMEOUT_MS = 5_000L
     }
 }
