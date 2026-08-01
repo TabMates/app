@@ -34,10 +34,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.designsystem.text.SectionLabel
 import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
-import de.tabmates.features.tabgroup.presentation.components.SectionLabel
 import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.formatEntryDate

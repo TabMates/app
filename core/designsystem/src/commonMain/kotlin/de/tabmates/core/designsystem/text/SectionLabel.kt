@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.components
+package de.tabmates.core.designsystem.text
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

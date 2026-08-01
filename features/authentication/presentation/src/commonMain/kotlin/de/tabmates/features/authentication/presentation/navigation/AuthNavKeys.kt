@@ -5,6 +5,8 @@ import de.tabmates.core.presentation.navigation.LoggedIn
 import de.tabmates.core.presentation.navigation.ScreenWithTopBar
 import de.tabmates.core.presentation.util.UiText
 import kotlinx.serialization.Serializable
+import tabmatesapp.features.authentication.presentation.generated.resources.Res
+import tabmatesapp.features.authentication.presentation.generated.resources.environment_title
 
 @Serializable
 data object Welcome : LoggableNavKey()
@@ -64,4 +66,13 @@ data object ForgotPassword : LoggableNavKey(), ScreenWithTopBar {
 @Serializable
 data class ResetPassword(val token: String) : LoggableNavKey(), ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.DynamicString("")
+}
+
+/**
+ * Picks the backend the app talks to. Only reachable from [Welcome]: switching means signing out
+ * and dropping the local data, so it stays where neither exists yet.
+ */
+@Serializable
+data object EnvironmentSettings : LoggableNavKey(), ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.environment_title)
 }

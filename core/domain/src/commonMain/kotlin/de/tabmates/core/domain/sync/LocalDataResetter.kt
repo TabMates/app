@@ -10,4 +10,13 @@ package de.tabmates.core.domain.sync
  */
 interface LocalDataResetter {
     suspend fun resetLocalData()
+
+    /**
+     * Additionally drops the account-independent server data (currencies, exchange rates).
+     *
+     * Deliberately not part of [resetLocalData]: signing out does not invalidate that data, it is
+     * the same on the next sign-in. Switching backends does — the new one has its own currency
+     * list and rates, and the cached ones would otherwise be shown until the daily refresh.
+     */
+    suspend fun resetReferenceData()
 }

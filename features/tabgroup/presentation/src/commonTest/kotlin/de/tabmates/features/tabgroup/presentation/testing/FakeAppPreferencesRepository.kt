@@ -12,16 +12,19 @@ class FakeAppPreferencesRepository(
     initialNotificationsEnabled: Boolean = true,
     initialLanguage: AppLanguage = AppLanguage.SYSTEM,
     initialAndroidAppPromoSnoozedUntil: Instant? = null,
+    initialLastCurrencySync: Instant? = null,
 ) : AppPreferencesRepository {
     private val themeMode = MutableStateFlow(initialThemeMode)
     private val notificationsEnabled = MutableStateFlow(initialNotificationsEnabled)
     private val language = MutableStateFlow(initialLanguage)
     private val androidAppPromoSnoozedUntil = MutableStateFlow(initialAndroidAppPromoSnoozedUntil)
+    private val lastCurrencySync = MutableStateFlow(initialLastCurrencySync)
 
     val setThemeModeCalls: MutableList<ThemeMode> = mutableListOf()
     val setNotificationsEnabledCalls: MutableList<Boolean> = mutableListOf()
     val setAppLanguageCalls: MutableList<AppLanguage> = mutableListOf()
     val snoozeAndroidAppPromoCalls: MutableList<Instant> = mutableListOf()
+    val setLastCurrencySyncCalls: MutableList<Instant?> = mutableListOf()
 
     override fun themeMode(): Flow<ThemeMode> = themeMode
 
@@ -49,5 +52,12 @@ class FakeAppPreferencesRepository(
     override suspend fun snoozeAndroidAppPromo(until: Instant) {
         snoozeAndroidAppPromoCalls += until
         androidAppPromoSnoozedUntil.value = until
+    }
+
+    override suspend fun lastCurrencySync(): Instant? = lastCurrencySync.value
+
+    override suspend fun setLastCurrencySync(instant: Instant?) {
+        setLastCurrencySyncCalls += instant
+        lastCurrencySync.value = instant
     }
 }

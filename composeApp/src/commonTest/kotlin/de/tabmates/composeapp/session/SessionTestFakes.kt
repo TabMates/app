@@ -30,8 +30,15 @@ class FakeLocalDataResetter : LocalDataResetter {
     var resetCalls: Int = 0
         private set
 
+    var resetReferenceDataCalls: Int = 0
+        private set
+
     override suspend fun resetLocalData() {
         resetCalls += 1
+    }
+
+    override suspend fun resetReferenceData() {
+        resetReferenceDataCalls += 1
     }
 }
 

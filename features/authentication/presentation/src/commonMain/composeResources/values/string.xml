@@ -62,4 +62,27 @@
 
     <!-- Guest Register -->
     <string name="register_guest_desc">Continue as Guest has some limitations. When you log out or switch your device you will lose access to your groups. But you can always create an account later.</string>
+
+    <!-- Environment -->
+    <string name="welcome_button_environment">Environment: %1$s</string>
+    <string name="environment_title">Server environment</string>
+    <string name="environment_desc">Point the app at another TabMates backend. Accounts and groups belong to the server they were created on, so switching signs you out and removes the data stored on this device.</string>
+    <string name="environment_default_label">Default</string>
+    <string name="environment_section_choose">Choose server</string>
+    <string name="environment_row_default">Default server</string>
+    <string name="environment_row_custom">Custom server</string>
+    <string name="environment_row_custom_empty">Not set up yet</string>
+    <string name="environment_row_active">Active</string>
+    <string name="environment_url_hint">Server URL</string>
+    <string name="environment_url_title">Server URL</string>
+    <string name="environment_api_key_hint">API key</string>
+    <string name="environment_api_key_title">API key</string>
+    <string name="environment_apply">Use this server</string>
+    <string name="environment_switched">Environment switched</string>
+    <string name="environment_error_invalid_url">Enter the full server URL, starting with https://</string>
+    <string name="environment_error_insecure_url">Only https:// addresses are allowed</string>
+    <string name="environment_error_missing_api_key">Enter the API key for this server</string>
+    <string name="environment_error_unreachable">Could not reach this server</string>
+    <string name="environment_error_key_rejected">The server rejected this API key</string>
+    <string name="environment_error_version_rejected">The server does not accept this app version</string>
 </resources>

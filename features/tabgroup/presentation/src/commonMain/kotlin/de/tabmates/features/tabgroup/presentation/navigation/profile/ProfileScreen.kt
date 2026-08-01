@@ -38,9 +38,9 @@ import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOW
 import de.tabmates.core.data.AppBuildInfo
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.designsystem.text.SectionLabel
 import de.tabmates.core.domain.preferences.ThemeMode
 import de.tabmates.core.presentation.util.ObserveAsEvents
-import de.tabmates.features.tabgroup.presentation.components.SectionLabel
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.stringResource

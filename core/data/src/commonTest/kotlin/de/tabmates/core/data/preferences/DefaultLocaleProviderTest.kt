@@ -30,6 +30,10 @@ class DefaultLocaleProviderTest {
         override fun androidAppPromoSnoozedUntil(): Flow<Instant?> = flowOf(null)
 
         override suspend fun snoozeAndroidAppPromo(until: Instant) = Unit
+
+        override suspend fun lastCurrencySync(): Instant? = null
+
+        override suspend fun setLastCurrencySync(instant: Instant?) = Unit
     }
 
     @Test

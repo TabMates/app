@@ -40,9 +40,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import de.tabmates.core.designsystem.text.SectionLabel
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.models.Currency
-import de.tabmates.features.tabgroup.presentation.components.SectionLabel
 import de.tabmates.features.tabgroup.presentation.components.formatRate
 import de.tabmates.features.tabgroup.presentation.components.rateUpdatedLabel
 import org.jetbrains.compose.resources.stringResource
