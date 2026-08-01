@@ -5,6 +5,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import de.tabmates.features.authentication.presentation.emailverification.EmailVerificationRoot
+import de.tabmates.features.authentication.presentation.environment.EnvironmentRoot
 import de.tabmates.features.authentication.presentation.forgotpassword.ForgotPasswordScreenRoot
 import de.tabmates.features.authentication.presentation.login.LoginRoot
 import de.tabmates.features.authentication.presentation.register.RegisterRoot
@@ -29,6 +30,7 @@ val authSerializersModule =
             subclass(ResetPassword::class)
             subclass(ForgotPassword::class)
             subclass(RegisterGuest::class)
+            subclass(EnvironmentSettings::class)
         }
     }
 
@@ -86,6 +88,13 @@ fun EntryProviderScope<NavKey>.authGraph(
         RegisterGuestRoot(
             snackbarHostState = snackbarHostState,
             onRegisterSuccess = onGuestClick,
+        )
+    }
+
+    entry<EnvironmentSettings> {
+        EnvironmentRoot(
+            backStack = backStack,
+            snackbarHostState = snackbarHostState,
         )
     }
 }

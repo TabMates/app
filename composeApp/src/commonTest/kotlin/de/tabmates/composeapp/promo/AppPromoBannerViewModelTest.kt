@@ -60,6 +60,10 @@ class AppPromoBannerViewModelTest {
         override fun appLanguage(): Flow<AppLanguage> = MutableStateFlow(AppLanguage.SYSTEM)
 
         override suspend fun setAppLanguage(language: AppLanguage) = Unit
+
+        override suspend fun lastCurrencySync(): Instant? = null
+
+        override suspend fun setLastCurrencySync(instant: Instant?) = Unit
     }
 
     @Test

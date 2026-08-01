@@ -28,4 +28,9 @@ class RoomLocalDataResetter(
         database.groupDao.deleteAllGroups()
         database.pendingOutboxDao.deleteAll()
     }
+
+    override suspend fun resetReferenceData() {
+        database.currencyDao.deleteAllCurrencies()
+        database.exchangeRateDao.deleteAllExchangeRates()
+    }
 }

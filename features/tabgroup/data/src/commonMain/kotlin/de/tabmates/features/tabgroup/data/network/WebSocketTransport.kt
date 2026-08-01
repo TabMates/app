@@ -1,8 +1,8 @@
 package de.tabmates.features.tabgroup.data.network
 
 import de.tabmates.core.data.AppBuildInfo
+import de.tabmates.core.domain.environment.EnvironmentRepository
 import de.tabmates.core.domain.logging.TabMatesLogger
-import de.tabmates.features.tabgroup.data.BuildKonfig
 import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.webSocketSession
@@ -23,22 +23,25 @@ class WebSocketTransport(
     private val httpClient: HttpClient,
     private val json: Json,
     private val logger: TabMatesLogger,
+    private val environmentRepository: EnvironmentRepository,
 ) {
     /**
      * A 426 here surfaces only as a failed handshake, not as the forced-update prompt: the gate
      * rejects the upgrade before there is a session to report on. Acceptable because the app always
      * issues plain HTTP calls too, and those trip `UpgradeRequiredNotifier` first.
      */
-    suspend fun openSession(accessToken: String): WebSocketSession =
-        httpClient.webSocketSession(
+    suspend fun openSession(accessToken: String): WebSocketSession {
+        // Read per connect: a reconnect after an environment switch has to dial the new backend.
+        val environment = environmentRepository.current
+        return httpClient.webSocketSession(
             urlString =
-                URLBuilder("${BuildKonfig.BASE_URL_WS}/group")
+                URLBuilder("${environment.wsBaseUrl}/group")
                     .apply {
                         // Browser WebSockets cannot carry custom headers, so the credentials
                         // also travel as query parameters; the server accepts either.
                         parameters.append("access_token", accessToken)
                         // Null on web (server allow-lists the Origin instead); real key on native.
-                        BuildKonfig.API_KEY?.let { parameters.append("api_key", it) }
+                        environment.apiKey?.let { parameters.append("api_key", it) }
                         // The handshake is version-gated like any other request, and browsers
                         // cannot set headers on it — so the version has to travel as a parameter.
                         // The token deliberately does not: only native builds have one, and native
@@ -48,10 +51,11 @@ class WebSocketTransport(
                     }.buildString(),
         ) {
             header("Authorization", "Bearer $accessToken")
-            BuildKonfig.API_KEY?.let { header("x-api-key", it) }
+            environment.apiKey?.let { header("x-api-key", it) }
             header("X-Client-Version", AppBuildInfo.clientVersionHeader)
             AppBuildInfo.buildToken?.let { header("X-Client-Token", it) }
         }
+    }
 
     suspend fun decode(text: String): WebSocketMessageDto? =
         try {

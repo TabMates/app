@@ -133,7 +133,8 @@ ones. iOS/Web have no equivalent channel concept here.
 4. Upload the APNs auth key to Firebase Console.
 
 ### Desktop (WebSocket → local notifications)
-No FCM on desktop. The app opens a WebSocket to `${BASE_URL_WS}/api/notifications/stream`
+No FCM on desktop. The app opens a WebSocket to `<ws base>/api/notifications/stream` (the ws base
+is derived from `BASE_URL_HTTP`; see `EnvironmentUrls`)
 (`DesktopPushNotificationController`) and renders each `NotificationEventDto`
 (`{ title, body, deepLink? }`) as a local notification.
 1. **Backend**: implement the authenticated WS endpoint pushing `NotificationEventDto` JSON

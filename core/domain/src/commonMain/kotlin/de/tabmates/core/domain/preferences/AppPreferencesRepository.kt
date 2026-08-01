@@ -24,4 +24,13 @@ interface AppPreferencesRepository {
     fun androidAppPromoSnoozedUntil(): Flow<Instant?>
 
     suspend fun snoozeAndroidAppPromo(until: Instant)
+
+    /**
+     * When currencies and exchange rates were last pulled, or `null` if never. Read as a plain
+     * value rather than a [Flow]: the only reader compares it against the refresh interval once
+     * per sign-in, and the environment switch clears it so the next backend is pulled fresh.
+     */
+    suspend fun lastCurrencySync(): Instant?
+
+    suspend fun setLastCurrencySync(instant: Instant?)
 }

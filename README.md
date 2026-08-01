@@ -73,9 +73,11 @@ Build-time config is injected via BuildKonfig and **required** to build. Add the
 ```properties
 API_KEY=your-api-key
 BASE_URL_HTTP=https://your-backend.example.com
-BASE_URL_WS=wss://your-backend.example.com
 BASE_URL_PUBLIC=https://your-web-app.example.com
 ```
+
+There is no separate websocket URL: it is derived from `BASE_URL_HTTP` by swapping the scheme
+(`https` → `wss`, `http` → `ws`) and appending `/ws`.
 
 `BASE_URL_PUBLIC` is the user-facing host for shareable links and deep links (App Links / web fallback), decoupled from the API host. For local dev, set it to your `BASE_URL_HTTP` value. See [`docs/WEB_DEPLOYMENT.md`](docs/WEB_DEPLOYMENT.md#deep-links--android-app-links).
 
@@ -83,9 +85,7 @@ Optional per-target overrides let every target run against a local backend (`htt
 
 ```properties
 BASE_URL_HTTP_ANDROID=http://10.0.2.2:8080
-BASE_URL_WS_ANDROID=ws://10.0.2.2:8080/ws
 BASE_URL_HTTP_WEB=http://localhost:8081
-BASE_URL_WS_WEB=ws://localhost:8081/ws
 # Optional, web-only: Cloudflare Turnstile site key (a public identifier) for the invisible bot
 # check on the auth endpoints. Unset = no widget/token; harmless until the backend enforces it.
 TURNSTILE_SITE_KEY=your-site-key

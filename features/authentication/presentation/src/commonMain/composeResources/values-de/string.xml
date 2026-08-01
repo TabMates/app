@@ -61,4 +61,27 @@
 
     <!-- Guest Register -->
     <string name="register_guest_desc">Die Nutzung als Gast hat einige Einschränkungen. Wenn du dich abmeldest oder das Gerät wechselst, verlierst du den Zugriff auf deine Gruppen. Du kannst aber jederzeit später ein Konto erstellen.</string>
+
+    <!-- Environment -->
+    <string name="welcome_button_environment">Umgebung: %1$s</string>
+    <string name="environment_title">Server-Umgebung</string>
+    <string name="environment_desc">Verbinde die App mit einem anderen TabMates-Backend. Konten und Gruppen gehören zu dem Server, auf dem sie erstellt wurden — beim Wechsel wirst du abgemeldet und die auf diesem Gerät gespeicherten Daten werden gelöscht.</string>
+    <string name="environment_default_label">Standard</string>
+    <string name="environment_section_choose">Server wählen</string>
+    <string name="environment_row_default">Standard-Server</string>
+    <string name="environment_row_custom">Eigener Server</string>
+    <string name="environment_row_custom_empty">Noch nicht eingerichtet</string>
+    <string name="environment_row_active">Aktiv</string>
+    <string name="environment_url_hint">Server-URL</string>
+    <string name="environment_url_title">Server-URL</string>
+    <string name="environment_api_key_hint">API-Schlüssel</string>
+    <string name="environment_api_key_title">API-Schlüssel</string>
+    <string name="environment_apply">Diesen Server verwenden</string>
+    <string name="environment_switched">Umgebung gewechselt</string>
+    <string name="environment_error_invalid_url">Gib die vollständige Server-URL ein, beginnend mit https://</string>
+    <string name="environment_error_insecure_url">Es sind nur https://-Adressen erlaubt</string>
+    <string name="environment_error_missing_api_key">Gib den API-Schlüssel für diesen Server ein</string>
+    <string name="environment_error_unreachable">Dieser Server ist nicht erreichbar</string>
+    <string name="environment_error_key_rejected">Der Server hat diesen API-Schlüssel abgelehnt</string>
+    <string name="environment_error_version_rejected">Der Server akzeptiert diese App-Version nicht</string>
 </resources>

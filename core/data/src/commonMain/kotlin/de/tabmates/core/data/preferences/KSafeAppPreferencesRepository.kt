@@ -50,11 +50,27 @@ class KSafeAppPreferencesRepository(
         prefs.put(KEY_APP_PROMO_SNOOZED_UNTIL, until.toEpochMilliseconds(), KSafeWriteMode.Plain)
     }
 
+    // Same epoch-millis-with-0-for-never encoding as the promo snooze above.
+    override suspend fun lastCurrencySync(): Instant? =
+        prefs
+            .get(KEY_LAST_CURRENCY_SYNC, NEVER_SYNCED)
+            .takeIf { it != NEVER_SYNCED }
+            ?.let(Instant::fromEpochMilliseconds)
+
+    override suspend fun setLastCurrencySync(instant: Instant?) {
+        prefs.put(KEY_LAST_CURRENCY_SYNC, instant?.toEpochMilliseconds() ?: NEVER_SYNCED, KSafeWriteMode.Plain)
+    }
+
     private companion object {
         private const val KEY_THEME_MODE = "themeMode"
         private const val KEY_NOTIFICATIONS = "notificationsEnabled"
         private const val KEY_APP_LANGUAGE = "appLanguage"
         private const val KEY_APP_PROMO_SNOOZED_UNTIL = "androidAppPromoSnoozedUntil"
         private const val NEVER_SNOOZED = 0L
+
+        // Key kept as-is: CurrencySyncCoordinator wrote it under this name before the stamp moved
+        // here, so existing installs keep their last sync time instead of refetching once.
+        private const val KEY_LAST_CURRENCY_SYNC = "lastCurrencySync"
+        private const val NEVER_SYNCED = 0L
     }
 }

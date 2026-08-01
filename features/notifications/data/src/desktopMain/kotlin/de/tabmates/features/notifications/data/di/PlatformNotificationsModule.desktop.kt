@@ -1,7 +1,7 @@
 package de.tabmates.features.notifications.data.di
 
 import de.tabmates.core.data.di.APPLICATION_SCOPE
-import de.tabmates.core.data.di.WS_BASE_URL
+import de.tabmates.core.domain.environment.EnvironmentRepository
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.preferences.LocaleProvider
 import de.tabmates.features.notifications.data.DesktopPushNotificationController
@@ -24,7 +24,7 @@ actual class PlatformNotificationsModule {
     fun providePushNotificationController(
         httpClient: HttpClient,
         json: Json,
-        @Named(WS_BASE_URL) wsBaseUrl: String,
+        environmentRepository: EnvironmentRepository,
         @Named(APPLICATION_SCOPE) scope: CoroutineScope,
         logger: TabMatesLogger,
         deepLinkBus: NotificationDeepLinkBus,
@@ -33,7 +33,7 @@ actual class PlatformNotificationsModule {
         DesktopPushNotificationController(
             httpClient = httpClient,
             json = json,
-            wsBaseUrl = wsBaseUrl,
+            environmentRepository = environmentRepository,
             appScope = scope,
             logger = logger,
             deepLinkBus = deepLinkBus,

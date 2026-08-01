@@ -5,6 +5,7 @@ import com.mmk.kmpnotifier.local.LocalNotifications
 import com.mmk.kmpnotifier.local.localNotifier
 import com.mmk.kmpnotifier.notification.PayloadData
 import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
+import de.tabmates.core.domain.environment.EnvironmentRepository
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.preferences.LocaleProvider
 import de.tabmates.features.notifications.data.dto.NotificationEventDto
@@ -31,7 +32,7 @@ import kotlinx.serialization.json.Json
 class DesktopPushNotificationController(
     private val httpClient: HttpClient,
     private val json: Json,
-    private val wsBaseUrl: String,
+    private val environmentRepository: EnvironmentRepository,
     private val appScope: CoroutineScope,
     private val logger: TabMatesLogger,
     private val deepLinkBus: NotificationDeepLinkBus,
@@ -90,6 +91,9 @@ class DesktopPushNotificationController(
         // register no device token, so it's the only locale signal). Resolved per-connect so a
         // reconnect after a language change picks up the new tag.
         val lang = localeProvider.currentLanguageTag()
+        // Resolved per-connect like the language above, so a reconnect after an environment
+        // switch dials the new backend instead of the one this controller started on.
+        val wsBaseUrl = environmentRepository.current.wsBaseUrl
         val url =
             URLBuilder("$wsBaseUrl/api/notifications/stream")
                 .apply { parameters.append("lang", lang) }

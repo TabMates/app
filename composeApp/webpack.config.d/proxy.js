@@ -2,8 +2,8 @@
   if (config.devServer) {
     // The backend has no CORS config, so the browser cannot call it directly
     // from the app origin. Proxy API and websocket traffic through the dev
-    // server instead (same-origin). Requires BASE_URL_HTTP_WEB / BASE_URL_WS_WEB
-    // in local.properties pointing at the dev server itself (http://localhost:8081).
+    // server instead (same-origin). Requires BASE_URL_HTTP_WEB in local.properties
+    // pointing at the dev server itself (http://localhost:8081).
     //
     // The proxy target follows the (uncommented) BASE_URL_HTTP in local.properties —
     // the same backend the other targets use — so switching between the local backend

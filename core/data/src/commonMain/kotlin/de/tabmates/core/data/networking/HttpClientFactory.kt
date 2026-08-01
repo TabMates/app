@@ -8,6 +8,7 @@ import de.tabmates.core.data.mappers.toDomain
 import de.tabmates.core.domain.auth.SessionInvalidationReason
 import de.tabmates.core.domain.auth.SessionInvalidator
 import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.environment.EnvironmentRepository
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.update.UpgradeRequiredNotifier
 import de.tabmates.core.domain.util.DataError
@@ -44,6 +45,7 @@ class HttpClientFactory(
     private val json: Json,
     private val upgradeRequiredNotifier: UpgradeRequiredNotifier,
     private val sessionInvalidator: SessionInvalidator,
+    private val environmentRepository: EnvironmentRepository,
 ) {
     /** Serializes token refreshes; see the comment in `refreshTokens`. */
     private val refreshMutex = Mutex()
@@ -79,8 +81,18 @@ class HttpClientFactory(
                 pingIntervalMillis = 20_000L
             }
             defaultRequest {
-                // Null on web (server allow-lists the Origin instead); real key on native.
-                BuildKonfig.API_KEY?.let { header("x-api-key", it) }
+                // Read per request, not once at construction: switching to another environment
+                // has to take effect on the next call without rebuilding the client. Routes are
+                // passed relative (see HttpClientExt) and resolved against this base.
+                val environment = environmentRepository.current
+                // Trailing slash on purpose: Ktor concatenates a relative route onto the base's
+                // path segments and drops the last one, so a base URL that ends in a path segment
+                // would lose it (`https://host/gateway` + `api/x` -> `https://host/api/x`).
+                url(environment.httpBaseUrl.trimEnd('/') + "/")
+                // Null on web (server allow-lists the Origin instead); real key on native. Blank
+                // counts as absent: an unset build property would otherwise send `x-api-key:` and
+                // get rejected as a bad key rather than treated as the no-key request it is.
+                environment.apiKey?.takeIf { it.isNotBlank() }?.let { header("x-api-key", it) }
                 // Every /api/** and /ws/** call must declare its version or the server answers 426.
                 // Set here rather than per call so a new endpoint cannot forget it.
                 header("X-Client-Version", AppBuildInfo.clientVersionHeader)

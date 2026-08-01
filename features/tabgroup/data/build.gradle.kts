@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.tabmates.convention.kmp.library)
     alias(libs.plugins.tabmates.convention.koin)
-    alias(libs.plugins.tabmates.convention.buildkonfig)
     alias(libs.plugins.tabmates.convention.cmp.resources)
 }
 

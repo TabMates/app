@@ -8,6 +8,9 @@ import de.tabmates.core.domain.auth.SessionInvalidator
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.auth.User
 import de.tabmates.core.domain.auth.UserType
+import de.tabmates.core.domain.environment.CustomEnvironment
+import de.tabmates.core.domain.environment.EnvironmentConfig
+import de.tabmates.core.domain.environment.EnvironmentRepository
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.update.UpgradeRequiredNotifier
 import de.tabmates.features.authentication.domain.TurnstileTokenProvider
@@ -85,7 +88,30 @@ class KtorAuthServiceTest {
             json = Json { ignoreUnknownKeys = true },
             upgradeRequiredNotifier = UpgradeRequiredNotifier(),
             sessionInvalidator = NoOpSessionInvalidator(),
+            environmentRepository = FixedEnvironmentRepository(),
         ).create(engine)
+    }
+
+    private class FixedEnvironmentRepository : EnvironmentRepository {
+        override val default: EnvironmentConfig =
+            EnvironmentConfig(
+                httpBaseUrl = "https://api.example.com",
+                wsBaseUrl = "wss://api.example.com/ws",
+                apiKey = "test-key",
+                isCustom = false,
+            )
+
+        override val config: StateFlow<EnvironmentConfig> = MutableStateFlow(default)
+
+        override val current: EnvironmentConfig = default
+
+        override val storedCustom: CustomEnvironment? = null
+
+        override val isSwitchSupported: Boolean = true
+
+        override suspend fun useCustom(environment: CustomEnvironment) = Unit
+
+        override suspend fun useDefault() = Unit
     }
 
     private fun authService(
