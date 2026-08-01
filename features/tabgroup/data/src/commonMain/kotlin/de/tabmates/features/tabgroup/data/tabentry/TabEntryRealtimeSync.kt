@@ -7,7 +7,7 @@ import de.tabmates.features.tabgroup.data.dto.TabEntryDto
 import de.tabmates.features.tabgroup.data.mappers.referencedParticipants
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.data.mappers.toEntity
-import de.tabmates.features.tabgroup.data.network.KtorWebSocketConnector
+import de.tabmates.features.tabgroup.data.network.WebSocketChannel
 import de.tabmates.features.tabgroup.data.network.dto.GroupMetadataChangedWsPayload
 import de.tabmates.features.tabgroup.data.network.dto.TabEntryDeletedWsPayload
 import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
@@ -31,7 +31,7 @@ import org.koin.core.annotation.Single
  */
 @Single(createdAtStart = true)
 class TabEntryRealtimeSync(
-    webSocketConnector: KtorWebSocketConnector,
+    webSocketConnector: WebSocketChannel,
     private val database: TabMatesDatabase,
     private val groupRepository: GroupRepository,
     private val json: Json,
@@ -78,6 +78,19 @@ class TabEntryRealtimeSync(
         val dto = json.decodeFromString(TabEntryDto.serializer(), payload)
         val entry = dto.toDomain()
         logger.debug(TAG, "WS echo received id=${entry.tabEntryId}")
+        // A soft-deleted entry is gone as far as this client is concerned, and local queries do not
+        // filter on deletedAt — upserting one would put it back on screen. Reached via a replayed
+        // ACK: the server answers a retry of a write whose entry has since been deleted with the
+        // canonical DTO, deletedAt and all. This mirrors what the paged sync does with its
+        // deletedIds, so both paths agree.
+        if (dto.deletedAt != null) {
+            logger.debug(TAG, "WS frame carries a deleted entry ${entry.tabEntryId}; removing it")
+            database.tabEntryDao.deleteTabEntryAndSplits(
+                tabEntryId = entry.tabEntryId,
+                splitDao = database.tabEntrySplitDao,
+            )
+            return
+        }
         // The entry may reference participants missing locally (ex-members whose old entry got
         // edited, or members whose join event hasn't been applied yet) — persist them first so
         // the split table's participant FK holds.

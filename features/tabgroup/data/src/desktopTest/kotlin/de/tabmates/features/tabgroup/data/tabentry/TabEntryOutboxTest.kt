@@ -1,13 +1,6 @@
 package de.tabmates.features.tabgroup.data.tabentry
 
-import de.tabmates.core.domain.auth.StaleSession
-import de.tabmates.core.domain.auth.StaleSessionStore
-import de.tabmates.core.domain.util.DataError
-import de.tabmates.core.domain.util.EmptyResult
-import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.data.mappers.toEntity
-import de.tabmates.features.tabgroup.data.network.ConnectionState
-import de.tabmates.features.tabgroup.data.network.WebSocketChannel
 import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
 import de.tabmates.features.tabgroup.data.network.dto.WsErrorPayload
 import de.tabmates.features.tabgroup.data.network.dto.WsMessageType
@@ -24,11 +17,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -53,8 +41,7 @@ class TabEntryOutboxTest {
 
     @Test
     fun `a sent write keeps its row until the ack arrives`() =
-        runTest {
-            val database = createInMemoryDatabase()
+        outboxTest { database ->
             val channel = FakeWebSocketChannel()
             val outbox = outbox(database, channel)
 
@@ -72,8 +59,7 @@ class TabEntryOutboxTest {
 
     @Test
     fun `a reconnect re-sends a write that was never acked, reusing its requestId`() =
-        runTest {
-            val database = createInMemoryDatabase()
+        outboxTest { database ->
             val channel = FakeWebSocketChannel()
             outbox(database, channel).enqueueCreateExpense()
 
@@ -97,8 +83,7 @@ class TabEntryOutboxTest {
 
     @Test
     fun `an ack for an unknown request changes nothing`() =
-        runTest {
-            val database = createInMemoryDatabase()
+        outboxTest { database ->
             val channel = FakeWebSocketChannel()
             outbox(database, channel).enqueueCreateExpense()
             channel.connect()
@@ -111,8 +96,7 @@ class TabEntryOutboxTest {
 
     @Test
     fun `an uncorrelated error leaves every pending write alone`() =
-        runTest {
-            val database = createInMemoryDatabase()
+        outboxTest { database ->
             val channel = FakeWebSocketChannel()
             outbox(database, channel).enqueueCreateExpense()
             channel.connect()
@@ -127,8 +111,7 @@ class TabEntryOutboxTest {
 
     @Test
     fun `a retryable error keeps the row and spends an attempt`() =
-        runTest {
-            val database = createInMemoryDatabase()
+        outboxTest { database ->
             val channel = FakeWebSocketChannel()
             outbox(database, channel).enqueueCreateExpense()
             channel.connect()
@@ -153,8 +136,7 @@ class TabEntryOutboxTest {
 
     @Test
     fun `a non-retryable error on a create deletes the row and the local entry`() =
-        runTest {
-            val database = createInMemoryDatabase()
+        outboxTest { database ->
             database.insertGroup(group(id = GROUP_ID))
             database.tabEntryDao.upsertTabEntry(
                 expense(id = ENTRY_ID, groupId = GROUP_ID).toEntity(),
@@ -180,8 +162,7 @@ class TabEntryOutboxTest {
 
     @Test
     fun `a non-retryable error on an update refetches the group`() =
-        runTest {
-            val database = createInMemoryDatabase()
+        outboxTest { database ->
             database.insertGroup(group(id = GROUP_ID))
             database.tabEntryDao.upsertTabEntry(expense(id = ENTRY_ID, groupId = GROUP_ID).toEntity())
             val channel = FakeWebSocketChannel()
@@ -211,8 +192,7 @@ class TabEntryOutboxTest {
 
     @Test
     fun `a non-retryable TAB_ENTRY_NOT_FOUND on an update deletes the local entry`() =
-        runTest {
-            val database = createInMemoryDatabase()
+        outboxTest { database ->
             database.insertGroup(group(id = GROUP_ID))
             database.tabEntryDao.upsertTabEntry(expense(id = ENTRY_ID, groupId = GROUP_ID).toEntity())
             val channel = FakeWebSocketChannel()
@@ -238,8 +218,7 @@ class TabEntryOutboxTest {
 
     @Test
     fun `re-editing an entry replaces its payload and mints a new requestId`() =
-        runTest {
-            val database = createInMemoryDatabase()
+        outboxTest { database ->
             val channel = FakeWebSocketChannel()
             val outbox = outbox(database, channel)
 
@@ -256,7 +235,50 @@ class TabEntryOutboxTest {
             assertTrue(second.payload.contains("second"))
         }
 
+    @Test
+    fun `a delete waits for the ack of the write it deletes`() =
+        outboxTest { database ->
+            val channel = FakeWebSocketChannel()
+            val service = FakeTabEntryService()
+            val outbox = outbox(database, channel, service)
+
+            outbox.enqueueCreateExpense()
+            channel.connect()
+            channel.awaitSent(1)
+            val requestId =
+                database.pendingOutboxDao
+                    .getAll()
+                    .single()
+                    .requestId!!
+
+            outbox.enqueueDeleteTabEntry(tabEntryId = ENTRY_ID, groupId = GROUP_ID)
+            database.awaitRowCount(2)
+            assertTrue(
+                service.deletedIds.isEmpty(),
+                "a DELETE that overtook the create would 404, retire itself, and let the create " +
+                    "commit afterwards — leaving the entry alive on the server",
+            )
+
+            channel.emitAck(requestId)
+
+            awaitCondition("the delete should run once the create is acked") {
+                service.deletedIds == listOf(ENTRY_ID)
+            }
+            database.awaitRowCount(0)
+        }
+
     // region helpers
+
+    /** Runs [body] against a fresh in-memory database, closed even when the test fails. */
+    private fun outboxTest(body: suspend TestScope.(TabMatesDatabase) -> Unit) =
+        runTest {
+            val database = createInMemoryDatabase()
+            try {
+                body(database)
+            } finally {
+                database.close()
+            }
+        }
 
     /**
      * Waits for work the outbox does off the test's own coroutine.
@@ -290,7 +312,11 @@ class TabEntryOutboxTest {
         channel: FakeWebSocketChannel,
         service: FakeTabEntryService = FakeTabEntryService(),
     ): TabEntryOutbox {
-        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        // Parented to backgroundScope so runTest cancels the outbox's two permanent collectors at
+        // the end of the test; a standalone scope would keep them — and the fake channel and Room
+        // database they hold — alive for the rest of the suite. Unconfined so an enqueue's drain
+        // runs eagerly rather than waiting on the scheduler.
+        val scope = CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler))
         return TabEntryOutbox(
             database = database,
             webSocketConnector = channel,
@@ -365,49 +391,4 @@ class TabEntryOutboxTest {
     }
 
     // endregion
-}
-
-private class FakeWebSocketChannel : WebSocketChannel {
-    private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
-    override val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
-
-    private val _messages = MutableSharedFlow<WebSocketMessageDto>(extraBufferCapacity = 16)
-    override val messages = _messages.asSharedFlow()
-
-    val sent: MutableList<String> = mutableListOf()
-
-    override suspend fun sendMessage(message: String): EmptyResult<DataError.Connection> {
-        if (_connectionState.value != ConnectionState.CONNECTED) {
-            return Result.Failure(DataError.Connection.NOT_CONNECTED)
-        }
-        sent += message
-        return Result.Success(Unit)
-    }
-
-    fun connect() {
-        _connectionState.value = ConnectionState.CONNECTED
-    }
-
-    fun disconnect() {
-        _connectionState.value = ConnectionState.DISCONNECTED
-    }
-
-    fun emit(message: WebSocketMessageDto) {
-        check(_messages.tryEmit(message)) { "no subscriber for $message" }
-    }
-}
-
-private class FakeStaleSessionStore : StaleSessionStore {
-    private val _state = MutableStateFlow<StaleSession?>(null)
-    override val state: StateFlow<StaleSession?> = _state.asStateFlow()
-
-    override fun get(): StaleSession? = _state.value
-
-    override fun set(session: StaleSession?) {
-        _state.value = session
-    }
-
-    override fun clear() {
-        _state.value = null
-    }
 }

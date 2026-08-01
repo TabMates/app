@@ -21,13 +21,16 @@ import de.tabmates.features.tabgroup.database.entities.PendingOutboxEntity
 import de.tabmates.features.tabgroup.domain.tabentry.NewTabEntrySplit
 import de.tabmates.features.tabgroup.domain.tabentry.SplitResolver
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryService
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
@@ -464,10 +467,20 @@ class TabEntryOutbox(
                 if (isAwaitingAck(item, now)) {
                     continue
                 }
+                if (isBlockedByEarlierWrite(item, pending)) {
+                    continue
+                }
                 when (val result = dispatch(item)) {
                     is DispatchResult.Sent -> {
                         logger.debug(TAG, "Outbox sent id=${item.id}; awaiting ack ${result.requestId}")
                         inFlight[result.requestId] = now
+                        // Nothing else would notice a verdict that never comes on a socket that
+                        // stays up: drains are otherwise only triggered by an enqueue or a
+                        // connection edge. This wakes up once the claim is old enough to re-send.
+                        applicationScope.launch {
+                            delay(ACK_TIMEOUT_MS)
+                            drain()
+                        }
                     }
 
                     is DispatchResult.Success -> {
@@ -573,6 +586,34 @@ class TabEntryOutbox(
         return false
     }
 
+    /**
+     * Whether [item] is a delete that must wait for an earlier write to the same entry.
+     *
+     * Deletes go over HTTP while creates and updates go over the socket, so the two have no shared
+     * ordering. A `DELETE` that overtakes an unacknowledged create gets a 404, which
+     * [dispatchDelete] treats as success and retires the row — and the create then commits and
+     * leaves the entry alive on the server with nothing left to remove it. Holding the delete until
+     * the write it deletes is acknowledged is what keeps the two transports in order; [onAck]
+     * re-drains, so the wait ends as soon as the ack lands.
+     */
+    private fun isBlockedByEarlierWrite(
+        item: PendingOutboxEntity,
+        pending: List<PendingOutboxEntity>,
+    ): Boolean {
+        if (item.type != OUTBOX_TYPE_TAB_ENTRY_DELETE) return false
+
+        val tabEntryId = item.id.removePrefix(DELETE_ID_PREFIX)
+        val blocked =
+            pending.any {
+                (it.id == tabEntryId && it.type == OUTBOX_TYPE_NEW_TAB_ENTRY) ||
+                    (it.id == "$UPDATE_ID_PREFIX$tabEntryId" && it.type == OUTBOX_TYPE_TAB_ENTRY_UPDATE)
+            }
+        if (blocked) {
+            logger.debug(TAG, "Holding delete of $tabEntryId until its pending write is acked")
+        }
+        return blocked
+    }
+
     private suspend fun dispatchNewTabEntry(item: PendingOutboxEntity): DispatchResult =
         when (val result = webSocketConnector.sendMessage(item.payload)) {
             is Result.Success -> {
@@ -657,6 +698,8 @@ class TabEntryOutbox(
 
                 else -> {}
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             logger.error(TAG, "Failed to apply server verdict for requestId=${message.requestId}", e)
         }
@@ -664,11 +707,14 @@ class TabEntryOutbox(
 
     private suspend fun onAck(requestId: String) {
         mutex.withLock {
-            val row = resolveRow(requestId) ?: return@withLock
+            val row = resolveRow(requestId) ?: return
             logger.debug(TAG, "Ack for id=${row.id}; the write is durable server-side, deleting row")
             database.pendingOutboxDao.deleteById(row.id)
             sessionAttempts.remove(row.id)
         }
+        // Retiring a row can unblock one that was waiting on it — a queued delete held behind the
+        // write it deletes. Nothing else would re-drain until the next enqueue or reconnect.
+        applicationScope.launch { drain() }
     }
 
     private suspend fun onError(
@@ -689,6 +735,13 @@ class TabEntryOutbox(
                         "Retryable WS error code=${error.code} for id=${row.id} ($nextCount/$MAX_ATTEMPTS)",
                     )
                     recordAttempt(row, lastError = "ws_${error.code.lowercase()}_attempt_$nextCount")
+                    // The socket is still up, so no connection edge is coming to re-drain this.
+                    // Backed off so a server that keeps rejecting cannot spin the row through its
+                    // whole attempt budget in one burst.
+                    applicationScope.launch {
+                        delay(RETRY_BACKOFF_MS)
+                        drain()
+                    }
                     return
                 }
 
@@ -711,6 +764,8 @@ class TabEntryOutbox(
             database.pendingOutboxDao.deleteById(rejected.id)
             sessionAttempts.remove(rejected.id)
         }
+        // As in onAck: a row leaving the queue can release one that was held behind it.
+        applicationScope.launch { drain() }
     }
 
     /**
@@ -759,10 +814,13 @@ class TabEntryOutbox(
         }
 
         val groupId =
-            runCatching {
+            try {
                 val envelope = json.decodeFromString(WebSocketMessageDto.serializer(), row.payload)
                 json.decodeFromString(NewTabEntryWsPayload.serializer(), envelope.payload).groupId
-            }.getOrNull()
+            } catch (e: SerializationException) {
+                logger.error(TAG, "Unreadable payload on id=${row.id}", e)
+                null
+            }
         if (groupId == null) {
             logger.error(TAG, "Cannot roll back id=${row.id}: unreadable payload")
             return
@@ -817,6 +875,9 @@ class TabEntryOutbox(
          * instead of writing again.
          */
         private const val ACK_TIMEOUT_MS = 30_000L
+
+        /** Breathing room before re-sending after a retryable rejection, so a row cannot spin. */
+        private const val RETRY_BACKOFF_MS = 5_000L
 
         /** Server `ErrorDto.code` for an entry it no longer has; the one update that cannot heal. */
         private const val ERROR_TAB_ENTRY_NOT_FOUND = "TAB_ENTRY_NOT_FOUND"
