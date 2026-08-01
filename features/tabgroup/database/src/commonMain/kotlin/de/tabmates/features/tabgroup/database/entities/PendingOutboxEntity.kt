@@ -30,4 +30,17 @@ data class PendingOutboxEntity(
      * moment the server's own event for it arrives, rather than showing the change twice.
      */
     val expectedVersion: Int? = null,
+    /**
+     * The correlation id the server acknowledges this write by. Stable for every retry of the
+     * payload currently in [payload], and replaced whenever that payload is.
+     *
+     * Deliberately not [id]: update rows are keyed `update:<tabEntryId>` and upserted in place, so
+     * reusing the row key would make a second edit of the same entry carry the first edit's id.
+     * The server's replay cache would answer it with the first edit's ack and never apply the
+     * second — a silently lost write.
+     *
+     * Nullable only for rows written before this column existed; the outbox mints one before their
+     * first dispatch.
+     */
+    val requestId: String? = null,
 )

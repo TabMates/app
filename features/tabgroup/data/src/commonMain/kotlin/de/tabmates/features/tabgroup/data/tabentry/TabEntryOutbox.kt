@@ -29,6 +29,8 @@ import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import kotlin.time.Clock
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Durable outbox for tab-entry writes. The repository enqueues every write here; the outbox
@@ -92,21 +94,13 @@ class TabEntryOutbox(
                 entryDate = entryDate,
                 splits = buildSplitPayloads(splits, amount),
             )
-        val envelope =
-            WebSocketMessageDto(
-                type = WsMessageType.NEW_TAB_ENTRY,
-                payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
-            )
-        database.pendingOutboxDao.upsert(
-            PendingOutboxEntity(
-                id = clientRequestId,
-                type = OUTBOX_TYPE_NEW_TAB_ENTRY,
-                payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
-                createdAt = Clock.System.now().toEpochMilliseconds(),
-                expectedVersion = expectedVersion,
-            ),
+        persistWrite(
+            rowId = clientRequestId,
+            outboxType = OUTBOX_TYPE_NEW_TAB_ENTRY,
+            messageType = WsMessageType.NEW_TAB_ENTRY,
+            payload = payload,
+            expectedVersion = expectedVersion,
         )
-        applicationScope.launch { drain() }
     }
 
     suspend fun enqueueCreateSettlement(
@@ -135,21 +129,13 @@ class TabEntryOutbox(
                 entryDate = entryDate,
                 receivedByUserId = receivedByUserId,
             )
-        val envelope =
-            WebSocketMessageDto(
-                type = WsMessageType.NEW_TAB_ENTRY,
-                payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
-            )
-        database.pendingOutboxDao.upsert(
-            PendingOutboxEntity(
-                id = clientRequestId,
-                type = OUTBOX_TYPE_NEW_TAB_ENTRY,
-                payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
-                createdAt = Clock.System.now().toEpochMilliseconds(),
-                expectedVersion = expectedVersion,
-            ),
+        persistWrite(
+            rowId = clientRequestId,
+            outboxType = OUTBOX_TYPE_NEW_TAB_ENTRY,
+            messageType = WsMessageType.NEW_TAB_ENTRY,
+            payload = payload,
+            expectedVersion = expectedVersion,
         )
-        applicationScope.launch { drain() }
     }
 
     suspend fun enqueueUpdateExpense(
@@ -178,21 +164,13 @@ class TabEntryOutbox(
                 entryDate = entryDate,
                 splits = buildSplitPayloads(splits, amount),
             )
-        val envelope =
-            WebSocketMessageDto(
-                type = WsMessageType.UPDATED_TAB_ENTRY,
-                payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
-            )
-        database.pendingOutboxDao.upsert(
-            PendingOutboxEntity(
-                id = "$UPDATE_ID_PREFIX$tabEntryId",
-                type = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
-                payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
-                createdAt = Clock.System.now().toEpochMilliseconds(),
-                expectedVersion = expectedVersion,
-            ),
+        persistWrite(
+            rowId = "$UPDATE_ID_PREFIX$tabEntryId",
+            outboxType = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
+            messageType = WsMessageType.UPDATED_TAB_ENTRY,
+            payload = payload,
+            expectedVersion = expectedVersion,
         )
-        applicationScope.launch { drain() }
     }
 
     suspend fun enqueueCreateIncome(
@@ -222,21 +200,13 @@ class TabEntryOutbox(
                 entryDate = entryDate,
                 splits = buildSplitPayloads(splits, amount),
             )
-        val envelope =
-            WebSocketMessageDto(
-                type = WsMessageType.NEW_TAB_ENTRY,
-                payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
-            )
-        database.pendingOutboxDao.upsert(
-            PendingOutboxEntity(
-                id = clientRequestId,
-                type = OUTBOX_TYPE_NEW_TAB_ENTRY,
-                payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
-                createdAt = Clock.System.now().toEpochMilliseconds(),
-                expectedVersion = expectedVersion,
-            ),
+        persistWrite(
+            rowId = clientRequestId,
+            outboxType = OUTBOX_TYPE_NEW_TAB_ENTRY,
+            messageType = WsMessageType.NEW_TAB_ENTRY,
+            payload = payload,
+            expectedVersion = expectedVersion,
         )
-        applicationScope.launch { drain() }
     }
 
     suspend fun enqueueUpdateIncome(
@@ -265,21 +235,13 @@ class TabEntryOutbox(
                 entryDate = entryDate,
                 splits = buildSplitPayloads(splits, amount),
             )
-        val envelope =
-            WebSocketMessageDto(
-                type = WsMessageType.UPDATED_TAB_ENTRY,
-                payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
-            )
-        database.pendingOutboxDao.upsert(
-            PendingOutboxEntity(
-                id = "$UPDATE_ID_PREFIX$tabEntryId",
-                type = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
-                payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
-                createdAt = Clock.System.now().toEpochMilliseconds(),
-                expectedVersion = expectedVersion,
-            ),
+        persistWrite(
+            rowId = "$UPDATE_ID_PREFIX$tabEntryId",
+            outboxType = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
+            messageType = WsMessageType.UPDATED_TAB_ENTRY,
+            payload = payload,
+            expectedVersion = expectedVersion,
         )
-        applicationScope.launch { drain() }
     }
 
     suspend fun enqueueUpdateSettlement(
@@ -308,18 +270,47 @@ class TabEntryOutbox(
                 entryDate = entryDate,
                 receivedByUserId = receivedByUserId,
             )
+        persistWrite(
+            rowId = "$UPDATE_ID_PREFIX$tabEntryId",
+            outboxType = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
+            messageType = WsMessageType.UPDATED_TAB_ENTRY,
+            payload = payload,
+            expectedVersion = expectedVersion,
+        )
+    }
+
+    /**
+     * Persists one WebSocket write and kicks a drain.
+     *
+     * The [PendingOutboxEntity.requestId] is minted here, fresh on every call, and stored both in
+     * the envelope the server will read and in its own column so an incoming ack can be matched
+     * back to this row. Regenerating it is the point: an update row is keyed on the entry id and
+     * upserted in place, so a second edit that reused the first edit's id would be answered from
+     * the server's replay cache and never applied.
+     */
+    @OptIn(ExperimentalUuidApi::class)
+    private suspend fun persistWrite(
+        rowId: String,
+        outboxType: String,
+        messageType: String,
+        payload: NewTabEntryWsPayload,
+        expectedVersion: Int?,
+    ) {
+        val requestId = Uuid.random().toString()
         val envelope =
             WebSocketMessageDto(
-                type = WsMessageType.UPDATED_TAB_ENTRY,
+                type = messageType,
                 payload = json.encodeToString(NewTabEntryWsPayload.serializer(), payload),
+                requestId = requestId,
             )
         database.pendingOutboxDao.upsert(
             PendingOutboxEntity(
-                id = "$UPDATE_ID_PREFIX$tabEntryId",
-                type = OUTBOX_TYPE_TAB_ENTRY_UPDATE,
+                id = rowId,
+                type = outboxType,
                 payload = json.encodeToString(WebSocketMessageDto.serializer(), envelope),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
                 expectedVersion = expectedVersion,
+                requestId = requestId,
             ),
         )
         applicationScope.launch { drain() }
@@ -470,7 +461,7 @@ class TabEntryOutbox(
                 OUTBOX_TYPE_NEW_TAB_ENTRY,
                 OUTBOX_TYPE_TAB_ENTRY_UPDATE,
                 -> {
-                    dispatchNewTabEntry(item.payload)
+                    dispatchNewTabEntry(withRequestId(item))
                 }
 
                 OUTBOX_TYPE_TAB_ENTRY_DELETE -> {
@@ -487,8 +478,35 @@ class TabEntryOutbox(
             DispatchResult.Permanent("dispatch_crash")
         }
 
-    private suspend fun dispatchNewTabEntry(envelopeJson: String): DispatchResult =
-        when (val result = webSocketConnector.sendMessage(envelopeJson)) {
+    /**
+     * [item] with a durable [PendingOutboxEntity.requestId], minting one if the row predates the
+     * column.
+     *
+     * It has to be persisted rather than generated per attempt: the server treats a new id as a new
+     * request, so a retry carrying a fresh one would apply the write a second time instead of being
+     * answered from the replay cache.
+     */
+    @OptIn(ExperimentalUuidApi::class)
+    private suspend fun withRequestId(item: PendingOutboxEntity): PendingOutboxEntity {
+        if (item.requestId != null) return item
+
+        val requestId = Uuid.random().toString()
+        val envelope = json.decodeFromString(WebSocketMessageDto.serializer(), item.payload)
+        val upgraded =
+            item.copy(
+                payload =
+                    json.encodeToString(
+                        WebSocketMessageDto.serializer(),
+                        envelope.copy(requestId = requestId),
+                    ),
+                requestId = requestId,
+            )
+        database.pendingOutboxDao.upsert(upgraded)
+        return upgraded
+    }
+
+    private suspend fun dispatchNewTabEntry(item: PendingOutboxEntity): DispatchResult =
+        when (val result = webSocketConnector.sendMessage(item.payload)) {
             is Result.Success -> {
                 DispatchResult.Success
             }

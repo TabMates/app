@@ -20,6 +20,12 @@ object WsMessageType {
     const val UPDATED_TAB_ENTRY = "UPDATED_TAB_ENTRY"
 
     // Incoming (server -> client)
+
+    /**
+     * Acknowledges one write, unicast to the session that sent it and correlated by the envelope's
+     * `requestId`. Carries the canonical `TabEntryDto`, the same shape [NEW_TAB_ENTRY] does.
+     */
+    const val ACK = "ACK"
     const val TAB_ENTRY_DELETED = "TAB_ENTRY_DELETED"
     const val GROUP_METADATA_CHANGED = "GROUP_METADATA_CHANGED"
     const val ACTIVITY_EVENT = "ACTIVITY_EVENT"
@@ -123,4 +129,13 @@ data class GroupMetadataChangedWsPayload(
 data class WsErrorPayload(
     val code: String,
     val message: String,
+    /**
+     * Whether re-sending the write could succeed. The server owns this call so the outbox does not
+     * have to hardcode [code] lists.
+     *
+     * Defaults to `true` rather than `false`: a non-retryable verdict rolls the user's optimistic
+     * write back, and a frame that somehow arrives without the field must leave that write pending
+     * instead of discarding what they typed.
+     */
+    val retryable: Boolean = true,
 )
