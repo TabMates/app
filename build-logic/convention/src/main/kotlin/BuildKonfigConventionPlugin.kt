@@ -55,8 +55,10 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                         optionalProperty("CLIENT_BUILD_TOKEN"),
                         nullable = true,
                     )
+                    // The only backend URL: the websocket base is derived from it at runtime
+                    // (EnvironmentUrls.toWebSocketBaseUrl), so there is no separate BASE_URL_WS
+                    // that could drift to another host.
                     buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", requireProperty("BASE_URL_HTTP"))
-                    buildConfigField(FieldSpec.Type.STRING, "BASE_URL_WS", requireProperty("BASE_URL_WS"))
                     // User-facing host for shareable links / deep links (e.g. https://app.tabmates.de),
                     // decoupled from the backend API host above. Required (like BASE_URL_HTTP) so the
                     // deep-link host is always explicit; same value on all targets.
@@ -86,17 +88,14 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                     create("debug") {
                         buildConfigField(FieldSpec.Type.BOOLEAN, "IS_DEBUG", "true")
                     }
-                    // Optional per-target base URLs so all targets can run against a local
+                    // Optional per-target base URL so all targets can run against a local
                     // backend at the same time: the Android emulator reaches the host via
                     // 10.0.2.2, the browser must go same-origin through the dev server proxy
                     // (the backend has no CORS config), and iOS simulator/desktop use the
-                    // BASE_URL_HTTP/BASE_URL_WS defaults directly.
+                    // BASE_URL_HTTP default directly.
                     create("android") {
                         optionalProperty("BASE_URL_HTTP_ANDROID")?.let {
                             buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", it)
-                        }
-                        optionalProperty("BASE_URL_WS_ANDROID")?.let {
-                            buildConfigField(FieldSpec.Type.STRING, "BASE_URL_WS", it)
                         }
                     }
                     create("wasmJs") {
@@ -109,9 +108,6 @@ class BuildKonfigConventionPlugin : Plugin<Project> {
                         buildConfigField(FieldSpec.Type.STRING, "CLIENT_BUILD_TOKEN", null, nullable = true)
                         optionalProperty("BASE_URL_HTTP_WEB")?.let {
                             buildConfigField(FieldSpec.Type.STRING, "BASE_URL_HTTP", it)
-                        }
-                        optionalProperty("BASE_URL_WS_WEB")?.let {
-                            buildConfigField(FieldSpec.Type.STRING, "BASE_URL_WS", it)
                         }
                     }
                 }

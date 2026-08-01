@@ -126,8 +126,8 @@ Local dev never exercises this — it goes same-origin through the webpack proxy
 from a real cross-origin build before launch**: serve the web app from an origin different from
 the API and confirm the preflight `OPTIONS` returns the `Access-Control-Allow-Origin` header, an
 authenticated request succeeds, and the `wss` `/ws/group` upgrade connects. The production web
-build must set `BASE_URL_HTTP_WEB` / `BASE_URL_WS_WEB` to the real API origin (there is no proxy
-in production).
+build must set `BASE_URL_HTTP_WEB` to the real API origin (there is no proxy in production); the
+`wss` origin is derived from it.
 
 Browsers cannot set headers on a WebSocket handshake, so `WebSocketTransport` sends the JWT as an
 `access_token` query parameter, which the server accepts on `/ws/group` only. On **web** that is the
@@ -142,9 +142,8 @@ push (and manually via *Run workflow*), injects the offline precache manifest, t
 and `CNAME`, and publishes to
 GitHub Pages at `app.tabmates.de`. One-time setup:
 
-- **Secrets**: `BASE_URL_HTTP_WEB` / `BASE_URL_WS_WEB` → the target backend
-  (e.g. `https://<api-host>` / `wss://<api-host>/ws`); `API_KEY`, `BASE_URL_HTTP`,
-  `BASE_URL_WS` are reused from the Android release setup.
+- **Secrets**: `BASE_URL_HTTP_WEB` → the target backend (e.g. `https://<api-host>`);
+  `API_KEY` and `BASE_URL_HTTP` are reused from the Android release setup.
 - **Pages**: repo Settings → Pages → Source: *GitHub Actions*; Custom domain: `app.tabmates.de`;
   enable *Enforce HTTPS* once the certificate is issued.
 - **DNS**: `app` `CNAME` → `<github-org>.github.io.` (lowercase).
