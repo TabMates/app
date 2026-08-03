@@ -24,6 +24,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -117,7 +118,31 @@ class EmailVerificationViewModelTest {
             assertEquals(authInfo(), sessionStorage.get())
         }
 
-    private fun authInfo(): AuthInfo =
+    @Test
+    fun `verifying under an anonymous session upgrades it instead of ending it`() =
+        runTest(testDispatcher) {
+            // A guest has no address to change and no registration to confirm, so the token can
+            // only be their upgrade — and that flow keeps them signed in on purpose, since the
+            // account had no password to sign back in with until this moment.
+            val sessionStorage = FakeSessionStorage(initial = authInfo(userType = UserType.ANONYMOUS))
+            val sessionInvalidator = FakeSessionInvalidator(sessionStorage)
+            val authService = FakeAuthService(verifyEmailResult = Result.Success(Unit))
+            val viewModel =
+                createViewModel(
+                    authService = authService,
+                    sessionStorage = sessionStorage,
+                    sessionInvalidator = sessionInvalidator,
+                )
+
+            assertEquals(true, viewModel.state.value.isVerified)
+            assertEquals(true, viewModel.state.value.retainsSession)
+            assertEquals(emptyList(), sessionInvalidator.reasons)
+            assertNotNull(sessionStorage.get())
+            // The now-registered user has to replace the cached anonymous one.
+            assertEquals(1, authService.refreshAccountCalls)
+        }
+
+    private fun authInfo(userType: UserType = UserType.REGISTERED): AuthInfo =
         AuthInfo(
             accessToken = "access",
             refreshToken = "refresh",
@@ -127,7 +152,7 @@ class EmailVerificationViewModelTest {
                     email = "user@test.com",
                     username = "alice",
                     hasVerifiedEmail = true,
-                    userType = UserType.REGISTERED,
+                    userType = userType,
                 ),
         )
 
@@ -141,6 +166,7 @@ class EmailVerificationViewModelTest {
             EmailVerificationViewModel(
                 authService = authService,
                 sessionInvalidator = sessionInvalidator,
+                sessionStorage = sessionStorage,
                 token = token,
             )
         activateState(viewModel)
