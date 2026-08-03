@@ -63,7 +63,7 @@
     <string name="error_same_password">The new password can't be equal to the old one</string>
 
     <!-- Guest Register -->
-    <string name="register_guest_desc">Continue as Guest has some limitations. When you log out or switch your device you will lose access to your groups. But you can always create an account later.</string>
+    <string name="register_guest_desc">A guest account lives only on this device — sign out or switch devices and you lose access to your groups. You can turn it into a full account any time under Profile, and keep everything.</string>
 
     <!-- Environment -->
     <string name="welcome_button_environment">Environment: %1$s</string>
