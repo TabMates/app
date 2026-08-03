@@ -36,7 +36,9 @@
     <string name="email_verified_successfully">E-Mail erfolgreich verifiziert!</string>
     <string name="email_verified_failed">E-Mail-Verifizierung fehlgeschlagen</string>
     <string name="email_verified_successfully_desc">Deine E-Mail wurde verifiziert. Du kannst dich jetzt mit deinen Zugangsdaten anmelden.</string>
+    <string name="email_verified_upgraded_desc">Deine E-Mail wurde verifiziert. Du bleibst hier angemeldet und kannst dich ab jetzt auf jedem Gerät mit deinen Zugangsdaten anmelden.</string>
     <string name="email_verified_failed_desc">Deine E-Mail konnte nicht verifiziert werden. Möglicherweise ist der Link ungültig oder abgelaufen.</string>
+    <string name="email_verified_continue">Weiter</string>
 
     <!-- Login -->
     <string name="login_title">Willkommen zurück</string>
@@ -60,7 +62,7 @@
     <string name="error_same_password">Das neue Passwort darf nicht mit dem alten übereinstimmen</string>
 
     <!-- Guest Register -->
-    <string name="register_guest_desc">Die Nutzung als Gast hat einige Einschränkungen. Wenn du dich abmeldest oder das Gerät wechselst, verlierst du den Zugriff auf deine Gruppen. Du kannst aber jederzeit später ein Konto erstellen.</string>
+    <string name="register_guest_desc">Ein Gastkonto existiert nur auf diesem Gerät — wenn du dich abmeldest oder das Gerät wechselst, verlierst du den Zugriff auf deine Gruppen. Du kannst es jederzeit im Profil in ein vollwertiges Konto umwandeln und alles behalten.</string>
 
     <!-- Environment -->
     <string name="welcome_button_environment">Umgebung: %1$s</string>

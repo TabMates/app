@@ -394,4 +394,33 @@
     <string name="delete_account_dialog_message">Your account will be permanently deleted. This cannot be undone.</string>
     <string name="delete_account_dialog_confirm">Delete</string>
     <string name="delete_account_dialog_cancel">Cancel</string>
+
+    <string name="upgrade_account_title">Create a full account</string>
+    <string name="upgrade_account_intro">Add an email address and a password to keep your groups when you sign out or switch devices. Nothing changes until you confirm the link we send you, so you can keep using the app in the meantime.</string>
+    <string name="upgrade_account_email_label">Email</string>
+    <string name="upgrade_account_password_label">Password</string>
+    <string name="upgrade_account_confirm_password_label">Confirm password</string>
+    <string name="upgrade_account_password_requirements">At least 8 characters, including a number or a symbol</string>
+    <string name="upgrade_account_submit">Send confirmation link</string>
+    <string name="upgrade_account_email_invalid">Enter a valid email address</string>
+    <string name="upgrade_account_password_mismatch">Passwords do not match</string>
+    <string name="upgrade_account_error_email_in_use">That email already has an account. Use a different address.</string>
+    <string name="upgrade_account_sent">Confirmation link sent to %1$s</string>
+    <string name="upgrade_account_pending_title">Check your inbox</string>
+    <string name="upgrade_account_pending_desc">We sent a confirmation link to %1$s. Your account becomes a full account once you open it.</string>
+    <string name="upgrade_account_pending_hint">Nothing has changed yet — keep using the app as usual, on this device or any other.</string>
+    <string name="upgrade_account_resend">Send the link again</string>
+    <string name="upgrade_account_use_different_email">Use a different address</string>
+    <string name="upgrade_account_resend_needs_details">Enter your email and password again to send a new link</string>
+
+    <string name="profile_upgrade_account_title">Create a full account</string>
+    <string name="profile_upgrade_account_subtitle">Keep your groups when you switch devices</string>
+    <string name="profile_upgrade_account_pending_title">Confirm your email</string>
+    <string name="profile_upgrade_account_pending_desc">You are still using a guest account. Open the link we sent to %1$s to finish creating your full account — until then, signing out still loses your groups.</string>
+    <string name="profile_upgrade_account_pending_action">Resend or change address</string>
+    <string name="profile_sign_out_guest_dialog_title">Sign out of your guest account?</string>
+    <string name="profile_sign_out_guest_dialog_text">Your guest account only exists on this device. Signing out deletes it along with your groups, and there is no way back in. Create a full account first to keep them.</string>
+    <string name="profile_sign_out_guest_dialog_text_pending_writes">Your guest account only exists on this device, and %1$d change hasn't reached the server yet. Signing out deletes everything, and there is no way back in. Create a full account first to keep it.</string>
+    <string name="profile_sign_out_guest_dialog_text_pending_writes_other">Your guest account only exists on this device, and %1$d changes haven't reached the server yet. Signing out deletes everything, and there is no way back in. Create a full account first to keep them.</string>
+    <string name="profile_sign_out_dialog_create_account">Create account</string>
 </resources>

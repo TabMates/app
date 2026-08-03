@@ -31,17 +31,25 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.authentication.presentation.generated.resources.Res
 import tabmatesapp.features.authentication.presentation.generated.resources.close
+import tabmatesapp.features.authentication.presentation.generated.resources.email_verified_continue
 import tabmatesapp.features.authentication.presentation.generated.resources.email_verified_failed
 import tabmatesapp.features.authentication.presentation.generated.resources.email_verified_failed_desc
 import tabmatesapp.features.authentication.presentation.generated.resources.email_verified_successfully
 import tabmatesapp.features.authentication.presentation.generated.resources.email_verified_successfully_desc
+import tabmatesapp.features.authentication.presentation.generated.resources.email_verified_upgraded_desc
 import tabmatesapp.features.authentication.presentation.generated.resources.login
 import tabmatesapp.features.authentication.presentation.generated.resources.verifying_account
 
+/**
+ * @param onExitClick Where leaving the screen leads: back into the app when the link was opened on a
+ * live session — upgrading a guest keeps them signed in, and clearing the stack would strand a
+ * perfectly valid session — and Welcome when there is no session to return to.
+ */
 @Composable
 fun EmailVerificationRoot(
     token: String,
     backStack: NavBackStack<NavKey>,
+    onExitClick: () -> Unit,
     emailVerificationViewModel: EmailVerificationViewModel = koinViewModel(parameters = { parametersOf(token) }),
 ) {
     val state by emailVerificationViewModel.state.collectAsStateWithLifecycle()
@@ -52,10 +60,7 @@ fun EmailVerificationRoot(
             backStack.add(Welcome)
             backStack.add(Login)
         },
-        onCloseClick = {
-            backStack.clear()
-            backStack.add(Welcome)
-        },
+        onExitClick = onExitClick,
     )
 }
 
@@ -63,19 +68,31 @@ fun EmailVerificationRoot(
 private fun EmailVerificationScreen(
     state: EmailVerificationState,
     onLoginClick: () -> Unit,
-    onCloseClick: () -> Unit,
+    onExitClick: () -> Unit,
 ) {
     when {
         state.isVerifying -> {
             VerifyContent()
         }
 
+        state.isVerified && state.retainsSession -> {
+            VerifiedContent(
+                description = stringResource(Res.string.email_verified_upgraded_desc),
+                buttonText = stringResource(Res.string.email_verified_continue),
+                onButtonClick = onExitClick,
+            )
+        }
+
         state.isVerified -> {
-            VerifiedContent(onLoginClick = onLoginClick)
+            VerifiedContent(
+                description = stringResource(Res.string.email_verified_successfully_desc),
+                buttonText = stringResource(Res.string.login),
+                onButtonClick = onLoginClick,
+            )
         }
 
         else -> {
-            VerificationFailed(onCloseClick = onCloseClick)
+            VerificationFailed(onCloseClick = onExitClick)
         }
     }
 }
@@ -95,7 +112,11 @@ private fun VerifyContent() {
 }
 
 @Composable
-private fun VerifiedContent(onLoginClick: () -> Unit) {
+private fun VerifiedContent(
+    description: String,
+    buttonText: String,
+    onButtonClick: () -> Unit,
+) {
     EmailVerificationLayout {
         Text(
             text = stringResource(Res.string.email_verified_successfully),
@@ -103,13 +124,13 @@ private fun VerifiedContent(onLoginClick: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            text = stringResource(Res.string.email_verified_successfully_desc),
+            text = description,
             style = MaterialTheme.typography.bodySmall,
         )
         TabMatesButton(
             modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
-            text = stringResource(Res.string.login),
-            onClick = onLoginClick,
+            text = buttonText,
+            onClick = onButtonClick,
         )
     }
 }
@@ -154,7 +175,7 @@ private fun EmailVerificationScreenVerifyingPreview() {
             EmailVerificationScreen(
                 state = EmailVerificationState(isVerifying = true),
                 onLoginClick = {},
-                onCloseClick = {},
+                onExitClick = {},
             )
         }
     }
@@ -168,7 +189,21 @@ private fun EmailVerificationScreenVerifiedPreview() {
             EmailVerificationScreen(
                 state = EmailVerificationState(isVerified = true),
                 onLoginClick = {},
-                onCloseClick = {},
+                onExitClick = {},
+            )
+        }
+    }
+}
+
+@PreviewThemes
+@Composable
+private fun EmailVerificationScreenUpgradedPreview() {
+    TabMatesTheme {
+        Surface {
+            EmailVerificationScreen(
+                state = EmailVerificationState(isVerified = true, retainsSession = true),
+                onLoginClick = {},
+                onExitClick = {},
             )
         }
     }
@@ -182,7 +217,7 @@ private fun EmailVerificationScreenErrorPreview() {
             EmailVerificationScreen(
                 state = EmailVerificationState(),
                 onLoginClick = {},
-                onCloseClick = {},
+                onExitClick = {},
             )
         }
     }

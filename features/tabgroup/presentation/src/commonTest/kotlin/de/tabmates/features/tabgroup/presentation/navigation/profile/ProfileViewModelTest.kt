@@ -1,9 +1,13 @@
 package de.tabmates.features.tabgroup.presentation.navigation.profile
 
 import app.cash.turbine.test
+import de.tabmates.core.domain.auth.AuthInfo
 import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.auth.UserType
+import de.tabmates.core.domain.auth.UserWithPendingEmail
 import de.tabmates.core.domain.preferences.AppPreferencesRepository
 import de.tabmates.core.domain.sync.PendingWrites
+import de.tabmates.core.domain.util.Result
 import de.tabmates.features.authentication.testing.FakeAuthService
 import de.tabmates.features.notifications.domain.NotificationPermissionController
 import de.tabmates.features.notifications.domain.PushNotificationController
@@ -108,6 +112,67 @@ class ProfileViewModelTest {
         }
 
     @Test
+    fun guestSignOutAlwaysConfirmsEvenWithNothingPending() =
+        runTest(testDispatcher) {
+            // A guest account only exists on this device and has no credentials to come back with,
+            // so signing out destroys it — that never happens on a single tap.
+            val authService = FakeAuthService()
+            val sessionStorage = FakeSessionStorage(initial = guestAuthInfo())
+            val viewModel =
+                createViewModel(
+                    sessionStorage = sessionStorage,
+                    authService = authService,
+                    pendingWrites = FakePendingWrites(initialCount = 0),
+                )
+            subscribeToState(viewModel)
+
+            viewModel.onSignOutClick()
+            advanceUntilIdle()
+
+            assertTrue(viewModel.state.value.showSignOutDialog)
+            assertTrue(authService.logoutCalls.isEmpty())
+            assertNotNull(sessionStorage.get())
+        }
+
+    @Test
+    fun pendingMigrationEmailFlowsIntoState() =
+        runTest(testDispatcher) {
+            val userWithPendingEmail =
+                UserWithPendingEmail(
+                    user = guestAuthInfo().user,
+                    pendingEmail = "waiting@test.com",
+                )
+            val viewModel =
+                createViewModel(
+                    sessionStorage = FakeSessionStorage(initial = guestAuthInfo()),
+                    authService = FakeAuthService(refreshAccountResult = Result.Success(userWithPendingEmail)),
+                )
+            subscribeToState(viewModel)
+
+            assertEquals("waiting@test.com", viewModel.state.value.pendingMigrationEmail)
+        }
+
+    @Test
+    fun pendingEmailOfARegisteredUserIsNotTreatedAsAMigration() =
+        runTest(testDispatcher) {
+            // The server reuses one field for both: a pending address change for a registered user
+            // and a pending migration for a guest. Only the guest meaning belongs in this state.
+            val userWithPendingEmail =
+                UserWithPendingEmail(
+                    user = FakeSessionStorage.DEFAULT_USER,
+                    pendingEmail = "changed@test.com",
+                )
+            val viewModel =
+                createViewModel(
+                    sessionStorage = FakeSessionStorage(),
+                    authService = FakeAuthService(refreshAccountResult = Result.Success(userWithPendingEmail)),
+                )
+            subscribeToState(viewModel)
+
+            assertNull(viewModel.state.value.pendingMigrationEmail)
+        }
+
+    @Test
     fun confirmSignOutHidesDialogRevokesTokenAndClearsSession() =
         runTest(testDispatcher) {
             val authService = FakeAuthService()
@@ -194,6 +259,16 @@ class ProfileViewModelTest {
      * `state` is `WhileSubscribed`, and `onSignOutClick` reads `state.value` to decide whether the
      * pending-write warning is needed — so the state has to be kept hot for the duration of a test.
      */
+    private fun guestAuthInfo(): AuthInfo =
+        FakeSessionStorage.DEFAULT_AUTH_INFO.copy(
+            user =
+                FakeSessionStorage.DEFAULT_USER.copy(
+                    email = "",
+                    hasVerifiedEmail = false,
+                    userType = UserType.ANONYMOUS,
+                ),
+        )
+
     private fun TestScope.subscribeToState(viewModel: ProfileViewModel) {
         backgroundScope.launch { viewModel.state.collect { } }
         advanceUntilIdle()

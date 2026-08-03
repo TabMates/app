@@ -25,4 +25,7 @@ data class ProfileState(
     // Signing out wipes local data, so anything still queued is about to be lost.
     val pendingWriteCount: Int = 0,
     val showSignOutDialog: Boolean = false,
+    // Set while an anonymous account has asked to become a registered one and the emailed
+    // confirmation link is still unredeemed.
+    val pendingMigrationEmail: String? = null,
 )

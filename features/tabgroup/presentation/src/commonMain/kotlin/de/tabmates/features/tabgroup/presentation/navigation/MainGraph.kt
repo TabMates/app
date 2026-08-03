@@ -21,6 +21,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.profile.DeleteAccou
 import de.tabmates.features.tabgroup.presentation.navigation.profile.EditUsernameRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.OssLicensesRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ProfileRoot
+import de.tabmates.features.tabgroup.presentation.navigation.profile.UpgradeAccountRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settlementdetail.SettlementDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settleup.SettleUpRoot
 import kotlinx.coroutines.CoroutineScope
@@ -52,6 +53,7 @@ val mainSerializersModule =
             subclass(EditUsername::class)
             subclass(ChangePassword::class)
             subclass(ChangeEmail::class)
+            subclass(UpgradeAccount::class)
             subclass(DeleteAccount::class)
             subclass(OssLicenses::class)
         }
@@ -134,6 +136,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
             onEditUsername = { backStack.add(EditUsername) },
             onChangePassword = { backStack.add(ChangePassword) },
             onChangeEmail = { backStack.add(ChangeEmail) },
+            onUpgradeAccount = { backStack.add(UpgradeAccount) },
             onOpenOssLicenses = { backStack.add(OssLicenses) },
             onDeleteAccount = { backStack.add(DeleteAccount) },
         )
@@ -164,6 +167,13 @@ fun EntryProviderScope<NavKey>.mainGraph(
             navKey = route,
             snackbarHostState = snackbarHostState,
             onSaved = { backStack.removeLastOrNull() },
+        )
+    }
+
+    entry<UpgradeAccount> {
+        UpgradeAccountRoot(
+            snackbarHostState = snackbarHostState,
+            onCompleted = { backStack.removeLastOrNull() },
         )
     }
 

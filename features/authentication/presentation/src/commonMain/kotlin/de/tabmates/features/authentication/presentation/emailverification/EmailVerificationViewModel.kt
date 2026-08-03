@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.SessionInvalidationReason
 import de.tabmates.core.domain.auth.SessionInvalidator
+import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.auth.UserType
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.authentication.domain.AuthService
@@ -22,6 +24,7 @@ import kotlin.time.Duration.Companion.seconds
 class EmailVerificationViewModel(
     private val authService: AuthService,
     private val sessionInvalidator: SessionInvalidator,
+    private val sessionStorage: SessionStorage,
     @InjectedParam private val token: String,
 ) : ViewModel() {
     private var hasLoadedInitialData = false
@@ -46,22 +49,63 @@ class EmailVerificationViewModel(
                 it.copy(isVerifying = true)
             }
 
+            // An anonymous account has no address to change and no registration to confirm, so a
+            // token redeemed under one can only be its upgrade to a registered account. That path
+            // keeps the session alive on purpose — the account had no password to sign back in
+            // with until this very moment — so it must not go through the invalidator below.
+            val isAnonymousUpgrade = sessionStorage.get()?.user?.userType == UserType.ANONYMOUS
+
             authService
                 .verifyEmail(token)
                 .onSuccess {
-                    // Confirming an email change revokes all refresh tokens server-side, so force
-                    // a fresh login. Routed through the invalidator so this counts as an *expired*
-                    // session rather than a sign-out: local data stays put and the user is asked
-                    // back into the same account — under their new address, hence EMAIL_CHANGED.
-                    sessionInvalidator.invalidate(SessionInvalidationReason.EMAIL_CHANGED)
+                    if (isAnonymousUpgrade) {
+                        adoptRegisteredUser()
+                    } else {
+                        // Confirming an email change revokes all refresh tokens server-side, so
+                        // force a fresh login. Routed through the invalidator so this counts as an
+                        // *expired* session rather than a sign-out: local data stays put and the
+                        // user is asked back into the same account — under their new address,
+                        // hence EMAIL_CHANGED.
+                        sessionInvalidator.invalidate(SessionInvalidationReason.EMAIL_CHANGED)
+                    }
                     _state.update {
-                        it.copy(isVerifying = false, isVerified = true)
+                        it.copy(
+                            isVerifying = false,
+                            isVerified = true,
+                            retainsSession = isAnonymousUpgrade,
+                        )
                     }
                 }.onFailure {
                     _state.update {
                         it.copy(isVerified = false, isVerifying = false)
                     }
                 }
+        }
+    }
+
+    /**
+     * Replaces the cached anonymous user with the registered one the migration just produced.
+     *
+     * Normally that is the server's own copy. When it cannot be fetched the account type is still
+     * known — a redeemed token under an anonymous session *is* the migration — so it is corrected
+     * locally instead of leaving the app treating a registered user as a guest, which would offer
+     * them the upgrade again and warn them that signing out destroys their groups. The address
+     * catches up on the next refresh; ending the session over a failed GET would undo the one
+     * thing this flow exists to guarantee.
+     */
+    private suspend fun adoptRegisteredUser() {
+        authService.refreshAccount().onFailure {
+            sessionStorage.get()?.let { current ->
+                sessionStorage.set(
+                    current.copy(
+                        user =
+                            current.user.copy(
+                                hasVerifiedEmail = true,
+                                userType = UserType.REGISTERED,
+                            ),
+                    ),
+                )
+            }
         }
     }
 }

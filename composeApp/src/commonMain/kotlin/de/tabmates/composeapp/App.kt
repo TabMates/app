@@ -73,8 +73,10 @@ import de.tabmates.core.presentation.navigation.ScreenWithFab
 import de.tabmates.core.presentation.navigation.TopBarActionsController
 import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.core.presentation.util.ObserveAsEvents
+import de.tabmates.features.authentication.presentation.emailverification.EmailVerificationRoot
 import de.tabmates.features.authentication.presentation.forgotpassword.ForgotPasswordScreenRoot
 import de.tabmates.features.authentication.presentation.navigation.EmailVerification
+import de.tabmates.features.authentication.presentation.navigation.InAppEmailVerification
 import de.tabmates.features.authentication.presentation.navigation.Reauth
 import de.tabmates.features.authentication.presentation.navigation.ReauthForgotPassword
 import de.tabmates.features.authentication.presentation.navigation.ResetPassword
@@ -224,18 +226,27 @@ fun App() {
 
             DisposableEffect(Unit) {
                 DeepLinkHandler.listener = listener@{ uri ->
-                    val navKey = resolveDeepLink(uri, deepLinks) ?: return@listener
-                    if (navKey is LoggedIn && !mainViewModel.sessionState.value.hasLocalSession) {
+                    val resolvedKey = resolveDeepLink(uri, deepLinks) ?: return@listener
+                    val hasLocalSession = mainViewModel.sessionState.value.hasLocalSession
+                    // A guest confirming their upgrade link is signed in the whole time and must
+                    // come back to the app, not to a Welcome screen they never left, so the
+                    // confirmation runs on the logged-in twin route the shell can render.
+                    val navKey =
+                        if (resolvedKey is EmailVerification && hasLocalSession) {
+                            InAppEmailVerification(resolvedKey.token)
+                        } else {
+                            resolvedKey
+                        }
+                    if (navKey is LoggedIn && !hasLocalSession) {
                         mainViewModel.setPendingPostAuthNavKey(navKey)
                         backStack.clear()
                         backStack.add(Welcome)
                     } else {
                         backStack.clear()
-                        if (navKey is LoggedIn) {
-                            backStack.add(Home)
-                        } else {
-                            backStack.add(Welcome)
-                        }
+                        // What sits *under* the deep-linked screen is where closing it returns to.
+                        // It follows the key's own graph, which is the only one whose entries the
+                        // surrounding NavDisplay knows how to build.
+                        backStack.add(if (navKey is LoggedIn) Home else Welcome)
                         backStack.add(navKey)
                     }
                 }
@@ -346,9 +357,9 @@ fun App() {
                                             snackbarHostState = snackbarHostState,
                                             appScope = appScope,
                                         )
-                                        // Registered here rather than in `authGraph`: re-auth is
-                                        // reached *from* the logged-in shell, which is served by
-                                        // this entry provider.
+                                        // Registered here rather than in `authGraph`: these routes
+                                        // are reached *from* the logged-in shell, which is served
+                                        // by this entry provider.
                                         entry<Reauth> {
                                             ReauthRoot(
                                                 backStack = backStack,
@@ -357,6 +368,15 @@ fun App() {
                                         }
                                         entry<ReauthForgotPassword> {
                                             ForgotPasswordScreenRoot()
+                                        }
+                                        entry<InAppEmailVerification> {
+                                            EmailVerificationRoot(
+                                                token = it.token,
+                                                backStack = backStack,
+                                                // The session outlives the link, so leaving the
+                                                // screen just uncovers the app underneath it.
+                                                onExitClick = { backStack.removeLastOrNull() },
+                                            )
                                         }
                                     },
                                 )

@@ -58,6 +58,17 @@ data class EmailVerification(val token: String) : LoggableNavKey(), ScreenWithTo
     override val topBarTitle: UiText get() = UiText.DynamicString("")
 }
 
+/**
+ * Confirms a verification link opened while an account is already on the device — a guest upgrading
+ * or a registered user changing their address. A [LoggedIn] twin of [EmailVerification] so it renders
+ * in the app shell the user came from; pushing the plain key would flip the app to the logged-out
+ * navigation graph, which has no entries for the routes still sitting underneath it on the back stack.
+ */
+@Serializable
+data class InAppEmailVerification(val token: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.DynamicString("")
+}
+
 @Serializable
 data object ForgotPassword : LoggableNavKey(), ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.DynamicString("")

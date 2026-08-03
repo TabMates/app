@@ -2,6 +2,7 @@ package de.tabmates.features.authentication.data
 
 import de.tabmates.core.data.dto.AuthInfoSerializable
 import de.tabmates.core.data.dto.UserSerializable
+import de.tabmates.core.data.dto.UserWithPendingEmailSerializable
 import de.tabmates.core.data.dto.requests.RefreshRequest
 import de.tabmates.core.data.mappers.toDomain
 import de.tabmates.core.data.networking.delete
@@ -9,6 +10,7 @@ import de.tabmates.core.data.networking.get
 import de.tabmates.core.data.networking.post
 import de.tabmates.core.domain.auth.AuthInfo
 import de.tabmates.core.domain.auth.SessionStorage
+import de.tabmates.core.domain.auth.UserWithPendingEmail
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
@@ -19,8 +21,8 @@ import de.tabmates.features.authentication.data.dto.requests.ChangePasswordReque
 import de.tabmates.features.authentication.data.dto.requests.ChangeUsernameRequest
 import de.tabmates.features.authentication.data.dto.requests.DeleteAccountRequest
 import de.tabmates.features.authentication.data.dto.requests.EmailRequest
-import de.tabmates.features.authentication.data.dto.requests.LoginAnonymousRequest
 import de.tabmates.features.authentication.data.dto.requests.LoginRequest
+import de.tabmates.features.authentication.data.dto.requests.MigrateToRegisteredRequest
 import de.tabmates.features.authentication.data.dto.requests.RegisterAnonymousRequest
 import de.tabmates.features.authentication.data.dto.requests.RegisterRequest
 import de.tabmates.features.authentication.data.dto.requests.ResetPasswordRequest
@@ -99,22 +101,36 @@ class KtorAuthService(
             }
     }
 
-    override suspend fun loginAnonymous(
-        userId: String,
+    override suspend fun migrateToRegistered(
+        email: String,
         password: String,
-    ): Result<AuthInfo, DataError.Remote> {
+    ): EmptyResult<DataError.Remote> {
+        // Deliberately does not touch the session: the server only records the request until the
+        // emailed link is redeemed, so the account is still anonymous when this returns.
+        // The endpoint authenticates with the anonymous session's own token and is not
+        // Turnstile-protected, so no challenge token is attached here.
+        return httpClient.post(
+            route = "/api/auth/migrate-to-registered",
+            body =
+                MigrateToRegisteredRequest(
+                    email = email,
+                    password = password,
+                ),
+        )
+    }
+
+    override suspend fun refreshAccount(): Result<UserWithPendingEmail, DataError.Remote> {
         return httpClient
-            .post<LoginAnonymousRequest, AuthInfoSerializable>(
-                route = "/api/auth/login-anonymous",
-                body =
-                    LoginAnonymousRequest(
-                        userId = userId,
-                        password = password,
-                    ),
-            ).map { authInfoSerializable ->
-                authInfoSerializable.toDomain()
-            }.onSuccess { authInfo ->
-                sessionStorage.set(authInfo)
+            .get<UserWithPendingEmailSerializable>(route = "/api/auth/account")
+            .map { serializable ->
+                serializable.toDomain()
+            }.onSuccess { userWithPendingEmail ->
+                // Keep the cached session in sync so a migration confirmed on another device shows
+                // up everywhere `userType` is read. A failure leaves the session as it was: this is
+                // a background refresh, and a flaky network must not look like a signed-out user.
+                sessionStorage.get()?.let { current ->
+                    sessionStorage.set(current.copy(user = userWithPendingEmail.user))
+                }
             }
     }
 

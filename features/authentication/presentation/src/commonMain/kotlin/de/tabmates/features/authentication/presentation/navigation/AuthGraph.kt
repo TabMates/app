@@ -27,6 +27,7 @@ val authSerializersModule =
             subclass(Register::class)
             subclass(RegisterSuccess::class)
             subclass(EmailVerification::class)
+            subclass(InAppEmailVerification::class)
             subclass(ResetPassword::class)
             subclass(ForgotPassword::class)
             subclass(RegisterGuest::class)
@@ -73,6 +74,11 @@ fun EntryProviderScope<NavKey>.authGraph(
         EmailVerificationRoot(
             token = it.token,
             backStack = backStack,
+            // Nothing was signed in when this link was opened, so Welcome is the only way back.
+            onExitClick = {
+                backStack.clear()
+                backStack.add(Welcome)
+            },
         )
     }
 
