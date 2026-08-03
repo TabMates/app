@@ -6,11 +6,8 @@ import de.tabmates.features.tabgroup.presentation.util.platformShortMonthNames
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
 
-internal fun parseAmount(input: String): Double? {
-    if (input.isBlank()) return null
-    val normalized = input.replace(',', '.').trim()
-    return normalized.toDoubleOrNull()
-}
+/** Fraction digits allowed in a percentage split — unlike money, this is not currency-dependent. */
+internal const val PERCENTAGE_DECIMALS = 2
 
 @Composable
 internal fun rememberMonthAbbreviations(): List<String> = remember { platformShortMonthNames() }

@@ -39,9 +39,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
+import de.tabmates.core.presentation.format.amountEpsilon
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
-import de.tabmates.features.tabgroup.presentation.navigation.addentry.parseAmount
+import de.tabmates.features.tabgroup.presentation.components.parseAmount
+import de.tabmates.features.tabgroup.presentation.components.rememberAmountInputTransformation
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -66,7 +68,6 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_recorded_other
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_subtitle
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_your_payments_header
-import kotlin.math.pow
 
 @Composable
 fun SettleUpRoot(
@@ -268,7 +269,7 @@ private fun SettleAmountBottomSheet(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val epsilon = 0.5 / 10.0.pow(currencyDecimals)
+    val epsilon = amountEpsilon(currencyDecimals)
     val parsed = parseAmount(amountState.text.toString())
     val isTooHigh = parsed != null && parsed > payment.amount + epsilon
     val isInvalid = parsed == null || parsed <= 0.0
@@ -330,6 +331,7 @@ private fun SettleAmountBottomSheet(
                 singleLine = true,
                 keyboardType = KeyboardType.Decimal,
                 imeAction = ImeAction.Done,
+                inputTransformation = rememberAmountInputTransformation(currencyDecimals),
                 onKeyboardAction = { if (supportingText == null) onConfirm() },
                 isError = supportingText != null,
                 supportingText = supportingText,

@@ -3,6 +3,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.CurrentAccount
+import de.tabmates.core.presentation.format.DEFAULT_CURRENCY_DECIMALS
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
@@ -114,7 +115,7 @@ class HomeViewModel(
             isLoading = false,
             netAmount = netTotal,
             displaySymbol = displayCurrency?.nativeSymbol ?: displayCode,
-            displayDecimals = displayCurrency?.decimalDigits ?: DEFAULT_DECIMALS,
+            displayDecimals = displayCurrency?.decimalDigits ?: DEFAULT_CURRENCY_DECIMALS,
             contributingGroupCount = contributing.size,
             topGroups =
                 itemsByGroup
@@ -147,6 +148,5 @@ class HomeViewModel(
     private companion object {
         private const val MAX_TOP_GROUPS = 3
         private const val MAX_AVATARS = 3
-        private const val DEFAULT_DECIMALS = 2
     }
 }

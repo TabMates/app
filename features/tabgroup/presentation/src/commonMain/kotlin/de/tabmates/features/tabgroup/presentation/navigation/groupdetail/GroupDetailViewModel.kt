@@ -3,6 +3,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.groupdetail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.CurrentAccount
+import de.tabmates.core.presentation.format.NumberSymbols
 import de.tabmates.features.tabgroup.domain.activity.ActivityFeedItem
 import de.tabmates.features.tabgroup.domain.activity.ActivityRepository
 import de.tabmates.features.tabgroup.domain.balance.PerPersonBalanceCalculator
@@ -67,6 +68,7 @@ class GroupDetailViewModel(
     exchangeRateRepository: ExchangeRateRepository,
     activityRepository: ActivityRepository,
     currentAccount: CurrentAccount,
+    private val numberSymbols: NumberSymbols,
 ) : ViewModel() {
     private val currentUserId = currentAccount.userId().orEmpty()
     private val isRotatingInvite = MutableStateFlow(false)
@@ -135,6 +137,7 @@ class GroupDetailViewModel(
                         groupTitles = group?.let { mapOf(it.id to it.title) }.orEmpty(),
                         participantNames = history.participants.associate { it.userId to it.username },
                         currencyByCode = currencies.associateBy { it.code },
+                        numberSymbols = numberSymbols,
                         now = Clock.System.now(),
                         // The group name is the screen's own title; repeating it in every row is noise.
                         includeGroupName = false,

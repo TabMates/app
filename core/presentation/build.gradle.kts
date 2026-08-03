@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.tabmates.convention.cmp.library)
+    alias(libs.plugins.tabmates.convention.koin)
 }
 
 kotlin {
@@ -12,6 +13,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.domain)
+                implementation(libs.koin.core)
                 implementation(libs.jetbrains.navigation3.ui)
                 implementation(libs.jetbrains.lifecycle.compose)
                 implementation(libs.jetbrains.compose.viewmodel)

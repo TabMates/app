@@ -1,6 +1,7 @@
 package de.tabmates.features.tabgroup.presentation.navigation.editsettlement
 
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import de.tabmates.core.presentation.format.NumberSymbols
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
@@ -182,5 +183,6 @@ class EditSettlementViewModelTest {
             groupRepository = groupRepository,
             currencyRepository = currencyRepository,
             currentAccount = currentAccount,
+            numberSymbols = NumberSymbols.Fallback,
         )
 }

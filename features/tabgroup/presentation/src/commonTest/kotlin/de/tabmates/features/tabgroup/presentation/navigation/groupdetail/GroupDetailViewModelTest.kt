@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.presentation.navigation.groupdetail
 
+import de.tabmates.core.presentation.format.NumberSymbols
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
@@ -256,5 +257,6 @@ class GroupDetailViewModelTest {
             exchangeRateRepository = exchangeRateRepository,
             activityRepository = activityRepository,
             currentAccount = currentAccount,
+            numberSymbols = NumberSymbols.Fallback,
         )
 }

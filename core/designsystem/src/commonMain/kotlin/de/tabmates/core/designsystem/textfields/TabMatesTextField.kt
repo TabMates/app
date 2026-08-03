@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
@@ -64,6 +65,7 @@ fun TabMatesTextField(
     imeAction: ImeAction = ImeAction.Default,
     capitalization: KeyboardCapitalization = KeyboardCapitalization.Unspecified,
     contentType: ContentType? = null,
+    inputTransformation: InputTransformation? = null,
     onFocusChanged: (Boolean) -> Unit = {},
     onKeyboardAction: (() -> Unit)? = null,
 ) {
@@ -103,6 +105,7 @@ fun TabMatesTextField(
                     imeAction = imeAction,
                     capitalization = capitalization,
                 ),
+            inputTransformation = inputTransformation,
             onKeyboardAction = onKeyboardAction?.let { action -> KeyboardActionHandler { action() } },
             interactionSource = interactionSource,
             placeholder =

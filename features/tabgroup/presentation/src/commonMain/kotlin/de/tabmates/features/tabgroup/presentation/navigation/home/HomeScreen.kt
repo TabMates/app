@@ -48,11 +48,13 @@ import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.designsystem.theme.extended
+import de.tabmates.core.presentation.format.AmountSign
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
 import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.formatAmount
+import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.formatSignedAmount
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -195,9 +197,17 @@ private fun NetBalanceHeroValue(
 ) {
     val value =
         when (balance) {
-            is GroupBalance.Owed -> "+${formatAmount(balance.amount, state.displaySymbol, state.displayDecimals)}"
-            is GroupBalance.Owe -> "−${formatAmount(balance.amount, state.displaySymbol, state.displayDecimals)}"
-            GroupBalance.Settled -> formatAmount(0.0, state.displaySymbol, state.displayDecimals)
+            is GroupBalance.Owed -> {
+                formatSignedAmount(balance.amount, state.displaySymbol, state.displayDecimals, AmountSign.Positive)
+            }
+
+            is GroupBalance.Owe -> {
+                formatSignedAmount(balance.amount, state.displaySymbol, state.displayDecimals, AmountSign.Negative)
+            }
+
+            GroupBalance.Settled -> {
+                formatAmount(0.0, state.displaySymbol, state.displayDecimals)
+            }
         }
     val subtitle =
         when (balance) {
@@ -359,13 +369,21 @@ private fun GroupBalanceText(group: HomeGroup) {
     val (text, color) =
         when (val balance = group.balance) {
             is GroupBalance.Owed -> {
-                "+${formatAmount(balance.amount, group.currencySymbol, group.currencyDecimals)}" to
-                    extended.positive
+                formatSignedAmount(
+                    balance.amount,
+                    group.currencySymbol,
+                    group.currencyDecimals,
+                    AmountSign.Positive,
+                ) to extended.positive
             }
 
             is GroupBalance.Owe -> {
-                "−${formatAmount(balance.amount, group.currencySymbol, group.currencyDecimals)}" to
-                    extended.negative
+                formatSignedAmount(
+                    balance.amount,
+                    group.currencySymbol,
+                    group.currencyDecimals,
+                    AmountSign.Negative,
+                ) to extended.negative
             }
 
             GroupBalance.Settled -> {

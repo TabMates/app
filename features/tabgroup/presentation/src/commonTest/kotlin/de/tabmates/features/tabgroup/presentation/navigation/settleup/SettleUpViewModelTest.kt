@@ -2,6 +2,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.settleup
 
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import de.tabmates.core.domain.util.DataError
+import de.tabmates.core.presentation.format.NumberSymbols
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
@@ -329,6 +330,7 @@ class SettleUpViewModelTest {
             currencyRepository = currencyRepository,
             exchangeRateRepository = exchangeRateRepository,
             currentAccount = currentAccount,
+            numberSymbols = NumberSymbols.Fallback,
         )
 
     private companion object {
