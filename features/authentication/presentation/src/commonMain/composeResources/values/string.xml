@@ -33,12 +33,18 @@
     <string name="close">Close</string>
 
     <!-- Email Verification -->
-    <string name="verifying_account">Verifying account...</string>
-    <string name="email_verified_successfully">Email verified successfully!</string>
-    <string name="email_verified_failed">Failed to verify your email</string>
-    <string name="email_verified_successfully_desc">Your email has been verified. You can now log in with your credentials.</string>
-    <string name="email_verified_upgraded_desc">Your email has been verified. You stay signed in here, and can now log in with your credentials on any device.</string>
-    <string name="email_verified_failed_desc">Unable to verify your email. Maybe the link is invalid or has expired.</string>
+    <string name="verifying_account">Confirming your email…</string>
+    <string name="email_verified_title">Email confirmed</string>
+    <string name="email_verified_successfully_desc">Your email address is confirmed. Sign in to start using TabMates.</string>
+    <string name="email_verified_upgraded_title">You are all set</string>
+    <string name="email_verified_upgraded_desc">Your email address is confirmed and your groups now belong to your account. You stay signed in here, and can sign in with your credentials on any device.</string>
+    <string name="email_verified_changed_title">Email address updated</string>
+    <string name="email_verified_changed_desc">Your new address is confirmed. You have been signed out on purpose — sign in again with the new address.</string>
+    <string name="email_verified_failed">This link did not work</string>
+    <string name="email_verified_failed_desc">Your email could not be confirmed. The link is either invalid or has expired.</string>
+    <string name="email_verified_failed_hint_no_session">Sign in to send yourself a new confirmation email.</string>
+    <string name="email_verified_failed_hint_guest">Open Profile → Create a full account to send a new link.</string>
+    <string name="email_verified_failed_hint_registered">Open Profile → Email to request the change again.</string>
     <string name="email_verified_continue">Continue</string>
 
     <!-- Login -->

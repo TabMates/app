@@ -32,12 +32,18 @@
     <string name="close">Schließen</string>
 
     <!-- Email Verification -->
-    <string name="verifying_account">Konto wird verifiziert …</string>
-    <string name="email_verified_successfully">E-Mail erfolgreich verifiziert!</string>
-    <string name="email_verified_failed">E-Mail-Verifizierung fehlgeschlagen</string>
-    <string name="email_verified_successfully_desc">Deine E-Mail wurde verifiziert. Du kannst dich jetzt mit deinen Zugangsdaten anmelden.</string>
-    <string name="email_verified_upgraded_desc">Deine E-Mail wurde verifiziert. Du bleibst hier angemeldet und kannst dich ab jetzt auf jedem Gerät mit deinen Zugangsdaten anmelden.</string>
-    <string name="email_verified_failed_desc">Deine E-Mail konnte nicht verifiziert werden. Möglicherweise ist der Link ungültig oder abgelaufen.</string>
+    <string name="verifying_account">E-Mail wird bestätigt …</string>
+    <string name="email_verified_title">E-Mail bestätigt</string>
+    <string name="email_verified_successfully_desc">Deine E-Mail-Adresse ist bestätigt. Melde dich an, um mit TabMates loszulegen.</string>
+    <string name="email_verified_upgraded_title">Alles erledigt</string>
+    <string name="email_verified_upgraded_desc">Deine E-Mail-Adresse ist bestätigt und deine Gruppen gehören jetzt zu deinem Konto. Du bleibst hier angemeldet und kannst dich auf jedem Gerät mit deinen Zugangsdaten anmelden.</string>
+    <string name="email_verified_changed_title">E-Mail-Adresse geändert</string>
+    <string name="email_verified_changed_desc">Deine neue Adresse ist bestätigt. Du wurdest absichtlich abgemeldet — melde dich mit der neuen Adresse wieder an.</string>
+    <string name="email_verified_failed">Dieser Link hat nicht funktioniert</string>
+    <string name="email_verified_failed_desc">Deine E-Mail konnte nicht bestätigt werden. Der Link ist ungültig oder abgelaufen.</string>
+    <string name="email_verified_failed_hint_no_session">Melde dich an, um dir eine neue Bestätigungs-E-Mail zu schicken.</string>
+    <string name="email_verified_failed_hint_guest">Öffne Profil → Vollwertiges Konto erstellen, um einen neuen Link zu senden.</string>
+    <string name="email_verified_failed_hint_registered">Öffne Profil → E-Mail, um die Änderung erneut anzufordern.</string>
     <string name="email_verified_continue">Weiter</string>
 
     <!-- Login -->

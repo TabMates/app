@@ -376,6 +376,14 @@ fun App() {
                                                 // The session outlives the link, so leaving the
                                                 // screen just uncovers the app underneath it.
                                                 onExitClick = { backStack.removeLastOrNull() },
+                                                // A confirmed guest upgrade started on Profile and
+                                                // is only visible there — the banner and the
+                                                // upgrade row are gone. Popping would land on
+                                                // Home, which the deep link seeded underneath.
+                                                onContinueClick = {
+                                                    backStack.clear()
+                                                    backStack.add(Profile)
+                                                },
                                             )
                                         }
                                     },

@@ -45,20 +45,28 @@ class EmailVerificationViewModel(
 
     private fun verifyEmail() {
         viewModelScope.launch {
+            // Read before the token is spent: succeeding empties the storage in every branch but
+            // the guest upgrade, and both the outcome copy and the failure hint need to know which
+            // flow the user came from.
+            val origin =
+                when (sessionStorage.get()?.user?.userType) {
+                    null -> VerificationOrigin.NoSession
+                    UserType.ANONYMOUS -> VerificationOrigin.Guest
+                    UserType.REGISTERED -> VerificationOrigin.Registered
+                }
             _state.update {
-                it.copy(isVerifying = true)
+                it.copy(origin = origin, status = VerificationStatus.Verifying)
             }
-
-            // An anonymous account has no address to change and no registration to confirm, so a
-            // token redeemed under one can only be its upgrade to a registered account. That path
-            // keeps the session alive on purpose — the account had no password to sign back in
-            // with until this very moment — so it must not go through the invalidator below.
-            val isAnonymousUpgrade = sessionStorage.get()?.user?.userType == UserType.ANONYMOUS
 
             authService
                 .verifyEmail(token)
                 .onSuccess {
-                    if (isAnonymousUpgrade) {
+                    // An anonymous account has no address to change and no registration to confirm,
+                    // so a token redeemed under one can only be its upgrade to a registered
+                    // account. That path keeps the session alive on purpose — the account had no
+                    // password to sign back in with until this very moment — so it must not go
+                    // through the invalidator below.
+                    if (origin == VerificationOrigin.Guest) {
                         adoptRegisteredUser()
                     } else {
                         // Confirming an email change revokes all refresh tokens server-side, so
@@ -69,15 +77,11 @@ class EmailVerificationViewModel(
                         sessionInvalidator.invalidate(SessionInvalidationReason.EMAIL_CHANGED)
                     }
                     _state.update {
-                        it.copy(
-                            isVerifying = false,
-                            isVerified = true,
-                            retainsSession = isAnonymousUpgrade,
-                        )
+                        it.copy(status = VerificationStatus.Succeeded)
                     }
                 }.onFailure {
                     _state.update {
-                        it.copy(isVerified = false, isVerifying = false)
+                        it.copy(status = VerificationStatus.Failed)
                     }
                 }
         }
