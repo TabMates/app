@@ -1,6 +1,7 @@
 package de.tabmates.features.authentication.domain
 
 import de.tabmates.core.domain.auth.AuthInfo
+import de.tabmates.core.domain.auth.UserWithPendingEmail
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
@@ -19,10 +20,27 @@ interface AuthService {
         password: String,
     ): Result<AuthInfo, DataError.Remote>
 
-    suspend fun loginAnonymous(
-        userId: String,
+    /**
+     * Asks the server to turn the current anonymous account into a registered one.
+     *
+     * Nothing about the account changes yet: the server only records the request and mails a
+     * verification link, so the caller keeps its anonymous session and stays fully usable. The
+     * migration itself happens when that link is redeemed through [verifyEmail] — which is what
+     * makes a mistyped address harmless, since an anonymous account has no password to recover
+     * with. Calling this again replaces the pending request, so it doubles as the resend path.
+     */
+    suspend fun migrateToRegistered(
+        email: String,
         password: String,
-    ): Result<AuthInfo, DataError.Remote>
+    ): EmptyResult<DataError.Remote>
+
+    /**
+     * Re-reads the authenticated account from the server and writes it back into [SessionStorage].
+     *
+     * The cached session is only refreshed on the calls that change it, so a migration confirmed on
+     * another device is invisible until this runs.
+     */
+    suspend fun refreshAccount(): Result<UserWithPendingEmail, DataError.Remote>
 
     suspend fun resendVerificationEmail(email: String): EmptyResult<DataError.Remote>
 

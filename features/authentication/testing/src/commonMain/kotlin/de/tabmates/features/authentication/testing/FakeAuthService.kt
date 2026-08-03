@@ -1,6 +1,7 @@
 package de.tabmates.features.authentication.testing
 
 import de.tabmates.core.domain.auth.AuthInfo
+import de.tabmates.core.domain.auth.UserWithPendingEmail
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
@@ -23,8 +24,13 @@ open class FakeAuthService(
     var changePasswordResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var changeEmailResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
     var deleteAccountResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var migrateToRegisteredResult: EmptyResult<DataError.Remote> = Result.Success(Unit),
+    var migrateToRegisteredDelayMillis: Long = 0L,
+    var refreshAccountResult: Result<UserWithPendingEmail, DataError.Remote> =
+        Result.Failure(DataError.Remote.UNKNOWN),
 ) : AuthService {
     val logoutCalls: MutableList<String> = mutableListOf()
+    val migrateToRegisteredCalls: MutableList<Pair<String, String>> = mutableListOf()
     val changeUsernameCalls: MutableList<String> = mutableListOf()
     val changePasswordCalls: MutableList<Pair<String, String>> = mutableListOf()
     val changeEmailCalls: MutableList<Pair<String, String>> = mutableListOf()
@@ -53,6 +59,9 @@ open class FakeAuthService(
     var clearCachedTokensCalls: Int = 0
         private set
 
+    var refreshAccountCalls: Int = 0
+        private set
+
     override suspend fun register(
         email: String,
         username: String,
@@ -78,10 +87,21 @@ open class FakeAuthService(
         return loginResult
     }
 
-    override suspend fun loginAnonymous(
-        userId: String,
+    override suspend fun migrateToRegistered(
+        email: String,
         password: String,
-    ): Result<AuthInfo, DataError.Remote> = Result.Failure(DataError.Remote.UNKNOWN)
+    ): EmptyResult<DataError.Remote> {
+        migrateToRegisteredCalls += email to password
+        if (migrateToRegisteredDelayMillis > 0L) {
+            delay(migrateToRegisteredDelayMillis)
+        }
+        return migrateToRegisteredResult
+    }
+
+    override suspend fun refreshAccount(): Result<UserWithPendingEmail, DataError.Remote> {
+        refreshAccountCalls += 1
+        return refreshAccountResult
+    }
 
     override suspend fun resendVerificationEmail(email: String): EmptyResult<DataError.Remote> {
         resendVerificationEmailCalls += 1
