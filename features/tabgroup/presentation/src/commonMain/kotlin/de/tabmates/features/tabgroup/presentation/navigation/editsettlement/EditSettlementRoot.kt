@@ -25,6 +25,7 @@ import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
+import de.tabmates.features.tabgroup.presentation.components.rememberAmountInputTransformation
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.DatePickerSheet
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.FieldRow
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.formatEntryDate
@@ -124,6 +125,7 @@ private fun EditSettlementScreen(
             singleLine = true,
             keyboardType = KeyboardType.Decimal,
             imeAction = ImeAction.Done,
+            inputTransformation = rememberAmountInputTransformation(state.currencyDecimalDigits),
             onKeyboardAction = {
                 if (!state.isSubmitting) {
                     focusManager.clearFocus()

@@ -1,5 +1,7 @@
 package de.tabmates.features.tabgroup.presentation.navigation.activity
 
+import de.tabmates.core.presentation.format.DEFAULT_CURRENCY_DECIMALS
+import de.tabmates.core.presentation.format.NumberSymbols
 import de.tabmates.features.tabgroup.domain.activity.ActivityEntryType
 import de.tabmates.features.tabgroup.domain.activity.ActivityEvent
 import de.tabmates.features.tabgroup.domain.activity.ActivityEventType
@@ -26,7 +28,6 @@ internal object ActivityFeedBuilder {
     private const val SEPARATOR = " · "
     private const val SELF_SEED = "self"
     private const val FALLBACK_NAME = "Someone"
-    private const val DEFAULT_DECIMALS = 2
 
     fun build(
         items: List<ActivityFeedItem>,
@@ -34,6 +35,7 @@ internal object ActivityFeedBuilder {
         groupTitles: Map<String, String>,
         participantNames: Map<String, String>,
         currencyByCode: Map<String, Currency>,
+        numberSymbols: NumberSymbols,
         now: Instant,
         includeGroupName: Boolean = true,
     ): List<ActivitySection> {
@@ -44,6 +46,7 @@ internal object ActivityFeedBuilder {
                 groupTitles = groupTitles,
                 participantNames = participantNames,
                 currencyByCode = currencyByCode,
+                numberSymbols = numberSymbols,
                 monthNames = monthNames,
                 now = now,
                 includeGroupName = includeGroupName,
@@ -89,6 +92,7 @@ internal object ActivityFeedBuilder {
         val groupTitles: Map<String, String>,
         val participantNames: Map<String, String>,
         val currencyByCode: Map<String, Currency>,
+        val numberSymbols: NumberSymbols,
         val monthNames: List<String>,
         val now: Instant,
         val includeGroupName: Boolean,
@@ -267,7 +271,12 @@ internal object ActivityFeedBuilder {
             if (amount == null) return null
             val currency = currencyCode?.let { currencyByCode[it] }
             val symbol = currency?.nativeSymbol ?: currencyCode.orEmpty()
-            return formatAmount(amount, symbol, currency?.decimalDigits ?: DEFAULT_DECIMALS)
+            return formatAmount(
+                amount,
+                symbol,
+                currency?.decimalDigits ?: DEFAULT_CURRENCY_DECIMALS,
+                numberSymbols,
+            )
         }
 
         private fun subtitle(

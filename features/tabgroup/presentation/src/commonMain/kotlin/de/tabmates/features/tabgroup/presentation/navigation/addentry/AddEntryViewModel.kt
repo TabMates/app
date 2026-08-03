@@ -8,6 +8,11 @@ import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.CurrentAccount
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
+import de.tabmates.core.presentation.format.NumberSymbols
+import de.tabmates.core.presentation.format.amountEpsilon
+import de.tabmates.core.presentation.format.formatAmountForInput
+import de.tabmates.core.presentation.format.formatMoney
+import de.tabmates.core.presentation.format.parseAmount
 import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
@@ -18,7 +23,6 @@ import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.NewTabEntrySplit
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
-import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.buildCurrencyPickerState
 import kotlinx.coroutines.channels.Channel
@@ -58,6 +62,7 @@ class AddEntryViewModel(
     private val currencyRepository: CurrencyRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
     currentAccount: CurrentAccount,
+    private val numberSymbols: NumberSymbols,
 ) : ViewModel() {
     private val isEditing = entryId.isNotBlank()
     private val currentUserId =
@@ -194,7 +199,9 @@ class AddEntryViewModel(
                     descriptionTextState = TextFieldState(existing?.description.orEmpty()),
                     amountTextState =
                         TextFieldState(
-                            existing?.let { e -> formatMoney("", e.amount, decimals) }.orEmpty(),
+                            existing
+                                ?.let { e -> formatAmountForInput(e.amount, decimals, numberSymbols) }
+                                .orEmpty(),
                         ),
                     splitInputs =
                         activeMembers.map { member ->
@@ -205,7 +212,7 @@ class AddEntryViewModel(
                                 exactAmountState =
                                     TextFieldState(
                                         if (split?.splitType == SplitType.EXACT_AMOUNT) {
-                                            formatMoney("", split.value, decimals)
+                                            formatAmountForInput(split.value, decimals, numberSymbols)
                                         } else {
                                             ""
                                         },
@@ -213,7 +220,7 @@ class AddEntryViewModel(
                                 percentageState =
                                     TextFieldState(
                                         if (split?.splitType == SplitType.PERCENTAGE) {
-                                            formatMoney("", split.value, 2)
+                                            formatAmountForInput(split.value, PERCENTAGE_DECIMALS, numberSymbols)
                                         } else {
                                             ""
                                         },
@@ -297,7 +304,7 @@ class AddEntryViewModel(
         if (_state.value.isSubmitting) return
         val current = _state.value
         val amount =
-            parseAmount(current.amountTextState.text.toString())?.takeIf { it > 0.0 }
+            parseAmount(current.amountTextState.text.toString(), numberSymbols)?.takeIf { it > 0.0 }
         if (amount == null) {
             emitError(UiText.Resource(Res.string.add_entry_error_amount_required))
             return
@@ -439,10 +446,11 @@ class AddEntryViewModel(
             SplitType.EXACT_AMOUNT -> {
                 val rows =
                     state.splitInputs.map { input ->
-                        input.participantId to (parseAmount(input.exactAmountState.text.toString()) ?: 0.0)
+                        input.participantId to
+                            (parseAmount(input.exactAmountState.text.toString(), numberSymbols) ?: 0.0)
                     }
                 val total = rows.sumOf { it.second }
-                if (abs(total - totalAmount) > epsilon(state.entryCurrencyDecimalDigits)) {
+                if (abs(total - totalAmount) > amountEpsilon(state.entryCurrencyDecimalDigits)) {
                     emitError(
                         UiText.Resource(
                             Res.string.add_entry_error_split_total_mismatch,
@@ -451,6 +459,7 @@ class AddEntryViewModel(
                                     state.entryCurrencySymbol,
                                     totalAmount,
                                     state.entryCurrencyDecimalDigits,
+                                    numberSymbols,
                                 ),
                             ),
                         ),
@@ -468,7 +477,8 @@ class AddEntryViewModel(
             SplitType.PERCENTAGE -> {
                 val rows =
                     state.splitInputs.map { input ->
-                        input.participantId to (parseAmount(input.percentageState.text.toString()) ?: 0.0)
+                        input.participantId to
+                            (parseAmount(input.percentageState.text.toString(), numberSymbols) ?: 0.0)
                     }
                 val total = rows.sumOf { it.second }
                 if (abs(total - 100.0) > 0.01) {
@@ -512,12 +522,6 @@ class AddEntryViewModel(
 
     private fun emitError(message: UiText) {
         viewModelScope.launch { eventChannel.send(AddEntryEvent.Error(message)) }
-    }
-
-    private fun epsilon(decimals: Int): Double {
-        var v = 1.0
-        repeat(decimals) { v /= 10.0 }
-        return v / 2.0
     }
 
     private companion object {

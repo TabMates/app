@@ -3,6 +3,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.CurrentAccount
+import de.tabmates.core.presentation.format.NumberSymbols
 import de.tabmates.features.tabgroup.domain.activity.ActivityFeedItem
 import de.tabmates.features.tabgroup.domain.activity.ActivityRepository
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
@@ -33,6 +34,7 @@ class ActivityViewModel(
     groupRepository: GroupRepository,
     currencyRepository: CurrencyRepository,
     currentAccount: CurrentAccount,
+    private val numberSymbols: NumberSymbols,
 ) : ViewModel() {
     private val currentUserId =
         currentAccount.userId().orEmpty()
@@ -56,6 +58,7 @@ class ActivityViewModel(
                         groupTitles = groups.associate { it.id to it.title },
                         participantNames = participants.associate { it.userId to it.username },
                         currencyByCode = currencies.associateBy { it.code },
+                        numberSymbols = numberSymbols,
                         now = Clock.System.now(),
                     ),
                 // Pending rows are exempt from the limit, so only the persisted tail decides whether

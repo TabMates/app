@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.presentation.navigation.activity
 
+import de.tabmates.core.presentation.format.NumberSymbols
 import de.tabmates.features.tabgroup.domain.activity.ActivityEntryType
 import de.tabmates.features.tabgroup.domain.activity.ActivityEvent
 import de.tabmates.features.tabgroup.domain.activity.ActivityEventType
@@ -359,5 +360,6 @@ class ActivityViewModelTest {
                 ),
             currencyRepository = FakeCurrencyRepository(),
             currentAccount = FakeCurrentAccount(),
+            numberSymbols = NumberSymbols.Fallback,
         )
 }

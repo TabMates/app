@@ -6,14 +6,15 @@ import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.CurrentAccount
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
+import de.tabmates.core.presentation.format.NumberSymbols
+import de.tabmates.core.presentation.format.formatAmountForInput
+import de.tabmates.core.presentation.format.parseAmount
 import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
-import de.tabmates.features.tabgroup.presentation.components.formatMoney
-import de.tabmates.features.tabgroup.presentation.navigation.addentry.parseAmount
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,6 +43,7 @@ class EditSettlementViewModel(
     private val groupRepository: GroupRepository,
     private val currencyRepository: CurrencyRepository,
     currentAccount: CurrentAccount,
+    private val numberSymbols: NumberSymbols,
 ) : ViewModel() {
     private val currentUserId =
         currentAccount.userId().orEmpty()
@@ -79,7 +81,9 @@ class EditSettlementViewModel(
                     isLoading = false,
                     amountTextState =
                         TextFieldState(
-                            settlement?.let { s -> formatMoney("", s.amount, decimals) }.orEmpty(),
+                            settlement
+                                ?.let { s -> formatAmountForInput(s.amount, decimals, numberSymbols) }
+                                .orEmpty(),
                         ),
                     entryDate = settlement?.entryDate ?: it.entryDate,
                     title = settlement?.title.orEmpty(),
@@ -119,7 +123,7 @@ class EditSettlementViewModel(
         val current = _state.value
         if (current.isSubmitting || current.isLoading) return
         val amount =
-            parseAmount(current.amountTextState.text.toString())?.takeIf { it > 0.0 }
+            parseAmount(current.amountTextState.text.toString(), numberSymbols)?.takeIf { it > 0.0 }
         if (amount == null) {
             viewModelScope.launch {
                 eventChannel.send(

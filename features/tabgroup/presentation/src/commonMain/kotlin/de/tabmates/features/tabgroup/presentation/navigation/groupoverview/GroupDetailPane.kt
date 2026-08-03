@@ -36,6 +36,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +59,7 @@ import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOW
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.theme.extended
+import de.tabmates.core.presentation.format.AmountSign
 import de.tabmates.core.presentation.share.LinkShareResult
 import de.tabmates.core.presentation.share.rememberLinkSharer
 import de.tabmates.features.tabgroup.domain.balance.UserBalanceCalculator
@@ -851,6 +853,8 @@ private fun SettlementRow(
  * is available the original amount is shown on its own. The entry's locked-in rate wins over the
  * live rate table, so displayed values match the balance math and don't drift with rate updates.
  */
+@Composable
+@ReadOnlyComposable
 private fun entryAmountLabel(
     entry: TabEntry,
     item: GroupOverviewItem,
@@ -871,6 +875,8 @@ private fun entryAmountLabel(
  * into the group's base currency when they differ (no bracketed original), falling back to the
  * entry's own currency when no rate is available.
  */
+@Composable
+@ReadOnlyComposable
 private fun shareAmountLabel(
     amount: Double,
     entry: TabEntry,
@@ -977,7 +983,7 @@ private fun BalanceHero(item: GroupOverviewItem) {
             is GroupBalance.Owed -> {
                 HeroPalette(
                     title = stringResource(Res.string.groups_detail_youre_owed),
-                    value = "+${formatAmount(item, item.balance.amount)}",
+                    value = formatSignedAmount(item, item.balance.amount, AmountSign.Positive),
                     container = extended.positive,
                     onContainer = MaterialTheme.colorScheme.surface,
                 )
@@ -986,7 +992,7 @@ private fun BalanceHero(item: GroupOverviewItem) {
             is GroupBalance.Owe -> {
                 HeroPalette(
                     title = stringResource(Res.string.groups_detail_you_owe),
-                    value = "−${formatAmount(item, item.balance.amount)}",
+                    value = formatSignedAmount(item, item.balance.amount, AmountSign.Negative),
                     container = extended.negative,
                     onContainer = MaterialTheme.colorScheme.surface,
                 )
@@ -1049,8 +1055,8 @@ private fun PerPersonRow(
         }
     val amountText =
         when (balance) {
-            is GroupBalance.Owed -> "+${formatAmount(item, balance.amount)}"
-            is GroupBalance.Owe -> "−${formatAmount(item, balance.amount)}"
+            is GroupBalance.Owed -> formatSignedAmount(item, balance.amount, AmountSign.Positive)
+            is GroupBalance.Owe -> formatSignedAmount(item, balance.amount, AmountSign.Negative)
             GroupBalance.Settled -> null
         }
     val amountColor =
@@ -1283,8 +1289,8 @@ private fun MemberRow(
     val balanceText =
         when {
             isCurrentUser -> null
-            net > 0 -> "+${formatAmount(item, net)}"
-            net < 0 -> "−${formatAmount(item, abs(net))}"
+            net > 0 -> formatSignedAmount(item, net, AmountSign.Positive)
+            net < 0 -> formatSignedAmount(item, abs(net), AmountSign.Negative)
             else -> null
         }
     val balanceColor =
@@ -1354,8 +1360,8 @@ private fun StatCardsRow(
         }
     val balanceValue =
         when (item.balance) {
-            is GroupBalance.Owed -> "+${formatAmount(item, item.balance.amount)}"
-            is GroupBalance.Owe -> "−${formatAmount(item, item.balance.amount)}"
+            is GroupBalance.Owed -> formatSignedAmount(item, item.balance.amount, AmountSign.Positive)
+            is GroupBalance.Owe -> formatSignedAmount(item, item.balance.amount, AmountSign.Negative)
             GroupBalance.Settled -> stringResource(Res.string.groups_status_settled)
         }
     val balanceColor =

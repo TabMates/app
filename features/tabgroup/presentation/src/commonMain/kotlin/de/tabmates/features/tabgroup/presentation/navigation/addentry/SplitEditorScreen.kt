@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
@@ -31,9 +32,14 @@ import androidx.compose.ui.unit.dp
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
+import de.tabmates.core.presentation.format.LocalNumberSymbols
+import de.tabmates.core.presentation.format.amountEpsilon
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
+import de.tabmates.features.tabgroup.presentation.components.formatPercent
+import de.tabmates.features.tabgroup.presentation.components.parseAmount
+import de.tabmates.features.tabgroup.presentation.components.rememberAmountInputTransformation
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import org.jetbrains.compose.resources.stringResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
@@ -185,7 +191,7 @@ private fun RemainderText(
 ) {
     val text =
         when {
-            abs(remaining) < epsilon(decimals) -> {
+            abs(remaining) < amountEpsilon(decimals) -> {
                 stringResource(Res.string.split_screen_balanced)
             }
 
@@ -204,7 +210,7 @@ private fun RemainderText(
             }
         }
     val color =
-        if (abs(remaining) < epsilon(decimals)) {
+        if (abs(remaining) < amountEpsilon(decimals)) {
             MaterialTheme.colorScheme.primary
         } else {
             MaterialTheme.colorScheme.error
@@ -228,14 +234,14 @@ private fun PercentageRemainderText(remaining: Double) {
             remaining > 0 -> {
                 stringResource(
                     Res.string.split_screen_left_to_assign,
-                    "${formatPercent(remaining)}%",
+                    formatPercent(remaining),
                 )
             }
 
             else -> {
                 stringResource(
                     Res.string.split_screen_over_by,
-                    "${formatPercent(-remaining)}%",
+                    formatPercent(-remaining),
                 )
             }
         }
@@ -263,7 +269,7 @@ private fun ValidationBanner(
             SplitType.EXACT_AMOUNT -> {
                 val assigned =
                     state.splitInputs.sumOf { parseAmount(it.exactAmountState.text.toString()) ?: 0.0 }
-                if (abs(assigned - total) > epsilon(state.entryCurrencyDecimalDigits)) {
+                if (abs(assigned - total) > amountEpsilon(state.entryCurrencyDecimalDigits)) {
                     stringResource(
                         Res.string.split_screen_running_total_must_equal,
                         formatMoney(state.entryCurrencySymbol, total, state.entryCurrencyDecimalDigits),
@@ -368,6 +374,7 @@ private fun SplitMemberRow(
                     state = exactState,
                     prefix = currencySymbol,
                     keyboardType = KeyboardType.Decimal,
+                    inputTransformation = rememberAmountInputTransformation(currencyDecimals),
                 )
             }
 
@@ -375,8 +382,9 @@ private fun SplitMemberRow(
                 AmountInputField(
                     state = percentageState,
                     prefix = null,
-                    suffix = "%",
+                    suffix = LocalNumberSymbols.current.percentSymbol,
                     keyboardType = KeyboardType.Decimal,
+                    inputTransformation = rememberAmountInputTransformation(PERCENTAGE_DECIMALS),
                 )
             }
 
@@ -418,6 +426,7 @@ private fun AmountInputField(
     keyboardType: KeyboardType,
     prefix: String? = null,
     suffix: String? = null,
+    inputTransformation: InputTransformation? = null,
 ) {
     Row(
         modifier = Modifier.widthIn(min = 120.dp, max = 180.dp),
@@ -428,6 +437,7 @@ private fun AmountInputField(
             singleLine = true,
             keyboardType = keyboardType,
             imeAction = ImeAction.Next,
+            inputTransformation = inputTransformation,
             placeholder = "${prefix.orEmpty()}0${suffix.orEmpty()}",
             modifier = Modifier.weight(1f),
         )
@@ -443,25 +453,6 @@ private fun equalShareFor(
     val count = state.splitInputs.count { it.included }
     if (count == 0) return 0.0
     return total / count
-}
-
-private fun epsilon(decimals: Int): Double {
-    var v = 1.0
-    repeat(decimals) { v /= 10.0 }
-    return v / 2.0
-}
-
-private fun formatPercent(value: Double): String {
-    val rounded = (value * 100).toLong() / 100.0
-    val whole = rounded.toLong()
-    val frac = ((rounded - whole) * 100).toLong()
-    return if (frac ==
-        0L
-    ) {
-        whole.toString()
-    } else {
-        "$whole.${frac.toString().padStart(2, '0').trimEnd('0').ifEmpty { "0" }}"
-    }
 }
 
 @Composable

@@ -1,6 +1,7 @@
 package de.tabmates.features.tabgroup.presentation.navigation.addentry
 
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import de.tabmates.core.presentation.format.NumberSymbols
 import de.tabmates.features.tabgroup.domain.models.ExchangeRate
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
@@ -464,5 +465,6 @@ class AddEntryViewModelTest {
             currencyRepository = currencyRepository,
             exchangeRateRepository = exchangeRateRepository,
             currentAccount = currentAccount,
+            numberSymbols = NumberSymbols.Fallback,
         )
 }

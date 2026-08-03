@@ -62,6 +62,7 @@ import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.designsystem.theme.extended
+import de.tabmates.core.presentation.format.AmountSign
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
 import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
@@ -491,11 +492,11 @@ private fun BalanceLabel(item: GroupOverviewItem) {
             }
 
             is GroupBalance.Owed -> {
-                "+${formatAmount(item, balance.amount)}" to extended.positive
+                formatSignedAmount(item, balance.amount, AmountSign.Positive) to extended.positive
             }
 
             is GroupBalance.Owe -> {
-                "−${formatAmount(item, balance.amount)}" to extended.negative
+                formatSignedAmount(item, balance.amount, AmountSign.Negative) to extended.negative
             }
         }
     Text(

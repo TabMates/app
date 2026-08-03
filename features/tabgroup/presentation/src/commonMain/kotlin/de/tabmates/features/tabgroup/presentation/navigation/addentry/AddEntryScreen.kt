@@ -68,6 +68,7 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
+import de.tabmates.core.presentation.format.LocalNumberSymbols
 import de.tabmates.core.presentation.navigation.OverrideTopBar
 import de.tabmates.core.presentation.navigation.TopBarAction
 import de.tabmates.core.presentation.navigation.TopBarActions
@@ -78,7 +79,9 @@ import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.components.formatRate
+import de.tabmates.features.tabgroup.presentation.components.parseAmount
 import de.tabmates.features.tabgroup.presentation.components.rateUpdatedLabel
+import de.tabmates.features.tabgroup.presentation.components.rememberAmountInputTransformation
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerBottomSheet
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
@@ -248,6 +251,7 @@ internal fun AddEntryScreen(
         AmountInput(
             amountState = state.amountTextState,
             symbol = state.entryCurrencySymbol,
+            decimals = state.entryCurrencyDecimalDigits,
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         VerticalSpacer(8.dp)
@@ -410,6 +414,7 @@ private fun EntryKindToggle(
 private fun AmountInput(
     amountState: TextFieldState,
     symbol: String,
+    decimals: Int,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -448,15 +453,18 @@ private fun AmountInput(
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.Center,
             ) {
-                Text(
-                    text = symbol,
-                    style = symbolStyle,
-                )
-                HorizontalSpacer(4.dp)
+                // Locales that write "1.234,56 €" need the symbol trailing, or the hero field
+                // would contradict every other amount on screen.
+                val symbolLeads = LocalNumberSymbols.current.currencyBeforeAmount
+                if (symbolLeads) {
+                    Text(text = symbol, style = symbolStyle)
+                    HorizontalSpacer(SYMBOL_GAP)
+                }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     BasicTextField(
                         state = amountState,
                         textStyle = amountTextStyle,
+                        inputTransformation = rememberAmountInputTransformation(decimals = decimals),
                         lineLimits = TextFieldLineLimits.SingleLine,
                         keyboardOptions =
                             KeyboardOptions(
@@ -483,6 +491,10 @@ private fun AmountInput(
                         thickness = 2.dp,
                         color = MaterialTheme.colorScheme.primary,
                     )
+                }
+                if (!symbolLeads) {
+                    HorizontalSpacer(SYMBOL_GAP)
+                    Text(text = symbol, style = symbolStyle)
                 }
             }
         }
@@ -772,3 +784,6 @@ internal fun DatePickerSheet(
         DatePicker(state = pickerState)
     }
 }
+
+/** Gap between the hero amount and its currency symbol, on whichever side the locale puts it. */
+private val SYMBOL_GAP = 4.dp

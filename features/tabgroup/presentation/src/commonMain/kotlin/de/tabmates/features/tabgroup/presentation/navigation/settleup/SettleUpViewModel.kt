@@ -8,6 +8,12 @@ import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.CurrentAccount
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
+import de.tabmates.core.presentation.format.DEFAULT_CURRENCY_DECIMALS
+import de.tabmates.core.presentation.format.NumberSymbols
+import de.tabmates.core.presentation.format.amountEpsilon
+import de.tabmates.core.presentation.format.formatAmountForInput
+import de.tabmates.core.presentation.format.parseAmount
+import de.tabmates.core.presentation.format.roundToDecimals
 import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.tabgroup.domain.balance.DebtSimplifier
@@ -20,8 +26,6 @@ import de.tabmates.features.tabgroup.domain.models.ExchangeRate
 import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
-import de.tabmates.features.tabgroup.presentation.components.formatMoney
-import de.tabmates.features.tabgroup.presentation.navigation.addentry.parseAmount
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,8 +43,6 @@ import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_amount_error_invalid
-import kotlin.math.pow
-import kotlin.math.round
 import kotlin.time.Clock
 
 @KoinViewModel
@@ -51,6 +53,7 @@ class SettleUpViewModel(
     private val currencyRepository: CurrencyRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
     currentAccount: CurrentAccount,
+    private val numberSymbols: NumberSymbols,
 ) : ViewModel() {
     private val currentUserId =
         currentAccount.userId().orEmpty()
@@ -87,7 +90,7 @@ class SettleUpViewModel(
     fun onPaymentRowClick(payment: SettleUpPayment) {
         if (payment.fromUserId to payment.toUserId in settlingPairs.value) return
         settleAmountTextState.setTextAndPlaceCursorAtEnd(
-            formatMoney("", payment.amount, state.value.currencyDecimalDigits),
+            formatAmountForInput(payment.amount, state.value.currencyDecimalDigits, numberSymbols),
         )
         pendingSettlementFlow.value = payment
     }
@@ -103,14 +106,14 @@ class SettleUpViewModel(
         val pending = pendingSettlementFlow.value ?: return
         val current = state.value
         val decimals = current.currencyDecimalDigits
-        val epsilon = 0.5 / 10.0.pow(decimals)
+        val epsilon = amountEpsilon(decimals)
         // Re-validate against the live plan: the debt may have vanished or shrunk while the
         // sheet was open (someone else settled it on another device).
         val livePayment =
             current.payments.firstOrNull {
                 it.fromUserId == pending.fromUserId && it.toUserId == pending.toUserId
             }
-        val amount = parseAmount(settleAmountTextState.text.toString())
+        val amount = parseAmount(settleAmountTextState.text.toString(), numberSymbols)
         if (livePayment == null ||
             amount == null ||
             amount <= 0.0 ||
@@ -170,7 +173,7 @@ class SettleUpViewModel(
     ): SettleUpState {
         val group = groups.firstOrNull { it.id == groupId }
         val currency = currencies.firstOrNull { it.code == group?.defaultCurrencyCode }
-        val decimals = currency?.decimalDigits ?: DEFAULT_DECIMALS
+        val decimals = currency?.decimalDigits ?: DEFAULT_CURRENCY_DECIMALS
         val symbol = currency?.nativeSymbol ?: group?.defaultCurrencyCode.orEmpty()
 
         if (group == null || currentUserId.isEmpty()) {
@@ -186,7 +189,7 @@ class SettleUpViewModel(
         }
 
         val participants = group.participants
-        val epsilon = 0.5 / 10.0.pow(decimals)
+        val epsilon = amountEpsilon(decimals)
         val plan =
             DebtSimplifier.simplifyFromEntries(
                 entries = entries,
@@ -208,7 +211,7 @@ class SettleUpViewModel(
                         toUserId = debt.toUserId,
                         toName = recipient.username,
                         toInitials = recipient.initials,
-                        amount = roundTo(debt.amount, decimals),
+                        amount = roundToDecimals(debt.amount, decimals),
                         isSettling = debt.fromUserId to debt.toUserId in settling,
                     )
                 }.sortedByDescending { it.amount }
@@ -224,16 +227,7 @@ class SettleUpViewModel(
         )
     }
 
-    private fun roundTo(
-        amount: Double,
-        decimals: Int,
-    ): Double {
-        val factor = 10.0.pow(decimals)
-        return round(amount * factor) / factor
-    }
-
     private companion object {
         private const val STOP_TIMEOUT_MILLIS = 5_000L
-        private const val DEFAULT_DECIMALS = 2
     }
 }
