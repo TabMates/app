@@ -144,11 +144,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create GitHub Prerelease
+      - name: Create GitHub Release
         uses: mikepenz/action-gh-release@v3
         with:
           body: ${{ steps.github_release.outputs.changelog }}
-          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
