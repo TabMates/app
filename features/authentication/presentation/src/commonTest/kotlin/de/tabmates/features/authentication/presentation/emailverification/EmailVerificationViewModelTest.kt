@@ -43,27 +43,34 @@ class EmailVerificationViewModelTest {
     }
 
     @Test
-    fun `successful email verification sets isVerified to true`() =
+    fun `successful email verification succeeds with no session on the device`() =
         runTest(testDispatcher) {
             val authService = FakeAuthService(verifyEmailResult = Result.Success(Unit))
             val viewModel = createViewModel(authService = authService)
 
-            assertEquals(true, viewModel.state.value.isVerified)
-            assertEquals(false, viewModel.state.value.isVerifying)
+            assertEquals(VerificationStatus.Succeeded, viewModel.state.value.status)
+            // No account on the device: the link can only be finishing a registration.
+            assertEquals(VerificationOrigin.NoSession, viewModel.state.value.origin)
             assertEquals(1, authService.verifyEmailCalls)
         }
 
     @Test
-    fun `failed email verification sets isVerified to false`() =
+    fun `failed email verification reports the origin it started from`() =
         runTest(testDispatcher) {
             val authService =
                 FakeAuthService(
                     verifyEmailResult = Result.Failure(DataError.Remote.SERVER_ERROR),
                 )
-            val viewModel = createViewModel(authService = authService)
+            val viewModel =
+                createViewModel(
+                    authService = authService,
+                    // The failure screen names where a new link comes from, which differs per
+                    // flow, so the origin has to survive an unsuccessful redemption.
+                    sessionStorage = FakeSessionStorage(initial = authInfo(userType = UserType.ANONYMOUS)),
+                )
 
-            assertEquals(false, viewModel.state.value.isVerified)
-            assertEquals(false, viewModel.state.value.isVerifying)
+            assertEquals(VerificationStatus.Failed, viewModel.state.value.status)
+            assertEquals(VerificationOrigin.Guest, viewModel.state.value.origin)
             assertEquals(1, authService.verifyEmailCalls)
         }
 
@@ -95,12 +102,17 @@ class EmailVerificationViewModelTest {
         runTest(testDispatcher) {
             val sessionStorage = FakeSessionStorage(initial = authInfo())
             val sessionInvalidator = FakeSessionInvalidator(sessionStorage)
-            createViewModel(
-                authService = FakeAuthService(verifyEmailResult = Result.Success(Unit)),
-                sessionStorage = sessionStorage,
-                sessionInvalidator = sessionInvalidator,
-            )
+            val viewModel =
+                createViewModel(
+                    authService = FakeAuthService(verifyEmailResult = Result.Success(Unit)),
+                    sessionStorage = sessionStorage,
+                    sessionInvalidator = sessionInvalidator,
+                )
 
+            // A signed-in registered user has already confirmed their registration, so the only
+            // link they can be redeeming is the one for a new address.
+            assertEquals(VerificationOrigin.Registered, viewModel.state.value.origin)
+            assertEquals(VerificationStatus.Succeeded, viewModel.state.value.status)
             assertNull(sessionStorage.get())
             // EMAIL_CHANGED rather than TOKEN_REJECTED: the stored address is now the old one, so
             // the re-auth screen must ask for the new one instead of locking the stale value in.
@@ -145,8 +157,8 @@ class EmailVerificationViewModelTest {
                     sessionInvalidator = sessionInvalidator,
                 )
 
-            assertEquals(true, viewModel.state.value.isVerified)
-            assertEquals(true, viewModel.state.value.retainsSession)
+            assertEquals(VerificationStatus.Succeeded, viewModel.state.value.status)
+            assertEquals(VerificationOrigin.Guest, viewModel.state.value.origin)
             assertEquals(emptyList(), sessionInvalidator.reasons)
             assertNotNull(sessionStorage.get())
             // The now-registered user has to replace the cached anonymous one.
@@ -172,8 +184,8 @@ class EmailVerificationViewModelTest {
                     sessionInvalidator = sessionInvalidator,
                 )
 
-            assertEquals(true, viewModel.state.value.isVerified)
-            assertEquals(true, viewModel.state.value.retainsSession)
+            assertEquals(VerificationStatus.Succeeded, viewModel.state.value.status)
+            assertEquals(VerificationOrigin.Guest, viewModel.state.value.origin)
             assertEquals(emptyList(), sessionInvalidator.reasons)
             assertEquals(UserType.REGISTERED, sessionStorage.get()?.user?.userType)
             assertEquals(true, sessionStorage.get()?.user?.hasVerifiedEmail)
