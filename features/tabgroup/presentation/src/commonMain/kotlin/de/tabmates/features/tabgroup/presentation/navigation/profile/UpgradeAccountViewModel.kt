@@ -49,9 +49,9 @@ class UpgradeAccountViewModel(
     private val eventChannel = Channel<UpgradeAccountEvent>()
     val events = eventChannel.receiveAsFlow()
 
-    private val emailInvalid get() = UiText.Resource(Res.string.upgrade_account_email_invalid)
-    private val passwordRequirements get() = UiText.Resource(Res.string.upgrade_account_password_requirements)
-    private val passwordMismatch get() = UiText.Resource(Res.string.upgrade_account_password_mismatch)
+    private val emailInvalid = UiText.Resource(Res.string.upgrade_account_email_invalid)
+    private val passwordRequirements = UiText.Resource(Res.string.upgrade_account_password_requirements)
+    private val passwordMismatch = UiText.Resource(Res.string.upgrade_account_password_mismatch)
 
     init {
         // A request survives process death server-side, so re-open the screen in whichever phase
