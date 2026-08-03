@@ -7,6 +7,7 @@ import de.tabmates.core.domain.auth.UserType
 import de.tabmates.core.domain.preferences.AppPreferencesRepository
 import de.tabmates.core.domain.preferences.ThemeMode
 import de.tabmates.core.domain.sync.PendingWrites
+import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.notifications.domain.NotificationPermissionController
 import de.tabmates.features.notifications.domain.NotificationPermissionStatus
@@ -36,6 +37,8 @@ class ProfileViewModel(
     private val selectedSection = MutableStateFlow(SettingsSection.PROFILE)
 
     private val showSignOutDialog = MutableStateFlow(false)
+
+    private val pendingMigrationEmail = MutableStateFlow<String?>(null)
 
     private val accountState =
         combine(
@@ -71,10 +74,12 @@ class ProfileViewModel(
             accountState,
             pendingWrites.observeCount(),
             showSignOutDialog,
-        ) { account, pendingWriteCount, showDialog ->
+            pendingMigrationEmail,
+        ) { account, pendingWriteCount, showDialog, migrationEmail ->
             account.copy(
                 pendingWriteCount = pendingWriteCount,
                 showSignOutDialog = showDialog,
+                pendingMigrationEmail = migrationEmail,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -84,11 +89,31 @@ class ProfileViewModel(
 
     init {
         refreshNotificationPermission()
+        refreshAccount()
     }
 
     /** Re-read OS permission (call when the screen resumes — user may change it in settings). */
     fun refreshNotificationPermission() {
         viewModelScope.launch { notificationPermissionController.refresh() }
+    }
+
+    /**
+     * Re-reads the account (call when the screen resumes).
+     *
+     * An anonymous account becomes registered by confirming an emailed link, which usually happens
+     * on whatever device the mailbox is on — so this device only learns about it by asking. The
+     * failure case is deliberately silent: this decorates the screen, it does not gate it.
+     */
+    fun refreshAccount() {
+        viewModelScope.launch {
+            authService.refreshAccount().onSuccess { account ->
+                // `pendingEmail` means an unconfirmed *change* of address for a registered user and
+                // an unconfirmed *migration* for an anonymous one, so only the latter belongs here.
+                pendingMigrationEmail.update {
+                    account.pendingEmail.takeIf { account.user.userType == UserType.ANONYMOUS }
+                }
+            }
+        }
     }
 
     fun onOpenNotificationSettings() {
@@ -112,10 +137,12 @@ class ProfileViewModel(
 
     /**
      * Signing out wipes this device's local data, including writes that never reached the server,
-     * so anything still queued has to be confirmed away rather than silently dropped.
+     * so anything still queued has to be confirmed away rather than silently dropped. An anonymous
+     * account is always confirmed: it only exists on this device and has no credentials to sign
+     * back in with, so signing out destroys it outright.
      */
     fun onSignOutClick() {
-        if (state.value.pendingWriteCount > 0) {
+        if (state.value.pendingWriteCount > 0 || !state.value.isRegistered) {
             showSignOutDialog.update { true }
         } else {
             signOut()

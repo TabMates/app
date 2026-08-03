@@ -394,4 +394,33 @@
     <string name="delete_account_dialog_message">Dein Konto wird dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.</string>
     <string name="delete_account_dialog_confirm">Löschen</string>
     <string name="delete_account_dialog_cancel">Abbrechen</string>
+
+    <string name="upgrade_account_title">Vollwertiges Konto erstellen</string>
+    <string name="upgrade_account_intro">Füge eine E-Mail-Adresse und ein Passwort hinzu, damit deine Gruppen erhalten bleiben, wenn du dich abmeldest oder das Gerät wechselst. Es ändert sich nichts, bis du den Link bestätigst, den wir dir schicken — du kannst die App also weiter nutzen.</string>
+    <string name="upgrade_account_email_label">E-Mail</string>
+    <string name="upgrade_account_password_label">Passwort</string>
+    <string name="upgrade_account_confirm_password_label">Passwort bestätigen</string>
+    <string name="upgrade_account_password_requirements">Mindestens 8 Zeichen, davon mindestens eine Zahl oder ein Sonderzeichen</string>
+    <string name="upgrade_account_submit">Bestätigungslink senden</string>
+    <string name="upgrade_account_email_invalid">Gib eine gültige E-Mail-Adresse ein</string>
+    <string name="upgrade_account_password_mismatch">Die Passwörter stimmen nicht überein</string>
+    <string name="upgrade_account_error_email_in_use">Für diese E-Mail-Adresse gibt es bereits ein Konto. Nutze eine andere Adresse.</string>
+    <string name="upgrade_account_sent">Bestätigungslink an %1$s gesendet</string>
+    <string name="upgrade_account_pending_title">Schau in dein Postfach</string>
+    <string name="upgrade_account_pending_desc">Wir haben einen Bestätigungslink an %1$s gesendet. Sobald du ihn öffnest, wird dein Konto zu einem vollwertigen Konto.</string>
+    <string name="upgrade_account_pending_hint">Bisher hat sich nichts geändert — nutze die App wie gewohnt weiter, auf diesem oder einem anderen Gerät.</string>
+    <string name="upgrade_account_resend">Link erneut senden</string>
+    <string name="upgrade_account_use_different_email">Andere Adresse verwenden</string>
+    <string name="upgrade_account_resend_needs_details">Gib E-Mail und Passwort erneut ein, um einen neuen Link zu senden</string>
+
+    <string name="profile_upgrade_account_title">Vollwertiges Konto erstellen</string>
+    <string name="profile_upgrade_account_subtitle">Behalte deine Gruppen beim Gerätewechsel</string>
+    <string name="profile_upgrade_account_pending_title">E-Mail bestätigen</string>
+    <string name="profile_upgrade_account_pending_desc">Du nutzt weiterhin ein Gastkonto. Öffne den Link, den wir an %1$s gesendet haben, um dein vollwertiges Konto fertigzustellen — bis dahin verlierst du beim Abmelden weiterhin deine Gruppen.</string>
+    <string name="profile_upgrade_account_pending_action">Erneut senden oder Adresse ändern</string>
+    <string name="profile_sign_out_guest_dialog_title">Vom Gastkonto abmelden?</string>
+    <string name="profile_sign_out_guest_dialog_text">Dein Gastkonto existiert nur auf diesem Gerät. Beim Abmelden wird es zusammen mit deinen Gruppen gelöscht, und es gibt keinen Weg zurück. Erstelle vorher ein vollwertiges Konto, um sie zu behalten.</string>
+    <string name="profile_sign_out_guest_dialog_text_pending_writes">Dein Gastkonto existiert nur auf diesem Gerät, und %1$d Änderung hat den Server noch nicht erreicht. Beim Abmelden wird alles gelöscht, und es gibt keinen Weg zurück. Erstelle vorher ein vollwertiges Konto, um es zu behalten.</string>
+    <string name="profile_sign_out_guest_dialog_text_pending_writes_other">Dein Gastkonto existiert nur auf diesem Gerät, und %1$d Änderungen haben den Server noch nicht erreicht. Beim Abmelden wird alles gelöscht, und es gibt keinen Weg zurück. Erstelle vorher ein vollwertiges Konto, um sie zu behalten.</string>
+    <string name="profile_sign_out_dialog_create_account">Konto erstellen</string>
 </resources>

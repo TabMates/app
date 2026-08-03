@@ -57,6 +57,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_logout
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_mail
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_notifications
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_palette
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_settings
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_email
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_password
@@ -80,10 +81,15 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_se
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_settings_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_dialog_confirm
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_dialog_create_account
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_dialog_dismiss
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_dialog_text_one
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_dialog_text_other
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_dialog_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_guest_dialog_text
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_guest_dialog_text_pending_writes
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_guest_dialog_text_pending_writes_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_sign_out_guest_dialog_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_subtitle
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_theme
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_theme_caption_dark
@@ -93,6 +99,11 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_th
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_theme_light
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_theme_system
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_upgrade_account_pending_action
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_upgrade_account_pending_desc
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_upgrade_account_pending_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_upgrade_account_subtitle
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_upgrade_account_title
 
 @Composable
 fun ProfileRoot(
@@ -100,6 +111,7 @@ fun ProfileRoot(
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
+    onUpgradeAccount: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     onDeleteAccount: () -> Unit,
     modifier: Modifier = Modifier,
@@ -107,9 +119,11 @@ fun ProfileRoot(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    // Re-check the OS permission whenever the screen resumes (user may grant it in settings).
+    // Re-check the OS permission whenever the screen resumes (user may grant it in settings), and
+    // the account with it — an upgrade is usually confirmed in a mail client, i.e. off this screen.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshNotificationPermission()
+        viewModel.refreshAccount()
     }
 
     ObserveAsEvents(viewModel.events) { event ->
@@ -130,6 +144,11 @@ fun ProfileRoot(
         onEditUsername = onEditUsername,
         onChangePassword = onChangePassword,
         onChangeEmail = onChangeEmail,
+        // Also reached from the sign-out dialog, which has to close behind the navigation.
+        onUpgradeAccount = {
+            viewModel.onDismissSignOutDialog()
+            onUpgradeAccount()
+        },
         onOpenOssLicenses = onOpenOssLicenses,
         onDeleteAccount = onDeleteAccount,
         onSignOut = viewModel::onSignOutClick,
@@ -149,6 +168,7 @@ internal fun ProfileScreen(
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
+    onUpgradeAccount: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
@@ -168,6 +188,7 @@ internal fun ProfileScreen(
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
             onChangeEmail = onChangeEmail,
+            onUpgradeAccount = onUpgradeAccount,
             onOpenOssLicenses = onOpenOssLicenses,
             onDeleteAccount = onDeleteAccount,
             onSignOut = onSignOut,
@@ -182,6 +203,7 @@ internal fun ProfileScreen(
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
             onChangeEmail = onChangeEmail,
+            onUpgradeAccount = onUpgradeAccount,
             onOpenOssLicenses = onOpenOssLicenses,
             onDeleteAccount = onDeleteAccount,
             onSignOut = onSignOut,
@@ -192,31 +214,73 @@ internal fun ProfileScreen(
     if (state.showSignOutDialog) {
         AlertDialog(
             onDismissRequest = onDismissSignOutDialog,
-            title = { Text(text = stringResource(Res.string.profile_sign_out_dialog_title)) },
-            text = {
+            title = {
                 Text(
                     text =
-                        if (state.pendingWriteCount == 1) {
-                            stringResource(Res.string.profile_sign_out_dialog_text_one)
+                        if (state.isRegistered) {
+                            stringResource(Res.string.profile_sign_out_dialog_title)
                         } else {
-                            stringResource(
-                                Res.string.profile_sign_out_dialog_text_other,
-                                state.pendingWriteCount,
-                            )
+                            stringResource(Res.string.profile_sign_out_guest_dialog_title)
                         },
                 )
             },
+            text = { Text(text = signOutDialogText(state)) },
             confirmButton = {
-                TextButton(onClick = onConfirmSignOut) {
-                    Text(text = stringResource(Res.string.profile_sign_out_dialog_confirm))
+                // Guests are steered to the upgrade instead: signing out destroys the only way back
+                // into the account, so the safe action gets the emphasis position.
+                if (state.isRegistered) {
+                    TextButton(onClick = onConfirmSignOut) {
+                        Text(text = stringResource(Res.string.profile_sign_out_dialog_confirm))
+                    }
+                } else {
+                    TextButton(onClick = onUpgradeAccount) {
+                        Text(text = stringResource(Res.string.profile_sign_out_dialog_create_account))
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = onDismissSignOutDialog) {
-                    Text(text = stringResource(Res.string.profile_sign_out_dialog_dismiss))
+                if (state.isRegistered) {
+                    TextButton(onClick = onDismissSignOutDialog) {
+                        Text(text = stringResource(Res.string.profile_sign_out_dialog_dismiss))
+                    }
+                } else {
+                    TextButton(onClick = onConfirmSignOut) {
+                        Text(text = stringResource(Res.string.profile_sign_out_dialog_confirm))
+                    }
                 }
             },
         )
+    }
+}
+
+@Composable
+private fun signOutDialogText(state: ProfileState): String {
+    return when {
+        state.isRegistered && state.pendingWriteCount == 1 -> {
+            stringResource(Res.string.profile_sign_out_dialog_text_one)
+        }
+
+        state.isRegistered -> {
+            stringResource(Res.string.profile_sign_out_dialog_text_other, state.pendingWriteCount)
+        }
+
+        state.pendingWriteCount == 0 -> {
+            stringResource(Res.string.profile_sign_out_guest_dialog_text)
+        }
+
+        state.pendingWriteCount == 1 -> {
+            stringResource(
+                Res.string.profile_sign_out_guest_dialog_text_pending_writes,
+                state.pendingWriteCount,
+            )
+        }
+
+        else -> {
+            stringResource(
+                Res.string.profile_sign_out_guest_dialog_text_pending_writes_other,
+                state.pendingWriteCount,
+            )
+        }
     }
 }
 
@@ -229,6 +293,7 @@ private fun ProfilePhonePane(
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
+    onUpgradeAccount: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
@@ -259,6 +324,7 @@ private fun ProfilePhonePane(
             onEditUsername = onEditUsername,
             onChangePassword = onChangePassword,
             onChangeEmail = onChangeEmail,
+            onUpgradeAccount = onUpgradeAccount,
             onOpenOssLicenses = onOpenOssLicenses,
         )
         VerticalSpacer(8.dp)
@@ -286,6 +352,7 @@ private fun SettingsTwoPane(
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
+    onUpgradeAccount: () -> Unit,
     onOpenOssLicenses: () -> Unit,
     onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
@@ -331,6 +398,7 @@ private fun SettingsTwoPane(
                         onEditUsername = onEditUsername,
                         onChangePassword = onChangePassword,
                         onChangeEmail = onChangeEmail,
+                        onUpgradeAccount = onUpgradeAccount,
                         onOpenOssLicenses = onOpenOssLicenses,
                     )
                 }
@@ -461,9 +529,33 @@ private fun ProfileAccountAndAppearance(
     onEditUsername: () -> Unit,
     onChangePassword: () -> Unit,
     onChangeEmail: () -> Unit,
+    onUpgradeAccount: () -> Unit,
     onOpenOssLicenses: () -> Unit,
 ) {
     SectionLabel(stringResource(Res.string.profile_section_account))
+    // Guests have no email or password rows to show; this takes their place and is the only entry
+    // point to the upgrade, so it stays at the top of the section in both layouts.
+    if (!state.isRegistered) {
+        val pendingMigrationEmail = state.pendingMigrationEmail
+        if (pendingMigrationEmail != null) {
+            // The account is still a guest account until the link is opened. That in-between is
+            // easy to forget about — and it is exactly when the user is most likely to lose
+            // everything by signing out — so it gets a callout rather than a row.
+            PendingMigrationBanner(
+                email = pendingMigrationEmail,
+                onOpenUpgrade = onUpgradeAccount,
+            )
+        } else {
+            AccountRow(
+                iconRes = Res.drawable.ic_person_add,
+                title = stringResource(Res.string.profile_upgrade_account_title),
+                subtitle = stringResource(Res.string.profile_upgrade_account_subtitle),
+                onClick = onUpgradeAccount,
+                showChevron = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
     if (twoColumnAccount) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             AccountRow(
@@ -815,6 +907,48 @@ private fun NotificationsCard(
         }
         if (permissionBlocked) {
             NotificationPermissionBanner(onOpenSettings = onOpenSettings)
+        }
+    }
+}
+
+@Composable
+private fun PendingMigrationBanner(
+    email: String,
+    onOpenUpgrade: () -> Unit,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_mail),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                HorizontalSpacer(12.dp)
+                Text(
+                    text = stringResource(Res.string.profile_upgrade_account_pending_title),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Text(
+                text = stringResource(Res.string.profile_upgrade_account_pending_desc, email),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            TextButton(
+                onClick = onOpenUpgrade,
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text(stringResource(Res.string.profile_upgrade_account_pending_action))
+            }
         }
     }
 }

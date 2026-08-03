@@ -38,6 +38,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.join_group
 import tabmatesapp.features.tabgroup.presentation.generated.resources.oss_licenses_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.upgrade_account_title
 
 @Serializable
 data object Home : LoggableNavKey(), TopLevelTab, ScreenWithFab {
@@ -100,6 +101,12 @@ data object ChangePassword : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
 @Serializable
 data object ChangeEmail : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.change_email_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Close
+}
+
+@Serializable
+data object UpgradeAccount : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.upgrade_account_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
 
