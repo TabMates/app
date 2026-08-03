@@ -59,9 +59,7 @@ class EmailVerificationViewModel(
                 .verifyEmail(token)
                 .onSuccess {
                     if (isAnonymousUpgrade) {
-                        // Pulls the now-registered user into the cached session so the app stops
-                        // treating this account as a guest.
-                        authService.refreshAccount()
+                        adoptRegisteredUser()
                     } else {
                         // Confirming an email change revokes all refresh tokens server-side, so
                         // force a fresh login. Routed through the invalidator so this counts as an
@@ -82,6 +80,32 @@ class EmailVerificationViewModel(
                         it.copy(isVerified = false, isVerifying = false)
                     }
                 }
+        }
+    }
+
+    /**
+     * Replaces the cached anonymous user with the registered one the migration just produced.
+     *
+     * Normally that is the server's own copy. When it cannot be fetched the account type is still
+     * known — a redeemed token under an anonymous session *is* the migration — so it is corrected
+     * locally instead of leaving the app treating a registered user as a guest, which would offer
+     * them the upgrade again and warn them that signing out destroys their groups. The address
+     * catches up on the next refresh; ending the session over a failed GET would undo the one
+     * thing this flow exists to guarantee.
+     */
+    private suspend fun adoptRegisteredUser() {
+        authService.refreshAccount().onFailure {
+            sessionStorage.get()?.let { current ->
+                sessionStorage.set(
+                    current.copy(
+                        user =
+                            current.user.copy(
+                                hasVerifiedEmail = true,
+                                userType = UserType.REGISTERED,
+                            ),
+                    ),
+                )
+            }
         }
     }
 }

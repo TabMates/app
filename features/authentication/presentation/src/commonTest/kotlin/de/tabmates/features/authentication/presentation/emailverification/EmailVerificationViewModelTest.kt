@@ -4,6 +4,7 @@ import de.tabmates.core.domain.auth.AuthInfo
 import de.tabmates.core.domain.auth.SessionInvalidationReason
 import de.tabmates.core.domain.auth.User
 import de.tabmates.core.domain.auth.UserType
+import de.tabmates.core.domain.auth.UserWithPendingEmail
 import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
@@ -126,7 +127,17 @@ class EmailVerificationViewModelTest {
             // account had no password to sign back in with until this moment.
             val sessionStorage = FakeSessionStorage(initial = authInfo(userType = UserType.ANONYMOUS))
             val sessionInvalidator = FakeSessionInvalidator(sessionStorage)
-            val authService = FakeAuthService(verifyEmailResult = Result.Success(Unit))
+            val authService =
+                FakeAuthService(
+                    verifyEmailResult = Result.Success(Unit),
+                    refreshAccountResult =
+                        Result.Success(
+                            UserWithPendingEmail(
+                                user = authInfo().user,
+                                pendingEmail = null,
+                            ),
+                        ),
+                )
             val viewModel =
                 createViewModel(
                     authService = authService,
@@ -140,6 +151,32 @@ class EmailVerificationViewModelTest {
             assertNotNull(sessionStorage.get())
             // The now-registered user has to replace the cached anonymous one.
             assertEquals(1, authService.refreshAccountCalls)
+        }
+
+    @Test
+    fun `a failed refresh still stops treating the upgraded account as a guest`() =
+        runTest(testDispatcher) {
+            // The migration already happened server-side — the redeemed token is the proof — so a
+            // GET that does not come back must not leave the app offering the upgrade again, and
+            // must not end a session the account has only just gained credentials for.
+            val sessionStorage = FakeSessionStorage(initial = authInfo(userType = UserType.ANONYMOUS))
+            val sessionInvalidator = FakeSessionInvalidator(sessionStorage)
+            val viewModel =
+                createViewModel(
+                    authService =
+                        FakeAuthService(
+                            verifyEmailResult = Result.Success(Unit),
+                            refreshAccountResult = Result.Failure(DataError.Remote.SERVER_ERROR),
+                        ),
+                    sessionStorage = sessionStorage,
+                    sessionInvalidator = sessionInvalidator,
+                )
+
+            assertEquals(true, viewModel.state.value.isVerified)
+            assertEquals(true, viewModel.state.value.retainsSession)
+            assertEquals(emptyList(), sessionInvalidator.reasons)
+            assertEquals(UserType.REGISTERED, sessionStorage.get()?.user?.userType)
+            assertEquals(true, sessionStorage.get()?.user?.hasVerifiedEmail)
         }
 
     private fun authInfo(userType: UserType = UserType.REGISTERED): AuthInfo =
