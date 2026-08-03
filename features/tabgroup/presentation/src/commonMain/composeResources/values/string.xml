@@ -251,7 +251,7 @@
     <string name="split_screen_tab_percentage">%</string>
     <string name="split_screen_tab_shares">Shares</string>
     <string name="split_screen_running_total_must_equal">Running total must equal %1$s to save.</string>
-    <string name="split_screen_percent_total_must_equal_100">Percentages must total 100%% to save.</string>
+    <string name="split_screen_percent_total_must_equal_100">Percentages must total 100% to save.</string>
     <string name="split_screen_shares_must_be_positive">Add at least one share to save.</string>
 
     <string name="expense_detail_edit_cd">Edit</string>
