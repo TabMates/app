@@ -13,7 +13,7 @@ private const val DEEP_LINK_STASH_KEY = "tm_deeplink"
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
-    // A deep path (e.g. /j/<token>) has no file on static GitHub Pages, so 404.html stashed the
+    // A deep path (e.g. /join/<token>) has no file on static GitHub Pages, so 404.html stashed the
     // original URL and bounced us to the root. Prefer that stashed URL (consumed once); otherwise
     // use the address bar as usual. Either way the shared DeepLinkHandler resolves it.
     val stashedDeepLink =

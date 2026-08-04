@@ -117,9 +117,9 @@ private val savedStateConfiguration = SavedStateConfiguration {
 // Matched against the user-facing public host (BASE_URL_PUBLIC, e.g. https://app.tabmates.de),
 // not the backend API host — the same URL an installed app (App Links) and the web client resolve.
 private val deepLinks = listOf(
-    navDeepLink<EmailVerification>(basePath = "${BuildKonfig.BASE_URL_PUBLIC}/api/auth/verify"),
-    navDeepLink<ResetPassword>(basePath = "${BuildKonfig.BASE_URL_PUBLIC}/api/auth/reset-password"),
-    navDeepLink<JoinGroup>(basePath = "${BuildKonfig.BASE_URL_PUBLIC}/j", pathSuffixParam = "token"),
+    navDeepLink<EmailVerification>(basePath = "${BuildKonfig.BASE_URL_PUBLIC}/verify", pathSuffixParam = "token"),
+    navDeepLink<ResetPassword>(basePath = "${BuildKonfig.BASE_URL_PUBLIC}/reset-password", pathSuffixParam = "token"),
+    navDeepLink<JoinGroup>(basePath = "${BuildKonfig.BASE_URL_PUBLIC}/join", pathSuffixParam = "token"),
     navDeepLink<GroupDetail>(basePath = "${BuildKonfig.BASE_URL_PUBLIC}/groups", pathSuffixParam = "groupId"),
 )
 

@@ -43,9 +43,9 @@
                 <!-- Must match the prod BASE_URL_PUBLIC host (and the web CNAME). -->
                 <data android:host="app.tabmates.de" />
 
-                <data android:pathPrefix="/api/auth/verify" />
-                <data android:pathPrefix="/api/auth/reset-password" />
-                <data android:pathPrefix="/j/" />
+                <data android:pathPrefix="/verify/" />
+                <data android:pathPrefix="/reset-password/" />
+                <data android:pathPrefix="/join/" />
                 <!-- Stateless "open the app" target. Carries no data: it exists so the web
                      client's intent:// promo has a path this app claims, and so a plain
                      https://app.tabmates.de/open link opens the app when it is installed.
@@ -61,9 +61,9 @@
                 <data android:scheme="tabmates" />
                 <data android:host="app.tabmates.de" />
 
-                <data android:pathPrefix="/api/auth/verify" />
-                <data android:pathPrefix="/api/auth/reset-password" />
-                <data android:pathPrefix="/j/" />
+                <data android:pathPrefix="/verify/" />
+                <data android:pathPrefix="/reset-password/" />
+                <data android:pathPrefix="/join/" />
                 <data android:pathPrefix="/open" />
             </intent-filter>
         </activity>
