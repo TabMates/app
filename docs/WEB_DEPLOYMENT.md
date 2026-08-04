@@ -169,12 +169,15 @@ App Links) when present, and otherwise load the **web client** at the same URL, 
 Key point: the user-facing link host is **decoupled from the backend API host**. Links and
 deep-link matching use `BASE_URL_PUBLIC` (e.g. `https://app.tabmates.de`), *not* the API
 `BASE_URL_HTTP`. `BASE_URL_PUBLIC` is **required to build** (like `BASE_URL_HTTP`); for local
-dev set it to your `BASE_URL_HTTP` value. Currently deep-linkable: `/api/auth/verify`,
-`/api/auth/reset-password`, `/j/<token>` (invites). `/groups/<id>` resolves in-app from
-notifications but is intentionally **not** an external App Link.
+dev set it to your `BASE_URL_HTTP` value. Currently deep-linkable: `/verify/<token>`,
+`/reset-password/<token>`, `/join/<token>` (invites), and `/open` (stateless — claims the path
+so the app opens, resolves to no route). All three token routes carry the token as a **path
+segment**, not a query param, and their manifest `pathPrefix` keeps the trailing slash so a
+tokenless `/verify` is not claimed. `/groups/<id>` resolves in-app from notifications but is
+intentionally **not** an external App Link.
 
 **Web fallback (app not installed).** GitHub Pages is static with no SPA rewrite, so a direct
-hit to a sub-path (`/j/<token>`) would 404. `composeApp/src/wasmJsMain/resources/404.html`
+hit to a sub-path (`/join/<token>`) would 404. `composeApp/src/wasmJsMain/resources/404.html`
 stashes the original URL in `sessionStorage` and redirects to the root (a real file, so it is
 reload-safe with coi-serviceworker); `webMain/.../main.kt` then consumes the stashed URL and
 feeds the shared `DeepLinkHandler`. The address bar stays on `/` — consistent with the app,
@@ -199,9 +202,17 @@ adb shell pm get-app-links de.tabmates.androidapp              # expect: verifie
 Debug builds are signed with the debug key, which is **not** in `assetlinks.json`, so they will
 not auto-verify — test the installed-app path with a release build (or the `tabmates://` custom
 scheme). For manual testing:
-`adb shell am start -a android.intent.action.VIEW -d "https://app.tabmates.de/j/TESTTOKEN"`.
+`adb shell am start -a android.intent.action.VIEW -d "https://app.tabmates.de/join/TESTTOKEN"`.
 
 **Backend (separate repo) — required for auth email links.** The emailed
-`/api/auth/verify` and `/api/auth/reset-password` links (and group-notification deep links)
-must be emitted on the **public host** (`app.tabmates.de`) so they match the app's registered
-links and open the app/web rather than hitting the API host directly.
+links must be emitted on the **public host** (`app.tabmates.de`) as `/verify/<token>` and
+`/reset-password/<token>` (and group-notification deep links likewise), so they match the app's
+registered links and open the app/web rather than hitting the API host directly. These are
+*link* paths only — the endpoints the app then POSTs to stay `/api/auth/verify` and
+`/api/auth/reset-password` on the API host, with the token in the body. The app matches nothing
+else: an email still carrying the old `/api/auth/…` link — or the query form `/verify?token=…`,
+which is no longer an App Link since the manifest prefix requires the trailing slash — drops its
+token and lands on the app root. Same for an invite still on `/j/<token>`.
+
+Tokens must be URL-safe: the path is percent-decoded before the segment is split, so a token
+containing an encoded `/` (`%2F`) would be truncated at that point.

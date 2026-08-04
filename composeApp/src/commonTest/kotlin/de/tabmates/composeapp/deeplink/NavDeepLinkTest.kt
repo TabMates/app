@@ -16,9 +16,9 @@ class NavDeepLinkTest {
     @BeforeTest
     fun setUp() {
         deepLinks = listOf(
-            navDeepLink<EmailVerification>(basePath = "https://example.com/api/auth/verify"),
-            navDeepLink<ResetPassword>(basePath = "https://example.com/api/auth/reset-password"),
-            navDeepLink<JoinGroup>(basePath = "https://example.com/j", pathSuffixParam = "token"),
+            navDeepLink<EmailVerification>(basePath = "https://example.com/verify", pathSuffixParam = "token"),
+            navDeepLink<ResetPassword>(basePath = "https://example.com/reset-password", pathSuffixParam = "token"),
+            navDeepLink<JoinGroup>(basePath = "https://example.com/join", pathSuffixParam = "token"),
             navDeepLink<GroupDetail>(basePath = "https://example.com/groups", pathSuffixParam = "groupId"),
         )
     }
@@ -27,14 +27,14 @@ class NavDeepLinkTest {
 
     @Test
     fun resolveEmailVerificationReturnsCorrectNavKey() {
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=abc123", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=abc123", deepLinks)
 
         assertEquals(EmailVerification(token = "abc123"), result)
     }
 
     @Test
     fun resolveResetPasswordReturnsCorrectNavKey() {
-        val result = resolveDeepLink("https://example.com/api/auth/reset-password?token=xyz789", deepLinks)
+        val result = resolveDeepLink("https://example.com/reset-password?token=xyz789", deepLinks)
 
         assertEquals(ResetPassword(token = "xyz789"), result)
     }
@@ -48,21 +48,21 @@ class NavDeepLinkTest {
 
     @Test
     fun resolveWithCustomSchemeReturnsCorrectNavKey() {
-        val result = resolveDeepLink("tabmates://example.com/api/auth/verify?token=abc123", deepLinks)
+        val result = resolveDeepLink("tabmates://example.com/verify?token=abc123", deepLinks)
 
         assertEquals(EmailVerification(token = "abc123"), result)
     }
 
     @Test
     fun resolveIgnoresExtraQueryParams() {
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=abc123&extra=value", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=abc123&extra=value", deepLinks)
 
         assertEquals(EmailVerification(token = "abc123"), result)
     }
 
     @Test
     fun resolveWithRepeatedKeyUsesLastValue() {
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=first&token=second", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=first&token=second", deepLinks)
 
         assertEquals(EmailVerification(token = "second"), result)
     }
@@ -73,21 +73,21 @@ class NavDeepLinkTest {
 
     @Test
     fun resolveMatchesCaseInsensitiveHost() {
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=abc123", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=abc123", deepLinks)
 
         assertEquals(EmailVerification(token = "abc123"), result)
     }
 
     @Test
     fun resolveMatchesMixedCaseHost() {
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=abc123", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=abc123", deepLinks)
 
         assertEquals(EmailVerification(token = "abc123"), result)
     }
 
     @Test
     fun resolveWithWrongHostReturnsNull() {
-        val result = resolveDeepLink("https://wrong.host.com/api/auth/verify?token=abc123", deepLinks)
+        val result = resolveDeepLink("https://wrong.host.com/verify?token=abc123", deepLinks)
 
         assertNull(result)
     }
@@ -95,7 +95,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveWithHostPortMismatchReturnsNull() {
         // host:port is a different authority than host alone
-        val result = resolveDeepLink("https://example.com:8080/api/auth/verify?token=abc123", deepLinks)
+        val result = resolveDeepLink("https://example.com:8080/verify?token=abc123", deepLinks)
 
         assertNull(result)
     }
@@ -106,38 +106,38 @@ class NavDeepLinkTest {
 
     @Test
     fun resolveWithSimilarPrefixPathReturnsNull() {
-        val result = resolveDeepLink("https://example.com/api/auth/verify-evil?token=abc123", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify-evil?token=abc123", deepLinks)
 
         assertNull(result)
     }
 
     @Test
     fun resolveWithSuffixedPathReturnsNull() {
-        val result = resolveDeepLink("https://example.com/api/auth/verifySomething?token=abc123", deepLinks)
+        val result = resolveDeepLink("https://example.com/verifySomething?token=abc123", deepLinks)
 
         assertNull(result)
     }
 
     @Test
     fun resolvePathIsCaseSensitive() {
-        val result = resolveDeepLink("https://example.com/API/AUTH/VERIFY?token=abc123", deepLinks)
+        val result = resolveDeepLink("https://example.com/VERIFY?token=abc123", deepLinks)
 
         assertNull(result)
     }
 
     @Test
     fun resolveWithTrailingSlashOnIncomingUri() {
-        // "/api/auth/verify/" startsWith "/api/auth/verify/" — sub-path match
-        val result = resolveDeepLink("https://example.com/api/auth/verify/?token=abc123", deepLinks)
+        // "/verify/" startsWith "/verify/" — sub-path match
+        val result = resolveDeepLink("https://example.com/verify/?token=abc123", deepLinks)
 
-        // Path is "/api/auth/verify/" which starts with "/api/auth/verify/" — matches
+        // Path is "/verify/" which starts with "/verify/" — matches
         assertEquals(EmailVerification(token = "abc123"), result)
     }
 
     @Test
     fun resolveWithPercentEncodedPathSegment() {
         // %76erify → decoded to "verify", should match
-        val result = resolveDeepLink("https://example.com/api/auth/%76erify?token=abc123", deepLinks)
+        val result = resolveDeepLink("https://example.com/%76erify?token=abc123", deepLinks)
 
         assertEquals(EmailVerification(token = "abc123"), result)
     }
@@ -148,7 +148,7 @@ class NavDeepLinkTest {
 
     @Test
     fun resolveWithEmptyQueryReturnsNull() {
-        val result = resolveDeepLink("https://example.com/api/auth/verify?", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?", deepLinks)
 
         assertNull(result)
     }
@@ -156,7 +156,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveQueryParamWithEmptyValue() {
         // token= (empty value) → EmailVerification(token = "")
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=", deepLinks)
 
         assertEquals(EmailVerification(token = ""), result)
     }
@@ -164,7 +164,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveSkipsQueryParamWithoutEquals() {
         // "orphan" has no '=' so it is skipped; token is still extracted
-        val result = resolveDeepLink("https://example.com/api/auth/verify?orphan&token=abc123", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?orphan&token=abc123", deepLinks)
 
         assertEquals(EmailVerification(token = "abc123"), result)
     }
@@ -172,7 +172,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveSkipsEmptyQuerySegments() {
         // Double && produces an empty segment between them — should be ignored
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=abc123&&extra=x", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=abc123&&extra=x", deepLinks)
 
         assertEquals(EmailVerification(token = "abc123"), result)
     }
@@ -183,7 +183,7 @@ class NavDeepLinkTest {
 
     @Test
     fun resolveIgnoresFragmentAfterQuery() {
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=abc123#section", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=abc123#section", deepLinks)
 
         assertEquals(EmailVerification(token = "abc123"), result)
     }
@@ -191,7 +191,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveIgnoresQueryInsideFragment() {
         // RFC 3986 §3.5: '?' inside a fragment is NOT a query delimiter
-        val result = resolveDeepLink("https://example.com/api/auth/verify#section?token=abc123", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify#section?token=abc123", deepLinks)
 
         assertNull(result) // no query → missing required param
     }
@@ -199,14 +199,14 @@ class NavDeepLinkTest {
     @Test
     fun resolveIgnoresComplexFragment() {
         // Fragment containing '?', '&', '=' — none of it is query
-        val result = resolveDeepLink("https://example.com/api/auth/verify#a?b=c&d=e", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify#a?b=c&d=e", deepLinks)
 
         assertNull(result) // no query → missing required param
     }
 
     @Test
     fun resolveWithEmptyFragment() {
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=abc123#", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=abc123#", deepLinks)
 
         assertEquals(EmailVerification(token = "abc123"), result)
     }
@@ -218,7 +218,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveDecodesPercentEncodedReservedChars() {
         // %3D → '=', %26 → '&'
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=abc%3D%26123", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=abc%3D%26123", deepLinks)
 
         assertEquals(EmailVerification(token = "abc=&123"), result)
     }
@@ -226,7 +226,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveDecodesLowercaseHexDigits() {
         // %3d (lowercase) is equivalent to %3D (uppercase) per RFC 3986 §2.1
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=abc%3d123", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=abc%3d123", deepLinks)
 
         assertEquals(EmailVerification(token = "abc=123"), result)
     }
@@ -234,7 +234,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveDecodesPercentEncodedUnreservedChars() {
         // %61 → 'a', %62 → 'b' — over-encoded but valid
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=%61%62c", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=%61%62c", deepLinks)
 
         assertEquals(EmailVerification(token = "abc"), result)
     }
@@ -242,7 +242,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveDecodesPercentEncodedPercent() {
         // %25 → literal '%'
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=100%25done", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=100%25done", deepLinks)
 
         assertEquals(EmailVerification(token = "100%done"), result)
     }
@@ -250,7 +250,7 @@ class NavDeepLinkTest {
     @Test
     fun resolvePreservesIncompletePercentSequence() {
         // Trailing '%2' is not a valid percent-encoded triplet — kept as-is
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=abc%2", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=abc%2", deepLinks)
 
         assertEquals(EmailVerification(token = "abc%2"), result)
     }
@@ -258,7 +258,7 @@ class NavDeepLinkTest {
     @Test
     fun resolvePreservesInvalidPercentHexDigits() {
         // %GG is not valid hex — kept as-is
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=abc%GGdef", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=abc%GGdef", deepLinks)
 
         assertEquals(EmailVerification(token = "abc%GGdef"), result)
     }
@@ -270,7 +270,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveDecodesTwoByteUtf8() {
         // %C3%A9 → 'é' (U+00E9, 2-byte UTF-8)
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=caf%C3%A9", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=caf%C3%A9", deepLinks)
 
         assertEquals(EmailVerification(token = "café"), result)
     }
@@ -278,7 +278,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveDecodesThreeByteUtf8() {
         // %E4%B8%96 → '世' (U+4E16, 3-byte UTF-8)
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=%E4%B8%96", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=%E4%B8%96", deepLinks)
 
         assertEquals(EmailVerification(token = "世"), result)
     }
@@ -286,7 +286,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveDecodesFourByteUtf8() {
         // %F0%9F%8D%95 → '🍕' (U+1F355, 4-byte UTF-8)
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=%F0%9F%8D%95", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=%F0%9F%8D%95", deepLinks)
 
         assertEquals(EmailVerification(token = "🍕"), result)
     }
@@ -295,7 +295,7 @@ class NavDeepLinkTest {
     fun resolveDecodesMultiByteUtf8MixedWithPlainText() {
         // plain + 2-byte + plain + 3-byte
         val result = resolveDeepLink(
-            "https://example.com/api/auth/verify?token=a%C3%A9b%E4%B8%96c",
+            "https://example.com/verify?token=a%C3%A9b%E4%B8%96c",
             deepLinks,
         )
 
@@ -308,7 +308,7 @@ class NavDeepLinkTest {
 
     @Test
     fun resolveDecodesPlusAsSpaceInQuery() {
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=hello+world", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=hello+world", deepLinks)
 
         assertEquals(EmailVerification(token = "hello world"), result)
     }
@@ -316,7 +316,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveDecodesPercent2BAsLiteralPlus() {
         // %2B in query → literal '+' (NOT space)
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=a%2Bb", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=a%2Bb", deepLinks)
 
         assertEquals(EmailVerification(token = "a+b"), result)
     }
@@ -324,7 +324,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveDecodesPercent20AsSpace() {
         // %20 → space (RFC 3986 encoding, also valid in form-urlencoded)
-        val result = resolveDeepLink("https://example.com/api/auth/verify?token=hello%20world", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify?token=hello%20world", deepLinks)
 
         assertEquals(EmailVerification(token = "hello world"), result)
     }
@@ -335,7 +335,7 @@ class NavDeepLinkTest {
 
     @Test
     fun resolveWithNoSchemeReturnsNull() {
-        val result = resolveDeepLink("example.com/api/auth/verify?token=abc123", deepLinks)
+        val result = resolveDeepLink("example.com/verify?token=abc123", deepLinks)
 
         assertNull(result)
     }
@@ -349,7 +349,7 @@ class NavDeepLinkTest {
 
     @Test
     fun resolveWithMissingRequiredParamReturnsNull() {
-        val result = resolveDeepLink("https://example.com/api/auth/verify", deepLinks)
+        val result = resolveDeepLink("https://example.com/verify", deepLinks)
 
         assertNull(result)
     }
@@ -364,7 +364,7 @@ class NavDeepLinkTest {
     @Test
     fun resolveWithNoDeepLinksReturnsNull() {
         val result = resolveDeepLink(
-            "https://example.com/api/auth/verify?token=abc123",
+            "https://example.com/verify?token=abc123",
             emptyList(),
         )
 
@@ -377,21 +377,21 @@ class NavDeepLinkTest {
 
     @Test
     fun resolvePathSuffixParamExtractsToken() {
-        val result = resolveDeepLink("https://example.com/j/abc123", deepLinks)
+        val result = resolveDeepLink("https://example.com/join/abc123", deepLinks)
 
         assertEquals(JoinGroup(token = "abc123"), result)
     }
 
     @Test
     fun resolvePathSuffixParamWithCustomScheme() {
-        val result = resolveDeepLink("tabmates://example.com/j/abc123", deepLinks)
+        val result = resolveDeepLink("tabmates://example.com/join/abc123", deepLinks)
 
         assertEquals(JoinGroup(token = "abc123"), result)
     }
 
     @Test
     fun resolvePathSuffixParamDecodesPercentEncoding() {
-        val result = resolveDeepLink("https://example.com/j/abc%2D123", deepLinks)
+        val result = resolveDeepLink("https://example.com/join/abc%2D123", deepLinks)
 
         assertEquals(JoinGroup(token = "abc-123"), result)
     }
@@ -399,7 +399,7 @@ class NavDeepLinkTest {
     @Test
     fun resolvePathSuffixParamStopsAtNextSlash() {
         // additional segments after the token are ignored
-        val result = resolveDeepLink("https://example.com/j/abc123/extra", deepLinks)
+        val result = resolveDeepLink("https://example.com/join/abc123/extra", deepLinks)
 
         assertEquals(JoinGroup(token = "abc123"), result)
     }
@@ -407,19 +407,45 @@ class NavDeepLinkTest {
     @Test
     fun resolvePathSuffixParamFallsBackToQueryParamIfMissing() {
         // base path alone yields no suffix; required `token` param missing → null
-        val result = resolveDeepLink("https://example.com/j", deepLinks)
+        val result = resolveDeepLink("https://example.com/join", deepLinks)
 
         assertNull(result)
     }
 
     @Test
-    fun resolvePathSuffixParamPrefersQueryParamWhenBothPresent() {
-        // path suffix sets token first, then query overrides via map put — query wins
-        val result = resolveDeepLink("https://example.com/j/path-token?token=query-token", deepLinks)
+    fun resolvePathSuffixParamPrefersPathSuffixWhenBothPresent() {
+        // the suffix is written into the map after the query is parsed, so the path wins
+        val result = resolveDeepLink("https://example.com/join/path-token?token=query-token", deepLinks)
 
-        // path suffix is written first, query parsed second but suffix overrides via mutable map
-        // Actual behavior: pathSuffixParam writes AFTER queryParams are parsed → suffix wins
         assertEquals(JoinGroup(token = "path-token"), result)
+    }
+
+    @Test
+    fun resolveEmailVerificationFromPathSuffix() {
+        val result = resolveDeepLink("https://example.com/verify/abc123", deepLinks)
+
+        assertEquals(EmailVerification(token = "abc123"), result)
+    }
+
+    @Test
+    fun resolveResetPasswordFromPathSuffix() {
+        val result = resolveDeepLink("https://example.com/reset-password/xyz789", deepLinks)
+
+        assertEquals(ResetPassword(token = "xyz789"), result)
+    }
+
+    @Test
+    fun resolveEmailVerificationFromPathSuffixWithCustomScheme() {
+        val result = resolveDeepLink("tabmates://example.com/verify/abc123", deepLinks)
+
+        assertEquals(EmailVerification(token = "abc123"), result)
+    }
+
+    @Test
+    fun resolveResetPasswordPathSuffixDecodesPercentEncoding() {
+        val result = resolveDeepLink("https://example.com/reset-password/abc%2D123", deepLinks)
+
+        assertEquals(ResetPassword(token = "abc-123"), result)
     }
 
     // endregion

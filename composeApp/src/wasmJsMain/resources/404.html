@@ -5,7 +5,7 @@
     <title>TabMates</title>
     <!--
       GitHub Pages serves this for any path with no matching file (it is static, with no SPA
-      rewrite). Deep links like /j/<token> land here: stash the full URL and bounce to the root,
+      rewrite). Deep links like /join/<token> land here: stash the full URL and bounce to the root,
       which is a real file (reload-safe — coi-serviceworker reloads once on first visit, and the
       address bar stays on "/" so no 404 loop). main.kt then consumes the stashed URL and hands
       it to the existing DeepLinkHandler. This file is NOT CSP-injected by CI (the deploy step

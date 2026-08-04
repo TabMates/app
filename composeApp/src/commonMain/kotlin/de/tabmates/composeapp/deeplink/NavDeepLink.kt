@@ -15,7 +15,7 @@ import kotlinx.serialization.serializer
  * TODO: Replace with `androidx.navigation3.NavDeepLink` when available.
  *
  * @param basePath Full URI prefix including scheme, host, and path
- *   (e.g. `https://example.com/api/auth/verify`).
+ *   (e.g. `https://example.com/verify`).
  * @param serializer The KotlinX [KSerializer] for the target NavKey type.
  */
 data class NavDeepLink<T : NavKey>(
@@ -31,7 +31,7 @@ data class NavDeepLink<T : NavKey>(
  * TODO: Replace import with `androidx.navigation3.navDeepLink` when available.
  *
  * @param pathSuffixParam If set, the path segment immediately following [basePath]
- *   (e.g. `abc123` in `/j/abc123`) is decoded as the value for this query param.
+ *   (e.g. `abc123` in `/join/abc123`) is decoded as the value for this query param.
  */
 inline fun <reified T : NavKey> navDeepLink(
     basePath: String,
