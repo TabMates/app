@@ -43,7 +43,6 @@ class GroupOverviewViewModel(
     private val searchQueryFlow = snapshotFlow { searchQueryState.text.toString() }
 
     private val filterFlow = MutableStateFlow(GroupFilter.ALL)
-    private val selectedGroupIdFlow = MutableStateFlow<String?>(null)
 
     private val groupItemsFlow: Flow<List<GroupOverviewItem>> =
         combine(
@@ -92,8 +91,7 @@ class GroupOverviewViewModel(
             groupItemsFlow,
             filterFlow,
             searchQueryFlow,
-            selectedGroupIdFlow,
-        ) { items, filter, query, selected ->
+        ) { items, filter, query ->
             val displayed =
                 items
                     .filter { filter.matches(it.balance) }
@@ -104,7 +102,6 @@ class GroupOverviewViewModel(
                 displayedItems = displayed,
                 filter = filter,
                 searchQueryState = searchQueryState,
-                selectedGroupId = selected ?: items.firstOrNull()?.id,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -114,10 +111,6 @@ class GroupOverviewViewModel(
 
     fun onFilterSelected(filter: GroupFilter) {
         filterFlow.value = filter
-    }
-
-    fun onGroupSelected(groupId: String) {
-        selectedGroupIdFlow.value = groupId
     }
 }
 

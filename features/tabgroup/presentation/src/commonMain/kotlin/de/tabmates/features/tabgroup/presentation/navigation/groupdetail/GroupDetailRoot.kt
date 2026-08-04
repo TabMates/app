@@ -33,13 +33,15 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_arrow_b
 fun GroupDetailRoot(
     groupId: String,
     snackbarHostState: SnackbarHostState,
-    onBack: () -> Unit = {},
-    onSettingsClick: () -> Unit = {},
-    onAddEntryClick: () -> Unit = {},
-    onSettleUpClick: () -> Unit = {},
-    onEntryClick: (String) -> Unit = {},
-    onSettlementClick: (String) -> Unit = {},
-    onLeaveGroup: () -> Unit = {},
+    // No defaults on purpose: a silently defaulted callback is what left settle-up, settlement
+    // taps and leave-group dead in the tablet two-pane layout. Every call site states its intent.
+    onBack: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onAddEntryClick: () -> Unit,
+    onSettleUpClick: () -> Unit,
+    onEntryClick: (String) -> Unit,
+    onSettlementClick: (String) -> Unit,
+    onLeaveGroup: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupDetailViewModel =
         koinViewModel(

@@ -10,11 +10,7 @@ data class GroupOverviewState(
     val displayedItems: List<GroupOverviewItem> = emptyList(),
     val filter: GroupFilter = GroupFilter.ALL,
     val searchQueryState: TextFieldState = TextFieldState(),
-    val selectedGroupId: String? = null,
-) {
-    val selectedItem: GroupOverviewItem?
-        get() = allItems.firstOrNull { it.id == selectedGroupId }
-}
+)
 
 enum class GroupFilter { ALL, ACTIVE, SETTLED }
 

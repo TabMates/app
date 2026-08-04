@@ -4,6 +4,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import de.tabmates.core.presentation.navigation.PaneRole
 import de.tabmates.core.presentation.navigation.TopLevelTab
 import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivityRoot
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.AddEntryRoot
@@ -86,19 +87,24 @@ fun EntryProviderScope<NavKey>.mainGraph(
         )
     }
 
-    entry<Group> {
+    // The group list and whatever sits on top of it form the two panes on wide windows; see
+    // GroupTwoPaneSceneStrategy, which reads these roles back off the entries.
+    entry<Group>(metadata = PaneRole.list) {
+        // The back stack is the selection: no parallel flag to drift out of sync, and system back
+        // clears the detail pane on its own.
+        val selectedGroupId = backStack.filterIsInstance<GroupDetail>().lastOrNull()?.groupId
         GroupOverviewRoot(
-            onGroupOpen = { groupId -> backStack.add(GroupDetail(groupId)) },
-            onSettingsOpen = { groupId -> backStack.add(GroupSettings(groupId)) },
-            onAddEntryClick = { groupId -> backStack.add(AddEntry(groupId)) },
-            onEntryClick = { groupId, entryId ->
-                backStack.add(EntryDetail(entryId = entryId, groupId = groupId))
+            selectedGroupId = selectedGroupId,
+            onGroupOpen = { groupId ->
+                // Replace rather than stack: picking another group swaps the pane, it does not
+                // deepen the history.
+                backStack.removeAll { it is GroupDetail || it is SettleUp }
+                backStack.add(GroupDetail(groupId))
             },
-            snackbarHostState = snackbarHostState,
         )
     }
 
-    entry<GroupDetail> { route ->
+    entry<GroupDetail>(metadata = PaneRole.detail) { route ->
         val leftMessage = stringResource(Res.string.group_settings_left)
         GroupDetailRoot(
             groupId = route.groupId,
@@ -123,7 +129,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
         )
     }
 
-    entry<SettleUp> { route ->
+    entry<SettleUp>(metadata = PaneRole.detail) { route ->
         SettleUpRoot(
             groupId = route.groupId,
             snackbarHostState = snackbarHostState,
