@@ -12,6 +12,7 @@ import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.authentication.domain.EmailValidator
+import de.tabmates.features.authentication.domain.normalizeEmail
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -79,7 +80,7 @@ class UpgradeAccountViewModel(
     }
 
     fun validateEmailOnBlur() {
-        val email = emailState.text.toString().trim()
+        val email = emailState.text.toString().normalizeEmail()
         if (email.isEmpty()) return
         _state.update {
             it.copy(emailError = if (EmailValidator.validate(email)) null else emailInvalid)
@@ -107,7 +108,7 @@ class UpgradeAccountViewModel(
         if (_state.value.isSubmitting) return
         if (!validateFormInputs()) return
         submit(
-            email = emailState.text.toString().trim(),
+            email = emailState.text.toString().normalizeEmail(),
             password = passwordState.text.toString(),
         )
     }
@@ -121,7 +122,7 @@ class UpgradeAccountViewModel(
      */
     fun onResend() {
         if (_state.value.isSubmitting) return
-        val email = emailState.text.toString().trim()
+        val email = emailState.text.toString().normalizeEmail()
         val password = passwordState.text.toString()
         if (email.isEmpty() || password.isEmpty()) {
             _state.update { it.copy(pendingEmail = null) }
@@ -155,7 +156,7 @@ class UpgradeAccountViewModel(
     }
 
     private fun validateFormInputs(): Boolean {
-        val email = emailState.text.toString().trim()
+        val email = emailState.text.toString().normalizeEmail()
         val password = passwordState.text.toString()
         val confirmPassword = confirmPasswordState.text.toString()
 

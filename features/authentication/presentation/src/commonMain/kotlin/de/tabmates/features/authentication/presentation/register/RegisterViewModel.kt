@@ -12,6 +12,7 @@ import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.authentication.domain.EmailValidator
 import de.tabmates.features.authentication.domain.UsernameValidator
+import de.tabmates.features.authentication.domain.normalizeEmail
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -127,6 +128,7 @@ class RegisterViewModel(
         val email =
             state.value.emailTextState.text
                 .toString()
+                .normalizeEmail()
         if (email.isEmpty()) return
         val error =
             if (!EmailValidator.validate(email)) {
@@ -200,6 +202,7 @@ class RegisterViewModel(
             val email =
                 state.value.emailTextState.text
                     .toString()
+                    .normalizeEmail()
             val username =
                 state.value.usernameTextState.text
                     .toString()
@@ -229,7 +232,10 @@ class RegisterViewModel(
 
     private fun validateFormInputs(): Boolean {
         val currentState = state.value
-        val email = currentState.emailTextState.text.toString()
+        val email =
+            currentState.emailTextState.text
+                .toString()
+                .normalizeEmail()
         val username = currentState.usernameTextState.text.toString()
         val password = currentState.passwordTextState.text.toString()
         val confirmPassword = currentState.confirmPasswordTextState.text.toString()

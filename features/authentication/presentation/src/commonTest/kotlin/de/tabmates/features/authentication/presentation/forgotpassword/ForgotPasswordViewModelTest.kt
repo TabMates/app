@@ -109,6 +109,23 @@ class ForgotPasswordViewModelTest {
         }
 
     @Test
+    fun submitForgotPasswordRequestSendsTheEmailTrimmedAndLowercased() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService(forgotPasswordResult = Result.Success(Unit))
+            val viewModel = createViewModel(authService = authService)
+            viewModel.state.value.emailTextFieldState.edit {
+                replace(0, length, " Test.User@Example.COM ")
+            }
+            Snapshot.sendApplyNotifications()
+            advanceUntilIdle()
+
+            viewModel.submitForgotPasswordRequest()
+            advanceUntilIdle()
+
+            assertEquals(listOf("test.user@example.com"), authService.forgotPasswordEmails)
+        }
+
+    @Test
     fun submitForgotPasswordRequestFailureSetsError() =
         runTest(testDispatcher) {
             val error = DataError.Remote.NOT_FOUND

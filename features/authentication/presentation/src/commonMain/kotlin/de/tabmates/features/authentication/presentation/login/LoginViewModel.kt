@@ -10,6 +10,7 @@ import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.authentication.domain.EmailValidator
+import de.tabmates.features.authentication.domain.normalizeEmail
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,7 +58,7 @@ class LoginViewModel(
         snapshotFlow {
             _state.value.emailTextFieldState.text
                 .toString()
-                .trim()
+                .normalizeEmail()
         }.map { email -> EmailValidator.validate(email) }
             .distinctUntilChanged()
 
@@ -103,7 +104,7 @@ class LoginViewModel(
             val email =
                 state.value.emailTextFieldState.text
                     .toString()
-                    .trim()
+                    .normalizeEmail()
             val password =
                 state.value.passwordTextFieldState.text
                     .toString()
@@ -153,7 +154,7 @@ class LoginViewModel(
             val email =
                 state.value.emailTextFieldState.text
                     .toString()
-                    .trim()
+                    .normalizeEmail()
 
             authService
                 .resendVerificationEmail(email)

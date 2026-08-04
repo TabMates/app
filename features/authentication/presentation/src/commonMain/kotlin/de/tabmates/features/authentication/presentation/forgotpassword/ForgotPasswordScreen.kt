@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.buttons.TabMatesButton
 import de.tabmates.core.designsystem.preview.PreviewThemes
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.designsystem.textfields.EmailInputTransformation
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.designsystem.theme.extended
@@ -86,6 +88,8 @@ private fun ForgotPasswordScreen(
             keyboardType = KeyboardType.Email,
             singleLine = true,
             imeAction = ImeAction.Done,
+            capitalization = KeyboardCapitalization.None,
+            inputTransformation = EmailInputTransformation,
             onKeyboardAction = {
                 if (enabled) {
                     focusManager.clearFocus()

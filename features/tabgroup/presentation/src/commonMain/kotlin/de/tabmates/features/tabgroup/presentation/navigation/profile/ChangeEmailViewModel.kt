@@ -11,6 +11,7 @@ import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.authentication.domain.EmailValidator
+import de.tabmates.features.authentication.domain.normalizeEmail
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,13 +48,14 @@ class ChangeEmailViewModel(
 
     fun onSave() {
         if (_state.value.isSubmitting) return
-        val newEmail = newEmailState.text.toString().trim()
+        val newEmail = newEmailState.text.toString().normalizeEmail()
         val password = passwordState.text.toString()
         if (!EmailValidator.validate(newEmail)) {
             send(ChangeEmailEvent.Error(UiText.Resource(Res.string.change_email_error_invalid)))
             return
         }
-        if (newEmail.equals(sessionStorage.get()?.user?.email, ignoreCase = true)) {
+        val currentEmail = sessionStorage.get()?.user?.email
+        if (newEmail == currentEmail?.normalizeEmail()) {
             send(ChangeEmailEvent.Error(UiText.Resource(Res.string.change_email_error_same)))
             return
         }

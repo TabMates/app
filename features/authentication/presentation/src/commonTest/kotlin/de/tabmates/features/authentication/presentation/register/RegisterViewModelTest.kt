@@ -217,6 +217,22 @@ class RegisterViewModelTest {
         }
 
     @Test
+    fun `register sends the email trimmed and lower cased`() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService()
+            val viewModel = RegisterViewModel(authService)
+            activateState(viewModel)
+            fillValidInputs(viewModel)
+            viewModel.state.value.emailTextState
+                .setTextAndPlaceCursorAtEnd(" Test.User@Example.COM ")
+
+            viewModel.register()
+
+            assertEquals(listOf("test.user@example.com"), authService.registerEmails)
+            assertNull(viewModel.state.value.emailError)
+        }
+
+    @Test
     fun `register conflict emits registration error event with account exists message`() =
         runTest(testDispatcher) {
             val authService = FakeAuthService(registerResult = Result.Failure(DataError.Remote.CONFLICT))
