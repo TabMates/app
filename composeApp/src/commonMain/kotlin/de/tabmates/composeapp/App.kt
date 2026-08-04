@@ -55,6 +55,7 @@ import de.tabmates.composeapp.deeplink.navDeepLink
 import de.tabmates.composeapp.deeplink.resolveDeepLink
 import de.tabmates.composeapp.di.TabMatesKoinApp
 import de.tabmates.composeapp.navigation.PlatformBackHandler
+import de.tabmates.composeapp.navigation.rememberGroupTwoPaneSceneStrategy
 import de.tabmates.composeapp.navigation.rememberScreenTopBarNavEntryDecorator
 import de.tabmates.composeapp.promo.AppPromoBannerRoot
 import de.tabmates.composeapp.promo.isAndroidBrowser
@@ -279,12 +280,22 @@ fun App() {
                     modifier = Modifier.imePadding(),
                     navigationSuiteType = navigationSuiteType,
                     navigationItems = {
+                        // The tab the stack is currently under, not just the top key: on wide
+                        // windows the Groups tab keeps a GroupDetail entry stacked on it to fill
+                        // the detail pane, and the rail must stay lit through that.
+                        val activeTab = backStack.lastOrNull { it is TopLevelTab }
                         topLevelTabs.forEach { tab ->
-                            val selected = currentKey == tab
+                            val selected = activeTab == tab
                             NavigationSuiteItem(
                                 selected = selected,
                                 onClick = {
-                                    backStack.removeAll { it is TopLevelTab }
+                                    // Drop the whole current tab section, not just the tab key —
+                                    // otherwise its detail entries outlive it and resurface
+                                    // full-screen when backing out of the new tab.
+                                    val tabIndex = backStack.indexOfLast { it is TopLevelTab }
+                                    if (tabIndex >= 0) {
+                                        while (backStack.size > tabIndex) backStack.removeLastOrNull()
+                                    }
                                     backStack.add(tab)
                                 },
                                 icon = {
@@ -348,6 +359,7 @@ fun App() {
                                     backStack = backStack,
                                     onBack = { backStack.removeLastOrNull() },
                                     entryDecorators = rememberEntryDecorators(backStack),
+                                    sceneStrategies = listOf(rememberGroupTwoPaneSceneStrategy()),
                                     transitionSpec = { navTransition },
                                     popTransitionSpec = { navTransition },
                                     predictivePopTransitionSpec = { _ -> predictivePopTransition },

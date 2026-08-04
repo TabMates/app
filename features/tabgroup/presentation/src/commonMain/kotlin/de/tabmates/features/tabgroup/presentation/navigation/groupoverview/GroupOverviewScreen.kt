@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -26,13 +24,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,7 +50,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import de.tabmates.core.designsystem.preview.PreviewScreenSizes
 import de.tabmates.core.designsystem.preview.PreviewThemes
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
@@ -66,13 +60,10 @@ import de.tabmates.core.presentation.format.AmountSign
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
 import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
-import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.GroupDetailRoot
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_placeholder_caption
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_placeholder_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_empty_caption
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_empty_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_expense_count
@@ -92,68 +83,30 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_close
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_search
 import kotlin.time.Clock
 
+/**
+ * The group list. On wide windows this is the left pane of [GroupTwoPane] and the right pane is a
+ * separate back-stack entry, so the screen renders the same list either way and only the highlight
+ * differs — [selectedGroupId] comes from the back stack, not from local state.
+ */
 @Composable
 fun GroupOverviewRoot(
     onGroupOpen: (String) -> Unit,
-    onSettingsOpen: (String) -> Unit,
-    snackbarHostState: SnackbarHostState,
-    onAddEntryClick: (String) -> Unit = {},
-    onEntryClick: (groupId: String, entryId: String) -> Unit = { _, _ -> },
+    selectedGroupId: String? = null,
     viewModel: GroupOverviewViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     GroupOverviewScreen(
         state = state,
+        selectedGroupId = selectedGroupId,
         onFilterSelected = viewModel::onFilterSelected,
-        onGroupSelected = viewModel::onGroupSelected,
         onGroupOpen = onGroupOpen,
-        onSettingsOpen = onSettingsOpen,
-        onAddEntryClick = onAddEntryClick,
-        onEntryClick = onEntryClick,
-        snackbarHostState = snackbarHostState,
     )
 }
 
 @Composable
 private fun GroupOverviewScreen(
     state: GroupOverviewState,
-    onFilterSelected: (GroupFilter) -> Unit,
-    onGroupSelected: (String) -> Unit,
-    onGroupOpen: (String) -> Unit,
-    onSettingsOpen: (String) -> Unit,
-    onAddEntryClick: (String) -> Unit,
-    onEntryClick: (groupId: String, entryId: String) -> Unit,
-    snackbarHostState: SnackbarHostState,
-    modifier: Modifier = Modifier,
-) {
-    val isExpanded =
-        currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
-            WIDTH_DP_MEDIUM_LOWER_BOUND,
-        )
-    if (isExpanded) {
-        ExpandedLayout(
-            state = state,
-            onFilterSelected = onFilterSelected,
-            onGroupSelected = onGroupSelected,
-            onSettingsOpen = onSettingsOpen,
-            onAddEntryClick = onAddEntryClick,
-            onEntryClick = onEntryClick,
-            snackbarHostState = snackbarHostState,
-            modifier = modifier,
-        )
-    } else {
-        CompactLayout(
-            state = state,
-            onFilterSelected = onFilterSelected,
-            onGroupOpen = onGroupOpen,
-            modifier = modifier,
-        )
-    }
-}
-
-@Composable
-private fun CompactLayout(
-    state: GroupOverviewState,
+    selectedGroupId: String?,
     onFilterSelected: (GroupFilter) -> Unit,
     onGroupOpen: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -173,71 +126,11 @@ private fun CompactLayout(
         VerticalSpacer(8.dp)
         GroupList(
             items = state.displayedItems,
-            selectedGroupId = null,
+            selectedGroupId = selectedGroupId,
             onGroupSelected = onGroupOpen,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             modifier = Modifier.fillMaxSize(),
         )
-    }
-}
-
-@Composable
-private fun ExpandedLayout(
-    state: GroupOverviewState,
-    onFilterSelected: (GroupFilter) -> Unit,
-    onGroupSelected: (String) -> Unit,
-    onSettingsOpen: (String) -> Unit,
-    onAddEntryClick: (String) -> Unit,
-    onEntryClick: (groupId: String, entryId: String) -> Unit,
-    snackbarHostState: SnackbarHostState,
-    modifier: Modifier = Modifier,
-) {
-    Row(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier =
-                Modifier
-                    .widthIn(min = 280.dp, max = 360.dp)
-                    .fillMaxHeight(),
-        ) {
-            GroupsHeader(
-                searchQueryState = state.searchQueryState,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            )
-            FilterChipsRow(
-                filter = state.filter,
-                onFilterSelected = onFilterSelected,
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-            VerticalSpacer(8.dp)
-            GroupList(
-                items = state.displayedItems,
-                selectedGroupId = state.selectedGroupId,
-                onGroupSelected = onGroupSelected,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-        VerticalDivider(
-            modifier = Modifier.fillMaxHeight(),
-            color = MaterialTheme.colorScheme.outlineVariant,
-        )
-        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-            val selectedId = state.selectedGroupId
-            if (selectedId == null) {
-                DetailPlaceholder(modifier = Modifier.fillMaxSize())
-            } else {
-                key(selectedId) {
-                    GroupDetailRoot(
-                        groupId = selectedId,
-                        snackbarHostState = snackbarHostState,
-                        onSettingsClick = { onSettingsOpen(selectedId) },
-                        onAddEntryClick = { onAddEntryClick(selectedId) },
-                        onEntryClick = { entryId -> onEntryClick(selectedId, entryId) },
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-            }
-        }
     }
 }
 
@@ -529,28 +422,6 @@ private fun EmptyState(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun DetailPlaceholder(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = stringResource(Res.string.groups_detail_placeholder_title),
-            style = MaterialTheme.typography.titleLarge,
-            textAlign = TextAlign.Center,
-        )
-        VerticalSpacer(8.dp)
-        Text(
-            text = stringResource(Res.string.groups_detail_placeholder_caption),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
 @PreviewThemes
 @Composable
 private fun GroupOverviewPreviewThemes() {
@@ -558,13 +429,9 @@ private fun GroupOverviewPreviewThemes() {
         Surface {
             GroupOverviewScreen(
                 state = previewState(),
+                selectedGroupId = "1",
                 onFilterSelected = {},
-                onGroupSelected = {},
                 onGroupOpen = {},
-                onSettingsOpen = {},
-                onAddEntryClick = {},
-                onEntryClick = { _, _ -> },
-                snackbarHostState = remember { SnackbarHostState() },
             )
         }
     }
@@ -577,13 +444,9 @@ private fun GroupOverviewPreviewSizes() {
         Surface {
             GroupOverviewScreen(
                 state = previewState(),
+                selectedGroupId = "1",
                 onFilterSelected = {},
-                onGroupSelected = {},
                 onGroupOpen = {},
-                onSettingsOpen = {},
-                onAddEntryClick = {},
-                onEntryClick = { _, _ -> },
-                snackbarHostState = remember { SnackbarHostState() },
             )
         }
     }
@@ -670,6 +533,5 @@ private fun previewState(): GroupOverviewState {
         displayedItems = items,
         filter = GroupFilter.ALL,
         searchQueryState = TextFieldState(),
-        selectedGroupId = "1",
     )
 }

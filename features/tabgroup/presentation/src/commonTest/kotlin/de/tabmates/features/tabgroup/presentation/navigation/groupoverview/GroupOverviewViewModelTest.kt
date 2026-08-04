@@ -176,24 +176,6 @@ class GroupOverviewViewModelTest {
         }
 
     @Test
-    fun selectedGroupIdDefaultsToFirstItem() =
-        runTest(testDispatcher) {
-            val groupRepo =
-                FakeGroupRepository(
-                    initialGroups =
-                        listOf(
-                            Fixtures.group(id = "g1", title = "First", activityEpochMs = 2),
-                            Fixtures.group(id = "g2", title = "Second", activityEpochMs = 1),
-                        ),
-                )
-            val viewModel = createViewModel(groupRepository = groupRepo)
-            activateState(viewModel)
-            advanceUntilIdle()
-
-            assertEquals("g1", viewModel.state.value.selectedGroupId)
-        }
-
-    @Test
     fun groupWithPendingExpenseExposesHasPendingSync() =
         runTest(testDispatcher) {
             val groupRepo =
@@ -309,27 +291,6 @@ class GroupOverviewViewModelTest {
                 viewModel.state.value.displayedItems
                     .map { it.title },
             )
-        }
-
-    @Test
-    fun onGroupSelectedUpdatesSelectedGroupId() =
-        runTest(testDispatcher) {
-            val groupRepo =
-                FakeGroupRepository(
-                    initialGroups =
-                        listOf(
-                            Fixtures.group(id = "g1", title = "First"),
-                            Fixtures.group(id = "g2", title = "Second"),
-                        ),
-                )
-            val viewModel = createViewModel(groupRepository = groupRepo)
-            activateState(viewModel)
-            advanceUntilIdle()
-
-            viewModel.onGroupSelected("g2")
-            advanceUntilIdle()
-
-            assertEquals("g2", viewModel.state.value.selectedGroupId)
         }
 
     private fun TestScope.activateState(viewModel: GroupOverviewViewModel) {
