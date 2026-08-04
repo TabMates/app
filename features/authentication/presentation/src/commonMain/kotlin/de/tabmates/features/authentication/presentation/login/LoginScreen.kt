@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import de.tabmates.core.designsystem.buttons.TabMatesButtonStyle
 import de.tabmates.core.designsystem.preview.PreviewThemes
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.text.TabMatesInlineLinkText
+import de.tabmates.core.designsystem.textfields.EmailInputTransformation
 import de.tabmates.core.designsystem.textfields.TabMatesPasswordTextField
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.designsystem.theme.TabMatesTheme
@@ -152,7 +154,9 @@ private fun LoginScreen(
             placeholder = stringResource(Res.string.register_email_hint),
             keyboardType = KeyboardType.Email,
             imeAction = ImeAction.Next,
+            capitalization = KeyboardCapitalization.None,
             contentType = ContentType.EmailAddress,
+            inputTransformation = EmailInputTransformation,
         )
         TabMatesPasswordTextField(
             modifier = Modifier.widthIn(max = 300.dp).fillMaxWidth(),

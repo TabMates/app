@@ -16,6 +16,7 @@ import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.authentication.domain.EmailValidator
+import de.tabmates.features.authentication.domain.normalizeEmail
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -55,7 +56,7 @@ class ReauthViewModel(
     private val _state =
         MutableStateFlow(
             ReauthState(
-                emailTextFieldState = TextFieldState(staleSession?.email.orEmpty()),
+                emailTextFieldState = TextFieldState(staleSession?.email.orEmpty().normalizeEmail()),
                 isEmailLocked = staleSession?.email != null,
                 isGuest = staleSession?.userType == UserType.ANONYMOUS,
             ),
@@ -81,7 +82,7 @@ class ReauthViewModel(
         snapshotFlow {
             _state.value.emailTextFieldState.text
                 .toString()
-                .trim()
+                .normalizeEmail()
         }.map { email -> EmailValidator.validate(email) }
             .distinctUntilChanged()
 
@@ -126,7 +127,7 @@ class ReauthViewModel(
             val email =
                 state.value.emailTextFieldState.text
                     .toString()
-                    .trim()
+                    .normalizeEmail()
             val password =
                 state.value.passwordTextFieldState.text
                     .toString()

@@ -11,12 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.buttons.TabMatesButton
 import de.tabmates.core.designsystem.buttons.TabMatesButtonStyle
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.designsystem.textfields.EmailInputTransformation
 import de.tabmates.core.designsystem.textfields.TabMatesPasswordTextField
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.presentation.util.ObserveAsEvents
@@ -153,8 +155,10 @@ private fun UpgradeAccountForm(
         singleLine = true,
         keyboardType = KeyboardType.Email,
         imeAction = ImeAction.Next,
-        onFocusChanged = onEmailFocusChanged,
+        capitalization = KeyboardCapitalization.None,
         contentType = ContentType.EmailAddress,
+        inputTransformation = EmailInputTransformation,
+        onFocusChanged = onEmailFocusChanged,
         modifier = Modifier.fillMaxWidth(),
     )
     VerticalSpacer(16.dp)

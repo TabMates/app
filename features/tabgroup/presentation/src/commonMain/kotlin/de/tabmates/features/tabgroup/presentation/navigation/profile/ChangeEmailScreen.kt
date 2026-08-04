@@ -10,11 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.designsystem.textfields.EmailInputTransformation
 import de.tabmates.core.designsystem.textfields.TabMatesPasswordTextField
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.presentation.navigation.TopBarActions
@@ -63,6 +65,8 @@ fun ChangeEmailRoot(
             singleLine = true,
             keyboardType = KeyboardType.Email,
             imeAction = ImeAction.Next,
+            capitalization = KeyboardCapitalization.None,
+            inputTransformation = EmailInputTransformation,
             modifier = Modifier.fillMaxWidth(),
         )
         VerticalSpacer(16.dp)

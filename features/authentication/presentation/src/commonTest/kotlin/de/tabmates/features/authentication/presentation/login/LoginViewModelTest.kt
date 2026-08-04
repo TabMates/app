@@ -199,6 +199,28 @@ class LoginViewModelTest {
         }
 
     @Test
+    fun loginSendsTheEmailTrimmedAndLowercased() =
+        runTest(testDispatcher) {
+            val authService = FakeAuthService(loginResult = Result.Success(FAKE_AUTH_INFO))
+            val viewModel = createViewModel(authService = authService)
+            // Written straight to the state, the way autofill or a prefill does: the field's
+            // input transformation never runs, so the ViewModel has to normalize it.
+            viewModel.state.value.emailTextFieldState.edit {
+                replace(0, length, " Test.User@Example.COM ")
+            }
+            viewModel.state.value.passwordTextFieldState.edit {
+                replace(0, length, "password123")
+            }
+            Snapshot.sendApplyNotifications()
+            advanceUntilIdle()
+
+            viewModel.onLogin()
+            advanceUntilIdle()
+
+            assertEquals(listOf("test.user@example.com"), authService.loginEmails)
+        }
+
+    @Test
     fun isLoggingInIsFalseAfterFailedLogin() =
         runTest(testDispatcher) {
             val authService = FakeAuthService(loginResult = Result.Failure(DataError.Remote.UNKNOWN))

@@ -8,6 +8,7 @@ import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.authentication.domain.AuthService
 import de.tabmates.features.authentication.domain.EmailValidator
+import de.tabmates.features.authentication.domain.normalizeEmail
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -30,6 +31,7 @@ class ForgotPasswordViewModel(
         snapshotFlow {
             state.value.emailTextFieldState.text
                 .toString()
+                .normalizeEmail()
         }.map { email -> EmailValidator.validate(email) }
             .distinctUntilChanged()
 
@@ -64,6 +66,7 @@ class ForgotPasswordViewModel(
             val email =
                 state.value.emailTextFieldState.text
                     .toString()
+                    .normalizeEmail()
             authService
                 .forgotPassword(email)
                 .onSuccess {

@@ -29,6 +29,9 @@ open class FakeAuthService(
     var refreshAccountResult: Result<UserWithPendingEmail, DataError.Remote> =
         Result.Failure(DataError.Remote.UNKNOWN),
 ) : AuthService {
+    val registerEmails: MutableList<String> = mutableListOf()
+    val loginEmails: MutableList<String> = mutableListOf()
+    val forgotPasswordEmails: MutableList<String> = mutableListOf()
     val logoutCalls: MutableList<String> = mutableListOf()
     val migrateToRegisteredCalls: MutableList<Pair<String, String>> = mutableListOf()
     val changeUsernameCalls: MutableList<String> = mutableListOf()
@@ -68,6 +71,7 @@ open class FakeAuthService(
         password: String,
     ): EmptyResult<DataError.Remote> {
         registerCalls += 1
+        registerEmails += email
         return registerResult
     }
 
@@ -81,6 +85,7 @@ open class FakeAuthService(
         password: String,
     ): Result<AuthInfo, DataError.Remote> {
         loginCalls += 1
+        loginEmails += email
         if (loginDelayMillis > 0L) {
             delay(loginDelayMillis)
         }
@@ -118,6 +123,7 @@ open class FakeAuthService(
 
     override suspend fun forgotPassword(email: String): EmptyResult<DataError.Remote> {
         forgotPasswordCalls += 1
+        forgotPasswordEmails += email
         return forgotPasswordResult
     }
 

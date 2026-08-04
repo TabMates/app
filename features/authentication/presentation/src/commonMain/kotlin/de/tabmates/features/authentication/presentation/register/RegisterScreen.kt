@@ -30,6 +30,7 @@ import de.tabmates.core.designsystem.buttons.TabMatesButtonStyle
 import de.tabmates.core.designsystem.preview.PreviewThemes
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.text.TabMatesInlineLinkText
+import de.tabmates.core.designsystem.textfields.EmailInputTransformation
 import de.tabmates.core.designsystem.textfields.TabMatesPasswordTextField
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.designsystem.theme.TabMatesTheme
@@ -149,8 +150,10 @@ private fun RegisterScreen(
             singleLine = true,
             keyboardType = KeyboardType.Email,
             imeAction = ImeAction.Next,
-            onFocusChanged = onEmailFocusChanged,
+            capitalization = KeyboardCapitalization.None,
             contentType = ContentType.EmailAddress,
+            inputTransformation = EmailInputTransformation,
+            onFocusChanged = onEmailFocusChanged,
         )
         state.emailError?.let {
             VerticalSpacer(16.dp)
