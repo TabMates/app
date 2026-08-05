@@ -105,7 +105,6 @@ fun EntryProviderScope<NavKey>.mainGraph(
     }
 
     entry<GroupDetail>(metadata = PaneRole.detail) { route ->
-        val leftMessage = stringResource(Res.string.group_settings_left)
         GroupDetailRoot(
             groupId = route.groupId,
             snackbarHostState = snackbarHostState,
@@ -118,13 +117,6 @@ fun EntryProviderScope<NavKey>.mainGraph(
             },
             onSettlementClick = { settlementId ->
                 backStack.add(SettlementDetail(settlementId = settlementId, groupId = route.groupId))
-            },
-            onLeaveGroup = {
-                backStack.removeAll {
-                    (it is GroupDetail && it.groupId == route.groupId) ||
-                        (it is GroupSettings && it.groupId == route.groupId)
-                }
-                appScope.launch { snackbarHostState.showSnackbar(leftMessage) }
             },
         )
     }

@@ -123,8 +123,6 @@
     <string name="groups_detail_back_cd">Zurück</string>
     <string name="groups_detail_tab_transactions">Transaktionen</string>
     <string name="groups_detail_tab_balances">Salden</string>
-    <string name="groups_detail_tab_members">Mitglieder</string>
-    <string name="groups_detail_tab_settings">Einstellungen</string>
     <string name="groups_detail_tab_history">Verlauf</string>
     <string name="groups_detail_youre_owed">Du hast verliehen</string>
     <string name="groups_detail_you_owe">Du hast geliehen</string>

@@ -41,7 +41,6 @@ fun GroupDetailRoot(
     onSettleUpClick: () -> Unit,
     onEntryClick: (String) -> Unit,
     onSettlementClick: (String) -> Unit,
-    onLeaveGroup: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupDetailViewModel =
         koinViewModel(
@@ -83,7 +82,6 @@ fun GroupDetailRoot(
             currentUserId = state.currentUserId,
             members = state.members,
             entries = state.entries,
-            perPersonBalances = state.perPersonBalances,
             memberNetBalances = state.memberNetBalances,
             hasOutstandingDebts = state.hasOutstandingDebts,
             currencyByCode = state.currencyByCode,
@@ -91,14 +89,12 @@ fun GroupDetailRoot(
             historySections = state.historySections,
             canLoadMoreHistory = state.canLoadMoreHistory,
             onLoadMoreHistory = viewModel::loadMoreHistory,
-            onRotateInvite = viewModel::rotateInvite,
             onBack = onBack,
             onSettingsClick = onSettingsClick,
             onAddEntryClick = onAddEntryClick,
             onSettleUpClick = onSettleUpClick,
             onEntryClick = onEntryClick,
             onSettlementClick = onSettlementClick,
-            onLeaveGroup = onLeaveGroup,
             snackbarHostState = snackbarHostState,
             modifier = modifier.fillMaxSize(),
         )

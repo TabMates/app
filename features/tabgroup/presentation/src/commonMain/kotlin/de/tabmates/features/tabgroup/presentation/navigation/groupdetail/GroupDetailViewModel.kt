@@ -6,7 +6,6 @@ import de.tabmates.core.domain.auth.CurrentAccount
 import de.tabmates.core.presentation.format.NumberSymbols
 import de.tabmates.features.tabgroup.domain.activity.ActivityFeedItem
 import de.tabmates.features.tabgroup.domain.activity.ActivityRepository
-import de.tabmates.features.tabgroup.domain.balance.PerPersonBalanceCalculator
 import de.tabmates.features.tabgroup.domain.balance.UserBalanceCalculator
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
 import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
@@ -34,7 +33,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 import kotlin.time.Clock
@@ -46,7 +44,6 @@ data class GroupDetailState(
     val members: List<GroupParticipant> = emptyList(),
     /** Entries shown in the transaction list: expenses, incomes and settlements, newest first. */
     val entries: List<TabEntry> = emptyList(),
-    val perPersonBalances: Map<String, Double> = emptyMap(),
     /** Each member's overall net in the group (positive = gets money back, negative = owes). */
     val memberNetBalances: Map<String, Double> = emptyMap(),
     /** True while any member's overall net is not settled — gates the Settle Up entry point. */
@@ -71,7 +68,6 @@ class GroupDetailViewModel(
     private val numberSymbols: NumberSymbols,
 ) : ViewModel() {
     private val currentUserId = currentAccount.userId().orEmpty()
-    private val isRotatingInvite = MutableStateFlow(false)
     private val historyPageSize = MutableStateFlow(INITIAL_HISTORY_PAGE_SIZE)
 
     /**
@@ -123,8 +119,6 @@ class GroupDetailViewModel(
                             compareByDescending<TabEntry> { it.entryDate }
                                 .thenByDescending { it.createdAt },
                         ),
-                perPersonBalances =
-                    PerPersonBalanceCalculator.computeByParticipant(visibleEntries, currentUserId, conversion),
                 memberNetBalances = memberNetBalances,
                 hasOutstandingDebts =
                     memberNetBalances.values.any { GroupBalance.fromNet(it) != GroupBalance.Settled },
@@ -150,15 +144,6 @@ class GroupDetailViewModel(
             started = SharingStarted.WhileSubscribed(5.seconds),
             initialValue = GroupDetailState(),
         )
-
-    fun rotateInvite() {
-        if (groupId.isBlank() || isRotatingInvite.value) return
-        viewModelScope.launch {
-            isRotatingInvite.update { true }
-            groupRepository.rotateInviteToken(groupId)
-            isRotatingInvite.update { false }
-        }
-    }
 
     fun loadMoreHistory() {
         historyPageSize.update { it + HISTORY_PAGE_SIZE_INCREMENT }
