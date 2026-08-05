@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.presentation.navigation.activity
 
+import de.tabmates.core.presentation.util.RelativeTimeSpan
 import de.tabmates.features.tabgroup.domain.activity.ActivityField
 
 data class ActivityState(
@@ -31,10 +32,13 @@ data class ActivityItem(
     val id: String,
     val initials: String,
     val colorSeed: String,
+    /** Blank when the actor is not among the known participants — the composable names them. */
     val actor: String,
     val actorIsYou: Boolean,
     val kind: ActivityKind,
+    /** Group and amount only; the composable appends the localized timestamp from [occurredAgo]. */
     val subtitle: String,
+    val occurredAgo: RelativeTimeSpan,
     /** Field-level diff lines, empty for anything but an update. */
     val diffs: List<ActivityDiff> = emptyList(),
     /** A local write still in the outbox: rendered with the same "Not synced" chip as elsewhere. */
@@ -71,7 +75,12 @@ sealed interface ActivityClickTarget {
     data object None : ActivityClickTarget
 }
 
-/** What happened. The actor is rendered bold; the target (entry/group/member name) is bold too. */
+/**
+ * What happened, as one sentence per variant. Each variant picks a full-sentence string resource —
+ * a verb alone cannot be placed the same way in every language. The actor is rendered bold, as is
+ * the [target] / member name; a blank one means "unknown", and the composable substitutes a
+ * localized fallback rather than the ViewModel inventing display text.
+ */
 sealed interface ActivityKind {
     data class EntryAdded(val target: String) : ActivityKind
 
@@ -79,13 +88,24 @@ sealed interface ActivityKind {
 
     data class EntryDeleted(val target: String) : ActivityKind
 
+    /** Settlements read as their own sentence: their title is a generic default, not a name. */
+    data object SettlementAdded : ActivityKind
+
+    data object SettlementEdited : ActivityKind
+
+    data object SettlementDeleted : ActivityKind
+
     data class GroupCreated(val target: String) : ActivityKind
 
     data class GroupUpdated(val target: String) : ActivityKind
 
-    data class MemberJoined(val member: String) : ActivityKind
+    /** The actor joined by themselves — no member name, or the row would repeat the actor. */
+    data object MemberJoined : ActivityKind
 
-    data class MemberLeft(val member: String) : ActivityKind
+    /** The actor put someone else in the group (an invite, or a placeholder participant). */
+    data class MemberAdded(val member: String) : ActivityKind
+
+    data object MemberLeft : ActivityKind
 
     data class MemberRemoved(val member: String) : ActivityKind
 

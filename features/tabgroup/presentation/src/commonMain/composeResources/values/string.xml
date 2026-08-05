@@ -341,17 +341,49 @@
     <string name="activity_today">TODAY</string>
     <string name="activity_yesterday">YESTERDAY</string>
     <string name="activity_you">You</string>
-    <string name="activity_action_added">added</string>
-    <string name="activity_action_edited">edited</string>
-    <string name="activity_action_deleted">deleted</string>
-    <string name="activity_action_created">created</string>
-    <string name="activity_settled_with_you">settled up with you</string>
-    <string name="activity_settled_with">settled up with</string>
     <string name="activity_empty">No activity yet</string>
-    <string name="activity_action_group_updated">updated</string>
-    <string name="activity_action_member_joined">joined</string>
-    <string name="activity_action_member_left">left</string>
-    <string name="activity_action_member_removed">removed</string>
+
+    <!--
+      Activity rows are whole sentences, never a verb glued between two names: %1$s is the actor
+      (the "You" label above, or a name), %2$s the thing it happened to. The _you form always
+      addresses the reader, so a translation may conjugate it for the second person; the _other
+      form speaks about somebody else.
+    -->
+    <string name="activity_msg_entry_added_you">%1$s added %2$s</string>
+    <string name="activity_msg_entry_added_other">%1$s added %2$s</string>
+    <string name="activity_msg_entry_edited_you">%1$s edited %2$s</string>
+    <string name="activity_msg_entry_edited_other">%1$s edited %2$s</string>
+    <string name="activity_msg_entry_deleted_you">%1$s deleted %2$s</string>
+    <string name="activity_msg_entry_deleted_other">%1$s deleted %2$s</string>
+    <string name="activity_msg_settlement_added_you">%1$s recorded a settlement</string>
+    <string name="activity_msg_settlement_added_other">%1$s recorded a settlement</string>
+    <string name="activity_msg_settlement_edited_you">%1$s edited a settlement</string>
+    <string name="activity_msg_settlement_edited_other">%1$s edited a settlement</string>
+    <string name="activity_msg_settlement_deleted_you">%1$s deleted a settlement</string>
+    <string name="activity_msg_settlement_deleted_other">%1$s deleted a settlement</string>
+    <string name="activity_msg_group_created_you">%1$s created %2$s</string>
+    <string name="activity_msg_group_created_other">%1$s created %2$s</string>
+    <string name="activity_msg_group_updated_you">%1$s updated %2$s</string>
+    <string name="activity_msg_group_updated_other">%1$s updated %2$s</string>
+    <string name="activity_msg_member_joined_you">%1$s joined the group</string>
+    <string name="activity_msg_member_joined_other">%1$s joined the group</string>
+    <string name="activity_msg_member_added_you">%1$s added %2$s to the group</string>
+    <string name="activity_msg_member_added_other">%1$s added %2$s to the group</string>
+    <string name="activity_msg_member_left_you">%1$s left the group</string>
+    <string name="activity_msg_member_left_other">%1$s left the group</string>
+    <string name="activity_msg_member_removed_you">%1$s removed %2$s from the group</string>
+    <string name="activity_msg_member_removed_other">%1$s removed %2$s from the group</string>
+
+    <!-- Stand-ins for a name the app does not have; they fill the %2$s slot above. -->
+    <string name="activity_fallback_entry">an entry</string>
+    <string name="activity_fallback_group">the group</string>
+    <string name="activity_fallback_person">Someone</string>
+    <string name="activity_fallback_person_object">someone</string>
+
+    <!-- Row timestamps. Anything older than a day is left to the date section header. -->
+    <string name="activity_time_now">now</string>
+    <string name="activity_time_minutes">%1$d min</string>
+    <string name="activity_time_hours">%1$d h</string>
     <string name="activity_field_title">Title</string>
     <string name="activity_field_description">Description</string>
     <string name="activity_field_amount">Amount</string>

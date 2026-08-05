@@ -341,17 +341,48 @@
     <string name="activity_today">HEUTE</string>
     <string name="activity_yesterday">GESTERN</string>
     <string name="activity_you">Du</string>
-    <string name="activity_action_added">hinzugefügt</string>
-    <string name="activity_action_edited">bearbeitet</string>
-    <string name="activity_action_deleted">gelöscht</string>
-    <string name="activity_action_created">erstellt</string>
-    <string name="activity_settled_with_you">hat mit dir ausgeglichen</string>
-    <string name="activity_settled_with">hat ausgeglichen mit</string>
     <string name="activity_empty">Noch keine Aktivität</string>
-    <string name="activity_action_group_updated">aktualisiert</string>
-    <string name="activity_action_member_joined">ist beigetreten</string>
-    <string name="activity_action_member_left">hat verlassen</string>
-    <string name="activity_action_member_removed">hat entfernt</string>
+
+    <!--
+      Ganze Sätze statt aneinandergereihter Wörter: %1$s ist die handelnde Person (das "Du" von
+      oben oder ein Name), %2$s das Objekt der Handlung. Die _you Form spricht immer die lesende
+      Person an und wird deshalb in der zweiten Person gebeugt, die _other Form in der dritten.
+    -->
+    <string name="activity_msg_entry_added_you">%1$s hast %2$s hinzugefügt</string>
+    <string name="activity_msg_entry_added_other">%1$s hat %2$s hinzugefügt</string>
+    <string name="activity_msg_entry_edited_you">%1$s hast %2$s bearbeitet</string>
+    <string name="activity_msg_entry_edited_other">%1$s hat %2$s bearbeitet</string>
+    <string name="activity_msg_entry_deleted_you">%1$s hast %2$s gelöscht</string>
+    <string name="activity_msg_entry_deleted_other">%1$s hat %2$s gelöscht</string>
+    <string name="activity_msg_settlement_added_you">%1$s hast eine Zahlung erfasst</string>
+    <string name="activity_msg_settlement_added_other">%1$s hat eine Zahlung erfasst</string>
+    <string name="activity_msg_settlement_edited_you">%1$s hast eine Zahlung bearbeitet</string>
+    <string name="activity_msg_settlement_edited_other">%1$s hat eine Zahlung bearbeitet</string>
+    <string name="activity_msg_settlement_deleted_you">%1$s hast eine Zahlung gelöscht</string>
+    <string name="activity_msg_settlement_deleted_other">%1$s hat eine Zahlung gelöscht</string>
+    <string name="activity_msg_group_created_you">%1$s hast %2$s erstellt</string>
+    <string name="activity_msg_group_created_other">%1$s hat %2$s erstellt</string>
+    <string name="activity_msg_group_updated_you">%1$s hast %2$s aktualisiert</string>
+    <string name="activity_msg_group_updated_other">%1$s hat %2$s aktualisiert</string>
+    <string name="activity_msg_member_joined_you">%1$s bist der Gruppe beigetreten</string>
+    <string name="activity_msg_member_joined_other">%1$s ist der Gruppe beigetreten</string>
+    <string name="activity_msg_member_added_you">%1$s hast %2$s zur Gruppe hinzugefügt</string>
+    <string name="activity_msg_member_added_other">%1$s hat %2$s zur Gruppe hinzugefügt</string>
+    <string name="activity_msg_member_left_you">%1$s hast die Gruppe verlassen</string>
+    <string name="activity_msg_member_left_other">%1$s hat die Gruppe verlassen</string>
+    <string name="activity_msg_member_removed_you">%1$s hast %2$s aus der Gruppe entfernt</string>
+    <string name="activity_msg_member_removed_other">%1$s hat %2$s aus der Gruppe entfernt</string>
+
+    <!-- Platzhalter für einen fehlenden Namen; sie stehen im %2$s Slot, also im Akkusativ. -->
+    <string name="activity_fallback_entry">einen Eintrag</string>
+    <string name="activity_fallback_group">die Gruppe</string>
+    <string name="activity_fallback_person">Jemand</string>
+    <string name="activity_fallback_person_object">jemanden</string>
+
+    <!-- Zeitstempel der Zeile. Alles ältere als ein Tag steht schon in der Datumsüberschrift. -->
+    <string name="activity_time_now">jetzt</string>
+    <string name="activity_time_minutes">%1$d Min.</string>
+    <string name="activity_time_hours">%1$d Std.</string>
     <string name="activity_field_title">Titel</string>
     <string name="activity_field_description">Beschreibung</string>
     <string name="activity_field_amount">Betrag</string>
