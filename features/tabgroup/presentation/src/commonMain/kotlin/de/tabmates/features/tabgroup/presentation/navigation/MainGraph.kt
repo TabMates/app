@@ -99,8 +99,11 @@ fun EntryProviderScope<NavKey>.mainGraph(
             selectedGroupId = selectedGroupId,
             onGroupOpen = { groupId ->
                 // Replace rather than stack: picking another group swaps the pane, it does not
-                // deepen the history.
-                backStack.removeAll { it is GroupDetail || it is SettleUp }
+                // deepen the history. Settings and People go too, or the previous group's pages
+                // would sit under the newly selected group in the detail pane.
+                backStack.removeAll {
+                    it is GroupDetail || it is SettleUp || it is GroupSettings || it is GroupPeople
+                }
                 backStack.add(GroupDetail(groupId))
             },
         )
@@ -256,12 +259,18 @@ fun EntryProviderScope<NavKey>.mainGraph(
         )
     }
 
-    entry<GroupSettings> { route ->
+    entry<GroupSettings>(metadata = PaneRole.detail) { route ->
         val leftMessage = stringResource(Res.string.group_settings_left)
         GroupSettingsRoot(
             groupId = route.groupId,
+            onPeopleClick = { backStack.add(GroupPeople(route.groupId)) },
             onLeft = {
-                backStack.removeAll { it is GroupSettings || (it is GroupDetail && it.groupId == route.groupId) }
+                // Scoped to this group: another group's pages may sit on the stack on a wide window.
+                backStack.removeAll {
+                    (it is GroupSettings && it.groupId == route.groupId) ||
+                        (it is GroupPeople && it.groupId == route.groupId) ||
+                        (it is GroupDetail && it.groupId == route.groupId)
+                }
                 appScope.launch { snackbarHostState.showSnackbar(leftMessage) }
             },
             snackbarHostState = snackbarHostState,

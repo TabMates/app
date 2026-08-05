@@ -184,13 +184,7 @@
     <string name="group_settings_name_label">Gruppenname</string>
     <string name="group_settings_description_label">Beschreibung</string>
     <string name="group_settings_default_currency">Standardwährung</string>
-    <string name="group_settings_placeholders_section">PLATZHALTER</string>
-    <string name="group_settings_placeholders_caption">Reserviere jetzt Plätze für Personen — sie können diese später über einen Einladungslink beanspruchen.</string>
-    <string name="group_settings_add_placeholder">Platzhalter hinzufügen</string>
-    <string name="group_settings_placeholder_name_label">Platzhaltername</string>
-    <string name="group_settings_placeholder_dialog_title">Platzhalter hinzufügen</string>
-    <string name="group_settings_placeholder_dialog_confirm">Hinzufügen</string>
-    <string name="group_settings_placeholder_dialog_cancel">Abbrechen</string>
+    <string name="group_settings_people">Personen</string>
     <string name="group_settings_danger_zone">GEFAHRENZONE</string>
     <string name="group_settings_leave_group">Gruppe verlassen</string>
     <string name="group_settings_leave_caption">Du verlierst den Zugriff auf die Ausgaben in dieser Gruppe.</string>

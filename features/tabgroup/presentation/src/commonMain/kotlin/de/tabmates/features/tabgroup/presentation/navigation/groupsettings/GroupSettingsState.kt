@@ -10,30 +10,14 @@ data class GroupSettingsState(
     val nameTextState: TextFieldState = TextFieldState(),
     val descriptionTextState: TextFieldState = TextFieldState(),
     val defaultCurrencyCode: String = "",
-    val placeholders: List<GroupSettingsPlaceholder> = emptyList(),
-    val newPlaceholderTextState: TextFieldState = TextFieldState(),
-    val isPlaceholderDialogVisible: Boolean = false,
-    val isAddingPlaceholder: Boolean = false,
+    val peopleCount: Int = 0,
     val isSaving: Boolean = false,
     val isLeaving: Boolean = false,
     val showLeaveDialog: Boolean = false,
 )
 
-data class GroupSettingsPlaceholder(
-    val id: String,
-    val name: String,
-) {
-    val initial: String get() = name.firstOrNull()?.uppercase().orEmpty()
-}
-
 sealed interface GroupSettingsAction {
     data object Save : GroupSettingsAction
-
-    data object AddPlaceholderClick : GroupSettingsAction
-
-    data object PlaceholderDialogConfirm : GroupSettingsAction
-
-    data object PlaceholderDialogDismiss : GroupSettingsAction
 
     data object RequestLeave : GroupSettingsAction
 

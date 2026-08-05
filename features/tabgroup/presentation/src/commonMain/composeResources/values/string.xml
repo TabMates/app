@@ -184,13 +184,7 @@
     <string name="group_settings_name_label">Group name</string>
     <string name="group_settings_description_label">Description</string>
     <string name="group_settings_default_currency">Default currency</string>
-    <string name="group_settings_placeholders_section">PLACEHOLDERS</string>
-    <string name="group_settings_placeholders_caption">Add spots for people now — they can claim them later with an invitation link.</string>
-    <string name="group_settings_add_placeholder">Add placeholder</string>
-    <string name="group_settings_placeholder_name_label">Placeholder name</string>
-    <string name="group_settings_placeholder_dialog_title">Add placeholder</string>
-    <string name="group_settings_placeholder_dialog_confirm">Add</string>
-    <string name="group_settings_placeholder_dialog_cancel">Cancel</string>
+    <string name="group_settings_people">People</string>
     <string name="group_settings_danger_zone">DANGER ZONE</string>
     <string name="group_settings_leave_group">Leave group</string>
     <string name="group_settings_leave_caption">You will lose access to expenses in this group.</string>
