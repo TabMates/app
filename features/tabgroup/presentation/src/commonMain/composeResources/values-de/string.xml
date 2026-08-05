@@ -123,8 +123,6 @@
     <string name="groups_detail_back_cd">Zurück</string>
     <string name="groups_detail_tab_transactions">Transaktionen</string>
     <string name="groups_detail_tab_balances">Salden</string>
-    <string name="groups_detail_tab_members">Mitglieder</string>
-    <string name="groups_detail_tab_settings">Einstellungen</string>
     <string name="groups_detail_tab_history">Verlauf</string>
     <string name="groups_detail_youre_owed">Du hast verliehen</string>
     <string name="groups_detail_you_owe">Du hast geliehen</string>
@@ -186,13 +184,7 @@
     <string name="group_settings_name_label">Gruppenname</string>
     <string name="group_settings_description_label">Beschreibung</string>
     <string name="group_settings_default_currency">Standardwährung</string>
-    <string name="group_settings_placeholders_section">PLATZHALTER</string>
-    <string name="group_settings_placeholders_caption">Reserviere jetzt Plätze für Personen — sie können diese später über einen Einladungslink beanspruchen.</string>
-    <string name="group_settings_add_placeholder">Platzhalter hinzufügen</string>
-    <string name="group_settings_placeholder_name_label">Platzhaltername</string>
-    <string name="group_settings_placeholder_dialog_title">Platzhalter hinzufügen</string>
-    <string name="group_settings_placeholder_dialog_confirm">Hinzufügen</string>
-    <string name="group_settings_placeholder_dialog_cancel">Abbrechen</string>
+    <string name="group_settings_people">Personen</string>
     <string name="group_settings_danger_zone">GEFAHRENZONE</string>
     <string name="group_settings_leave_group">Gruppe verlassen</string>
     <string name="group_settings_leave_caption">Du verlierst den Zugriff auf die Ausgaben in dieser Gruppe.</string>
@@ -203,6 +195,16 @@
     <string name="group_settings_save">Speichern</string>
     <string name="group_settings_saved">Änderungen gespeichert</string>
     <string name="group_settings_left">Du hast die Gruppe verlassen</string>
+    <string name="group_people_title">Personen</string>
+    <string name="group_people_section_members">MITGLIEDER</string>
+    <string name="group_people_section_placeholders">PLATZHALTER</string>
+    <string name="group_people_placeholders_caption">Reserviere jetzt Plätze für Personen — sie können diese später über einen Einladungslink beanspruchen.</string>
+    <string name="group_people_add_placeholders">Platzhalter hinzufügen</string>
+    <string name="group_people_add_name_placeholder">Platzhaltername</string>
+    <string name="group_people_add_name_hint">Drücke die Eingabetaste zum Hinzufügen — das Feld bleibt für den nächsten Namen offen.</string>
+    <string name="group_people_add_confirm_cd">Diesen Platzhalter hinzufügen</string>
+    <string name="group_people_error_duplicate_name">Jemand mit diesem Namen ist bereits in dieser Gruppe.</string>
+    <string name="group_people_add_done_cd">Hinzufügen beenden</string>
 
     <string name="add_entry_title">Neuer Eintrag</string>
     <string name="edit_entry_title">Eintrag bearbeiten</string>

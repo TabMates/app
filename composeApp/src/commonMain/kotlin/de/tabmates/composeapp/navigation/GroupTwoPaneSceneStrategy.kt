@@ -16,11 +16,13 @@ import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.Group
  * Renders the group list and the entry stacked on top of it as two panes of a single scene on wide
  * windows, so the back stack alone decides what the detail pane shows: `[Group]` is the list plus an
  * empty state, `[Group, GroupDetail]` fills the pane with that group, and `[Group, GroupDetail,
- * SettleUp]` swaps the pane to settle-up. Back pops one entry and the pane follows.
+ * SettleUp]` swaps the pane to settle-up. Group Settings and Group People stack the same way — they
+ * are the only route to settings now that it is no longer a tab. Back pops one entry and the pane
+ * follows.
  *
  * Returns null on compact windows and for every other stack shape, which drops NavDisplay back to
- * its single-pane scene — so Add Entry, Entry Detail and Group Settings still take the whole window
- * even on a tablet.
+ * its single-pane scene — so Add Entry and Entry Detail still take the whole window even on a
+ * tablet.
  */
 @Composable
 fun rememberGroupTwoPaneSceneStrategy(): SceneStrategy<NavKey> {

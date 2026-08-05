@@ -1,7 +1,6 @@
 package de.tabmates.features.tabgroup.presentation.navigation.groupsettings
 
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.clearText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.util.onFailure
@@ -11,14 +10,14 @@ import de.tabmates.core.presentation.util.toUiText
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.group.GroupValidationError
 import de.tabmates.features.tabgroup.domain.group.GroupValidator
-import de.tabmates.features.tabgroup.domain.models.Group
-import de.tabmates.features.tabgroup.domain.models.ParticipantType
 import de.tabmates.features.tabgroup.presentation.components.deriveGroupAvatarKey
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -43,6 +42,22 @@ class GroupSettingsViewModel(
 
     init {
         loadGroup()
+        observePeopleCount()
+    }
+
+    /**
+     * Observed rather than folded into [loadGroup]'s one-shot read: this screen stays on the back
+     * stack while People is open, so a placeholder added there has to reach the row on the way back.
+     * The text fields deliberately stay out of this — re-hydrating them would fight the user typing.
+     */
+    private fun observePeopleCount() {
+        viewModelScope.launch {
+            groupRepository
+                .getGroups()
+                .map { groups -> groups.firstOrNull { it.id == groupId }?.participants?.size ?: 0 }
+                .distinctUntilChanged()
+                .collect { count -> _state.update { it.copy(peopleCount = count) } }
+        }
     }
 
     private fun loadGroup() {
@@ -61,34 +76,15 @@ class GroupSettingsViewModel(
                     nameTextState = TextFieldState(group.title),
                     descriptionTextState = TextFieldState(group.description.orEmpty()),
                     defaultCurrencyCode = group.defaultCurrencyCode,
-                    placeholders = group.toPlaceholders(),
                 )
             }
         }
     }
 
-    private fun Group.toPlaceholders(): List<GroupSettingsPlaceholder> =
-        participants
-            .filter { it.participantType == ParticipantType.PLACEHOLDER }
-            .map { GroupSettingsPlaceholder(id = it.userId, name = it.username) }
-
     fun onAction(action: GroupSettingsAction) {
         when (action) {
             GroupSettingsAction.Save -> {
                 save()
-            }
-
-            GroupSettingsAction.AddPlaceholderClick -> {
-                _state.value.newPlaceholderTextState.clearText()
-                _state.update { it.copy(isPlaceholderDialogVisible = true) }
-            }
-
-            GroupSettingsAction.PlaceholderDialogDismiss -> {
-                _state.update { it.copy(isPlaceholderDialogVisible = false) }
-            }
-
-            GroupSettingsAction.PlaceholderDialogConfirm -> {
-                addPlaceholder()
             }
 
             GroupSettingsAction.RequestLeave -> {
@@ -102,34 +98,6 @@ class GroupSettingsViewModel(
             GroupSettingsAction.ConfirmLeave -> {
                 leave()
             }
-        }
-    }
-
-    private fun addPlaceholder() {
-        val current = _state.value
-        if (current.isAddingPlaceholder) return
-        val name =
-            current.newPlaceholderTextState.text
-                .toString()
-                .trim()
-        if (name.isEmpty()) return
-        viewModelScope.launch {
-            _state.update { it.copy(isAddingPlaceholder = true) }
-            groupRepository
-                .addNewParticipantsToGroup(groupId, listOf(name))
-                .onSuccess { group ->
-                    _state.value.newPlaceholderTextState.clearText()
-                    _state.update {
-                        it.copy(
-                            isAddingPlaceholder = false,
-                            isPlaceholderDialogVisible = false,
-                            placeholders = group.toPlaceholders(),
-                        )
-                    }
-                }.onFailure { err ->
-                    _state.update { it.copy(isAddingPlaceholder = false) }
-                    eventChannel.send(GroupSettingsEvent.Error(err.toUiText()))
-                }
         }
     }
 

@@ -3,8 +3,6 @@ package de.tabmates.features.tabgroup.presentation.navigation.groupsettings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,16 +37,12 @@ import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.presentation.util.ObserveAsEvents
-import de.tabmates.features.tabgroup.presentation.components.AddPlaceholderButton
-import de.tabmates.features.tabgroup.presentation.components.AddPlaceholderDialog
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
-import de.tabmates.features.tabgroup.presentation.components.PlaceholderChip
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_add_placeholder
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_danger_zone
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_default_currency
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_description_label
@@ -59,20 +53,17 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.group_sett
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_leave_dialog_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_leave_group
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_name_label
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholder_dialog_cancel
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholder_dialog_confirm
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholder_dialog_title
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholder_name_label
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholders_caption
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_placeholders_section
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_people
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_save
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_saved
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_logout
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
 
 @Composable
 fun GroupSettingsRoot(
     groupId: String,
+    onPeopleClick: () -> Unit,
     onLeft: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
@@ -102,6 +93,7 @@ fun GroupSettingsRoot(
     GroupSettingsScreen(
         state = state,
         onAction = viewModel::onAction,
+        onPeopleClick = onPeopleClick,
         modifier = modifier,
     )
 }
@@ -110,6 +102,7 @@ fun GroupSettingsRoot(
 private fun GroupSettingsScreen(
     state: GroupSettingsState,
     onAction: (GroupSettingsAction) -> Unit,
+    onPeopleClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (state.isLoading) {
@@ -160,10 +153,9 @@ private fun GroupSettingsScreen(
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         VerticalSpacer(8.dp)
-        PlaceholdersSection(
-            placeholders = state.placeholders,
-            isAdding = state.isAddingPlaceholder,
-            onAddClick = { onAction(GroupSettingsAction.AddPlaceholderClick) },
+        PeopleCard(
+            peopleCount = state.peopleCount,
+            onClick = onPeopleClick,
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         VerticalSpacer(8.dp)
@@ -210,55 +202,50 @@ private fun GroupSettingsScreen(
             },
         )
     }
-    if (state.isPlaceholderDialogVisible) {
-        AddPlaceholderDialog(
-            textState = state.newPlaceholderTextState,
-            title = stringResource(Res.string.group_settings_placeholder_dialog_title),
-            nameLabel = stringResource(Res.string.group_settings_placeholder_name_label),
-            confirmLabel = stringResource(Res.string.group_settings_placeholder_dialog_confirm),
-            cancelLabel = stringResource(Res.string.group_settings_placeholder_dialog_cancel),
-            confirmEnabled = !state.isAddingPlaceholder,
-            onConfirm = { onAction(GroupSettingsAction.PlaceholderDialogConfirm) },
-            onDismiss = { onAction(GroupSettingsAction.PlaceholderDialogDismiss) },
-        )
-    }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+/** Members and placeholders are managed together one level down; this row is the way in. */
 @Composable
-private fun PlaceholdersSection(
-    placeholders: List<GroupSettingsPlaceholder>,
-    isAdding: Boolean,
-    onAddClick: () -> Unit,
+private fun PeopleCard(
+    peopleCount: Int,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(Res.string.group_settings_placeholders_section),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        VerticalSpacer(8.dp)
-        Text(
-            text = stringResource(Res.string.group_settings_placeholders_caption),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        VerticalSpacer(12.dp)
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        onClick = onClick,
+        modifier = modifier,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            placeholders.forEach { placeholder ->
-                PlaceholderChip(name = placeholder.name, initial = placeholder.initial)
-            }
-            AddPlaceholderButton(
-                label = stringResource(Res.string.group_settings_add_placeholder),
-                onClick = onAddClick,
-                enabled = !isAdding,
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_person_add),
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
+            HorizontalSpacer(12.dp)
+            Text(
+                text = stringResource(Res.string.group_settings_people),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = peopleCount.toString(),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            HorizontalSpacer(8.dp)
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_chevron_right),
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
             )
         }
     }

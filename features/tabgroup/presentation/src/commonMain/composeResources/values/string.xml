@@ -123,8 +123,6 @@
     <string name="groups_detail_back_cd">Back</string>
     <string name="groups_detail_tab_transactions">Transactions</string>
     <string name="groups_detail_tab_balances">Balances</string>
-    <string name="groups_detail_tab_members">Members</string>
-    <string name="groups_detail_tab_settings">Settings</string>
     <string name="groups_detail_tab_history">History</string>
     <string name="groups_detail_youre_owed">You lent</string>
     <string name="groups_detail_you_owe">You borrowed</string>
@@ -186,13 +184,7 @@
     <string name="group_settings_name_label">Group name</string>
     <string name="group_settings_description_label">Description</string>
     <string name="group_settings_default_currency">Default currency</string>
-    <string name="group_settings_placeholders_section">PLACEHOLDERS</string>
-    <string name="group_settings_placeholders_caption">Add spots for people now — they can claim them later with an invitation link.</string>
-    <string name="group_settings_add_placeholder">Add placeholder</string>
-    <string name="group_settings_placeholder_name_label">Placeholder name</string>
-    <string name="group_settings_placeholder_dialog_title">Add placeholder</string>
-    <string name="group_settings_placeholder_dialog_confirm">Add</string>
-    <string name="group_settings_placeholder_dialog_cancel">Cancel</string>
+    <string name="group_settings_people">People</string>
     <string name="group_settings_danger_zone">DANGER ZONE</string>
     <string name="group_settings_leave_group">Leave group</string>
     <string name="group_settings_leave_caption">You will lose access to expenses in this group.</string>
@@ -203,6 +195,16 @@
     <string name="group_settings_save">Save</string>
     <string name="group_settings_saved">Changes saved</string>
     <string name="group_settings_left">You left the group</string>
+    <string name="group_people_title">People</string>
+    <string name="group_people_section_members">MEMBERS</string>
+    <string name="group_people_section_placeholders">PLACEHOLDERS</string>
+    <string name="group_people_placeholders_caption">Add spots for people now — they can claim them later with an invitation link.</string>
+    <string name="group_people_add_placeholders">Add placeholder</string>
+    <string name="group_people_add_name_placeholder">Placeholder name</string>
+    <string name="group_people_add_name_hint">Press enter to add — the field stays open for the next one.</string>
+    <string name="group_people_add_confirm_cd">Add this placeholder</string>
+    <string name="group_people_error_duplicate_name">Someone with that name is already in this group.</string>
+    <string name="group_people_add_done_cd">Done adding placeholders</string>
 
     <string name="add_entry_title">New entry</string>
     <string name="edit_entry_title">Edit entry</string>

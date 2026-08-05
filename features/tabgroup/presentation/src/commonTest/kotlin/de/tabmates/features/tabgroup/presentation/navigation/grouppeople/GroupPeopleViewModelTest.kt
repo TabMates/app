@@ -1,0 +1,275 @@
+package de.tabmates.features.tabgroup.presentation.navigation.grouppeople
+
+import androidx.compose.runtime.snapshots.Snapshot
+import app.cash.turbine.test
+import de.tabmates.core.domain.util.DataError
+import de.tabmates.core.domain.util.Result
+import de.tabmates.features.tabgroup.domain.models.ParticipantType
+import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeCurrentAccount
+import de.tabmates.features.tabgroup.presentation.testing.Fixtures
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class GroupPeopleViewModelTest {
+    private val testDispatcher = UnconfinedTestDispatcher()
+
+    private val alice = Fixtures.participant(id = "user-1", name = "Alice")
+    private val bob = Fixtures.participant(id = "user-2", name = "Bob")
+    private val tom =
+        Fixtures.participant(id = "ph-1", name = "Tom", type = ParticipantType.PLACEHOLDER)
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    /**
+     * The state flow is `WhileSubscribed`, so it only leaves its initial value while something
+     * collects it — the screen does that in production, and this stands in for it.
+     */
+    private fun TestScope.viewModel(
+        repo: FakeGroupRepository,
+        currentUserId: String? = "user-2",
+    ): GroupPeopleViewModel {
+        val viewModel =
+            GroupPeopleViewModel(
+                groupId = "g1",
+                groupRepository = repo,
+                currentAccount = FakeCurrentAccount(id = currentUserId),
+            )
+        backgroundScope.launch { viewModel.state.collect { } }
+        advanceUntilIdle()
+        return viewModel
+    }
+
+    @Test
+    fun splitsMembersFromPlaceholdersAndBadgesThem() =
+        runTest(testDispatcher) {
+            val group =
+                Fixtures.group(
+                    id = "g1",
+                    participants = setOf(alice, bob, tom),
+                    creator = alice,
+                    inviteToken = "tok",
+                )
+            val repo = FakeGroupRepository(initialGroups = listOf(group))
+
+            val state = viewModel(repo).state.value
+
+            assertFalse(state.isLoading)
+            assertEquals(listOf("Bob", "Alice"), state.members.map { it.name })
+            assertEquals(listOf("Tom"), state.placeholders.map { it.name })
+            assertEquals(PersonBadge.PENDING, state.placeholders.single().badge)
+            assertEquals("tok", state.inviteToken)
+        }
+
+    @Test
+    fun currentUserSortsFirstAndKeepsTheOwnerBadge() =
+        runTest(testDispatcher) {
+            val group = Fixtures.group(id = "g1", participants = setOf(alice, bob), creator = bob)
+            val repo = FakeGroupRepository(initialGroups = listOf(group))
+
+            // Bob is both the viewer and the creator: he reads as "You" and still keeps Owner.
+            val members = viewModel(repo, currentUserId = "user-2").state.value.members
+
+            assertEquals("Bob", members.first().name)
+            assertTrue(members.first().isCurrentUser)
+            assertEquals(PersonBadge.OWNER, members.first().badge)
+            assertFalse(members[1].isCurrentUser)
+            assertNull(members[1].badge)
+        }
+
+    @Test
+    fun eachSubmittedNameIsAddedAndTheFieldStaysOpen() =
+        runTest(testDispatcher) {
+            val group = Fixtures.group(id = "g1", participants = setOf(alice))
+            val repo =
+                FakeGroupRepository(initialGroups = listOf(group)).apply {
+                    addNewParticipantsResult = Result.Success(group)
+                }
+            val viewModel = viewModel(repo)
+
+            viewModel.onAction(GroupPeopleAction.AddPlaceholderClick)
+            viewModel.submit("Tom")
+            viewModel.submit("Max")
+
+            assertEquals(
+                listOf(listOf("Tom"), listOf("Max")),
+                repo.addNewParticipantsCalls.map { it.usernames },
+            )
+            assertEquals("g1", repo.addNewParticipantsCalls.first().groupId)
+            val state = viewModel.state.value
+            // Still open and empty, so the next name can go straight in.
+            assertTrue(state.isAddRowVisible)
+            assertEquals("", state.newNameTextState.text.toString())
+        }
+
+    @Test
+    fun submittingAnEmptyNameClosesTheRow() =
+        runTest(testDispatcher) {
+            val group = Fixtures.group(id = "g1", participants = setOf(alice))
+            val repo = FakeGroupRepository(initialGroups = listOf(group))
+            val viewModel = viewModel(repo)
+
+            viewModel.onAction(GroupPeopleAction.AddPlaceholderClick)
+            viewModel.submit("   ")
+
+            assertTrue(repo.addNewParticipantsCalls.isEmpty())
+            assertFalse(viewModel.state.value.isAddRowVisible)
+        }
+
+    @Test
+    fun namesAlreadyInTheGroupAreRejectedWithAnError() =
+        runTest(testDispatcher) {
+            val group = Fixtures.group(id = "g1", participants = setOf(alice, tom))
+            val repo = FakeGroupRepository(initialGroups = listOf(group))
+            val viewModel = viewModel(repo)
+            viewModel.onAction(GroupPeopleAction.AddPlaceholderClick)
+
+            viewModel.events.test {
+                // Already a placeholder, in a different case.
+                viewModel.submit("tom")
+                assertIs<GroupPeopleEvent.Error>(awaitItem())
+                // Already a member.
+                viewModel.submit("alice")
+                assertIs<GroupPeopleEvent.Error>(awaitItem())
+            }
+
+            assertTrue(repo.addNewParticipantsCalls.isEmpty())
+            assertTrue(viewModel.state.value.isAddRowVisible)
+            // The rejected name stays in the field so it can be corrected.
+            assertEquals(
+                "alice",
+                viewModel.state.value.newNameTextState.text
+                    .toString(),
+            )
+        }
+
+    @Test
+    fun aMissingGroupResolvesInsteadOfLoadingForever() =
+        runTest(testDispatcher) {
+            val repo = FakeGroupRepository(initialGroups = emptyList())
+
+            val state = viewModel(repo).state.value
+
+            assertFalse(state.isLoading)
+            assertTrue(state.members.isEmpty())
+            assertTrue(state.placeholders.isEmpty())
+        }
+
+    @Test
+    fun addFailureEmitsErrorAndKeepsTheTypedName() =
+        runTest(testDispatcher) {
+            val group = Fixtures.group(id = "g1", participants = setOf(alice))
+            val repo =
+                FakeGroupRepository(initialGroups = listOf(group)).apply {
+                    addNewParticipantsResult = Result.Failure(DataError.Remote.UNKNOWN)
+                }
+            val viewModel = viewModel(repo)
+
+            viewModel.onAction(GroupPeopleAction.AddPlaceholderClick)
+            viewModel.type("Tom")
+
+            viewModel.events.test {
+                viewModel.onAction(GroupPeopleAction.SubmitName)
+                advanceUntilIdle()
+                assertIs<GroupPeopleEvent.Error>(awaitItem())
+            }
+            val state = viewModel.state.value
+            assertEquals("Tom", state.newNameTextState.text.toString())
+            assertTrue(state.isAddRowVisible)
+            assertFalse(state.isAddingPlaceholder)
+        }
+
+    @Test
+    fun cancelClosesTheRowAndClearsTheField() =
+        runTest(testDispatcher) {
+            val group = Fixtures.group(id = "g1", participants = setOf(alice))
+            val repo = FakeGroupRepository(initialGroups = listOf(group))
+            val viewModel = viewModel(repo)
+
+            viewModel.onAction(GroupPeopleAction.AddPlaceholderClick)
+            viewModel.type("Tom")
+            viewModel.onAction(GroupPeopleAction.CancelAdd)
+
+            assertTrue(repo.addNewParticipantsCalls.isEmpty())
+            assertFalse(viewModel.state.value.isAddRowVisible)
+            assertEquals(
+                "",
+                viewModel.state.value.newNameTextState.text
+                    .toString(),
+            )
+        }
+
+    @Test
+    fun rotateInviteDelegatesAndTheNewTokenFlowsBack() =
+        runTest(testDispatcher) {
+            val group = Fixtures.group(id = "g1", participants = setOf(alice), inviteToken = "old")
+            val repo =
+                FakeGroupRepository(initialGroups = listOf(group)).apply {
+                    rotateInviteResult = Result.Success(group.copy(inviteToken = "new"))
+                }
+            val viewModel = viewModel(repo)
+            assertEquals("old", viewModel.state.value.inviteToken)
+
+            viewModel.onAction(GroupPeopleAction.RotateInvite)
+            advanceUntilIdle()
+            assertEquals(listOf("g1"), repo.rotateInviteCalls)
+
+            // The repository is the source of truth: the screen only updates once the rotated group
+            // comes back through the groups flow.
+            repo.emitGroups(listOf(group.copy(inviteToken = "new")))
+            advanceUntilIdle()
+            assertEquals("new", viewModel.state.value.inviteToken)
+        }
+
+    @Test
+    fun rotateFailureEmitsError() =
+        runTest(testDispatcher) {
+            val group = Fixtures.group(id = "g1", participants = setOf(alice), inviteToken = "old")
+            val repo =
+                FakeGroupRepository(initialGroups = listOf(group)).apply {
+                    rotateInviteResult = Result.Failure(DataError.Remote.UNKNOWN)
+                }
+            val viewModel = viewModel(repo)
+
+            viewModel.events.test {
+                viewModel.onAction(GroupPeopleAction.RotateInvite)
+                advanceUntilIdle()
+                assertIs<GroupPeopleEvent.Error>(awaitItem())
+            }
+        }
+
+    private fun GroupPeopleViewModel.type(name: String) {
+        state.value.newNameTextState.edit { replace(0, length, name) }
+        Snapshot.sendApplyNotifications()
+    }
+
+    /** The unconfined dispatcher runs the add through to completion before this returns. */
+    private fun GroupPeopleViewModel.submit(name: String) {
+        type(name)
+        onAction(GroupPeopleAction.SubmitName)
+    }
+}

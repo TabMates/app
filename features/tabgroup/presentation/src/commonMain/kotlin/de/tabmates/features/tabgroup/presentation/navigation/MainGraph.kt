@@ -13,6 +13,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.editsettlement.Edit
 import de.tabmates.features.tabgroup.presentation.navigation.entrydetail.EntryDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.GroupDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.GroupOverviewRoot
+import de.tabmates.features.tabgroup.presentation.navigation.grouppeople.GroupPeopleRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
@@ -50,6 +51,7 @@ val mainSerializersModule =
             subclass(GroupDetail::class)
             subclass(SettleUp::class)
             subclass(GroupSettings::class)
+            subclass(GroupPeople::class)
             subclass(JoinGroup::class)
             subclass(EditUsername::class)
             subclass(ChangePassword::class)
@@ -97,15 +99,17 @@ fun EntryProviderScope<NavKey>.mainGraph(
             selectedGroupId = selectedGroupId,
             onGroupOpen = { groupId ->
                 // Replace rather than stack: picking another group swaps the pane, it does not
-                // deepen the history.
-                backStack.removeAll { it is GroupDetail || it is SettleUp }
+                // deepen the history. Settings and People go too, or the previous group's pages
+                // would sit under the newly selected group in the detail pane.
+                backStack.removeAll {
+                    it is GroupDetail || it is SettleUp || it is GroupSettings || it is GroupPeople
+                }
                 backStack.add(GroupDetail(groupId))
             },
         )
     }
 
     entry<GroupDetail>(metadata = PaneRole.detail) { route ->
-        val leftMessage = stringResource(Res.string.group_settings_left)
         GroupDetailRoot(
             groupId = route.groupId,
             snackbarHostState = snackbarHostState,
@@ -118,13 +122,6 @@ fun EntryProviderScope<NavKey>.mainGraph(
             },
             onSettlementClick = { settlementId ->
                 backStack.add(SettlementDetail(settlementId = settlementId, groupId = route.groupId))
-            },
-            onLeaveGroup = {
-                backStack.removeAll {
-                    (it is GroupDetail && it.groupId == route.groupId) ||
-                        (it is GroupSettings && it.groupId == route.groupId)
-                }
-                appScope.launch { snackbarHostState.showSnackbar(leftMessage) }
             },
         )
     }
@@ -262,14 +259,27 @@ fun EntryProviderScope<NavKey>.mainGraph(
         )
     }
 
-    entry<GroupSettings> { route ->
+    entry<GroupSettings>(metadata = PaneRole.detail) { route ->
         val leftMessage = stringResource(Res.string.group_settings_left)
         GroupSettingsRoot(
             groupId = route.groupId,
+            onPeopleClick = { backStack.add(GroupPeople(route.groupId)) },
             onLeft = {
-                backStack.removeAll { it is GroupSettings || (it is GroupDetail && it.groupId == route.groupId) }
+                // Scoped to this group: another group's pages may sit on the stack on a wide window.
+                backStack.removeAll {
+                    (it is GroupSettings && it.groupId == route.groupId) ||
+                        (it is GroupPeople && it.groupId == route.groupId) ||
+                        (it is GroupDetail && it.groupId == route.groupId)
+                }
                 appScope.launch { snackbarHostState.showSnackbar(leftMessage) }
             },
+            snackbarHostState = snackbarHostState,
+        )
+    }
+
+    entry<GroupPeople>(metadata = PaneRole.detail) { route ->
+        GroupPeopleRoot(
+            groupId = route.groupId,
             snackbarHostState = snackbarHostState,
         )
     }

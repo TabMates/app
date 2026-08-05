@@ -2,6 +2,7 @@ package de.tabmates.features.tabgroup.presentation.navigation.groupsettings
 
 import app.cash.turbine.test
 import de.tabmates.core.domain.util.Result
+import de.tabmates.features.tabgroup.domain.models.ParticipantType
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +37,17 @@ class GroupSettingsViewModelTest {
     @Test
     fun loadHydratesFieldsFromGroup() =
         runTest(testDispatcher) {
-            val group = Fixtures.group(id = "g1", title = "Lisbon", currency = "EUR")
+            val group =
+                Fixtures.group(
+                    id = "g1",
+                    title = "Lisbon",
+                    currency = "EUR",
+                    participants =
+                        setOf(
+                            Fixtures.participant(id = "user-1", name = "Alice"),
+                            Fixtures.participant(id = "user-2", name = "Bob"),
+                        ),
+                )
             val repo = FakeGroupRepository(initialGroups = listOf(group))
             val viewModel = GroupSettingsViewModel(groupId = "g1", groupRepository = repo)
             advanceUntilIdle()
@@ -45,6 +56,28 @@ class GroupSettingsViewModelTest {
             assertFalse(state.isLoading)
             assertEquals("Lisbon", state.nameTextState.text.toString())
             assertEquals("EUR", state.defaultCurrencyCode)
+            assertEquals(2, state.peopleCount)
+        }
+
+    /** The screen sits on the back stack while People is open, so the row has to follow the group. */
+    @Test
+    fun peopleCountTracksLaterParticipantChanges() =
+        runTest(testDispatcher) {
+            val alice = Fixtures.participant(id = "user-1", name = "Alice")
+            val group = Fixtures.group(id = "g1", participants = setOf(alice))
+            val repo = FakeGroupRepository(initialGroups = listOf(group))
+            val viewModel = GroupSettingsViewModel(groupId = "g1", groupRepository = repo)
+            advanceUntilIdle()
+            assertEquals(1, viewModel.state.value.peopleCount)
+
+            // A placeholder specifically: the row counts members and placeholders together, which is
+            // what the People screen shows.
+            val added =
+                Fixtures.participant(id = "ph-1", name = "Tom", type = ParticipantType.PLACEHOLDER)
+            repo.emitGroups(listOf(group.copy(participants = setOf(alice, added))))
+            advanceUntilIdle()
+
+            assertEquals(2, viewModel.state.value.peopleCount)
         }
 
     @Test

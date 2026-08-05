@@ -66,6 +66,7 @@ fun TabMatesTextField(
     capitalization: KeyboardCapitalization = KeyboardCapitalization.Unspecified,
     contentType: ContentType? = null,
     inputTransformation: InputTransformation? = null,
+    trailingIcon: (@Composable () -> Unit)? = null,
     onFocusChanged: (Boolean) -> Unit = {},
     onKeyboardAction: (() -> Unit)? = null,
 ) {
@@ -108,6 +109,7 @@ fun TabMatesTextField(
             inputTransformation = inputTransformation,
             onKeyboardAction = onKeyboardAction?.let { action -> KeyboardActionHandler { action() } },
             interactionSource = interactionSource,
+            trailingIcon = trailingIcon,
             placeholder =
                 if (state.text.isEmpty() && placeholder != null) {
                     {

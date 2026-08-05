@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -67,7 +66,6 @@ import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
-import de.tabmates.features.tabgroup.domain.models.ParticipantType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
 import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
@@ -76,15 +74,12 @@ import de.tabmates.features.tabgroup.presentation.navigation.activity.LoadMoreOn
 import de.tabmates.features.tabgroup.presentation.navigation.activity.activityFeed
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.rememberMonthAbbreviations
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.buildInviteUrl
-import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.shortInviteUrl
-import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
-import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_open_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_across_people
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_add_entry
@@ -93,17 +88,9 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_gets_back
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_copied
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_copy
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_link_title
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_rotate_cd
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_share
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_share_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_owes
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_owner_badge
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_paid_by
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_paid_by_you
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_badge
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_not_claimed
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_received_by
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_received_by_you
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_row_no_balance
@@ -117,8 +104,6 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_settlement_you_paid
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_balances
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_history
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_members
-import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_settings
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_tab_transactions
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_total_spent
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_you_owe
@@ -130,20 +115,16 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_mem
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_status_settled
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_arrow_back
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_content_copy
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_link
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_redeem
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_refresh
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_restaurant
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_send
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_settings
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_swap_horiz
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_action
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-private enum class DetailTab { TRANSACTIONS, HISTORY, BALANCES, MEMBERS, SETTINGS }
+private enum class DetailTab { TRANSACTIONS, HISTORY, BALANCES }
 
 /** Bottom space reserved so the last row can scroll clear of the host "Add Entry" FAB. */
 private val FabBottomClearance = 96.dp
@@ -155,7 +136,6 @@ internal fun GroupDetailPane(
     currentUserId: String,
     members: List<GroupParticipant>,
     entries: List<TabEntry>,
-    perPersonBalances: Map<String, Double>,
     memberNetBalances: Map<String, Double>,
     hasOutstandingDebts: Boolean,
     currencyByCode: Map<String, Currency>,
@@ -163,14 +143,12 @@ internal fun GroupDetailPane(
     historySections: List<ActivitySection>,
     canLoadMoreHistory: Boolean,
     onLoadMoreHistory: () -> Unit,
-    onRotateInvite: () -> Unit,
     onBack: () -> Unit = {},
     onSettingsClick: () -> Unit,
     onAddEntryClick: () -> Unit = {},
     onSettleUpClick: () -> Unit = {},
     onEntryClick: (String) -> Unit = {},
     onSettlementClick: (String) -> Unit = {},
-    onLeaveGroup: () -> Unit = {},
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -178,10 +156,7 @@ internal fun GroupDetailPane(
         currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
             WIDTH_DP_MEDIUM_LOWER_BOUND,
         )
-    val visibleTabs =
-        if (isExpanded) DetailTab.entries.toList() else DetailTab.entries.filterNot { it == DetailTab.SETTINGS }
     var selectedTab by rememberSaveable(item.id) { mutableStateOf(DetailTab.TRANSACTIONS) }
-    if (selectedTab !in visibleTabs) selectedTab = DetailTab.TRANSACTIONS
     val linkSharer = rememberLinkSharer()
     val scope = rememberCoroutineScope()
     val inviteUrl = remember(item.inviteToken) { buildInviteUrl(item.inviteToken) }
@@ -190,11 +165,6 @@ internal fun GroupDetailPane(
             scope.launch {
                 snackbarHostState.showSnackbar(getString(Res.string.groups_detail_invite_copied))
             }
-        }
-    }
-    val onCopyInvite: () -> Unit = {
-        if (item.inviteToken.isNotBlank()) {
-            showResultSnackbar(linkSharer.copy(inviteUrl))
         }
     }
     val onShareInvite: () -> Unit = {
@@ -260,10 +230,10 @@ internal fun GroupDetailPane(
             )
         }
         PrimaryTabRow(
-            selectedTabIndex = visibleTabs.indexOf(selectedTab).coerceAtLeast(0),
+            selectedTabIndex = selectedTab.ordinal,
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
-            visibleTabs.forEach { tab ->
+            DetailTab.entries.forEach { tab ->
                 Tab(
                     selected = selectedTab == tab,
                     onClick = { selectedTab = tab },
@@ -303,27 +273,6 @@ internal fun GroupDetailPane(
                     memberNetBalances = memberNetBalances,
                     hasOutstandingDebts = hasOutstandingDebts,
                     onSettleUpClick = onSettleUpClick,
-                )
-            }
-
-            DetailTab.MEMBERS -> {
-                MembersTab(
-                    item = item,
-                    members = members,
-                    currentUserId = currentUserId,
-                    perPersonBalances = perPersonBalances,
-                    onCopyInvite = onCopyInvite,
-                    onShareInvite = onShareInvite,
-                    onSharePendingInvite = onShareInvite,
-                    onRotateInvite = onRotateInvite,
-                )
-            }
-
-            DetailTab.SETTINGS -> {
-                GroupSettingsRoot(
-                    groupId = item.id,
-                    onLeft = onLeaveGroup,
-                    snackbarHostState = snackbarHostState,
                 )
             }
         }
@@ -368,19 +317,20 @@ private fun DetailHeader(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            // Settings is no longer a tab on any width, so the gear is the single way in.
+            IconButton(onClick = onSettingsClick) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_settings),
+                    contentDescription = stringResource(Res.string.group_settings_open_cd),
+                )
+            }
             if (isExpanded) {
+                HorizontalSpacer(8.dp)
                 HeaderActions(
                     modifier = Modifier,
                     onInviteClick = onInviteClick,
                     onAddEntryClick = onAddEntryClick,
                 )
-            } else {
-                IconButton(onClick = onSettingsClick) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.ic_settings),
-                        contentDescription = stringResource(Res.string.group_settings_open_cd),
-                    )
-                }
             }
         }
         if (!isExpanded) {
@@ -1112,241 +1062,6 @@ private fun PerPersonRow(
 }
 
 @Composable
-private fun MembersTab(
-    item: GroupOverviewItem,
-    members: List<GroupParticipant>,
-    currentUserId: String,
-    perPersonBalances: Map<String, Double>,
-    onCopyInvite: () -> Unit,
-    onShareInvite: () -> Unit,
-    onSharePendingInvite: () -> Unit,
-    onRotateInvite: () -> Unit,
-) {
-    val active = members.filter { it.participantType != ParticipantType.PLACEHOLDER }
-    val pending = members.filter { it.participantType == ParticipantType.PLACEHOLDER }
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(start = 24.dp, end = 24.dp, bottom = FabBottomClearance),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        VerticalSpacer(16.dp)
-        Text(
-            text = memberCountText(active.size).uppercase(),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        active.forEach { participant ->
-            MemberRow(
-                participant = participant,
-                isCurrentUser = participant.userId == currentUserId,
-                isCreator = participant.userId == item.creatorUserId,
-                net = perPersonBalances[participant.userId] ?: 0.0,
-                item = item,
-            )
-        }
-        pending.forEach { participant ->
-            PendingMemberRow(
-                participant = participant,
-                onShareClick = onSharePendingInvite,
-            )
-        }
-        if (item.inviteToken.isNotBlank()) {
-            InviteLinkCard(
-                inviteToken = item.inviteToken,
-                onCopy = onCopyInvite,
-                onShare = onShareInvite,
-                onRotate = onRotateInvite,
-            )
-        }
-    }
-}
-
-@Composable
-private fun PendingMemberRow(
-    participant: GroupParticipant,
-    onShareClick: () -> Unit,
-) {
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            UserAvatar(initials = participant.initials)
-            HorizontalSpacer(12.dp)
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = participant.username,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    HorizontalSpacer(8.dp)
-                    AssistChip(
-                        onClick = onShareClick,
-                        label = {
-                            Text(stringResource(Res.string.groups_detail_pending_badge))
-                        },
-                    )
-                }
-                Text(
-                    text = stringResource(Res.string.groups_detail_pending_not_claimed),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            IconButton(onClick = onShareClick) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_send),
-                    contentDescription = stringResource(Res.string.groups_detail_invite_share_cd),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun InviteLinkCard(
-    inviteToken: String,
-    onCopy: () -> Unit,
-    onShare: () -> Unit,
-    onRotate: () -> Unit,
-) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            ),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_link),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                HorizontalSpacer(8.dp)
-                Text(
-                    text = stringResource(Res.string.groups_detail_invite_link_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(onClick = onRotate) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.ic_refresh),
-                        contentDescription = stringResource(Res.string.groups_detail_invite_rotate_cd),
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-            VerticalSpacer(8.dp)
-            Text(
-                text = shortInviteUrl(inviteToken),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            VerticalSpacer(12.dp)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onCopy) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.ic_content_copy),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                    )
-                    HorizontalSpacer(6.dp)
-                    Text(stringResource(Res.string.groups_detail_invite_copy))
-                }
-                FilledTonalButton(onClick = onShare) {
-                    Text(stringResource(Res.string.groups_detail_invite_share))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MemberRow(
-    participant: GroupParticipant,
-    isCurrentUser: Boolean,
-    isCreator: Boolean,
-    net: Double,
-    item: GroupOverviewItem,
-) {
-    val balanceText =
-        when {
-            isCurrentUser -> null
-            net > 0 -> formatSignedAmount(item, net, AmountSign.Positive)
-            net < 0 -> formatSignedAmount(item, abs(net), AmountSign.Negative)
-            else -> null
-        }
-    val balanceColor =
-        when {
-            net > 0 -> MaterialTheme.colorScheme.extended.positive
-            net < 0 -> MaterialTheme.colorScheme.extended.negative
-            else -> MaterialTheme.colorScheme.onSurfaceVariant
-        }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        UserAvatar(initials = participant.initials)
-        HorizontalSpacer(12.dp)
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = if (isCurrentUser) stringResource(Res.string.activity_you) else participant.username,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                if (isCreator) {
-                    HorizontalSpacer(8.dp)
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.groups_detail_owner_badge),
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                        )
-                    }
-                }
-            }
-            Text(
-                text = participant.username,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        if (balanceText != null) {
-            Text(
-                text = balanceText,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = balanceColor,
-            )
-        }
-    }
-}
-
-@Composable
 private fun StatCardsRow(
     item: GroupOverviewItem,
     modifier: Modifier = Modifier,
@@ -1468,8 +1183,6 @@ private fun DetailTab.label(): String =
         DetailTab.TRANSACTIONS -> stringResource(Res.string.groups_detail_tab_transactions)
         DetailTab.HISTORY -> stringResource(Res.string.groups_detail_tab_history)
         DetailTab.BALANCES -> stringResource(Res.string.groups_detail_tab_balances)
-        DetailTab.MEMBERS -> stringResource(Res.string.groups_detail_tab_members)
-        DetailTab.SETTINGS -> stringResource(Res.string.groups_detail_tab_settings)
     }
 
 @Composable
