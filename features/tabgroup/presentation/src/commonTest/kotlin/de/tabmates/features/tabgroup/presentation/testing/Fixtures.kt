@@ -13,11 +13,12 @@ object Fixtures {
     fun participant(
         id: String = "user-1",
         name: String = "Alice",
+        type: ParticipantType = ParticipantType.REGISTERED,
     ): GroupParticipant =
         GroupParticipant(
             userId = id,
             username = name,
-            participantType = ParticipantType.REGISTERED,
+            participantType = type,
         )
 
     fun group(
@@ -26,6 +27,8 @@ object Fixtures {
         participants: Set<GroupParticipant> = setOf(participant()),
         currency: String = "EUR",
         activityEpochMs: Long = 0L,
+        creator: GroupParticipant = participants.first(),
+        inviteToken: String = "",
     ): Group =
         Group(
             id = id,
@@ -33,8 +36,8 @@ object Fixtures {
             description = null,
             defaultCurrencyCode = currency,
             participants = participants,
-            creator = participants.first(),
-            inviteToken = "",
+            creator = creator,
+            inviteToken = inviteToken,
             lastActivityAt = Instant.fromEpochMilliseconds(activityEpochMs),
             lastTabEntry = null,
             createdAt = Instant.fromEpochMilliseconds(0),

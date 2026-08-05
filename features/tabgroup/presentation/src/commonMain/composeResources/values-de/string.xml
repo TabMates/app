@@ -201,6 +201,16 @@
     <string name="group_settings_save">Speichern</string>
     <string name="group_settings_saved">Änderungen gespeichert</string>
     <string name="group_settings_left">Du hast die Gruppe verlassen</string>
+    <string name="group_people_title">Personen</string>
+    <string name="group_people_section_members">MITGLIEDER</string>
+    <string name="group_people_section_placeholders">PLATZHALTER</string>
+    <string name="group_people_placeholders_caption">Reserviere jetzt Plätze für Personen — sie können diese später über einen Einladungslink beanspruchen.</string>
+    <string name="group_people_add_placeholders">Platzhalter hinzufügen</string>
+    <string name="group_people_add_name_placeholder">Platzhaltername</string>
+    <string name="group_people_add_name_hint">Drücke die Eingabetaste zum Hinzufügen — das Feld bleibt für den nächsten Namen offen.</string>
+    <string name="group_people_add_confirm_cd">Diesen Platzhalter hinzufügen</string>
+    <string name="group_people_error_duplicate_name">Jemand mit diesem Namen ist bereits in dieser Gruppe.</string>
+    <string name="group_people_add_done_cd">Hinzufügen beenden</string>
 
     <string name="add_entry_title">Neuer Eintrag</string>
     <string name="edit_entry_title">Eintrag bearbeiten</string>

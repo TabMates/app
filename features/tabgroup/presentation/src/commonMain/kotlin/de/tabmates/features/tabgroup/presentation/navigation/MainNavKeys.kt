@@ -30,6 +30,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_entry
 import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_settlement_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_username_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.home_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home
@@ -182,6 +183,12 @@ data class SettleUp(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWit
 @Serializable
 data class GroupSettings(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.group_settings_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Back
+}
+
+@Serializable
+data class GroupPeople(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.group_people_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Back
 }
 

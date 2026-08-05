@@ -13,6 +13,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.editsettlement.Edit
 import de.tabmates.features.tabgroup.presentation.navigation.entrydetail.EntryDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.GroupDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.GroupOverviewRoot
+import de.tabmates.features.tabgroup.presentation.navigation.grouppeople.GroupPeopleRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
@@ -50,6 +51,7 @@ val mainSerializersModule =
             subclass(GroupDetail::class)
             subclass(SettleUp::class)
             subclass(GroupSettings::class)
+            subclass(GroupPeople::class)
             subclass(JoinGroup::class)
             subclass(EditUsername::class)
             subclass(ChangePassword::class)
@@ -262,6 +264,13 @@ fun EntryProviderScope<NavKey>.mainGraph(
                 backStack.removeAll { it is GroupSettings || (it is GroupDetail && it.groupId == route.groupId) }
                 appScope.launch { snackbarHostState.showSnackbar(leftMessage) }
             },
+            snackbarHostState = snackbarHostState,
+        )
+    }
+
+    entry<GroupPeople>(metadata = PaneRole.detail) { route ->
+        GroupPeopleRoot(
+            groupId = route.groupId,
             snackbarHostState = snackbarHostState,
         )
     }

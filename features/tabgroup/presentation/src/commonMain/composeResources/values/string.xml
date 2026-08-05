@@ -201,6 +201,16 @@
     <string name="group_settings_save">Save</string>
     <string name="group_settings_saved">Changes saved</string>
     <string name="group_settings_left">You left the group</string>
+    <string name="group_people_title">People</string>
+    <string name="group_people_section_members">MEMBERS</string>
+    <string name="group_people_section_placeholders">PLACEHOLDERS</string>
+    <string name="group_people_placeholders_caption">Add spots for people now — they can claim them later with an invitation link.</string>
+    <string name="group_people_add_placeholders">Add placeholder</string>
+    <string name="group_people_add_name_placeholder">Placeholder name</string>
+    <string name="group_people_add_name_hint">Press enter to add — the field stays open for the next one.</string>
+    <string name="group_people_add_confirm_cd">Add this placeholder</string>
+    <string name="group_people_error_duplicate_name">Someone with that name is already in this group.</string>
+    <string name="group_people_add_done_cd">Done adding placeholders</string>
 
     <string name="add_entry_title">New entry</string>
     <string name="edit_entry_title">Edit entry</string>
