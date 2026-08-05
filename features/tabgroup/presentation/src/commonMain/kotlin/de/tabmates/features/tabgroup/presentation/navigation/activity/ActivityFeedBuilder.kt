@@ -2,6 +2,8 @@ package de.tabmates.features.tabgroup.presentation.navigation.activity
 
 import de.tabmates.core.presentation.format.DEFAULT_CURRENCY_DECIMALS
 import de.tabmates.core.presentation.format.NumberSymbols
+import de.tabmates.core.presentation.util.RelativeTimeSpan
+import de.tabmates.core.presentation.util.relativeTimeSpan
 import de.tabmates.features.tabgroup.domain.activity.ActivityEntryType
 import de.tabmates.features.tabgroup.domain.activity.ActivityEvent
 import de.tabmates.features.tabgroup.domain.activity.ActivityEventType
@@ -13,21 +15,20 @@ import de.tabmates.features.tabgroup.presentation.util.platformShortMonthNames
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 /**
  * Turns a merged feed into the date-bucketed rows the UI renders.
  *
  * Shared by the account-wide Activity tab and the group History tab so the two can't drift. It
- * formats *values* only — amounts, dates and user names — and leaves every label (the action verb,
- * the field names, "You") to the composable, because `getString` cannot be called from a ViewModel.
+ * formats *values* only — amounts, dates and user names — and leaves every label (the sentence, the
+ * field names, "You", the timestamp) to the composable, because `getString` cannot be called from a
+ * ViewModel. A name it cannot resolve comes out blank rather than as an English placeholder.
  */
 internal object ActivityFeedBuilder {
-    private const val SEPARATOR = " · "
+    internal const val SEPARATOR = " · "
     private const val SELF_SEED = "self"
-    private const val FALLBACK_NAME = "Someone"
+    private const val UNKNOWN_INITIALS = "?"
 
     fun build(
         items: List<ActivityFeedItem>,
@@ -101,18 +102,49 @@ internal object ActivityFeedBuilder {
         fun render(event: ActivityEvent): ActivityItem {
             val groupTitle = groupTitles[event.groupId]
             val actorName = nameOf(event.actorUserId)
-            val targetName = event.targetUsername ?: event.targetUserId?.let { nameOf(it) } ?: FALLBACK_NAME
+            val targetName = event.targetUsername ?: event.targetUserId?.let { nameOf(it) } ?: ""
+            val entryTitle = event.entryTitle.orEmpty()
+            val isSettlement = event.entryType == ActivityEntryType.SETTLEMENT
+            val isSelf = event.isSelfTargeted()
             val kind =
                 when (event.type) {
-                    ActivityEventType.ENTRY_CREATED -> ActivityKind.EntryAdded(event.entryTitle.orEmpty())
-                    ActivityEventType.ENTRY_UPDATED -> ActivityKind.EntryEdited(event.entryTitle.orEmpty())
-                    ActivityEventType.ENTRY_DELETED -> ActivityKind.EntryDeleted(event.entryTitle.orEmpty())
-                    ActivityEventType.GROUP_CREATED -> ActivityKind.GroupCreated(groupTitle.orEmpty())
-                    ActivityEventType.GROUP_UPDATED -> ActivityKind.GroupUpdated(groupTitle.orEmpty())
-                    ActivityEventType.MEMBER_JOINED -> ActivityKind.MemberJoined(targetName)
-                    ActivityEventType.MEMBER_LEFT -> ActivityKind.MemberLeft(targetName)
-                    ActivityEventType.MEMBER_REMOVED -> ActivityKind.MemberRemoved(targetName)
-                    ActivityEventType.UNKNOWN -> ActivityKind.Unknown
+                    ActivityEventType.ENTRY_CREATED -> {
+                        if (isSettlement) ActivityKind.SettlementAdded else ActivityKind.EntryAdded(entryTitle)
+                    }
+
+                    ActivityEventType.ENTRY_UPDATED -> {
+                        if (isSettlement) ActivityKind.SettlementEdited else ActivityKind.EntryEdited(entryTitle)
+                    }
+
+                    ActivityEventType.ENTRY_DELETED -> {
+                        if (isSettlement) ActivityKind.SettlementDeleted else ActivityKind.EntryDeleted(entryTitle)
+                    }
+
+                    ActivityEventType.GROUP_CREATED -> {
+                        ActivityKind.GroupCreated(groupTitle.orEmpty())
+                    }
+
+                    ActivityEventType.GROUP_UPDATED -> {
+                        ActivityKind.GroupUpdated(groupTitle.orEmpty())
+                    }
+
+                    // The server names the actor as the target of a self-join, and someone else
+                    // whenever that person was invited or added as a placeholder instead.
+                    ActivityEventType.MEMBER_JOINED -> {
+                        if (isSelf) ActivityKind.MemberJoined else ActivityKind.MemberAdded(targetName)
+                    }
+
+                    ActivityEventType.MEMBER_LEFT -> {
+                        ActivityKind.MemberLeft
+                    }
+
+                    ActivityEventType.MEMBER_REMOVED -> {
+                        if (isSelf) ActivityKind.MemberLeft else ActivityKind.MemberRemoved(targetName)
+                    }
+
+                    ActivityEventType.UNKNOWN -> {
+                        ActivityKind.Unknown
+                    }
                 }
             return item(
                 id = event.id,
@@ -123,8 +155,8 @@ internal object ActivityFeedBuilder {
                     subtitle(
                         groupTitle = groupTitle,
                         amountText = amountText(event.amount, event.currencyCode),
-                        instant = event.occurredAt,
                     ),
+                occurredAgo = relativeTimeSpan(from = event.occurredAt, now = now),
                 diffs = event.changes.map { diff(it.field, it.oldValue, it.newValue, event.currencyCode) },
                 isDeleted = event.type == ActivityEventType.ENTRY_DELETED,
                 clickTarget = clickTarget(event.type, event.groupId, event.tabEntryId, event.entryType),
@@ -134,11 +166,20 @@ internal object ActivityFeedBuilder {
         fun render(pending: ActivityFeedItem.Pending): ActivityItem {
             val groupTitle = pending.groupId?.let { groupTitles[it] }
             val title = pending.entryTitle.orEmpty()
+            val isSettlement = pending.entryType == ActivityEntryType.SETTLEMENT
             val kind =
                 when (pending.type) {
-                    ActivityEventType.ENTRY_UPDATED -> ActivityKind.EntryEdited(title)
-                    ActivityEventType.ENTRY_DELETED -> ActivityKind.EntryDeleted(title)
-                    else -> ActivityKind.EntryAdded(title)
+                    ActivityEventType.ENTRY_UPDATED -> {
+                        if (isSettlement) ActivityKind.SettlementEdited else ActivityKind.EntryEdited(title)
+                    }
+
+                    ActivityEventType.ENTRY_DELETED -> {
+                        if (isSettlement) ActivityKind.SettlementDeleted else ActivityKind.EntryDeleted(title)
+                    }
+
+                    else -> {
+                        if (isSettlement) ActivityKind.SettlementAdded else ActivityKind.EntryAdded(title)
+                    }
                 }
             return item(
                 // Namespaced so a pending row and the server row that replaces it can never collide
@@ -151,8 +192,8 @@ internal object ActivityFeedBuilder {
                     subtitle(
                         groupTitle = groupTitle,
                         amountText = amountText(pending.amount, pending.currencyCode),
-                        instant = pending.occurredAt,
                     ),
+                occurredAgo = relativeTimeSpan(from = pending.occurredAt, now = now),
                 isPending = true,
                 isDeleted = pending.type == ActivityEventType.ENTRY_DELETED,
                 clickTarget =
@@ -166,6 +207,7 @@ internal object ActivityFeedBuilder {
             actorName: String,
             kind: ActivityKind,
             subtitle: String,
+            occurredAgo: RelativeTimeSpan,
             diffs: List<ActivityDiff> = emptyList(),
             isPending: Boolean = false,
             isDeleted: Boolean = false,
@@ -174,12 +216,13 @@ internal object ActivityFeedBuilder {
             val isYou = actorId == currentUserId
             return ActivityItem(
                 id = id,
-                initials = actorName.take(2).uppercase(),
+                initials = actorName.take(2).uppercase().ifBlank { UNKNOWN_INITIALS },
                 colorSeed = if (isYou) SELF_SEED else actorId,
                 actor = actorName,
                 actorIsYou = isYou,
                 kind = kind,
                 subtitle = subtitle,
+                occurredAgo = occurredAgo,
                 diffs = diffs,
                 isPending = isPending,
                 isDeleted = isDeleted,
@@ -249,6 +292,8 @@ internal object ActivityFeedBuilder {
 
                 ActivityField.ENTRY_DATE -> formatDate(raw)
 
+                // Blank, not null, when the id resolves to nobody: the composable tells the two
+                // apart — blank names an unknown person, null means the diff has no such side.
                 ActivityField.PAID_BY, ActivityField.RECEIVED_BY -> nameOf(raw)
 
                 // A flag, not a diff — the composable renders a single "split changed" line.
@@ -282,28 +327,20 @@ internal object ActivityFeedBuilder {
         private fun subtitle(
             groupTitle: String?,
             amountText: String?,
-            instant: Instant,
         ): String =
             listOfNotNull(
                 groupTitle.takeIf { includeGroupName },
                 amountText,
-                relativeTime(instant, now),
             ).joinToString(SEPARATOR)
 
-        fun nameOf(userId: String): String = participantNames[userId] ?: FALLBACK_NAME
-    }
+        /**
+         * True when the event describes the actor themselves. A target the event does not identify
+         * counts as the actor, so a row can never print the same person twice.
+         */
+        private fun ActivityEvent.isSelfTargeted(): Boolean = targetUserId?.let { it == actorUserId } ?: true
 
-    private fun relativeTime(
-        from: Instant,
-        now: Instant,
-    ): String {
-        val elapsed = now - from
-        return when {
-            elapsed < 1.minutes -> "now"
-            elapsed < 1.hours -> "${elapsed.inWholeMinutes}m"
-            elapsed < 1.days -> "${elapsed.inWholeHours}h"
-            else -> "${elapsed.inWholeDays}d"
-        }
+        /** Blank for a participant this device does not know — the composable names them. */
+        fun nameOf(userId: String): String = participantNames[userId].orEmpty()
     }
 
     private fun bucketFor(

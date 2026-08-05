@@ -1,6 +1,7 @@
 package de.tabmates.features.tabgroup.presentation.navigation.activity
 
 import de.tabmates.core.presentation.format.NumberSymbols
+import de.tabmates.core.presentation.util.RelativeTimeSpan
 import de.tabmates.features.tabgroup.domain.activity.ActivityEntryType
 import de.tabmates.features.tabgroup.domain.activity.ActivityEvent
 import de.tabmates.features.tabgroup.domain.activity.ActivityEventType
@@ -29,6 +30,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -273,7 +275,125 @@ class ActivityViewModelTest {
                     .items
                     .single()
             assertEquals(ActivityClickTarget.Group("g1"), item.clickTarget)
-            assertIs<ActivityKind.MemberJoined>(item.kind)
+            // Actor and target differ: someone was put in the group rather than joining themselves.
+            assertEquals("Bob", assertIs<ActivityKind.MemberAdded>(item.kind).member)
+        }
+
+    @Test
+    fun aSelfJoinNamesTheMemberOnlyOnce() =
+        runTest(testDispatcher) {
+            val activityRepo =
+                FakeActivityRepository(
+                    listOf(
+                        persisted(
+                            id = "a1",
+                            seq = 1,
+                            occurredAt = now,
+                            type = ActivityEventType.MEMBER_JOINED,
+                            tabEntryId = null,
+                            actorUserId = "user-1",
+                            targetUserId = "user-1",
+                            targetUsername = "Alice",
+                        ),
+                    ),
+                )
+            val viewModel = createViewModel(activityRepo)
+            activateState(viewModel)
+
+            val item =
+                viewModel.state.value.sections
+                    .single()
+                    .items
+                    .single()
+            assertEquals(ActivityKind.MemberJoined, item.kind)
+        }
+
+    @Test
+    fun leavingCarriesNoMemberName() =
+        runTest(testDispatcher) {
+            val activityRepo =
+                FakeActivityRepository(
+                    listOf(
+                        persisted(
+                            id = "a1",
+                            seq = 1,
+                            occurredAt = now,
+                            type = ActivityEventType.MEMBER_LEFT,
+                            tabEntryId = null,
+                            targetUserId = "user-1",
+                            targetUsername = "Alice",
+                        ),
+                    ),
+                )
+            val viewModel = createViewModel(activityRepo)
+            activateState(viewModel)
+
+            val item =
+                viewModel.state.value.sections
+                    .single()
+                    .items
+                    .single()
+            assertEquals(ActivityKind.MemberLeft, item.kind)
+        }
+
+    @Test
+    fun settlementsGetTheirOwnSentence() =
+        runTest(testDispatcher) {
+            val activityRepo =
+                FakeActivityRepository(
+                    listOf(
+                        persisted(
+                            id = "a1",
+                            seq = 1,
+                            occurredAt = now,
+                            entryType = ActivityEntryType.SETTLEMENT,
+                        ),
+                    ),
+                )
+            val viewModel = createViewModel(activityRepo)
+            activateState(viewModel)
+
+            val item =
+                viewModel.state.value.sections
+                    .single()
+                    .items
+                    .single()
+            assertEquals(ActivityKind.SettlementAdded, item.kind)
+        }
+
+    @Test
+    fun anUnknownActorIsLeftToTheComposableToName() =
+        runTest(testDispatcher) {
+            val activityRepo =
+                FakeActivityRepository(
+                    listOf(persisted(id = "a1", seq = 1, occurredAt = now, actorUserId = "ghost")),
+                )
+            val viewModel = createViewModel(activityRepo)
+            activateState(viewModel)
+
+            val item =
+                viewModel.state.value.sections
+                    .single()
+                    .items
+                    .single()
+            assertEquals("", item.actor)
+            assertEquals("?", item.initials)
+        }
+
+    @Test
+    fun rowsCarryTheirAgeForTheComposableToLocalize() =
+        runTest(testDispatcher) {
+            val activityRepo =
+                FakeActivityRepository(listOf(persisted(id = "a1", seq = 1, occurredAt = now - 2.hours)))
+            val viewModel = createViewModel(activityRepo)
+            activateState(viewModel)
+
+            val item =
+                viewModel.state.value.sections
+                    .single()
+                    .items
+                    .single()
+            assertEquals(RelativeTimeSpan.Hours(2), item.occurredAgo)
         }
 
     @Test
@@ -319,6 +439,9 @@ class ActivityViewModelTest {
         type: ActivityEventType = ActivityEventType.ENTRY_CREATED,
         tabEntryId: String? = "e1",
         entryType: ActivityEntryType? = ActivityEntryType.EXPENSE,
+        actorUserId: String = "user-1",
+        targetUserId: String? = "user-2",
+        targetUsername: String? = "Bob",
         changes: List<ActivityFieldChange> = emptyList(),
     ): ActivityFeedItem.Persisted =
         ActivityFeedItem.Persisted(
@@ -327,15 +450,15 @@ class ActivityViewModelTest {
                 seq = seq,
                 groupId = "g1",
                 occurredAt = occurredAt,
-                actorUserId = "user-1",
+                actorUserId = actorUserId,
                 type = type,
                 tabEntryId = tabEntryId,
                 entryType = entryType,
                 entryTitle = "Dinner",
                 amount = 12.5,
                 currencyCode = "EUR",
-                targetUserId = "user-2",
-                targetUsername = "Bob",
+                targetUserId = targetUserId,
+                targetUsername = targetUsername,
                 entryVersion = 0,
                 changes = changes,
             ),

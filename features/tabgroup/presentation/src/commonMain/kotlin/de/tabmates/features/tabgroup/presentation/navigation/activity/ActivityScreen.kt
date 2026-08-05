@@ -33,25 +33,23 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.presentation.util.RelativeTimeSpan
 import de.tabmates.features.tabgroup.domain.activity.ActivityField
 import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.rememberMonthAbbreviations
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
-import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_action_added
-import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_action_created
-import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_action_deleted
-import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_action_edited
-import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_action_group_updated
-import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_action_member_joined
-import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_action_member_left
-import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_action_member_removed
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_diff_splits_changed
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_empty
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_fallback_entry
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_fallback_group
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_fallback_person
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_fallback_person_object
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_field_amount
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_field_currency
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_field_default_currency
@@ -62,6 +60,33 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_f
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_field_received_by
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_field_splits
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_field_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_entry_added_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_entry_added_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_entry_deleted_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_entry_deleted_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_entry_edited_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_entry_edited_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_group_created_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_group_created_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_group_updated_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_group_updated_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_member_added_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_member_added_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_member_joined_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_member_joined_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_member_left_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_member_left_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_member_removed_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_member_removed_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_settlement_added_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_settlement_added_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_settlement_deleted_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_settlement_deleted_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_settlement_edited_other
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_msg_settlement_edited_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_time_hours
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_time_minutes
+import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_time_now
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_today
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_yesterday
@@ -266,7 +291,10 @@ private fun ActivityRow(
             VerticalSpacer(2.dp)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = item.subtitle,
+                    text =
+                        listOf(item.subtitle, timeLabel(item.occurredAgo))
+                            .filter { it.isNotBlank() }
+                            .joinToString(ActivityFeedBuilder.SEPARATOR),
                     style = MaterialTheme.typography.bodySmall,
                     color = dimmed,
                     textDecoration = if (item.isDeleted) TextDecoration.LineThrough else null,
@@ -288,69 +316,204 @@ private fun ActivityRow(
     }
 }
 
+/**
+ * The row's sentence.
+ *
+ * Every kind resolves to a whole localized sentence instead of an actor + verb + target
+ * concatenation: languages disagree on where the object goes ("Du hast Milch *hinzugefügt*"), and
+ * German conjugates for the actor ("Du *hast*" vs "Max *hat*") — hence a `_you` and an `_other`
+ * form per kind. Names travel wrapped in [HIGHLIGHT] markers so they stay bold wherever the
+ * translation puts them.
+ */
 @Composable
-private fun activityText(item: ActivityItem) =
-    buildAnnotatedString {
-        val actorLabel = if (item.actorIsYou) stringResource(Res.string.activity_you) else item.actor
-        val bold = SpanStyle(fontWeight = FontWeight.SemiBold)
-        withStyle(bold) { append(actorLabel) }
+private fun activityText(item: ActivityItem): AnnotatedString {
+    val actor =
+        if (item.actorIsYou) {
+            stringResource(Res.string.activity_you)
+        } else {
+            item.actor.ifBlank { stringResource(Res.string.activity_fallback_person) }
+        }
+    val isYou = item.actorIsYou
+    val entryFallback = stringResource(Res.string.activity_fallback_entry)
+    val groupFallback = stringResource(Res.string.activity_fallback_group)
+    val personFallback = stringResource(Res.string.activity_fallback_person_object)
+    val sentence =
         when (val kind = item.kind) {
             is ActivityKind.EntryAdded -> {
-                appendAction(stringResource(Res.string.activity_action_added), kind.target, bold)
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_entry_added_you,
+                    other = Res.string.activity_msg_entry_added_other,
+                    actor = actor,
+                    target = kind.target.ifBlank { entryFallback },
+                )
             }
 
             is ActivityKind.EntryEdited -> {
-                appendAction(stringResource(Res.string.activity_action_edited), kind.target, bold)
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_entry_edited_you,
+                    other = Res.string.activity_msg_entry_edited_other,
+                    actor = actor,
+                    target = kind.target.ifBlank { entryFallback },
+                )
             }
 
             is ActivityKind.EntryDeleted -> {
-                appendAction(stringResource(Res.string.activity_action_deleted), kind.target, bold)
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_entry_deleted_you,
+                    other = Res.string.activity_msg_entry_deleted_other,
+                    actor = actor,
+                    target = kind.target.ifBlank { entryFallback },
+                )
+            }
+
+            ActivityKind.SettlementAdded -> {
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_settlement_added_you,
+                    other = Res.string.activity_msg_settlement_added_other,
+                    actor = actor,
+                )
+            }
+
+            ActivityKind.SettlementEdited -> {
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_settlement_edited_you,
+                    other = Res.string.activity_msg_settlement_edited_other,
+                    actor = actor,
+                )
+            }
+
+            ActivityKind.SettlementDeleted -> {
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_settlement_deleted_you,
+                    other = Res.string.activity_msg_settlement_deleted_other,
+                    actor = actor,
+                )
             }
 
             is ActivityKind.GroupCreated -> {
-                appendAction(stringResource(Res.string.activity_action_created), kind.target, bold)
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_group_created_you,
+                    other = Res.string.activity_msg_group_created_other,
+                    actor = actor,
+                    target = kind.target.ifBlank { groupFallback },
+                )
             }
 
             is ActivityKind.GroupUpdated -> {
-                appendAction(stringResource(Res.string.activity_action_group_updated), kind.target, bold)
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_group_updated_you,
+                    other = Res.string.activity_msg_group_updated_other,
+                    actor = actor,
+                    target = kind.target.ifBlank { groupFallback },
+                )
             }
 
-            is ActivityKind.MemberJoined -> {
-                appendAction(stringResource(Res.string.activity_action_member_joined), kind.member, bold)
+            ActivityKind.MemberJoined -> {
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_member_joined_you,
+                    other = Res.string.activity_msg_member_joined_other,
+                    actor = actor,
+                )
             }
 
-            is ActivityKind.MemberLeft -> {
-                appendAction(stringResource(Res.string.activity_action_member_left), kind.member, bold)
+            is ActivityKind.MemberAdded -> {
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_member_added_you,
+                    other = Res.string.activity_msg_member_added_other,
+                    actor = actor,
+                    target = kind.member.ifBlank { personFallback },
+                )
+            }
+
+            ActivityKind.MemberLeft -> {
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_member_left_you,
+                    other = Res.string.activity_msg_member_left_other,
+                    actor = actor,
+                )
             }
 
             is ActivityKind.MemberRemoved -> {
-                appendAction(stringResource(Res.string.activity_action_member_removed), kind.member, bold)
+                actionSentence(
+                    isYou = isYou,
+                    you = Res.string.activity_msg_member_removed_you,
+                    other = Res.string.activity_msg_member_removed_other,
+                    actor = actor,
+                    target = kind.member.ifBlank { personFallback },
+                )
             }
 
-            // An event type this build does not know: the actor line alone still says who did it.
-            ActivityKind.Unknown -> {}
+            // An event type this build does not know: the actor alone still says who did it.
+            ActivityKind.Unknown -> {
+                highlight(actor)
+            }
         }
-    }
+    return sentence.withHighlights()
+}
 
-private fun AnnotatedString.Builder.appendAction(
-    action: String,
-    target: String,
-    bold: SpanStyle,
-) {
-    append(" ")
-    append(action)
-    if (target.isNotBlank()) {
-        append(" ")
-        withStyle(bold) { append(target) }
+@Composable
+private fun actionSentence(
+    isYou: Boolean,
+    you: StringResource,
+    other: StringResource,
+    actor: String,
+    target: String? = null,
+): String {
+    val sentence = if (isYou) you else other
+    return if (target == null) {
+        stringResource(sentence, highlight(actor))
+    } else {
+        stringResource(sentence, highlight(actor), highlight(target))
     }
 }
+
+/**
+ * Wraps a name in the markers [withHighlights] turns into a bold span. A control character, so it
+ * can never clash with something a person typed, and it rides along with the argument wherever the
+ * translated sentence places it.
+ */
+private fun highlight(value: String): String = "$HIGHLIGHT$value$HIGHLIGHT"
+
+private fun String.withHighlights(): AnnotatedString {
+    val bold = SpanStyle(fontWeight = FontWeight.SemiBold)
+    return buildAnnotatedString {
+        split(HIGHLIGHT).forEachIndexed { index, part ->
+            if (index % 2 == 1) withStyle(bold) { append(part) } else append(part)
+        }
+    }
+}
+
+private const val HIGHLIGHT = '\u0001'
+
+/** Blank past a day: those rows sit under a dated section header, which already says when. */
+@Composable
+private fun timeLabel(occurredAgo: RelativeTimeSpan): String =
+    when (occurredAgo) {
+        RelativeTimeSpan.JustNow -> stringResource(Res.string.activity_time_now)
+        is RelativeTimeSpan.Minutes -> stringResource(Res.string.activity_time_minutes, occurredAgo.value)
+        is RelativeTimeSpan.Hours -> stringResource(Res.string.activity_time_hours, occurredAgo.value)
+        is RelativeTimeSpan.Days -> ""
+    }
 
 @Composable
 private fun diffText(diff: ActivityDiff): String {
     if (diff.field == ActivityField.SPLITS) return stringResource(Res.string.activity_diff_splits_changed)
     val label = diff.field.label()
-    val old = diff.oldValue
-    val new = diff.newValue
+    // A blank value is a user id the device cannot resolve; null is a side the diff does not have.
+    val unknownPerson = stringResource(Res.string.activity_fallback_person)
+    val old = diff.oldValue?.ifBlank { unknownPerson }
+    val new = diff.newValue?.ifBlank { unknownPerson }
     return when {
         old != null && new != null -> "$label: $old → $new"
         new != null -> "$label: $new"
