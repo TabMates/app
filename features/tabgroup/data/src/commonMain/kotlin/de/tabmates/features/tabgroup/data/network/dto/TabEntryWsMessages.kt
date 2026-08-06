@@ -28,6 +28,12 @@ object WsMessageType {
     const val ACK = "ACK"
     const val TAB_ENTRY_DELETED = "TAB_ENTRY_DELETED"
     const val GROUP_METADATA_CHANGED = "GROUP_METADATA_CHANGED"
+
+    /**
+     * Unicast to the person just removed from a group, and sent before the server stops routing to
+     * them so it always lands. Someone who left on their own is not told — they already know.
+     */
+    const val REMOVED_FROM_GROUP = "REMOVED_FROM_GROUP"
     const val ACTIVITY_EVENT = "ACTIVITY_EVENT"
     const val ERROR = "ERROR"
 }
@@ -121,6 +127,15 @@ data class TabEntryDeletedWsPayload(
 /** Mirrors server `GroupMetadataChangedDto`. */
 @Serializable
 data class GroupMetadataChangedWsPayload(
+    val groupId: String,
+)
+
+/**
+ * Mirrors server `RemovedFromGroupDto`. Deliberately carries no title: the server has no reason to
+ * repeat what the client already has, so the name for the snackbar comes from the local mirror.
+ */
+@Serializable
+data class RemovedFromGroupWsPayload(
     val groupId: String,
 )
 

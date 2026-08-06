@@ -195,6 +195,8 @@
     <string name="group_settings_save">Save</string>
     <string name="group_settings_saved">Changes saved</string>
     <string name="group_settings_left">You left the group</string>
+    <string name="group_removed_snackbar">You were removed from %1$s</string>
+    <string name="group_removed_snackbar_unnamed">You were removed from a group</string>
     <string name="group_people_title">People</string>
     <string name="group_people_section_members">MEMBERS</string>
     <string name="group_people_section_placeholders">PLACEHOLDERS</string>
