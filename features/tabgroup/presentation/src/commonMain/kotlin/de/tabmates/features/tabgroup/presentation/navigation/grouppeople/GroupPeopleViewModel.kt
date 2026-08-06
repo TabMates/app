@@ -5,14 +5,24 @@ import androidx.compose.foundation.text.input.clearText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.CurrentAccount
+import de.tabmates.core.domain.util.DataError
 import de.tabmates.core.domain.util.onFailure
 import de.tabmates.core.domain.util.onSuccess
+import de.tabmates.core.presentation.format.DEFAULT_CURRENCY_DECIMALS
+import de.tabmates.core.presentation.format.NumberSymbols
+import de.tabmates.core.presentation.format.formatMoneyUnsigned
 import de.tabmates.core.presentation.util.UiText
 import de.tabmates.core.presentation.util.toUiText
+import de.tabmates.features.tabgroup.domain.balance.UserBalanceCalculator
+import de.tabmates.features.tabgroup.domain.currency.CurrencyConversion
+import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
+import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.Group
+import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.ParticipantType
+import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,13 +40,19 @@ import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_error_duplicate_name
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_remove_error_not_member
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_remove_error_stale
 import kotlin.time.Duration.Companion.seconds
 
 @KoinViewModel
 class GroupPeopleViewModel(
     @InjectedParam private val groupId: String,
     private val groupRepository: GroupRepository,
+    private val tabEntryRepository: TabEntryRepository,
+    private val currencyRepository: CurrencyRepository,
+    private val exchangeRateRepository: ExchangeRateRepository,
     currentAccount: CurrentAccount,
+    private val numberSymbols: NumberSymbols,
 ) : ViewModel() {
     private val currentUserId = currentAccount.userId().orEmpty()
 
@@ -77,6 +93,8 @@ class GroupPeopleViewModel(
                 isAddRowVisible = form.isRowVisible,
                 newNameTextState = newNameTextState,
                 isAddingPlaceholder = form.isAdding,
+                removeTarget = form.removeTarget,
+                isRemoving = form.isRemoving,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -102,6 +120,90 @@ class GroupPeopleViewModel(
 
             GroupPeopleAction.RotateInvite -> {
                 rotateInvite()
+            }
+
+            is GroupPeopleAction.RemoveClick -> {
+                openRemoveDialog(action.personId)
+            }
+
+            GroupPeopleAction.ConfirmRemove -> {
+                confirmRemove()
+            }
+
+            GroupPeopleAction.DismissRemove -> {
+                form.update { it.copy(removeTarget = null) }
+            }
+        }
+    }
+
+    /**
+     * Removal keeps every expense the person is in, so an unsettled balance is a reason to warn,
+     * never to block. The balance is computed here rather than folded into the state flow: it costs
+     * a pass over the group's entries and is only ever read by this dialog.
+     */
+    private fun openRemoveDialog(personId: String) {
+        viewModelScope.launch {
+            val group = groupRepository.getGroups().first().firstOrNull { it.id == groupId } ?: return@launch
+            val participant = group.participants.firstOrNull { it.userId == personId } ?: return@launch
+            val entries = tabEntryRepository.getTabEntriesForGroup(groupId).first().filterNot { it.isDeleted }
+            val rates = exchangeRateRepository.getExchangeRates().first()
+            val net =
+                UserBalanceCalculator.computeNet(
+                    entries = entries,
+                    userId = personId,
+                    conversion = CurrencyConversion.from(group.defaultCurrencyCode, rates),
+                )
+            val currency =
+                currencyRepository.getCurrencies().first().firstOrNull {
+                    it.code == group.defaultCurrencyCode
+                }
+            val outstanding =
+                when (GroupBalance.fromNet(net)) {
+                    GroupBalance.Settled -> {
+                        null
+                    }
+
+                    else -> {
+                        formatMoneyUnsigned(
+                            symbol = currency?.nativeSymbol ?: group.defaultCurrencyCode,
+                            amount = net,
+                            decimals = currency?.decimalDigits ?: DEFAULT_CURRENCY_DECIMALS,
+                            symbols = numberSymbols,
+                        )
+                    }
+                }
+            form.update {
+                it.copy(
+                    removeTarget =
+                        RemoveTarget(
+                            id = personId,
+                            name = participant.username,
+                            isPlaceholder = participant.participantType == ParticipantType.PLACEHOLDER,
+                            outstanding = outstanding,
+                        ),
+                )
+            }
+        }
+    }
+
+    private fun confirmRemove() {
+        val target = form.value.removeTarget ?: return
+        if (form.value.isRemoving) return
+        // Claimed before the coroutine starts, so a double tap cannot issue two removals.
+        form.update { it.copy(isRemoving = true) }
+        viewModelScope.launch {
+            try {
+                groupRepository
+                    .removeParticipant(groupId, target.id)
+                    .onSuccess {
+                        // No state patching: the observed group flow drops the row on its own.
+                        form.update { it.copy(removeTarget = null) }
+                    }.onFailure { error ->
+                        form.update { it.copy(removeTarget = null) }
+                        eventChannel.send(GroupPeopleEvent.Error(error.toRemoveErrorText()))
+                    }
+            } finally {
+                form.update { it.copy(isRemoving = false) }
             }
         }
     }
@@ -180,6 +282,8 @@ class GroupPeopleViewModel(
                     name = participant.username,
                     isCurrentUser = participant.userId == currentUserId,
                     badge = PersonBadge.OWNER.takeIf { participant.userId == creator.userId },
+                    canRemove =
+                        participant.userId != currentUserId && participant.userId != creator.userId,
                 )
             }
 
@@ -187,11 +291,35 @@ class GroupPeopleViewModel(
         participants
             .filter { it.participantType == ParticipantType.PLACEHOLDER }
             .sortedBy { it.username }
-            .map { GroupPerson(id = it.userId, name = it.username, badge = PersonBadge.PENDING) }
+            .map {
+                GroupPerson(
+                    id = it.userId,
+                    name = it.username,
+                    badge = PersonBadge.PENDING,
+                    canRemove = true,
+                )
+            }
+
+    /**
+     * Overrides the two generic statuses whose global wording says the wrong thing here, and leaves
+     * every other error to the shared mapping.
+     */
+    private fun DataError.Remote.toRemoveErrorText(): UiText =
+        when (this) {
+            // The server folds an unknown group and an unknown target into one 404, so this has to
+            // hold for both: whatever was true when the dialog opened no longer is.
+            DataError.Remote.NOT_FOUND -> UiText.Resource(Res.string.group_people_remove_error_stale)
+
+            DataError.Remote.FORBIDDEN -> UiText.Resource(Res.string.group_people_remove_error_not_member)
+
+            else -> toUiText()
+        }
 
     private data class FormState(
         val isRowVisible: Boolean = false,
         val isAdding: Boolean = false,
+        val removeTarget: RemoveTarget? = null,
+        val isRemoving: Boolean = false,
     )
 
     /** Separates "the group flow has not emitted yet" from "this group is not in the list". */

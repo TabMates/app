@@ -205,6 +205,15 @@
     <string name="group_people_add_confirm_cd">Diesen Platzhalter hinzufügen</string>
     <string name="group_people_error_duplicate_name">Jemand mit diesem Namen ist bereits in dieser Gruppe.</string>
     <string name="group_people_add_done_cd">Hinzufügen beenden</string>
+    <string name="group_people_remove_cd">%1$s aus dieser Gruppe entfernen</string>
+    <string name="group_people_remove_dialog_title">%1$s entfernen?</string>
+    <string name="group_people_remove_dialog_message">%1$s verliert den Zugriff auf diese Gruppe. Bisherige Ausgaben bleiben unverändert.</string>
+    <string name="group_people_remove_dialog_message_placeholder">%1$s wird aus dieser Gruppe entfernt. Bisherige Ausgaben bleiben unverändert.</string>
+    <string name="group_people_remove_dialog_balance_warning">%1$s hat noch offene Beträge — %2$s sind nicht ausgeglichen. Das Entfernen ändert daran nichts.</string>
+    <string name="group_people_remove_dialog_confirm">Entfernen</string>
+    <string name="group_people_remove_dialog_cancel">Abbrechen</string>
+    <string name="group_people_remove_error_stale">Das hat sich bereits geändert. Aktualisiere und versuche es erneut.</string>
+    <string name="group_people_remove_error_not_member">Du bist kein Mitglied dieser Gruppe mehr.</string>
 
     <string name="add_entry_title">Neuer Eintrag</string>
     <string name="edit_entry_title">Eintrag bearbeiten</string>

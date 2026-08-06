@@ -205,6 +205,15 @@
     <string name="group_people_add_confirm_cd">Add this placeholder</string>
     <string name="group_people_error_duplicate_name">Someone with that name is already in this group.</string>
     <string name="group_people_add_done_cd">Done adding placeholders</string>
+    <string name="group_people_remove_cd">Remove %1$s from this group</string>
+    <string name="group_people_remove_dialog_title">Remove %1$s?</string>
+    <string name="group_people_remove_dialog_message">%1$s loses access to this group. Past expenses stay unchanged.</string>
+    <string name="group_people_remove_dialog_message_placeholder">%1$s is removed from this group. Past expenses stay unchanged.</string>
+    <string name="group_people_remove_dialog_balance_warning">%1$s is not settled up — %2$s is still open. Removing them does not clear it.</string>
+    <string name="group_people_remove_dialog_confirm">Remove</string>
+    <string name="group_people_remove_dialog_cancel">Cancel</string>
+    <string name="group_people_remove_error_stale">That has already changed. Refresh and try again.</string>
+    <string name="group_people_remove_error_not_member">You are no longer a member of this group.</string>
 
     <string name="add_entry_title">New entry</string>
     <string name="edit_entry_title">Edit entry</string>
