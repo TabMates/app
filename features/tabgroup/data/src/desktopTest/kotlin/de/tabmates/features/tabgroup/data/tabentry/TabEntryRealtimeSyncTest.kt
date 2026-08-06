@@ -171,6 +171,11 @@ private object UnusedGroupRepository : GroupRepository {
 
     override suspend fun leaveGroup(groupId: String): EmptyResult<DataError.Remote> = unused()
 
+    override suspend fun removeParticipant(
+        groupId: String,
+        userId: String,
+    ): EmptyResult<DataError.Remote> = unused()
+
     override suspend fun addParticipantsToGroup(
         groupId: String,
         userIds: Set<String>,

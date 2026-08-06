@@ -62,9 +62,12 @@ suspend inline fun <reified Response : Any> HttpClient.get(
 suspend inline fun <reified Response : Any> HttpClient.delete(
     route: String,
     queryParams: Map<String, Any> = mapOf(),
+    // See [post]: inspected before the generic status handling, for calls whose failures can only
+    // be told apart by the response body (e.g. removing a group participant).
+    noinline mapKnownError: (suspend (HttpResponse) -> DataError.Remote?)? = null,
     crossinline builder: HttpRequestBuilder.() -> Unit = {},
 ): Result<Response, DataError.Remote> {
-    return safeCall {
+    return safeCall(mapKnownError = mapKnownError) {
         delete {
             url(routeForRequest(route))
             queryParams.forEach { (key, value) ->

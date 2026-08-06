@@ -3,6 +3,8 @@ package de.tabmates.core.presentation.util
 import de.tabmates.core.domain.util.DataError
 import tabmatesapp.core.presentation.generated.resources.Res
 import tabmatesapp.core.presentation.generated.resources.error_bad_request
+import tabmatesapp.core.presentation.generated.resources.error_cannot_remove_group_creator
+import tabmatesapp.core.presentation.generated.resources.error_cannot_remove_self
 import tabmatesapp.core.presentation.generated.resources.error_conflict
 import tabmatesapp.core.presentation.generated.resources.error_disk_full
 import tabmatesapp.core.presentation.generated.resources.error_forbidden
@@ -40,6 +42,8 @@ fun DataError.toUiText(): UiText {
             DataError.Remote.SERIALIZATION -> Res.string.error_serialization
             DataError.Remote.TURNSTILE_FAILED -> Res.string.error_turnstile_retry
             DataError.Remote.UPGRADE_REQUIRED -> Res.string.error_upgrade_required
+            DataError.Remote.CANNOT_REMOVE_SELF -> Res.string.error_cannot_remove_self
+            DataError.Remote.CANNOT_REMOVE_GROUP_CREATOR -> Res.string.error_cannot_remove_group_creator
             DataError.Remote.UNKNOWN -> Res.string.error_unknown
             DataError.Connection.NOT_CONNECTED -> Res.string.error_no_internet
             DataError.Connection.MESSAGE_SEND_FAILED -> Res.string.error_message_send_failed

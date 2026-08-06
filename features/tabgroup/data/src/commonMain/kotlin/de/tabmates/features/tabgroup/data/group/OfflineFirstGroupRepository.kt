@@ -109,6 +109,22 @@ class OfflineFirstGroupRepository(
             }
     }
 
+    override suspend fun removeParticipant(
+        groupId: String,
+        userId: String,
+    ): EmptyResult<DataError.Remote> {
+        return groupService
+            .removeParticipant(groupId, userId)
+            .onSuccess {
+                // The endpoint answers with an empty body, so the local mirror is refreshed the
+                // long way round: fetchGroupById syncs the participant cross-refs, which is what
+                // flips the removed person to inactive. Failing that refresh (offline right after
+                // the server accepted) is not an error — the same GROUP_METADATA_CHANGED frame the
+                // other members get, or the next sync, converges anyway.
+                fetchGroupById(groupId)
+            }
+    }
+
     override suspend fun addParticipantsToGroup(
         groupId: String,
         userIds: Set<String>,

@@ -11,6 +11,7 @@ import de.tabmates.core.domain.util.asEmptyResult
 import de.tabmates.core.domain.util.map
 import de.tabmates.features.tabgroup.data.dto.GroupDto
 import de.tabmates.features.tabgroup.data.dto.GroupInvitePreviewDto
+import de.tabmates.features.tabgroup.data.dto.removeParticipantErrorOrNull
 import de.tabmates.features.tabgroup.data.dto.request.AddNewParticipantToGroupRequest
 import de.tabmates.features.tabgroup.data.dto.request.CreateGroupRequest
 import de.tabmates.features.tabgroup.data.dto.request.JoinGroupRequest
@@ -85,6 +86,17 @@ class KtorGroupService(
         return httpClient
             .delete<Unit>(
                 route = "/api/group/$groupId/leave",
+            ).asEmptyResult()
+    }
+
+    override suspend fun removeParticipant(
+        groupId: String,
+        userId: String,
+    ): EmptyResult<DataError.Remote> {
+        return httpClient
+            .delete<Unit>(
+                route = "/api/group/$groupId/participants/$userId",
+                mapKnownError = { it.removeParticipantErrorOrNull() },
             ).asEmptyResult()
     }
 

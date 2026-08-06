@@ -55,6 +55,22 @@ class FakeGroupRepository(
 
     override suspend fun leaveGroup(groupId: String): EmptyResult<DataError.Remote> = Result.Success(Unit)
 
+    data class RemoveParticipantCall(
+        val groupId: String,
+        val userId: String,
+    )
+
+    val removeParticipantCalls: MutableList<RemoveParticipantCall> = mutableListOf()
+    var removeParticipantResult: EmptyResult<DataError.Remote> = Result.Success(Unit)
+
+    override suspend fun removeParticipant(
+        groupId: String,
+        userId: String,
+    ): EmptyResult<DataError.Remote> {
+        removeParticipantCalls += RemoveParticipantCall(groupId, userId)
+        return removeParticipantResult
+    }
+
     override suspend fun addParticipantsToGroup(
         groupId: String,
         userIds: Set<String>,

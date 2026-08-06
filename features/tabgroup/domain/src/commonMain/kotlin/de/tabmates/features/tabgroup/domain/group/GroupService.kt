@@ -28,6 +28,16 @@ interface GroupService {
 
     suspend fun leaveGroup(groupId: String): EmptyResult<DataError.Remote>
 
+    /**
+     * Drops [userId]'s membership of [groupId]. Any member may remove any other member or
+     * placeholder; the group's creator can only leave, and you always leave rather than remove
+     * yourself. Everything the person is referenced by — expenses, splits, settlements — stays.
+     */
+    suspend fun removeParticipant(
+        groupId: String,
+        userId: String,
+    ): EmptyResult<DataError.Remote>
+
     suspend fun updateGroup(
         groupId: String,
         title: String,
