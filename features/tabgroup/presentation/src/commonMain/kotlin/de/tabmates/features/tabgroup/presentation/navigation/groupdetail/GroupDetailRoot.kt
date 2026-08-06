@@ -81,6 +81,8 @@ fun GroupDetailRoot(
             item = item,
             currentUserId = state.currentUserId,
             members = state.members,
+            formerMemberIds = state.formerMemberIds,
+            participantsById = state.participantsById,
             entries = state.entries,
             memberNetBalances = state.memberNetBalances,
             hasOutstandingDebts = state.hasOutstandingDebts,

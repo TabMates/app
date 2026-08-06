@@ -235,6 +235,101 @@ class GroupDetailViewModelTest {
             assertEquals("$", item.currencySymbol)
         }
 
+    @Test
+    fun formerMemberWithAnUnsettledBalanceKeepsARow() =
+        runTest(testDispatcher) {
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    groupRepository = groupRepositoryWithFormerMember(),
+                    tabEntryRepository = entriesSplitWithFormerMember(),
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            assertEquals(listOf("user-1", "user-2"), state.members.map { it.userId })
+            assertEquals(setOf("user-2"), state.formerMemberIds)
+            // Alice paid 100 and owes 50 of it; Bob owes his 50 and is still out of the group.
+            assertEquals(-50.0, state.memberNetBalances["user-2"])
+            assertTrue(state.hasOutstandingDebts)
+            assertEquals("Bob", state.participantsById["user-2"]?.username)
+        }
+
+    @Test
+    fun settledFormerMemberIsNotListed() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit(
+                "g1",
+                listOf(
+                    Fixtures.expense(
+                        id = "e1",
+                        groupId = "g1",
+                        amount = 100.0,
+                        paidByUserId = "user-1",
+                        splits =
+                            listOf(
+                                Fixtures.split(tabEntryId = "e1", participantId = "user-1", resolvedAmount = 50.0),
+                                Fixtures.split(tabEntryId = "e1", participantId = "user-2", resolvedAmount = 50.0),
+                            ),
+                    ),
+                    // Bob paid his share back before leaving, so he carries no information any more.
+                    Fixtures.settlement(
+                        id = "s1",
+                        groupId = "g1",
+                        amount = 50.0,
+                        paidByUserId = "user-2",
+                        receivedByUserId = "user-1",
+                    ),
+                ),
+            )
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    groupRepository = groupRepositoryWithFormerMember(),
+                    tabEntryRepository = tabEntryRepo,
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            assertEquals(listOf("user-1"), state.members.map { it.userId })
+            assertTrue(state.formerMemberIds.isEmpty())
+            assertFalse(state.hasOutstandingDebts)
+        }
+
+    /** The group carries `user-1` only; `user-2` is known globally but no longer a member. */
+    private fun groupRepositoryWithFormerMember(): FakeGroupRepository =
+        FakeGroupRepository(
+            initialGroups = listOf(Fixtures.group(id = "g1")),
+            initialAllParticipants =
+                listOf(
+                    Fixtures.participant(id = "user-1", name = "Alice"),
+                    Fixtures.participant(id = "user-2", name = "Bob"),
+                ),
+        )
+
+    private fun entriesSplitWithFormerMember(): FakeTabEntryRepository =
+        FakeTabEntryRepository().apply {
+            emit(
+                "g1",
+                listOf(
+                    Fixtures.expense(
+                        id = "e1",
+                        groupId = "g1",
+                        amount = 100.0,
+                        paidByUserId = "user-1",
+                        splits =
+                            listOf(
+                                Fixtures.split(tabEntryId = "e1", participantId = "user-1", resolvedAmount = 50.0),
+                                Fixtures.split(tabEntryId = "e1", participantId = "user-2", resolvedAmount = 50.0),
+                            ),
+                    ),
+                ),
+            )
+        }
+
     private fun TestScope.activateState(viewModel: GroupDetailViewModel) {
         backgroundScope.launch { viewModel.state.collect {} }
         advanceUntilIdle()

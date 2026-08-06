@@ -15,6 +15,7 @@ import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.presentation.util.observeGroupWithParticipants
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -69,7 +70,8 @@ class EditSettlementViewModel(
 
     private fun loadInitialData() {
         viewModelScope.launch {
-            val group = groupRepository.getGroups().first().firstOrNull { it.id == groupId }
+            val groupData = groupRepository.observeGroupWithParticipants(groupId).first()
+            val group = groupData.group
             val currencies = currencyRepository.getCurrencies().first()
             val settlement =
                 tabEntryRepository.getTabEntryById(settlementId).first() as? TabEntry.Settlement
@@ -94,9 +96,7 @@ class EditSettlementViewModel(
                     exchangeRate = settlement?.exchangeRate,
                     paidByUserId = settlement?.paidByUserId.orEmpty(),
                     receivedByUserId = settlement?.receivedByUserId.orEmpty(),
-                    membersById =
-                        group?.participants?.associateBy { p -> p.userId }
-                            ?: emptyMap(),
+                    membersById = groupData.participantsById,
                 )
             }
         }

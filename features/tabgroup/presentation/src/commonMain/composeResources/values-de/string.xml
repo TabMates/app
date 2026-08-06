@@ -261,6 +261,7 @@
     <string name="expense_detail_paid_by_section">BEZAHLT VON</string>
     <string name="expense_detail_split_between_section">AUFGETEILT ZWISCHEN</string>
     <string name="expense_detail_removed_member">[Entferntes Mitglied]</string>
+    <string name="member_label_former">ehemalig</string>
     <string name="expense_detail_delete_dialog_title">Ausgabe löschen?</string>
     <string name="expense_detail_delete_dialog_message">Diese Ausgabe wird aus der Gruppe entfernt. Dies kann nicht rückgängig gemacht werden.</string>
     <string name="expense_detail_delete_dialog_confirm">Löschen</string>

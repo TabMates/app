@@ -50,6 +50,8 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
+import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_removed_member
+import tabmatesapp.features.tabgroup.presentation.generated.resources.member_label_former
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_all_settled_caption
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_all_settled_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_amount_dialog_cancel
@@ -224,9 +226,13 @@ private fun PaymentRow(
                 Text(
                     text =
                         if (isFromCurrentUser) {
-                            stringResource(Res.string.settle_up_pay_to, payment.toName)
+                            stringResource(Res.string.settle_up_pay_to, payment.toDisplayName())
                         } else {
-                            stringResource(Res.string.settle_up_owes, payment.fromName, payment.toName)
+                            stringResource(
+                                Res.string.settle_up_owes,
+                                payment.fromDisplayName(),
+                                payment.toDisplayName(),
+                            )
                         },
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
@@ -318,8 +324,8 @@ private fun SettleAmountBottomSheet(
                 text =
                     stringResource(
                         Res.string.settle_up_amount_dialog_subtitle,
-                        payment.fromName,
-                        payment.toName,
+                        payment.fromDisplayName(),
+                        payment.toDisplayName(),
                     ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -373,5 +379,30 @@ private fun AllSettled(modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/**
+ * How a payment names its two sides. A former member keeps their real username — removal does not
+ * touch their expenses — and is only marked as no longer being in the group; the placeholder is a
+ * genuine last resort for someone this client has never seen.
+ */
+@Composable
+private fun SettleUpPayment.fromDisplayName(): String =
+    displayName(name = fromName, isFormerMember = isFromFormerMember)
+
+@Composable
+private fun SettleUpPayment.toDisplayName(): String = displayName(name = toName, isFormerMember = isToFormerMember)
+
+@Composable
+private fun displayName(
+    name: String,
+    isFormerMember: Boolean,
+): String {
+    val resolved = name.ifBlank { stringResource(Res.string.expense_detail_removed_member) }
+    return if (isFormerMember) {
+        "$resolved (${stringResource(Res.string.member_label_former)})"
+    } else {
+        resolved
     }
 }

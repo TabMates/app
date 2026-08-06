@@ -261,6 +261,8 @@
     <string name="expense_detail_paid_by_section">PAID BY</string>
     <string name="expense_detail_split_between_section">SPLIT BETWEEN</string>
     <string name="expense_detail_removed_member">[Removed Member]</string>
+    <!-- Shared across split editor, balances and settle-up: someone still in the money, no longer in the group. -->
+    <string name="member_label_former">former</string>
     <string name="expense_detail_delete_dialog_title">Delete expense?</string>
     <string name="expense_detail_delete_dialog_message">This expense will be removed from the group. This cannot be undone.</string>
     <string name="expense_detail_delete_dialog_confirm">Delete</string>

@@ -243,6 +243,54 @@ class AddEntryViewModelTest {
             assertEquals(AddEntryEvent.EntrySaved, events.last())
         }
 
+    @Test
+    fun editingKeepsSplitOfAParticipantWhoIsNoLongerAMember() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit("g1", listOf(expenseSplitWithFormerMember()))
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    entryId = "e1",
+                    tabEntryRepository = tabEntryRepo,
+                    groupRepository = groupRepositoryWithFormerMember(),
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            assertEquals(setOf("user-1", "user-2"), state.splitInputs.map { it.participantId }.toSet())
+            assertEquals(setOf("user-2"), state.formerParticipantIds)
+            assertEquals("Bob", state.participantsById["user-2"]?.username)
+
+            viewModel.state.value.titleTextState
+                .setTextAndPlaceCursorAtEnd("New title")
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+
+            val expense = assertIs<TabEntry.Expense>(tabEntryRepo.getTabEntriesForGroup("g1").first().first())
+            assertEquals(setOf("user-1", "user-2"), expense.splits.map { it.participantId }.toSet())
+        }
+
+    @Test
+    fun creatingDoesNotOfferParticipantsWhoAreNoLongerMembers() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit("g1", listOf(expenseSplitWithFormerMember()))
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    tabEntryRepository = tabEntryRepo,
+                    groupRepository = groupRepositoryWithFormerMember(),
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            assertEquals(listOf("user-1"), state.splitInputs.map { it.participantId })
+            assertTrue(state.formerParticipantIds.isEmpty())
+        }
+
     // endregion
 
     // region exchange rates
@@ -422,6 +470,30 @@ class AddEntryViewModelTest {
                         Fixtures.split(tabEntryId = "e1", participantId = "user-1", resolvedAmount = 100.0),
                     ),
             ).copy(title = "Old title", description = "Old note")
+
+    /** `user-2` holds a split but has been removed from the group — the group carries `user-1` only. */
+    private fun expenseSplitWithFormerMember(): TabEntry.Expense =
+        Fixtures.expense(
+            id = "e1",
+            groupId = "g1",
+            amount = 100.0,
+            paidByUserId = "user-1",
+            splits =
+                listOf(
+                    Fixtures.split(tabEntryId = "e1", participantId = "user-1", resolvedAmount = 50.0),
+                    Fixtures.split(tabEntryId = "e1", participantId = "user-2", resolvedAmount = 50.0),
+                ),
+        )
+
+    private fun groupRepositoryWithFormerMember(): FakeGroupRepository =
+        FakeGroupRepository(
+            initialGroups = listOf(Fixtures.group(id = "g1", currency = "EUR")),
+            initialAllParticipants =
+                listOf(
+                    Fixtures.participant(id = "user-1", name = "Alice"),
+                    Fixtures.participant(id = "user-2", name = "Bob"),
+                ),
+        )
 
     private fun existingIncome(): TabEntry.Income =
         Fixtures

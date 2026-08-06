@@ -23,9 +23,11 @@ import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.ExchangeRate
-import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.TabEntry
+import de.tabmates.features.tabgroup.domain.models.referencedParticipantIds
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.presentation.util.GroupWithParticipants
+import de.tabmates.features.tabgroup.presentation.util.observeGroupWithParticipants
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -65,12 +67,12 @@ class SettleUpViewModel(
     val state: StateFlow<SettleUpState> =
         combine(
             tabEntryRepository.getTabEntriesForGroup(groupId),
-            groupRepository.getGroups(),
+            groupRepository.observeGroupWithParticipants(groupId),
             currencyRepository.getCurrencies(),
             exchangeRateRepository.getExchangeRates(),
             settlingPairs,
-        ) { entries, groups, currencies, rates, settling ->
-            buildState(entries, groups, currencies, rates, settling)
+        ) { entries, groupData, currencies, rates, settling ->
+            buildState(entries, groupData, currencies, rates, settling)
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
@@ -166,12 +168,12 @@ class SettleUpViewModel(
 
     private fun buildState(
         entries: List<TabEntry>,
-        groups: List<Group>,
+        groupData: GroupWithParticipants,
         currencies: List<Currency>,
         rates: List<ExchangeRate>,
         settling: Set<Pair<String, String>>,
     ): SettleUpState {
-        val group = groups.firstOrNull { it.id == groupId }
+        val group = groupData.group
         val currency = currencies.firstOrNull { it.code == group?.defaultCurrencyCode }
         val decimals = currency?.decimalDigits ?: DEFAULT_CURRENCY_DECIMALS
         val symbol = currency?.nativeSymbol ?: group?.defaultCurrencyCode.orEmpty()
@@ -188,29 +190,34 @@ class SettleUpViewModel(
             )
         }
 
-        val participants = group.participants
+        val activeMemberIds = group.participants.map { it.userId }.toSet()
+        // Seeded with everyone the entries reference, not just current members: a removed person's
+        // debt is still owed, and leaving them out silently unbalances the whole plan.
+        val participantIds =
+            activeMemberIds + entries.filterNot { it.isDeleted }.referencedParticipantIds()
+        val participantsById = groupData.participantsById
         val epsilon = amountEpsilon(decimals)
         val plan =
             DebtSimplifier.simplifyFromEntries(
                 entries = entries,
-                participantIds = participants.map { it.userId },
+                participantIds = participantIds,
                 conversion = CurrencyConversion.from(group.defaultCurrencyCode, rates),
                 epsilon = epsilon,
             )
         val payments =
             plan
-                .mapNotNull { debt ->
-                    val payer =
-                        participants.firstOrNull { it.userId == debt.fromUserId } ?: return@mapNotNull null
-                    val recipient =
-                        participants.firstOrNull { it.userId == debt.toUserId } ?: return@mapNotNull null
+                .map { debt ->
+                    val payer = participantsById[debt.fromUserId]
+                    val recipient = participantsById[debt.toUserId]
                     SettleUpPayment(
                         fromUserId = debt.fromUserId,
-                        fromName = payer.username,
-                        fromInitials = payer.initials,
+                        fromName = payer?.username.orEmpty(),
+                        fromInitials = payer?.initials.orEmpty(),
+                        isFromFormerMember = debt.fromUserId !in activeMemberIds,
                         toUserId = debt.toUserId,
-                        toName = recipient.username,
-                        toInitials = recipient.initials,
+                        toName = recipient?.username.orEmpty(),
+                        toInitials = recipient?.initials.orEmpty(),
+                        isToFormerMember = debt.toUserId !in activeMemberIds,
                         amount = roundToDecimals(debt.amount, decimals),
                         isSettling = debt.fromUserId to debt.toUserId in settling,
                     )

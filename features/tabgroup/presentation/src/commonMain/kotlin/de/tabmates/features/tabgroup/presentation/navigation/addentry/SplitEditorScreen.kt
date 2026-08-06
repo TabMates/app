@@ -44,6 +44,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserA
 import org.jetbrains.compose.resources.stringResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_you
+import tabmatesapp.features.tabgroup.presentation.generated.resources.member_label_former
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_balanced
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_left_to_assign
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_over_by
@@ -97,12 +98,14 @@ internal fun SplitEditorScreen(
             modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            state.members.forEach { member ->
-                val input =
-                    state.splitInputs.firstOrNull { it.participantId == member.userId } ?: return@forEach
+            // Driven by the inputs, not by membership: an edited entry can still split across
+            // someone who has since been removed, and their row has to render to survive a save.
+            state.splitInputs.forEach { input ->
+                val member = state.participantsById[input.participantId] ?: return@forEach
                 SplitMemberRow(
                     participant = member,
                     isCurrentUser = member.userId == state.currentUserId,
+                    isFormerMember = member.userId in state.formerParticipantIds,
                     included = input.included,
                     splitType = state.splitType,
                     currencySymbol = state.entryCurrencySymbol,
@@ -330,6 +333,7 @@ private fun ValidationBanner(
 private fun SplitMemberRow(
     participant: GroupParticipant,
     isCurrentUser: Boolean,
+    isFormerMember: Boolean,
     included: Boolean,
     splitType: SplitType,
     currencySymbol: String,
@@ -346,14 +350,29 @@ private fun SplitMemberRow(
     ) {
         UserAvatar(initials = participant.initials)
         HorizontalSpacer(12.dp)
-        Text(
-            text = if (isCurrentUser) stringResource(Res.string.add_entry_paid_by_you) else participant.username,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text =
+                    if (isCurrentUser) {
+                        stringResource(
+                            Res.string.add_entry_paid_by_you,
+                        )
+                    } else {
+                        participant.username
+                    },
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (isFormerMember) {
+                Text(
+                    text = stringResource(Res.string.member_label_former),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
         HorizontalSpacer(8.dp)
         when (splitType) {
             SplitType.EQUAL -> {
