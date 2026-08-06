@@ -236,6 +236,18 @@ class GroupDetailViewModelTest {
         }
 
     @Test
+    fun aGroupThatIsNotThereResolvesInsteadOfLoadingForever() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel(groupId = "missing")
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            // Both together are what the screen needs: loaded, and nothing to show.
+            assertTrue(viewModel.state.value.hasLoaded)
+            assertNull(viewModel.state.value.item)
+        }
+
+    @Test
     fun formerMemberWithAnUnsettledBalanceKeepsARow() =
         runTest(testDispatcher) {
             val viewModel =

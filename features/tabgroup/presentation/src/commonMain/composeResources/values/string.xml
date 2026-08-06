@@ -117,6 +117,8 @@
     <string name="groups_empty_title">No groups yet</string>
     <string name="groups_empty_caption">Tap the button to create your first group.</string>
     <string name="groups_detail_placeholder_title">Select a group</string>
+    <string name="groups_detail_unavailable">This group is no longer available</string>
+    <string name="groups_detail_unavailable_action">Back to groups</string>
     <string name="groups_detail_placeholder_caption">Pick a group on the left to see details.</string>
     <string name="groups_detail_invite">Invite</string>
     <string name="groups_detail_add_entry">Add entry</string>

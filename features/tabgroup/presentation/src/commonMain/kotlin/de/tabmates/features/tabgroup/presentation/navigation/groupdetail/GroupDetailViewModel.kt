@@ -12,6 +12,7 @@ import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.Currency
+import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.TabEntry
@@ -40,6 +41,12 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 data class GroupDetailState(
+    /**
+     * True once the group query has answered. Separates "still loading" from "this group is not
+     * here" — without it a group that was deleted, or that this user was removed from, renders as a
+     * spinner that never stops (a stale push deep link lands exactly there).
+     */
+    val hasLoaded: Boolean = false,
     val item: GroupOverviewItem? = null,
     val currentUserId: String = "",
     /** Active members, followed by former ones who still carry an unsettled balance. */
@@ -96,15 +103,16 @@ class GroupDetailViewModel(
         combine(
             groupRepository
                 .getGroups()
-                .map { groups -> groups.firstOrNull { it.id == groupId } }
-                .onStart { emit(null) },
+                .map { groups -> GroupLookup(hasLoaded = true, group = groups.firstOrNull { it.id == groupId }) }
+                .onStart { emit(GroupLookup()) },
             currencyRepository.getCurrencies().onStart { emit(emptyList()) },
             tabEntryRepository
                 .getTabEntriesForGroup(groupId)
                 .onStart { emit(emptyList()) },
             exchangeRateRepository.getExchangeRates().onStart { emit(emptyList()) },
             history,
-        ) { group, currencies, entries, rates, history ->
+        ) { lookup, currencies, entries, rates, history ->
+            val group = lookup.group
             val visibleEntries = entries.filterNot { it.isDeleted }
             val conversion = group?.let { CurrencyConversion.from(it.defaultCurrencyCode, rates) }
             val activeMembers = group?.participants?.toList().orEmpty()
@@ -132,6 +140,7 @@ class GroupDetailViewModel(
                     it.toUiItem(currency).withStats(entries, currentUserId, conversion)
                 }
             GroupDetailState(
+                hasLoaded = lookup.hasLoaded,
                 item = item,
                 currentUserId = currentUserId,
                 members = activeMembers + formerMembers,
@@ -175,6 +184,12 @@ class GroupDetailViewModel(
     fun loadMoreHistory() {
         historyPageSize.update { it + HISTORY_PAGE_SIZE_INCREMENT }
     }
+
+    /** Separates "the group flow has not emitted yet" from "this group is not in the list". */
+    private data class GroupLookup(
+        val hasLoaded: Boolean = false,
+        val group: Group? = null,
+    )
 
     private data class HistoryInput(
         val feed: List<ActivityFeedItem> = emptyList(),
