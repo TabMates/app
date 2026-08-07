@@ -13,7 +13,7 @@ enum class ActivityEventType {
     MEMBER_JOINED,
     MEMBER_LEFT,
 
-    /** Defined server-side but not emitted yet — there is no remove-another-member endpoint. */
+    /** One member removed another. Always names two different people, unlike [MEMBER_LEFT]. */
     MEMBER_REMOVED,
     GROUP_CREATED,
     GROUP_UPDATED,

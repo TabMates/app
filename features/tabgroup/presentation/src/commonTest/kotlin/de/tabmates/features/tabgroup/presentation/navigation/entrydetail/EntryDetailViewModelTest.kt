@@ -175,6 +175,35 @@ class EntryDetailViewModelTest {
             assertEquals(listOf<EntryDetailEvent>(EntryDetailEvent.EntryDeleted), events)
         }
 
+    @Test
+    fun payerWhoLeftTheGroupStillResolvesToTheirUsername() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit(
+                "g1",
+                listOf(Fixtures.expense(id = "e1", groupId = "g1", paidByUserId = "user-2")),
+            )
+            val groupRepo =
+                FakeGroupRepository(
+                    // The group has only user-1 left; user-2 paid before being removed.
+                    initialGroups = listOf(Fixtures.group(id = "g1", currency = "EUR")),
+                    initialAllParticipants =
+                        listOf(
+                            Fixtures.participant(id = "user-1", name = "Alice"),
+                            Fixtures.participant(id = "user-2", name = "Bob"),
+                        ),
+                )
+            val viewModel = createViewModel(tabEntryRepository = tabEntryRepo, groupRepository = groupRepo)
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            assertEquals(
+                "Bob",
+                viewModel.state.value.membersById["user-2"]
+                    ?.username,
+            )
+        }
+
     private fun TestScope.activateState(viewModel: EntryDetailViewModel) {
         backgroundScope.launch { viewModel.state.collect {} }
         advanceUntilIdle()

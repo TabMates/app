@@ -296,6 +296,70 @@ class SettleUpViewModelTest {
         return events
     }
 
+    @Test
+    fun planIncludesAFormerMemberAndStillSumsToZero() =
+        runTest(testDispatcher) {
+            val tabEntryRepo = FakeTabEntryRepository()
+            tabEntryRepo.emit(
+                GROUP_ID,
+                listOf(
+                    Fixtures.expense(
+                        id = "e1",
+                        groupId = GROUP_ID,
+                        amount = 90.0,
+                        paidByUserId = CURRENT_USER,
+                        splits =
+                            listOf(
+                                Fixtures.split(
+                                    tabEntryId = "e1",
+                                    participantId = CURRENT_USER,
+                                    resolvedAmount = 30.0,
+                                ),
+                                Fixtures.split(tabEntryId = "e1", participantId = PAYEE, resolvedAmount = 30.0),
+                                Fixtures.split(
+                                    tabEntryId = "e1",
+                                    participantId = FORMER_MEMBER,
+                                    resolvedAmount = 30.0,
+                                ),
+                            ),
+                    ),
+                ),
+            )
+            val groupRepo =
+                FakeGroupRepository(
+                    // The group has lost the third participant; the expense still splits across them.
+                    initialGroups =
+                        listOf(
+                            Fixtures.group(
+                                id = GROUP_ID,
+                                participants =
+                                    setOf(
+                                        Fixtures.participant(CURRENT_USER, "Alice"),
+                                        Fixtures.participant(PAYEE, "Bob"),
+                                    ),
+                                currency = "EUR",
+                            ),
+                        ),
+                    initialAllParticipants =
+                        listOf(
+                            Fixtures.participant(CURRENT_USER, "Alice"),
+                            Fixtures.participant(PAYEE, "Bob"),
+                            Fixtures.participant(FORMER_MEMBER, "Dana"),
+                        ),
+                )
+            val viewModel = createViewModel(tabEntryRepository = tabEntryRepo, groupRepository = groupRepo)
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            val payments = viewModel.state.value.payments
+            val former = payments.single { it.fromUserId == FORMER_MEMBER }
+            assertEquals("Dana", former.fromName)
+            assertTrue(former.isFromFormerMember)
+            assertFalse(former.isToFormerMember)
+            // Everything Alice is owed is covered by the plan: 30 from Bob and 30 from Dana.
+            assertEquals(60.0, payments.filter { it.toUserId == CURRENT_USER }.sumOf { it.amount })
+        }
+
     private fun TestScope.activateState(viewModel: SettleUpViewModel) {
         backgroundScope.launch { viewModel.state.collect {} }
         advanceUntilIdle()
@@ -338,5 +402,6 @@ class SettleUpViewModelTest {
         const val CURRENT_USER = "user-1"
         const val PAYEE = "user-2"
         const val OTHER_DEBTOR = "user-3"
+        const val FORMER_MEMBER = "user-4"
     }
 }

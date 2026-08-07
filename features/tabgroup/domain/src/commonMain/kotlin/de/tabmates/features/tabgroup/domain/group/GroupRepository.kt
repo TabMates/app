@@ -31,6 +31,12 @@ interface GroupRepository {
 
     suspend fun leaveGroup(groupId: String): EmptyResult<DataError.Remote>
 
+    /** See [GroupService.removeParticipant]. */
+    suspend fun removeParticipant(
+        groupId: String,
+        userId: String,
+    ): EmptyResult<DataError.Remote>
+
     suspend fun addParticipantsToGroup(
         groupId: String,
         userIds: Set<String>,

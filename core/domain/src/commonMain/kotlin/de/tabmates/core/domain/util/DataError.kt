@@ -23,6 +23,15 @@ sealed interface DataError : Error {
         // help — the only way out is a new build, so it is surfaced as the update prompt rather
         // than a generic error. See UpgradeRequiredNotifier.
         UPGRADE_REQUIRED,
+
+        // 400 with body { "code": "CANNOT_REMOVE_SELF" } when removing a group participant. Not
+        // reachable through the UI — your own row offers no remove — but mapped so a mistake
+        // reads as itself rather than a generic bad request. Leaving is a separate endpoint.
+        CANNOT_REMOVE_SELF,
+
+        // 403 with body { "code": "CANNOT_REMOVE_GROUP_CREATOR" }: the group's creator can only
+        // leave voluntarily. Distinguished from FORBIDDEN, which means the caller is not a member.
+        CANNOT_REMOVE_GROUP_CREATOR,
         UNKNOWN,
     }
 

@@ -9,14 +9,18 @@ import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.data.mappers.toEntity
 import de.tabmates.features.tabgroup.data.network.WebSocketChannel
 import de.tabmates.features.tabgroup.data.network.dto.GroupMetadataChangedWsPayload
+import de.tabmates.features.tabgroup.data.network.dto.RemovedFromGroupWsPayload
 import de.tabmates.features.tabgroup.data.network.dto.TabEntryDeletedWsPayload
 import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
 import de.tabmates.features.tabgroup.data.network.dto.WsErrorPayload
 import de.tabmates.features.tabgroup.data.network.dto.WsMessageType
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
+import de.tabmates.features.tabgroup.domain.group.GroupRemovalNotifier
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.serialization.json.Json
@@ -34,6 +38,7 @@ class TabEntryRealtimeSync(
     webSocketConnector: WebSocketChannel,
     private val database: TabMatesDatabase,
     private val groupRepository: GroupRepository,
+    private val groupRemovalNotifier: GroupRemovalNotifier,
     private val json: Json,
     private val logger: TabMatesLogger,
     @Named(APPLICATION_SCOPE) private val applicationScope: CoroutineScope,
@@ -62,6 +67,8 @@ class TabEntryRealtimeSync(
 
                 WsMessageType.GROUP_METADATA_CHANGED -> handleGroupMetadataChanged(message.payload)
 
+                WsMessageType.REMOVED_FROM_GROUP -> handleRemovedFromGroup(message.payload)
+
                 // Owned by ActivityRealtimeSync; named here only to keep it out of the unknown-type log.
                 WsMessageType.ACTIVITY_EVENT -> Unit
 
@@ -69,6 +76,10 @@ class TabEntryRealtimeSync(
 
                 else -> logger.warning(TAG, "Unknown WS message type=${message.type}")
             }
+            // Every branch above suspends, so a cancelled scope surfaces here as an exception like
+            // any other — let it through rather than log it as a handler failure and carry on.
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             logger.error(TAG, "Failed to handle WS message of type ${message.type}", e)
         }
@@ -130,6 +141,24 @@ class TabEntryRealtimeSync(
             .onFailure { error ->
                 logger.error(TAG, "Failed to refresh group ${event.groupId} after metadata change: $error")
             }
+    }
+
+    private suspend fun handleRemovedFromGroup(payload: String) {
+        val event = json.decodeFromString(RemovedFromGroupWsPayload.serializer(), payload)
+        // Read before the delete: the payload carries no title, and the local row is the only place
+        // the group's name still exists once it is gone.
+        val title =
+            groupRepository
+                .getGroups()
+                .first()
+                .firstOrNull { it.id == event.groupId }
+                ?.title
+        logger.debug(TAG, "Removed from group ${event.groupId}")
+        // Told before the delete too, so the shell can pop this group's screens rather than let
+        // them re-render against a group that no longer exists.
+        groupRemovalNotifier.notifyRemoved(groupId = event.groupId, title = title)
+        // Cascades the cross-refs, entries and activity rows that belong to it.
+        database.groupDao.deleteGroupById(event.groupId)
     }
 
     // Diagnostic only — TabEntryOutbox owns what an error does to the write that caused it.

@@ -41,6 +41,18 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_la
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.upgrade_account_title
 
+/**
+ * A screen that only makes sense while you are in [groupId].
+ *
+ * Marking them rather than listing them at the call site is what keeps leaving and being removed
+ * from drifting apart: a route added later is scoped by construction, and nothing has to remember
+ * to extend a predicate. Being removed can land on any of these, unlike leaving, which can only
+ * happen from the group's settings.
+ */
+internal interface GroupScoped {
+    val groupId: String
+}
+
 @Serializable
 data object Home : LoggableNavKey(), TopLevelTab, ScreenWithFab {
     override val icon: ImageVector
@@ -124,13 +136,16 @@ data object OssLicenses : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
 }
 
 @Serializable
-data class AddEntry(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+data class AddEntry(override val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.add_entry_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
 
 @Serializable
-data class EditEntry(val groupId: String, val entryId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+data class EditEntry(
+    override val groupId: String,
+    val entryId: String,
+) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.edit_entry_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
@@ -138,8 +153,8 @@ data class EditEntry(val groupId: String, val entryId: String) : LoggableNavKey(
 @Serializable
 data class EntryDetail(
     val entryId: String,
-    val groupId: String,
-) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val groupId: String,
+) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
     override val topBarTitle: UiText get() = UiText.DynamicString("")
     override val topBarAction: TopBarAction get() = TopBarAction.Back
 }
@@ -147,17 +162,17 @@ data class EntryDetail(
 @Serializable
 data class SettlementDetail(
     val settlementId: String,
-    val groupId: String,
-) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val groupId: String,
+) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
     override val topBarTitle: UiText get() = UiText.DynamicString("")
     override val topBarAction: TopBarAction get() = TopBarAction.Back
 }
 
 @Serializable
 data class EditSettlement(
-    val groupId: String,
+    override val groupId: String,
     val settlementId: String,
-) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.edit_settlement_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
@@ -169,25 +184,27 @@ data object CreateGroup : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
 }
 
 @Serializable
-data class GroupDetail(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithFab {
+data class GroupDetail(override val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithFab, GroupScoped {
     // Owns its own collapsing top bar (see GroupDetailPane), so it opts out of ScreenWithTopBar.
     override val fabAction: FabAction = FabAction.AddEntry(groupId)
 }
 
 @Serializable
-data class SettleUp(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+data class SettleUp(override val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.settle_up_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
 
 @Serializable
-data class GroupSettings(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+data class GroupSettings(
+    override val groupId: String,
+) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.group_settings_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Back
 }
 
 @Serializable
-data class GroupPeople(val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+data class GroupPeople(override val groupId: String) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
     override val topBarTitle: UiText get() = UiText.Resource(Res.string.group_people_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Back
 }

@@ -37,6 +37,11 @@ class FakeGroupService(
 
     override suspend fun leaveGroup(groupId: String): EmptyResult<DataError.Remote> = unused()
 
+    override suspend fun removeParticipant(
+        groupId: String,
+        userId: String,
+    ): EmptyResult<DataError.Remote> = unused()
+
     override suspend fun updateGroup(
         groupId: String,
         title: String,

@@ -12,9 +12,11 @@ import de.tabmates.features.tabgroup.domain.currency.CurrencyRepository
 import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.Currency
+import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.TabEntry
+import de.tabmates.features.tabgroup.domain.models.referencedParticipantIds
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivityFeedBuilder
 import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivitySection
@@ -39,9 +41,23 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 data class GroupDetailState(
+    /**
+     * True once the group query has answered. Separates "still loading" from "this group is not
+     * here" — without it a group that was deleted, or that this user was removed from, renders as a
+     * spinner that never stops (a stale push deep link lands exactly there).
+     */
+    val hasLoaded: Boolean = false,
     val item: GroupOverviewItem? = null,
     val currentUserId: String = "",
+    /** Active members, followed by former ones who still carry an unsettled balance. */
     val members: List<GroupParticipant> = emptyList(),
+    /** Ids within [members] that are no longer in the group — rendered with a "former" label. */
+    val formerMemberIds: Set<String> = emptySet(),
+    /**
+     * Every participant the client knows, current membership or not, so an entry paid by someone
+     * who has since been removed still shows their real name.
+     */
+    val participantsById: Map<String, GroupParticipant> = emptyMap(),
     /** Entries shown in the transaction list: expenses, incomes and settlements, newest first. */
     val entries: List<TabEntry> = emptyList(),
     /** Each member's overall net in the group (positive = gets money back, negative = owes). */
@@ -72,7 +88,8 @@ class GroupDetailViewModel(
 
     /**
      * Pre-combined so the state builder stays within the typed `combine` overloads. Names come from
-     * every known participant, not the group's members, so a diff can still name someone who left.
+     * every known participant, not the group's members, so a diff can still name someone who left —
+     * the balances lean on the same list for the former members they surface.
      */
     private val history: Flow<HistoryInput> =
         combine(
@@ -86,21 +103,36 @@ class GroupDetailViewModel(
         combine(
             groupRepository
                 .getGroups()
-                .map { groups -> groups.firstOrNull { it.id == groupId } }
-                .onStart { emit(null) },
+                .map { groups -> GroupLookup(hasLoaded = true, group = groups.firstOrNull { it.id == groupId }) }
+                .onStart { emit(GroupLookup()) },
             currencyRepository.getCurrencies().onStart { emit(emptyList()) },
             tabEntryRepository
                 .getTabEntriesForGroup(groupId)
                 .onStart { emit(emptyList()) },
             exchangeRateRepository.getExchangeRates().onStart { emit(emptyList()) },
             history,
-        ) { group, currencies, entries, rates, history ->
+        ) { lookup, currencies, entries, rates, history ->
+            val group = lookup.group
             val visibleEntries = entries.filterNot { it.isDeleted }
             val conversion = group?.let { CurrencyConversion.from(it.defaultCurrencyCode, rates) }
+            val activeMembers = group?.participants?.toList().orEmpty()
+            val activeMemberIds = activeMembers.map { it.userId }.toSet()
+            // Removal only drops membership: a former member's expenses and splits stay, so their
+            // balance is still part of this group's maths and leaving them out stops the numbers
+            // adding up. Ones who came out even carry no information, so they stay hidden.
+            val formerNetBalances =
+                (visibleEntries.referencedParticipantIds() - activeMemberIds)
+                    .associateWith { userId ->
+                        UserBalanceCalculator.computeNet(visibleEntries, userId, conversion)
+                    }.filterValues { GroupBalance.fromNet(it) != GroupBalance.Settled }
             val memberNetBalances =
-                group?.participants.orEmpty().associate { participant ->
+                activeMembers.associate { participant ->
                     participant.userId to
                         UserBalanceCalculator.computeNet(visibleEntries, participant.userId, conversion)
+                } + formerNetBalances
+            val formerMembers =
+                formerNetBalances.keys.mapNotNull { userId ->
+                    history.participants.firstOrNull { it.userId == userId }
                 }
             val item =
                 group?.let {
@@ -108,9 +140,13 @@ class GroupDetailViewModel(
                     it.toUiItem(currency).withStats(entries, currentUserId, conversion)
                 }
             GroupDetailState(
+                hasLoaded = lookup.hasLoaded,
                 item = item,
                 currentUserId = currentUserId,
-                members = group?.participants?.toList().orEmpty(),
+                members = activeMembers + formerMembers,
+                formerMemberIds = formerMembers.map { it.userId }.toSet(),
+                // Active members last so the group's own copy of a username wins over the global one.
+                participantsById = (history.participants + activeMembers).associateBy { it.userId },
                 entries =
                     visibleEntries
                         .filter {
@@ -148,6 +184,12 @@ class GroupDetailViewModel(
     fun loadMoreHistory() {
         historyPageSize.update { it + HISTORY_PAGE_SIZE_INCREMENT }
     }
+
+    /** Separates "the group flow has not emitted yet" from "this group is not in the list". */
+    private data class GroupLookup(
+        val hasLoaded: Boolean = false,
+        val group: Group? = null,
+    )
 
     private data class HistoryInput(
         val feed: List<ActivityFeedItem> = emptyList(),

@@ -119,6 +119,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_split_summary_shares
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_title_placeholder
 import tabmatesapp.features.tabgroup.presentation.generated.resources.currency_rate_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_removed_member
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_calendar
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_pie_chart
@@ -639,9 +640,11 @@ internal fun FieldRow(
 
 @Composable
 private fun paidByDisplay(state: AddEntryState): String {
-    val paidBy = state.members.firstOrNull { it.userId == state.paidByUserId }
+    // Resolved through the wider map, not the member list: the payer of an edited entry may have
+    // been removed from the group since, and their real name is still known.
+    val paidBy = state.participantsById[state.paidByUserId]
     return when {
-        paidBy == null -> "—"
+        paidBy == null -> stringResource(Res.string.expense_detail_removed_member)
         paidBy.userId == state.currentUserId -> stringResource(Res.string.add_entry_paid_by_you)
         else -> paidBy.username
     }

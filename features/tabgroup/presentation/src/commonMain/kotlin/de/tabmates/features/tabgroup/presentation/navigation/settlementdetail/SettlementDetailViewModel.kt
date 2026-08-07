@@ -11,6 +11,8 @@ import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import de.tabmates.features.tabgroup.presentation.util.EntryLookup
+import de.tabmates.features.tabgroup.presentation.util.GroupWithParticipants
+import de.tabmates.features.tabgroup.presentation.util.observeGroupWithParticipants
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -60,11 +62,13 @@ class SettlementDetailViewModel(
                 .getTabEntryById(settlementId)
                 .map<TabEntry?, EntryLookup> { EntryLookup.Loaded(it) }
                 .onStart { emit(EntryLookup.Loading) },
-            groupRepository.getGroups().onStart { emit(emptyList()) },
+            groupRepository
+                .observeGroupWithParticipants(groupId)
+                .onStart { emit(GroupWithParticipants()) },
             currencyRepository.getCurrencies().onStart { emit(emptyList()) },
             isDeleting,
-        ) { lookup, groups, currencies, deleting ->
-            val group = groups.firstOrNull { it.id == groupId }
+        ) { lookup, groupData, currencies, deleting ->
+            val group = groupData.group
             val settlement = (lookup as? EntryLookup.Loaded)?.entry as? TabEntry.Settlement
             val currencyCode = settlement?.currencyCode ?: group?.defaultCurrencyCode.orEmpty()
             val currency = currencies.firstOrNull { it.code == currencyCode }
@@ -77,9 +81,7 @@ class SettlementDetailViewModel(
                 currentUserId = currentUserId,
                 groupCurrencySymbol = currency?.nativeSymbol ?: currencyCode,
                 groupCurrencyDecimalDigits = currency?.decimalDigits ?: 2,
-                membersById =
-                    group?.participants?.associateBy { it.userId }
-                        ?: emptyMap(),
+                membersById = groupData.participantsById,
             )
         }.onEach { state ->
             // Sits before stateIn so the check only runs while the screen is actually collecting,

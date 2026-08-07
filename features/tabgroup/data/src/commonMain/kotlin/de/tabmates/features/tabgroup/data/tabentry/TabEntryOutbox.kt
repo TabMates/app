@@ -660,8 +660,11 @@ class TabEntryOutbox(
                     DataError.Remote.PAYLOAD_TOO_LARGE,
                     DataError.Remote.SERIALIZATION,
                     // Turnstile only gates the auth endpoints, never this delete; classify as
-                    // permanent for exhaustiveness (it would never clear on retry anyway).
+                    // permanent for exhaustiveness (it would never clear on retry anyway). The
+                    // same goes for the two participant-removal refusals.
                     DataError.Remote.TURNSTILE_FAILED,
+                    DataError.Remote.CANNOT_REMOVE_SELF,
+                    DataError.Remote.CANNOT_REMOVE_GROUP_CREATOR,
                     -> DispatchResult.Permanent(result.error.name.lowercase())
                 }
             }

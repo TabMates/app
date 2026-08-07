@@ -36,7 +36,15 @@ data class AddEntryState(
     val originalExchangeRate: Double? = null,
     val currencyQueryState: TextFieldState = TextFieldState(),
     val isCurrencyPickerVisible: Boolean = false,
+    /** Active members only: who may be picked as payer, and who a *new* entry can be split across. */
     val members: List<GroupParticipant> = emptyList(),
+    /**
+     * Everyone this screen has to be able to name: [members] plus anyone the edited entry already
+     * references — payer or split — who has since been removed from the group.
+     */
+    val participantsById: Map<String, GroupParticipant> = emptyMap(),
+    /** Subset of [participantsById] that is no longer in the group. */
+    val formerParticipantIds: Set<String> = emptySet(),
     val currentUserId: String = "",
     val amountTextState: TextFieldState = TextFieldState(),
     val titleTextState: TextFieldState = TextFieldState(),

@@ -1,11 +1,14 @@
 package de.tabmates.features.tabgroup.presentation.navigation
 
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import de.tabmates.core.presentation.navigation.PaneRole
 import de.tabmates.core.presentation.navigation.TopLevelTab
+import de.tabmates.core.presentation.util.ObserveAsEvents
+import de.tabmates.features.tabgroup.domain.group.GroupRemovalNotifier
 import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivityRoot
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.AddEntryRoot
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CreateGroupRoot
@@ -31,8 +34,12 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_removed_snackbar
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_removed_snackbar_unnamed
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_left
 
 val mainSerializersModule =
@@ -61,6 +68,42 @@ val mainSerializersModule =
             subclass(OssLicenses::class)
         }
     }
+
+/**
+ * Drops every screen belonging to [groupId], leaving whatever came before it on the stack.
+ *
+ * Scoped rather than "pop to the group list": on a wide window another group's pages can sit on the
+ * same stack, and they are still valid. Shared by leaving and by being removed — the second can
+ * land while any of these screens is open, so the set has to be the whole of [GroupScoped].
+ */
+fun NavBackStack<NavKey>.removeGroupScopedEntries(groupId: String) {
+    removeAll { it is GroupScoped && it.groupId == groupId }
+}
+
+/**
+ * Reacts to *this* user being removed from a group by someone else.
+ *
+ * Belongs to the shell rather than to any screen: by the time the frame arrives the group is gone
+ * locally, so whichever of its screens is open has nothing left to render. Call it once, above both
+ * adaptive layouts — twice would pop correctly but say so twice.
+ */
+@Composable
+fun ObserveGroupRemovals(
+    backStack: NavBackStack<NavKey>,
+    snackbarHostState: SnackbarHostState,
+    notifier: GroupRemovalNotifier = koinInject(),
+) {
+    ObserveAsEvents(notifier.removals) { removal ->
+        backStack.removeGroupScopedEntries(removal.groupId)
+        // The title comes from the local mirror, which a client that never saw the group may not
+        // have had — say the plain thing rather than name an empty group.
+        val message =
+            removal.title
+                ?.let { getString(Res.string.group_removed_snackbar, it) }
+                ?: getString(Res.string.group_removed_snackbar_unnamed)
+        snackbarHostState.showSnackbar(message)
+    }
+}
 
 fun EntryProviderScope<NavKey>.mainGraph(
     backStack: NavBackStack<NavKey>,
@@ -265,12 +308,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
             groupId = route.groupId,
             onPeopleClick = { backStack.add(GroupPeople(route.groupId)) },
             onLeft = {
-                // Scoped to this group: another group's pages may sit on the stack on a wide window.
-                backStack.removeAll {
-                    (it is GroupSettings && it.groupId == route.groupId) ||
-                        (it is GroupPeople && it.groupId == route.groupId) ||
-                        (it is GroupDetail && it.groupId == route.groupId)
-                }
+                backStack.removeGroupScopedEntries(route.groupId)
                 appScope.launch { snackbarHostState.showSnackbar(leftMessage) }
             },
             snackbarHostState = snackbarHostState,

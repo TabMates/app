@@ -13,6 +13,8 @@ import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.EntryKind
 import de.tabmates.features.tabgroup.presentation.util.EntryLookup
+import de.tabmates.features.tabgroup.presentation.util.GroupWithParticipants
+import de.tabmates.features.tabgroup.presentation.util.observeGroupWithParticipants
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -63,13 +65,15 @@ class EntryDetailViewModel(
                 .getTabEntryById(entryId)
                 .map<TabEntry?, EntryLookup> { EntryLookup.Loaded(it) }
                 .onStart { emit(EntryLookup.Loading) },
-            groupRepository.getGroups().onStart { emit(emptyList()) },
+            groupRepository
+                .observeGroupWithParticipants(groupId)
+                .onStart { emit(GroupWithParticipants()) },
             currencyRepository.getCurrencies().onStart { emit(emptyList()) },
             exchangeRateRepository.getExchangeRates().onStart { emit(emptyList()) },
             isDeleting,
-        ) { lookup, groups, currencies, rates, deleting ->
+        ) { lookup, groupData, currencies, rates, deleting ->
             val entry = (lookup as? EntryLookup.Loaded)?.entry
-            val group = groups.firstOrNull { it.id == groupId }
+            val group = groupData.group
             // This screen renders split-carrying entries only (expense/income). A settlement id
             // lands here as null, matching the previous expense-only behaviour.
             val detailEntry =
@@ -109,9 +113,7 @@ class EntryDetailViewModel(
                 groupCurrencyDecimalDigits = groupCurrency?.decimalDigits ?: 2,
                 ratesByCurrency = rates.associate { it.currencyCode to it.rateToBase },
                 ratesLastUpdatedAt = rates.maxOfOrNull { it.lastUpdatedAt },
-                membersById =
-                    group?.participants?.associateBy { it.userId }
-                        ?: emptyMap(),
+                membersById = groupData.participantsById,
             )
         }.onEach { state ->
             // Sits before stateIn so the check only runs while the screen is actually collecting,

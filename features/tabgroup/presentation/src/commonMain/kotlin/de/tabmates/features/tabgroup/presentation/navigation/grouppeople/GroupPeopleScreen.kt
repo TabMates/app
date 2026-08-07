@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,6 +65,13 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.group_peop
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_add_name_placeholder
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_add_placeholders
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_placeholders_caption
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_remove_cd
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_remove_dialog_balance_warning
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_remove_dialog_cancel
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_remove_dialog_confirm
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_remove_dialog_message
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_remove_dialog_message_placeholder
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_remove_dialog_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_section_members
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_section_placeholders
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_invite_copied
@@ -148,6 +157,7 @@ private fun GroupPeopleScreen(
                     name = person.displayName(),
                     initials = person.initials,
                     badge = person.badge?.label(),
+                    trailing = removeAction(person, onAction),
                 )
             }
         }
@@ -163,6 +173,7 @@ private fun GroupPeopleScreen(
                     initials = person.initials,
                     badge = person.badge?.label(),
                     supporting = stringResource(Res.string.groups_detail_pending_not_claimed),
+                    trailing = removeAction(person, onAction),
                 )
             }
             if (state.isAddRowVisible) {
@@ -188,6 +199,81 @@ private fun GroupPeopleScreen(
         }
         VerticalSpacer(8.dp)
     }
+    val target = state.removeTarget
+    if (target != null) {
+        RemoveDialog(
+            target = target,
+            isRemoving = state.isRemoving,
+            onConfirm = { onAction(GroupPeopleAction.ConfirmRemove) },
+            onDismiss = { onAction(GroupPeopleAction.DismissRemove) },
+        )
+    }
+}
+
+/** Null for the rows that offer no action, which is what leaves [PersonRow]'s trailing slot empty. */
+@Composable
+private fun removeAction(
+    person: GroupPerson,
+    onAction: (GroupPeopleAction) -> Unit,
+): (@Composable () -> Unit)? {
+    if (!person.canRemove) return null
+    val contentDescription = stringResource(Res.string.group_people_remove_cd, person.name)
+    return {
+        IconButton(onClick = { onAction(GroupPeopleAction.RemoveClick(person.id)) }) {
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_close),
+                contentDescription = contentDescription,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun RemoveDialog(
+    target: RemoveTarget,
+    isRemoving: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    // A placeholder has no access to lose, so it gets the shorter sentence.
+    val consequence =
+        if (target.isPlaceholder) {
+            stringResource(Res.string.group_people_remove_dialog_message_placeholder, target.name)
+        } else {
+            stringResource(Res.string.group_people_remove_dialog_message, target.name)
+        }
+    // The balance never blocks the removal, it only makes sure it is not a surprise.
+    val message =
+        if (target.outstanding == null) {
+            consequence
+        } else {
+            val warning =
+                stringResource(
+                    Res.string.group_people_remove_dialog_balance_warning,
+                    target.name,
+                    target.outstanding,
+                )
+            "$warning\n\n$consequence"
+        }
+    AlertDialog(
+        // Sealed while the request is in flight: closing it clears removeTarget but does nothing to
+        // the call already on its way, so a tap outside — or on Cancel — would read as a cancel that
+        // never happened.
+        onDismissRequest = { if (!isRemoving) onDismiss() },
+        title = { Text(stringResource(Res.string.group_people_remove_dialog_title, target.name)) },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isRemoving) {
+                Text(stringResource(Res.string.group_people_remove_dialog_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isRemoving) {
+                Text(stringResource(Res.string.group_people_remove_dialog_cancel))
+            }
+        },
+    )
 }
 
 /**

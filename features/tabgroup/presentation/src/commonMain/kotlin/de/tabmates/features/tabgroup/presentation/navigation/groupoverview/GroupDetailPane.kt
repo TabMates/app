@@ -80,6 +80,7 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
+import tabmatesapp.features.tabgroup.presentation.generated.resources.expense_detail_removed_member
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_open_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_across_people
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_add_entry
@@ -120,6 +121,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_redeem
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_restaurant
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_settings
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_swap_horiz
+import tabmatesapp.features.tabgroup.presentation.generated.resources.member_label_former
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_action
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -135,6 +137,8 @@ internal fun GroupDetailPane(
     item: GroupOverviewItem,
     currentUserId: String,
     members: List<GroupParticipant>,
+    formerMemberIds: Set<String>,
+    participantsById: Map<String, GroupParticipant>,
     entries: List<TabEntry>,
     memberNetBalances: Map<String, Double>,
     hasOutstandingDebts: Boolean,
@@ -246,7 +250,7 @@ internal fun GroupDetailPane(
                 TransactionsTab(
                     item = item,
                     currentUserId = currentUserId,
-                    members = members,
+                    participantsById = participantsById,
                     entries = entries,
                     currencyByCode = currencyByCode,
                     ratesByCurrency = ratesByCurrency,
@@ -269,6 +273,7 @@ internal fun GroupDetailPane(
                 BalancesTab(
                     item = item,
                     members = members,
+                    formerMemberIds = formerMemberIds,
                     currentUserId = currentUserId,
                     memberNetBalances = memberNetBalances,
                     hasOutstandingDebts = hasOutstandingDebts,
@@ -415,14 +420,14 @@ private fun HistoryTab(
 private fun TransactionsTab(
     item: GroupOverviewItem,
     currentUserId: String,
-    members: List<GroupParticipant>,
+    participantsById: Map<String, GroupParticipant>,
     entries: List<TabEntry>,
     currencyByCode: Map<String, Currency>,
     ratesByCurrency: Map<String, Double>,
     onEntryClick: (String) -> Unit,
     onSettlementClick: (String) -> Unit,
 ) {
-    val payerById = remember(members) { members.associateBy { it.userId } }
+    val removedMemberName = stringResource(Res.string.expense_detail_removed_member)
     Column(
         modifier =
             Modifier
@@ -445,7 +450,7 @@ private fun TransactionsTab(
                         ExpenseRow(
                             expense = entry,
                             currentUserId = currentUserId,
-                            payerName = payerById[entry.paidByUserId]?.username.orEmpty(),
+                            payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
                             item = item,
                             currency = currencyByCode[entry.currencyCode],
                             ratesByCurrency = ratesByCurrency,
@@ -457,8 +462,9 @@ private fun TransactionsTab(
                         SettlementRow(
                             settlement = entry,
                             currentUserId = currentUserId,
-                            payerName = payerById[entry.paidByUserId]?.username.orEmpty(),
-                            recipientName = payerById[entry.receivedByUserId]?.username.orEmpty(),
+                            payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
+                            recipientName =
+                                participantsById[entry.receivedByUserId]?.username ?: removedMemberName,
                             item = item,
                             currency = currencyByCode[entry.currencyCode],
                             ratesByCurrency = ratesByCurrency,
@@ -470,7 +476,7 @@ private fun TransactionsTab(
                         IncomeRow(
                             income = entry,
                             currentUserId = currentUserId,
-                            payerName = payerById[entry.paidByUserId]?.username.orEmpty(),
+                            payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
                             item = item,
                             currency = currencyByCode[entry.currencyCode],
                             ratesByCurrency = ratesByCurrency,
@@ -884,6 +890,7 @@ private fun EntryIcon(
 private fun BalancesTab(
     item: GroupOverviewItem,
     members: List<GroupParticipant>,
+    formerMemberIds: Set<String>,
     currentUserId: String,
     memberNetBalances: Map<String, Double>,
     hasOutstandingDebts: Boolean,
@@ -916,6 +923,7 @@ private fun BalancesTab(
                 .forEach { participant ->
                     PerPersonRow(
                         participant = participant,
+                        isFormerMember = participant.userId in formerMemberIds,
                         balance = GroupBalance.fromNet(memberNetBalances[participant.userId] ?: 0.0),
                         item = item,
                         onClick = onSettleUpClick,
@@ -993,15 +1001,24 @@ private data class HeroPalette(
 @Composable
 private fun PerPersonRow(
     participant: GroupParticipant,
+    isFormerMember: Boolean,
     balance: GroupBalance,
     item: GroupOverviewItem,
     onClick: () -> Unit,
 ) {
-    val verb =
+    val balanceVerb =
         when (balance) {
             is GroupBalance.Owed -> stringResource(Res.string.groups_detail_gets_back)
             is GroupBalance.Owe -> stringResource(Res.string.groups_detail_owes)
             GroupBalance.Settled -> stringResource(Res.string.groups_status_settled)
+        }
+    // A former member is only here because they still owe or are owed; saying so beats a row that
+    // looks like any other member's.
+    val verb =
+        if (isFormerMember) {
+            "${stringResource(Res.string.member_label_former)} · $balanceVerb"
+        } else {
+            balanceVerb
         }
     val amountText =
         when (balance) {

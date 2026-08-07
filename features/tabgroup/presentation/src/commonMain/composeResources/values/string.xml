@@ -117,6 +117,8 @@
     <string name="groups_empty_title">No groups yet</string>
     <string name="groups_empty_caption">Tap the button to create your first group.</string>
     <string name="groups_detail_placeholder_title">Select a group</string>
+    <string name="groups_detail_unavailable">This group is no longer available</string>
+    <string name="groups_detail_unavailable_action">Back to groups</string>
     <string name="groups_detail_placeholder_caption">Pick a group on the left to see details.</string>
     <string name="groups_detail_invite">Invite</string>
     <string name="groups_detail_add_entry">Add entry</string>
@@ -195,6 +197,8 @@
     <string name="group_settings_save">Save</string>
     <string name="group_settings_saved">Changes saved</string>
     <string name="group_settings_left">You left the group</string>
+    <string name="group_removed_snackbar">You were removed from %1$s</string>
+    <string name="group_removed_snackbar_unnamed">You were removed from a group</string>
     <string name="group_people_title">People</string>
     <string name="group_people_section_members">MEMBERS</string>
     <string name="group_people_section_placeholders">PLACEHOLDERS</string>
@@ -205,6 +209,15 @@
     <string name="group_people_add_confirm_cd">Add this placeholder</string>
     <string name="group_people_error_duplicate_name">Someone with that name is already in this group.</string>
     <string name="group_people_add_done_cd">Done adding placeholders</string>
+    <string name="group_people_remove_cd">Remove %1$s from this group</string>
+    <string name="group_people_remove_dialog_title">Remove %1$s?</string>
+    <string name="group_people_remove_dialog_message">%1$s loses access to this group. Past expenses stay unchanged.</string>
+    <string name="group_people_remove_dialog_message_placeholder">%1$s is removed from this group. Past expenses stay unchanged.</string>
+    <string name="group_people_remove_dialog_balance_warning">%1$s is not settled up — %2$s is still open. Removing them does not clear it.</string>
+    <string name="group_people_remove_dialog_confirm">Remove</string>
+    <string name="group_people_remove_dialog_cancel">Cancel</string>
+    <string name="group_people_remove_error_stale">That has already changed. Refresh and try again.</string>
+    <string name="group_people_remove_error_not_member">You are no longer a member of this group.</string>
 
     <string name="add_entry_title">New entry</string>
     <string name="edit_entry_title">Edit entry</string>
@@ -261,6 +274,8 @@
     <string name="expense_detail_paid_by_section">PAID BY</string>
     <string name="expense_detail_split_between_section">SPLIT BETWEEN</string>
     <string name="expense_detail_removed_member">[Removed Member]</string>
+    <!-- Shared across split editor, balances and settle-up: someone still in the money, no longer in the group. -->
+    <string name="member_label_former">former</string>
     <string name="expense_detail_delete_dialog_title">Delete expense?</string>
     <string name="expense_detail_delete_dialog_message">This expense will be removed from the group. This cannot be undone.</string>
     <string name="expense_detail_delete_dialog_confirm">Delete</string>

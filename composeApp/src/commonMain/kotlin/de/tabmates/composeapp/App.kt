@@ -93,6 +93,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.GroupDetail
 import de.tabmates.features.tabgroup.presentation.navigation.Home
 import de.tabmates.features.tabgroup.presentation.navigation.JoinGroup
 import de.tabmates.features.tabgroup.presentation.navigation.Profile
+import de.tabmates.features.tabgroup.presentation.navigation.ObserveGroupRemovals
 import de.tabmates.features.tabgroup.presentation.navigation.mainGraph
 import de.tabmates.features.tabgroup.presentation.navigation.mainSerializersModule
 import kotlinx.coroutines.Dispatchers
@@ -259,6 +260,9 @@ fun App() {
             val topLevelTabs = remember { listOf(Home, Activity, Group, Profile) }
             val snackbarHostState = remember { SnackbarHostState() }
             val appScope = rememberCoroutineScope()
+            // Above both adaptive layouts on purpose: each builds its own mainGraph, and observing
+            // per layout would announce the same removal twice.
+            ObserveGroupRemovals(backStack = backStack, snackbarHostState = snackbarHostState)
             val isAndroidBrowser = remember { isAndroidBrowser() }
 
             if (currentKey is LoggedIn) {

@@ -21,6 +21,7 @@ import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
+import de.tabmates.features.tabgroup.domain.models.referencedParticipantIds
 import de.tabmates.features.tabgroup.domain.tabentry.NewTabEntrySplit
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
@@ -176,11 +177,34 @@ class AddEntryViewModel(
                     ?: activeMembers.firstOrNull { it.userId == currentUserId }?.userId
                     ?: activeMembers.firstOrNull()?.userId.orEmpty()
             val splitsByParticipant = existingSplits.associateBy { it.participantId }
+            // An edited entry may reference people who have since been removed from the group.
+            // They are not in [activeMembers], so building the split rows from membership alone
+            // would drop their splits on save — the entry would silently lose money. Resolve them
+            // from the global participant table instead and keep their rows editable.
+            val activeMemberIds = activeMembers.map { it.userId }.toSet()
+            val formerParticipantIds =
+                listOfNotNull(existing).referencedParticipantIds() - activeMemberIds
+            val formerParticipants =
+                if (formerParticipantIds.isEmpty()) {
+                    emptyList()
+                } else {
+                    groupRepository
+                        .getAllParticipants()
+                        .first()
+                        .filter { it.userId in formerParticipantIds }
+                }
+            // Only former members who actually hold a split get a row; one who merely paid does
+            // not become splittable, they just need to stay nameable.
+            val splitParticipants =
+                activeMembers + formerParticipants.filter { it.userId in splitsByParticipant }
             _state.update {
                 it.copy(
                     isLoading = false,
                     entryKind = existingKind,
                     members = activeMembers,
+                    participantsById =
+                        (activeMembers + formerParticipants).associateBy { participant -> participant.userId },
+                    formerParticipantIds = formerParticipantIds,
                     paidByUserId = defaultPaidBy,
                     entryCurrencyCode = entryCurrencyCode,
                     entryCurrencySymbol = entryCurrency?.nativeSymbol ?: entryCurrencyCode,
@@ -204,7 +228,7 @@ class AddEntryViewModel(
                                 .orEmpty(),
                         ),
                     splitInputs =
-                        activeMembers.map { member ->
+                        splitParticipants.map { member ->
                             val split = splitsByParticipant[member.userId]
                             ParticipantSplitInput(
                                 participantId = member.userId,

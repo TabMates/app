@@ -117,6 +117,8 @@
     <string name="groups_empty_title">Noch keine Gruppen</string>
     <string name="groups_empty_caption">Tippe auf die Schaltfläche, um deine erste Gruppe zu erstellen.</string>
     <string name="groups_detail_placeholder_title">Gruppe auswählen</string>
+    <string name="groups_detail_unavailable">Diese Gruppe ist nicht mehr verfügbar</string>
+    <string name="groups_detail_unavailable_action">Zurück zu den Gruppen</string>
     <string name="groups_detail_placeholder_caption">Wähle links eine Gruppe aus, um Details zu sehen.</string>
     <string name="groups_detail_invite">Einladen</string>
     <string name="groups_detail_add_entry">Eintrag hinzufügen</string>
@@ -195,6 +197,8 @@
     <string name="group_settings_save">Speichern</string>
     <string name="group_settings_saved">Änderungen gespeichert</string>
     <string name="group_settings_left">Du hast die Gruppe verlassen</string>
+    <string name="group_removed_snackbar">Du wurdest aus %1$s entfernt</string>
+    <string name="group_removed_snackbar_unnamed">Du wurdest aus einer Gruppe entfernt</string>
     <string name="group_people_title">Personen</string>
     <string name="group_people_section_members">MITGLIEDER</string>
     <string name="group_people_section_placeholders">PLATZHALTER</string>
@@ -205,6 +209,15 @@
     <string name="group_people_add_confirm_cd">Diesen Platzhalter hinzufügen</string>
     <string name="group_people_error_duplicate_name">Jemand mit diesem Namen ist bereits in dieser Gruppe.</string>
     <string name="group_people_add_done_cd">Hinzufügen beenden</string>
+    <string name="group_people_remove_cd">%1$s aus dieser Gruppe entfernen</string>
+    <string name="group_people_remove_dialog_title">%1$s entfernen?</string>
+    <string name="group_people_remove_dialog_message">%1$s verliert den Zugriff auf diese Gruppe. Bisherige Ausgaben bleiben unverändert.</string>
+    <string name="group_people_remove_dialog_message_placeholder">%1$s wird aus dieser Gruppe entfernt. Bisherige Ausgaben bleiben unverändert.</string>
+    <string name="group_people_remove_dialog_balance_warning">%1$s hat noch offene Beträge — %2$s sind nicht ausgeglichen. Das Entfernen ändert daran nichts.</string>
+    <string name="group_people_remove_dialog_confirm">Entfernen</string>
+    <string name="group_people_remove_dialog_cancel">Abbrechen</string>
+    <string name="group_people_remove_error_stale">Das hat sich bereits geändert. Aktualisiere und versuche es erneut.</string>
+    <string name="group_people_remove_error_not_member">Du bist kein Mitglied dieser Gruppe mehr.</string>
 
     <string name="add_entry_title">Neuer Eintrag</string>
     <string name="edit_entry_title">Eintrag bearbeiten</string>
@@ -261,6 +274,7 @@
     <string name="expense_detail_paid_by_section">BEZAHLT VON</string>
     <string name="expense_detail_split_between_section">AUFGETEILT ZWISCHEN</string>
     <string name="expense_detail_removed_member">[Entferntes Mitglied]</string>
+    <string name="member_label_former">ehemalig</string>
     <string name="expense_detail_delete_dialog_title">Ausgabe löschen?</string>
     <string name="expense_detail_delete_dialog_message">Diese Ausgabe wird aus der Gruppe entfernt. Dies kann nicht rückgängig gemacht werden.</string>
     <string name="expense_detail_delete_dialog_confirm">Löschen</string>

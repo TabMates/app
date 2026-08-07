@@ -15,7 +15,9 @@ import de.tabmates.features.tabgroup.data.sync.expense
 import de.tabmates.features.tabgroup.data.sync.group
 import de.tabmates.features.tabgroup.data.sync.insertGroup
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
+import de.tabmates.features.tabgroup.domain.group.GroupRemovalNotifier
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
+import de.tabmates.features.tabgroup.domain.group.RemovedFromGroup
 import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupInvitePreview
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
@@ -24,6 +26,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -32,6 +36,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.fail
@@ -74,6 +79,44 @@ class TabEntryRealtimeSyncTest {
                 database.tabEntryDao.getTabEntryById(ENTRY_ID),
                 "local queries do not filter on deletedAt, so upserting one would put it on screen",
             )
+        }
+
+    @Test
+    fun `being removed reports the group by its local name and then deletes it`() =
+        syncTest(groupRepository = StubGroupRepository(listOf(group(id = GROUP_ID)))) { database, channel ->
+            database.insertGroup(group(id = GROUP_ID))
+            val removals = mutableListOf<RemovedFromGroup>()
+            // Unconfined so the collector is subscribed before the frame arrives: the notifier is
+            // a plain SharedFlow with no replay, exactly as the app shell sees it.
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                removalNotifier.removals.collect { removals += it }
+            }
+
+            channel.emit(
+                WebSocketMessageDto(
+                    type = WsMessageType.REMOVED_FROM_GROUP,
+                    payload = """{"groupId":"$GROUP_ID"}""",
+                ),
+            )
+
+            awaitCondition("the group should have been deleted locally") {
+                database.groupDao.getGroupById(GROUP_ID) == null
+            }
+            // The payload carries no title, so the name has to be read before the row is gone.
+            assertEquals(listOf(RemovedFromGroup(groupId = GROUP_ID, title = "Group $GROUP_ID")), removals)
+        }
+
+    @Test
+    fun `an unknown message type changes nothing`() =
+        syncTest { database, channel ->
+            database.insertGroup(group(id = GROUP_ID))
+
+            channel.emit(WebSocketMessageDto(type = "SOMETHING_NEW", payload = "{}"))
+
+            // Nothing to wait for; give the collector a turn and assert the group survived.
+            awaitCondition("the group must still be there") {
+                database.groupDao.getGroupById(GROUP_ID) != null
+            }
         }
 
     // region helpers
@@ -119,27 +162,32 @@ class TabEntryRealtimeSyncTest {
         }
     }
 
-    private fun syncTest(body: suspend TestScope.(TabMatesDatabase, FakeWebSocketChannel) -> Unit) =
-        runTest {
-            val database = createInMemoryDatabase()
-            val channel = FakeWebSocketChannel()
-            try {
-                TabEntryRealtimeSync(
-                    webSocketConnector = channel,
-                    database = database,
-                    groupRepository = UnusedGroupRepository,
-                    json = json,
-                    logger = NoopLogger,
-                    applicationScope =
-                        CoroutineScope(
-                            backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler),
-                        ),
-                )
-                body(database, channel)
-            } finally {
-                database.close()
-            }
+    private val removalNotifier = GroupRemovalNotifier()
+
+    private fun syncTest(
+        groupRepository: GroupRepository = StubGroupRepository(),
+        body: suspend TestScope.(TabMatesDatabase, FakeWebSocketChannel) -> Unit,
+    ) = runTest {
+        val database = createInMemoryDatabase()
+        val channel = FakeWebSocketChannel()
+        try {
+            TabEntryRealtimeSync(
+                webSocketConnector = channel,
+                database = database,
+                groupRepository = groupRepository,
+                groupRemovalNotifier = removalNotifier,
+                json = json,
+                logger = NoopLogger,
+                applicationScope =
+                    CoroutineScope(
+                        backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler),
+                    ),
+            )
+            body(database, channel)
+        } finally {
+            database.close()
         }
+    }
 
     private companion object {
         const val GROUP_ID = "g1"
@@ -150,11 +198,16 @@ class TabEntryRealtimeSyncTest {
     // endregion
 }
 
-/** Only `GROUP_METADATA_CHANGED` reaches the repository, and these tests never send one. */
-private object UnusedGroupRepository : GroupRepository {
+/**
+ * Answers [getGroups] from [groups] — the removal path reads the title from it before deleting the
+ * group — and refuses everything else these tests do not exercise.
+ */
+private class StubGroupRepository(
+    private val groups: List<Group> = emptyList(),
+) : GroupRepository {
     private fun unused(): Nothing = error("GroupRepository is not exercised by these tests")
 
-    override fun getGroups(): Flow<List<Group>> = unused()
+    override fun getGroups(): Flow<List<Group>> = flowOf(groups)
 
     override fun getActiveParticipantsByGroupId(groupId: String): Flow<List<GroupParticipant>> = unused()
 
@@ -170,6 +223,11 @@ private object UnusedGroupRepository : GroupRepository {
     ): Result<Group, DataError.Remote> = unused()
 
     override suspend fun leaveGroup(groupId: String): EmptyResult<DataError.Remote> = unused()
+
+    override suspend fun removeParticipant(
+        groupId: String,
+        userId: String,
+    ): EmptyResult<DataError.Remote> = unused()
 
     override suspend fun addParticipantsToGroup(
         groupId: String,
