@@ -11,6 +11,8 @@ import de.tabmates.features.tabgroup.database.dao.GroupDao
 import de.tabmates.features.tabgroup.database.dao.GroupParticipantCrossRefDao
 import de.tabmates.features.tabgroup.database.dao.GroupParticipantDao
 import de.tabmates.features.tabgroup.database.dao.PendingOutboxDao
+import de.tabmates.features.tabgroup.database.dao.RecurringSeriesDao
+import de.tabmates.features.tabgroup.database.dao.RecurringSlotClaimDao
 import de.tabmates.features.tabgroup.database.dao.TabEntryDao
 import de.tabmates.features.tabgroup.database.dao.TabEntrySplitDao
 import de.tabmates.features.tabgroup.database.entities.ActivityEventEntity
@@ -21,6 +23,10 @@ import de.tabmates.features.tabgroup.database.entities.GroupEntity
 import de.tabmates.features.tabgroup.database.entities.GroupParticipantCrossRef
 import de.tabmates.features.tabgroup.database.entities.GroupParticipantEntity
 import de.tabmates.features.tabgroup.database.entities.PendingOutboxEntity
+import de.tabmates.features.tabgroup.database.entities.RecurringExceptionEntity
+import de.tabmates.features.tabgroup.database.entities.RecurringSeriesEntity
+import de.tabmates.features.tabgroup.database.entities.RecurringSlotClaimEntity
+import de.tabmates.features.tabgroup.database.entities.RecurringTemplateSplitEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntryEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntrySplitEntity
 import de.tabmates.features.tabgroup.database.migrations.TabEntryEntryDateBackfill
@@ -38,11 +44,15 @@ import de.tabmates.features.tabgroup.database.view.LastTabEntryView
         PendingOutboxEntity::class,
         ActivityEventEntity::class,
         ActivityFieldChangeEntity::class,
+        RecurringSeriesEntity::class,
+        RecurringTemplateSplitEntity::class,
+        RecurringExceptionEntity::class,
+        RecurringSlotClaimEntity::class,
     ],
     views = [
         LastTabEntryView::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -50,6 +60,9 @@ import de.tabmates.features.tabgroup.database.view.LastTabEntryView
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 6, to = 7),
+        // Recurring entries: four new tables plus two nullable columns on tab entries, all
+        // additive, so Room derives the whole migration.
+        AutoMigration(from = 7, to = 8),
     ],
 )
 @ConstructedBy(TabMatesDatabaseConstructor::class)
@@ -63,6 +76,8 @@ abstract class TabMatesDatabase : RoomDatabase() {
     abstract val exchangeRateDao: ExchangeRateDao
     abstract val pendingOutboxDao: PendingOutboxDao
     abstract val activityEventDao: ActivityEventDao
+    abstract val recurringSeriesDao: RecurringSeriesDao
+    abstract val recurringSlotClaimDao: RecurringSlotClaimDao
 
     companion object {
         const val DATABASE_NAME = "tabmates.db"

@@ -47,6 +47,15 @@ data class TabEntryEntity(
     /** True while this row is an optimistic local write awaiting server confirmation. */
     @ColumnInfo(defaultValue = "0")
     val pendingSync: Boolean = false,
+    /**
+     * The recurring series that produced this entry, and the slot it filled (ISO "YYYY-MM-DD").
+     * Both null for a hand-created entry, both set for a generated one.
+     *
+     * The slot is deliberately not [entryDate]: a generated entry is ordinary once written and its
+     * date stays editable, but the slot it occupies must not move with it.
+     */
+    val recurringSeriesId: String? = null,
+    val recurringOccurrenceDate: String? = null,
 ) {
     val isDeleted: Boolean
         get() = deletedAt != null
