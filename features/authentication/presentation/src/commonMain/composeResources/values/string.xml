@@ -69,7 +69,7 @@
     <string name="error_same_password">The new password can't be equal to the old one</string>
 
     <!-- Guest Register -->
-    <string name="register_guest_desc">A guest account lives only on this device — sign out or switch devices and you lose access to your groups. You can turn it into a full account any time under Profile, and keep everything.</string>
+    <string name="register_guest_desc">A guest account lives only on this device — sign out or switch devices and you lose access to your groups. You can turn it into a full account any time under Settings, and keep everything.</string>
 
     <!-- Privacy notice -->
     <string name="privacy_notice_register_prefix">By creating an account you agree to our </string>

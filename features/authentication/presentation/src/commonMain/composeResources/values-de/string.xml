@@ -68,7 +68,7 @@
     <string name="error_same_password">Das neue Passwort darf nicht mit dem alten übereinstimmen</string>
 
     <!-- Guest Register -->
-    <string name="register_guest_desc">Ein Gastkonto existiert nur auf diesem Gerät — wenn du dich abmeldest oder das Gerät wechselst, verlierst du den Zugriff auf deine Gruppen. Du kannst es jederzeit im Profil in ein vollwertiges Konto umwandeln und alles behalten.</string>
+    <string name="register_guest_desc">Ein Gastkonto existiert nur auf diesem Gerät — wenn du dich abmeldest oder das Gerät wechselst, verlierst du den Zugriff auf deine Gruppen. Du kannst es jederzeit in den Einstellungen in ein vollwertiges Konto umwandeln und alles behalten.</string>
 
     <!-- Privacy notice -->
     <string name="privacy_notice_register_prefix">Mit dem Erstellen eines Kontos stimmst du unserer </string>
