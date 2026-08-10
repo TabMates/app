@@ -34,6 +34,27 @@ sealed class TabEntry {
     /** True while this entry is a local optimistic write not yet confirmed by the server. */
     abstract val isPendingSync: Boolean
 
+    /**
+     * The recurring series that produced this entry, and the slot it filled. Both null for a
+     * hand-created entry, both set for a generated one.
+     *
+     * The pair is the slot identity, and the server guarantees exactly one entry per slot. It is
+     * how a scheduled placeholder is matched against the entry that eventually replaces it —
+     * [recurringOccurrenceDate] and not [entryDate], which stays editable afterwards.
+     */
+    abstract val recurringSeriesId: String?
+    abstract val recurringOccurrenceDate: LocalDate?
+
+    /**
+     * True for a *projected* entry: an occurrence a recurring series owes but the server has not
+     * written yet, either because its sweep has not run or because this device is offline.
+     *
+     * Never persisted and never sent anywhere. It exists so balances stay correct in the window
+     * between a due date and the entry appearing, and so the UI can mark the row as not-yet-real.
+     * See `ScheduledEntryProjector`.
+     */
+    abstract val isScheduledPlaceholder: Boolean
+
     val isDeleted: Boolean
         get() = deletedAt != null
 
@@ -56,6 +77,9 @@ sealed class TabEntry {
         override val deletedByUserId: String?,
         val splits: List<TabEntrySplit>,
         override val isPendingSync: Boolean = false,
+        override val recurringSeriesId: String? = null,
+        override val recurringOccurrenceDate: LocalDate? = null,
+        override val isScheduledPlaceholder: Boolean = false,
     ) : TabEntry()
 
     data class Income(
@@ -77,6 +101,9 @@ sealed class TabEntry {
         override val deletedByUserId: String?,
         val splits: List<TabEntrySplit>,
         override val isPendingSync: Boolean = false,
+        override val recurringSeriesId: String? = null,
+        override val recurringOccurrenceDate: LocalDate? = null,
+        override val isScheduledPlaceholder: Boolean = false,
     ) : TabEntry()
 
     data class Settlement(
@@ -98,5 +125,8 @@ sealed class TabEntry {
         override val deletedByUserId: String?,
         val receivedByUserId: String,
         override val isPendingSync: Boolean = false,
+        override val recurringSeriesId: String? = null,
+        override val recurringOccurrenceDate: LocalDate? = null,
+        override val isScheduledPlaceholder: Boolean = false,
     ) : TabEntry()
 }
