@@ -319,6 +319,8 @@
     <string name="profile_section_appearance">APPEARANCE</string>
     <string name="profile_section_about">ABOUT</string>
     <string name="profile_app_version">Version</string>
+    <string name="profile_privacy_policy">Privacy policy</string>
+    <string name="profile_privacy_policy_caption">Opens tabmates.de in your browser</string>
     <string name="profile_oss_licenses">Open-source licenses</string>
     <string name="profile_oss_licenses_caption">Third-party libraries</string>
     <string name="oss_licenses_title">Open-source licenses</string>
