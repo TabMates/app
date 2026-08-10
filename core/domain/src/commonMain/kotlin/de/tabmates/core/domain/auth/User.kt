@@ -15,3 +15,6 @@ data class User(
     val hasVerifiedEmail: Boolean,
     val userType: UserType,
 )
+
+/** What an avatar falls back to, matching `GroupParticipant.initials` for other people. */
+val User.initials: String get() = username.take(2).uppercase()
