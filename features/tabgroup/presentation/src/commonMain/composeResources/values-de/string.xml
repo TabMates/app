@@ -299,6 +299,7 @@
     <string name="recurring_section_ended">Beendet</string>
     <string name="recurring_chip_ended">Beendet</string>
     <string name="recurring_chip_needs_attention">Aktion nötig</string>
+    <string name="recurring_tab_needs_attention_cd">Ein Zeitplan braucht Aufmerksamkeit</string>
     <string name="recurring_chip_scheduled">Geplant</string>
     <string name="recurring_next_on">Nächstes am %1$s</string>
     <string name="recurring_starts_on">Ab %1$s</string>

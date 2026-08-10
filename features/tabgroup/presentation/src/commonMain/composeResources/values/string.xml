@@ -299,6 +299,7 @@
     <string name="recurring_section_ended">Ended</string>
     <string name="recurring_chip_ended">Ended</string>
     <string name="recurring_chip_needs_attention">Needs attention</string>
+    <string name="recurring_tab_needs_attention_cd">A schedule needs attention</string>
     <string name="recurring_chip_scheduled">Scheduled</string>
     <string name="recurring_next_on">Next on %1$s</string>
     <string name="recurring_starts_on">Starts %1$s</string>

@@ -7,13 +7,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -23,6 +26,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryTabRow
@@ -51,12 +56,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
+import de.tabmates.core.designsystem.text.SectionLabel
 import de.tabmates.core.designsystem.theme.extended
 import de.tabmates.core.presentation.format.AmountSign
 import de.tabmates.core.presentation.share.LinkShareResult
@@ -67,14 +75,21 @@ import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.TabEntry
+import de.tabmates.features.tabgroup.domain.recurring.RecurringOccurrenceCalculator
+import de.tabmates.features.tabgroup.domain.recurring.RecurringSeries
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
 import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
 import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivitySection
 import de.tabmates.features.tabgroup.presentation.navigation.activity.LoadMoreOnApproachingEnd
 import de.tabmates.features.tabgroup.presentation.navigation.activity.activityFeed
+import de.tabmates.features.tabgroup.presentation.navigation.addentry.formatEntryDate
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.rememberMonthAbbreviations
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.buildInviteUrl
+import de.tabmates.features.tabgroup.presentation.navigation.recurringdetail.frequencyLabel
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -122,11 +137,24 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_restaur
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_settings
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_swap_horiz
 import tabmatesapp.features.tabgroup.presentation.generated.resources.member_label_former
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_chip_ended
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_chip_needs_attention
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_chip_scheduled
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_empty_hint
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_next_on
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_section_active
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_section_ended
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_tab_needs_attention_cd
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_tab_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_action
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.time.Clock
 
-private enum class DetailTab { TRANSACTIONS, HISTORY, BALANCES }
+private enum class DetailTab { TRANSACTIONS, RECURRING, HISTORY, BALANCES }
+
+/** How far a not-yet-written occurrence is faded relative to a real entry. */
+private const val SCHEDULED_ROW_ALPHA = 0.6f
 
 /** Bottom space reserved so the last row can scroll clear of the host "Add Entry" FAB. */
 private val FabBottomClearance = 96.dp
@@ -153,6 +181,8 @@ internal fun GroupDetailPane(
     onSettleUpClick: () -> Unit = {},
     onEntryClick: (String) -> Unit = {},
     onSettlementClick: (String) -> Unit = {},
+    recurringSeries: List<RecurringSeries> = emptyList(),
+    onRecurringSeriesClick: (String) -> Unit = {},
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -237,11 +267,30 @@ internal fun GroupDetailPane(
             selectedTabIndex = selectedTab.ordinal,
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
+            val hasParkedSchedule = recurringSeries.any { it.needsAttention }
+            val parkedScheduleLabel = stringResource(Res.string.recurring_tab_needs_attention_cd)
             DetailTab.entries.forEach { tab ->
+                val needsAttention = tab == DetailTab.RECURRING && hasParkedSchedule
                 Tab(
                     selected = selectedTab == tab,
                     onClick = { selectedTab = tab },
-                    text = { Text(tab.label()) },
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(tab.label())
+                            // A parked schedule creates nothing until someone repairs it, and
+                            // nothing else on this screen would say so. The dot is the only carrier
+                            // of that, so it has to be readable rather than merely visible.
+                            if (needsAttention) {
+                                Spacer(Modifier.width(4.dp))
+                                Box(
+                                    Modifier
+                                        .size(6.dp)
+                                        .background(MaterialTheme.colorScheme.error, CircleShape)
+                                        .semantics { contentDescription = parkedScheduleLabel },
+                                )
+                            }
+                        }
+                    },
                 )
             }
         }
@@ -256,6 +305,14 @@ internal fun GroupDetailPane(
                     ratesByCurrency = ratesByCurrency,
                     onEntryClick = onEntryClick,
                     onSettlementClick = onSettlementClick,
+                )
+            }
+
+            DetailTab.RECURRING -> {
+                RecurringTab(
+                    series = recurringSeries,
+                    currencyByCode = currencyByCode,
+                    onSeriesClick = onRecurringSeriesClick,
                 )
             }
 
@@ -445,48 +502,87 @@ private fun TransactionsTab(
             )
         } else {
             entries.forEach { entry ->
-                when (entry) {
-                    is TabEntry.Expense -> {
-                        ExpenseRow(
-                            expense = entry,
-                            currentUserId = currentUserId,
-                            payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
-                            item = item,
-                            currency = currencyByCode[entry.currencyCode],
-                            ratesByCurrency = ratesByCurrency,
-                            onClick = { onEntryClick(entry.tabEntryId) },
-                        )
-                    }
+                // A scheduled placeholder is an occurrence the server owes but has not written yet.
+                // It counts in the balances above — that is the point, the numbers must not jump
+                // when the sweep lands — but there is nothing to open: it has no id on the server,
+                // and every action lives on its schedule instead.
+                val isScheduled = entry.isScheduledPlaceholder
+                Box(
+                    modifier =
+                        Modifier.graphicsLayer {
+                            alpha = if (isScheduled) SCHEDULED_ROW_ALPHA else 1f
+                        },
+                ) {
+                    when (entry) {
+                        is TabEntry.Expense -> {
+                            ExpenseRow(
+                                expense = entry,
+                                currentUserId = currentUserId,
+                                payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
+                                item = item,
+                                currency = currencyByCode[entry.currencyCode],
+                                ratesByCurrency = ratesByCurrency,
+                                onClick = { onEntryClick(entry.tabEntryId) }.takeIf { !isScheduled },
+                            )
+                        }
 
-                    is TabEntry.Settlement -> {
-                        SettlementRow(
-                            settlement = entry,
-                            currentUserId = currentUserId,
-                            payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
-                            recipientName =
-                                participantsById[entry.receivedByUserId]?.username ?: removedMemberName,
-                            item = item,
-                            currency = currencyByCode[entry.currencyCode],
-                            ratesByCurrency = ratesByCurrency,
-                            onClick = { onSettlementClick(entry.tabEntryId) },
-                        )
-                    }
+                        is TabEntry.Settlement -> {
+                            SettlementRow(
+                                settlement = entry,
+                                currentUserId = currentUserId,
+                                payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
+                                recipientName =
+                                    participantsById[entry.receivedByUserId]?.username ?: removedMemberName,
+                                item = item,
+                                currency = currencyByCode[entry.currencyCode],
+                                ratesByCurrency = ratesByCurrency,
+                                onClick = { onSettlementClick(entry.tabEntryId) }.takeIf { !isScheduled },
+                            )
+                        }
 
-                    is TabEntry.Income -> {
-                        IncomeRow(
-                            income = entry,
-                            currentUserId = currentUserId,
-                            payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
-                            item = item,
-                            currency = currencyByCode[entry.currencyCode],
-                            ratesByCurrency = ratesByCurrency,
-                            onClick = { onEntryClick(entry.tabEntryId) },
+                        is TabEntry.Income -> {
+                            IncomeRow(
+                                income = entry,
+                                currentUserId = currentUserId,
+                                payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
+                                item = item,
+                                currency = currencyByCode[entry.currencyCode],
+                                ratesByCurrency = ratesByCurrency,
+                                onClick = { onEntryClick(entry.tabEntryId) }.takeIf { !isScheduled },
+                            )
+                        }
+                    }
+                    // Drawn last so it sits above the row rather than under its amount column.
+                    if (isScheduled) {
+                        ScheduledRowChip(
+                            modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 16.dp),
                         )
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * Makes an entry row tappable, or leaves it inert when there is nothing to open.
+ *
+ * A null [onClick] has to mean *no* [clickable] rather than an empty one: a scheduled placeholder
+ * has no server id and no detail screen, and a no-op handler would still ripple under the finger and
+ * still announce itself to a screen reader as something that can be activated.
+ */
+private fun Modifier.rowClick(onClick: (() -> Unit)?): Modifier =
+    then(onClick?.let { Modifier.clickable(onClick = it) } ?: Modifier)
+
+/** Marks a row as an occurrence that is due but not yet written by the server. */
+@Composable
+private fun ScheduledRowChip(modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(Res.string.recurring_chip_scheduled),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -497,13 +593,13 @@ private fun ExpenseRow(
     item: GroupOverviewItem,
     currency: Currency?,
     ratesByCurrency: Map<String, Double>,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
 ) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .rowClick(onClick)
                 .padding(horizontal = 24.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -600,13 +696,13 @@ private fun IncomeRow(
     item: GroupOverviewItem,
     currency: Currency?,
     ratesByCurrency: Map<String, Double>,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
 ) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .rowClick(onClick)
                 .padding(horizontal = 24.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -708,7 +804,7 @@ private fun SettlementRow(
     item: GroupOverviewItem,
     currency: Currency?,
     ratesByCurrency: Map<String, Double>,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
 ) {
     val extended = MaterialTheme.colorScheme.extended
     // Direction colors mirror the balance stat card: money in = positive, money out = negative,
@@ -760,7 +856,7 @@ private fun SettlementRow(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .rowClick(onClick)
                 .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1199,6 +1295,7 @@ private fun DetailTab.label(): String =
     when (this) {
         DetailTab.TRANSACTIONS -> stringResource(Res.string.groups_detail_tab_transactions)
         DetailTab.HISTORY -> stringResource(Res.string.groups_detail_tab_history)
+        DetailTab.RECURRING -> stringResource(Res.string.recurring_tab_title)
         DetailTab.BALANCES -> stringResource(Res.string.groups_detail_tab_balances)
     }
 
@@ -1217,3 +1314,150 @@ private fun expenseCaption(count: Int): String =
     } else {
         stringResource(Res.string.groups_expense_count, count)
     }
+
+/**
+ * The group's schedules, read-only — the same shape as the transactions tab.
+ *
+ * Everything you can do to a schedule lives on its detail screen, so a row is a link and nothing
+ * else. Ended schedules stay in the list rather than vanishing: they explain entries that already
+ * exist, and hiding them would make those entries look like they came from nowhere.
+ */
+@Composable
+private fun RecurringTab(
+    series: List<RecurringSeries>,
+    currencyByCode: Map<String, Currency>,
+    onSeriesClick: (String) -> Unit,
+) {
+    if (series.isEmpty()) {
+        EmptyTabHint(text = stringResource(Res.string.recurring_empty_hint))
+        return
+    }
+
+    val monthLabels = rememberMonthAbbreviations()
+    val today =
+        remember {
+            Clock.System
+                .now()
+                .toLocalDateTime(TimeZone.UTC)
+                .date
+        }
+    val (active, ended) = series.partition { it.isActive }
+
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = FabBottomClearance)) {
+        if (active.isNotEmpty()) {
+            SectionLabel(
+                text = stringResource(Res.string.recurring_section_active),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            active.forEach { candidate ->
+                RecurringRow(
+                    series = candidate,
+                    currency = currencyByCode[candidate.rule.currencyCode],
+                    monthLabels = monthLabels,
+                    today = today,
+                    onClick = { onSeriesClick(candidate.seriesId) },
+                )
+            }
+        }
+        if (ended.isNotEmpty()) {
+            SectionLabel(
+                text = stringResource(Res.string.recurring_section_ended),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            ended.forEach { candidate ->
+                RecurringRow(
+                    series = candidate,
+                    currency = currencyByCode[candidate.rule.currencyCode],
+                    monthLabels = monthLabels,
+                    today = today,
+                    onClick = { onSeriesClick(candidate.seriesId) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecurringRow(
+    series: RecurringSeries,
+    currency: Currency?,
+    monthLabels: List<String>,
+    today: LocalDate,
+    onClick: () -> Unit,
+) {
+    // A parked schedule has no next occurrence to promise — the server writes nothing for it until
+    // the template is repaired — so the subtitle falls back to the cadence alone. Remembered because
+    // finding the date walks the schedule slot by slot from its start.
+    val nextOccurrence =
+        remember(series, today) {
+            if (series.isActive && !series.needsAttention) {
+                RecurringOccurrenceCalculator
+                    .upcomingOccurrences(
+                        rule = series.rule,
+                        after = today,
+                        limit = 1,
+                        skippedDates = series.skippedOccurrenceDates,
+                    ).firstOrNull()
+            } else {
+                null
+            }
+        }
+
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        headlineContent = { Text(series.rule.title) },
+        supportingContent = {
+            Text(
+                text =
+                    listOfNotNull(
+                        frequencyLabel(series.rule.frequency, series.rule.interval),
+                        nextOccurrence?.let {
+                            stringResource(Res.string.recurring_next_on, formatEntryDate(it, monthLabels))
+                        },
+                    ).joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        },
+        trailingContent = {
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text =
+                        formatAmount(
+                            series.rule.amount,
+                            currency?.nativeSymbol ?: series.rule.currencyCode,
+                            currency?.decimalDigits ?: 2,
+                        ),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                when {
+                    series.needsAttention -> {
+                        RecurringStateChip(
+                            text = stringResource(Res.string.recurring_chip_needs_attention),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+
+                    !series.isActive -> {
+                        RecurringStateChip(
+                            text = stringResource(Res.string.recurring_chip_ended),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+    )
+}
+
+@Composable
+private fun RecurringStateChip(
+    text: String,
+    color: Color,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = color,
+    )
+}
