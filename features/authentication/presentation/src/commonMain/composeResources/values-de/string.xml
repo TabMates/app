@@ -70,6 +70,12 @@
     <!-- Guest Register -->
     <string name="register_guest_desc">Ein Gastkonto existiert nur auf diesem Gerät — wenn du dich abmeldest oder das Gerät wechselst, verlierst du den Zugriff auf deine Gruppen. Du kannst es jederzeit im Profil in ein vollwertiges Konto umwandeln und alles behalten.</string>
 
+    <!-- Privacy notice -->
+    <string name="privacy_notice_register_prefix">Mit dem Erstellen eines Kontos stimmst du unserer </string>
+    <string name="privacy_notice_guest_prefix">Wenn du fortfährst, stimmst du unserer </string>
+    <string name="privacy_policy_link">Datenschutzerklärung</string>
+    <string name="privacy_notice_suffix"> zu.</string>
+
     <!-- Environment -->
     <string name="welcome_button_environment">Umgebung: %1$s</string>
     <string name="environment_title">Server-Umgebung</string>

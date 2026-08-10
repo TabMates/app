@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,7 @@ import de.tabmates.core.data.AppBuildInfo
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.text.SectionLabel
+import de.tabmates.core.domain.legal.LegalUrls
 import de.tabmates.core.domain.preferences.ThemeMode
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
@@ -59,6 +61,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_notific
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_palette
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_settings
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_shield
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_email
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_password
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_account_username
@@ -75,6 +78,8 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_op
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_oss_licenses
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_oss_licenses_caption
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_password_subtitle
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_privacy_policy
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_privacy_policy_caption
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_about
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_account
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_section_appearance
@@ -421,6 +426,7 @@ private fun SettingsTwoPane(
                 SettingsSection.ABOUT -> {
                     SectionLabel(stringResource(Res.string.profile_section_about))
                     AppVersionRow()
+                    PrivacyPolicyRow()
                     AccountRow(
                         iconRes = Res.drawable.ic_info,
                         title = stringResource(Res.string.profile_oss_licenses),
@@ -629,6 +635,7 @@ private fun ProfileAccountAndAppearance(
     VerticalSpacer(4.dp)
     SectionLabel(stringResource(Res.string.profile_section_about))
     AppVersionRow()
+    PrivacyPolicyRow()
     AccountRow(
         iconRes = Res.drawable.ic_info,
         title = stringResource(Res.string.profile_oss_licenses),
@@ -647,6 +654,23 @@ private fun AppVersionRow() {
         subtitle = AppBuildInfo.version,
         onClick = null,
         showChevron = false,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/**
+ * The policy is hosted on the marketing site, so this row leaves the app — which the chevron alone
+ * cannot say. The subtitle does, so the row still looks like its siblings without misleading.
+ */
+@Composable
+private fun PrivacyPolicyRow() {
+    val uriHandler = LocalUriHandler.current
+    AccountRow(
+        iconRes = Res.drawable.ic_shield,
+        title = stringResource(Res.string.profile_privacy_policy),
+        subtitle = stringResource(Res.string.profile_privacy_policy_caption),
+        onClick = { uriHandler.openUri(LegalUrls.PRIVACY_POLICY) },
+        showChevron = true,
         modifier = Modifier.fillMaxWidth(),
     )
 }
