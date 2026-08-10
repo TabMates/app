@@ -1,12 +1,12 @@
 package de.tabmates.features.tabgroup.presentation.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import de.tabmates.core.presentation.navigation.FabAction
@@ -37,7 +37,8 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home_filled
 import tabmatesapp.features.tabgroup.presentation.generated.resources.join_group_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.oss_licenses_title
-import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.settings_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.upgrade_account_title
 
@@ -89,14 +90,20 @@ data object Group : LoggableNavKey(), TopLevelTab, ScreenWithFab {
 }
 
 @Serializable
-data object Profile : LoggableNavKey(), TopLevelTab {
+data object Settings : LoggableNavKey(), TopLevelTab {
     override val icon: ImageVector
         @Composable
-        get() = Icons.Outlined.AccountCircle
+        get() = Icons.Outlined.Settings
     override val selectedIcon: ImageVector
         @Composable
-        get() = Icons.Filled.AccountCircle
-    override val label: UiText = UiText.Resource(Res.string.profile_label)
+        get() = Icons.Filled.Settings
+    override val label: UiText = UiText.Resource(Res.string.settings_label)
+}
+
+@Serializable
+data object Profile : LoggableNavKey(), LoggedIn, ScreenWithTopBar {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.profile_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Back
 }
 
 @Serializable

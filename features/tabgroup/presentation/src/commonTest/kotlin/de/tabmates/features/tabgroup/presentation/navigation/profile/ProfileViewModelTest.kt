@@ -5,14 +5,10 @@ import de.tabmates.core.domain.auth.AuthInfo
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.auth.UserType
 import de.tabmates.core.domain.auth.UserWithPendingEmail
-import de.tabmates.core.domain.preferences.AppPreferencesRepository
 import de.tabmates.core.domain.sync.PendingWrites
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.authentication.testing.FakeAuthService
-import de.tabmates.features.notifications.domain.NotificationPermissionController
 import de.tabmates.features.notifications.domain.PushNotificationController
-import de.tabmates.features.tabgroup.presentation.testing.FakeAppPreferencesRepository
-import de.tabmates.features.tabgroup.presentation.testing.FakeNotificationPermissionController
 import de.tabmates.features.tabgroup.presentation.testing.FakePendingWrites
 import de.tabmates.features.tabgroup.presentation.testing.FakePushNotificationController
 import de.tabmates.features.tabgroup.presentation.testing.FakeSessionStorage
@@ -276,18 +272,13 @@ class ProfileViewModelTest {
 
     private fun createViewModel(
         sessionStorage: SessionStorage = FakeSessionStorage(),
-        appPreferencesRepository: AppPreferencesRepository = FakeAppPreferencesRepository(),
         authService: FakeAuthService = FakeAuthService(),
-        notificationPermissionController: NotificationPermissionController =
-            FakeNotificationPermissionController(),
         pushNotificationController: PushNotificationController = FakePushNotificationController(),
         pendingWrites: PendingWrites = FakePendingWrites(),
     ): ProfileViewModel =
         ProfileViewModel(
             sessionStorage = sessionStorage,
-            appPreferencesRepository = appPreferencesRepository,
             authService = authService,
-            notificationPermissionController = notificationPermissionController,
             pushNotificationController = pushNotificationController,
             pendingWrites = pendingWrites,
         )

@@ -4,13 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.tabmates.core.domain.auth.SessionStorage
 import de.tabmates.core.domain.auth.UserType
-import de.tabmates.core.domain.preferences.AppPreferencesRepository
-import de.tabmates.core.domain.preferences.ThemeMode
+import de.tabmates.core.domain.auth.initials
 import de.tabmates.core.domain.sync.PendingWrites
 import de.tabmates.core.domain.util.onSuccess
 import de.tabmates.features.authentication.domain.AuthService
-import de.tabmates.features.notifications.domain.NotificationPermissionController
-import de.tabmates.features.notifications.domain.NotificationPermissionStatus
 import de.tabmates.features.notifications.domain.PushNotificationController
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,58 +25,31 @@ import kotlin.time.Duration.Companion.seconds
 @KoinViewModel
 class ProfileViewModel(
     private val sessionStorage: SessionStorage,
-    private val appPreferencesRepository: AppPreferencesRepository,
     private val authService: AuthService,
-    private val notificationPermissionController: NotificationPermissionController,
     private val pushNotificationController: PushNotificationController,
     pendingWrites: PendingWrites,
 ) : ViewModel() {
-    private val selectedSection = MutableStateFlow(SettingsSection.PROFILE)
-
     private val showSignOutDialog = MutableStateFlow(false)
 
     private val pendingMigrationEmail = MutableStateFlow<String?>(null)
 
-    private val accountState =
+    val state: StateFlow<ProfileState> =
         combine(
             sessionStorage.authState,
-            appPreferencesRepository.themeMode(),
-            appPreferencesRepository.notificationsEnabled(),
-            selectedSection,
-            notificationPermissionController.status,
-        ) { auth, themeMode, notificationsEnabled, section, permissionStatus ->
+            pendingWrites.observeCount(),
+            showSignOutDialog,
+            pendingMigrationEmail,
+        ) { auth, pendingWriteCount, showDialog, migrationEmail ->
             val user = auth?.user
             ProfileState(
                 isLoading = false,
                 username = user?.username.orEmpty(),
                 email = user?.email.orEmpty(),
-                initials =
-                    user
-                        ?.username
-                        ?.take(2)
-                        ?.uppercase()
-                        .orEmpty(),
+                initials = user?.initials.orEmpty(),
                 isRegistered = user?.userType == UserType.REGISTERED,
-                themeMode = themeMode,
-                notificationsEnabled = notificationsEnabled,
-                notificationsPermissionBlocked = permissionStatus == NotificationPermissionStatus.DENIED,
-                selectedSection = section,
-            )
-        }
-
-    // Layered onto the account state rather than folded in: `combine` tops out at five typed
-    // sources and the block above already uses all five.
-    val state: StateFlow<ProfileState> =
-        combine(
-            accountState,
-            pendingWrites.observeCount(),
-            showSignOutDialog,
-            pendingMigrationEmail,
-        ) { account, pendingWriteCount, showDialog, migrationEmail ->
-            account.copy(
+                pendingMigrationEmail = migrationEmail,
                 pendingWriteCount = pendingWriteCount,
                 showSignOutDialog = showDialog,
-                pendingMigrationEmail = migrationEmail,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -88,13 +58,7 @@ class ProfileViewModel(
         )
 
     init {
-        refreshNotificationPermission()
         refreshAccount()
-    }
-
-    /** Re-read OS permission (call when the screen resumes — user may change it in settings). */
-    fun refreshNotificationPermission() {
-        viewModelScope.launch { notificationPermissionController.refresh() }
     }
 
     /**
@@ -116,24 +80,8 @@ class ProfileViewModel(
         }
     }
 
-    fun onOpenNotificationSettings() {
-        notificationPermissionController.openSettings()
-    }
-
     private val eventChannel = Channel<ProfileEvent>()
     val events = eventChannel.receiveAsFlow()
-
-    fun onSectionSelected(section: SettingsSection) {
-        selectedSection.update { section }
-    }
-
-    fun onThemeSelected(mode: ThemeMode) {
-        viewModelScope.launch { appPreferencesRepository.setThemeMode(mode) }
-    }
-
-    fun onNotificationsToggle(enabled: Boolean) {
-        viewModelScope.launch { appPreferencesRepository.setNotificationsEnabled(enabled) }
-    }
 
     /**
      * Signing out wipes this device's local data, including writes that never reached the server,
