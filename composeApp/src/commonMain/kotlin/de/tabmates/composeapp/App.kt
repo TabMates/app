@@ -92,7 +92,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.Group
 import de.tabmates.features.tabgroup.presentation.navigation.GroupDetail
 import de.tabmates.features.tabgroup.presentation.navigation.Home
 import de.tabmates.features.tabgroup.presentation.navigation.JoinGroup
-import de.tabmates.features.tabgroup.presentation.navigation.Profile
+import de.tabmates.features.tabgroup.presentation.navigation.Settings
 import de.tabmates.features.tabgroup.presentation.navigation.ObserveGroupRemovals
 import de.tabmates.features.tabgroup.presentation.navigation.mainGraph
 import de.tabmates.features.tabgroup.presentation.navigation.mainSerializersModule
@@ -257,7 +257,7 @@ fun App() {
                 }
             }
 
-            val topLevelTabs = remember { listOf(Home, Activity, Group, Profile) }
+            val topLevelTabs = remember { listOf(Home, Activity, Group, Settings) }
             val snackbarHostState = remember { SnackbarHostState() }
             val appScope = rememberCoroutineScope()
             // Above both adaptive layouts on purpose: each builds its own mainGraph, and observing
@@ -392,13 +392,14 @@ fun App() {
                                                 // The session outlives the link, so leaving the
                                                 // screen just uncovers the app underneath it.
                                                 onExitClick = { backStack.removeLastOrNull() },
-                                                // A confirmed guest upgrade started on Profile and
+                                                // A confirmed guest upgrade started on Settings and
                                                 // is only visible there — the banner and the
-                                                // upgrade row are gone. Popping would land on
-                                                // Home, which the deep link seeded underneath.
+                                                // profile card's prompt are gone. Popping would
+                                                // land on Home, which the deep link seeded
+                                                // underneath.
                                                 onContinueClick = {
                                                     backStack.clear()
-                                                    backStack.add(Profile)
+                                                    backStack.add(Settings)
                                                 },
                                             )
                                         }

@@ -1,4 +1,4 @@
-package de.tabmates.features.tabgroup.presentation.navigation.profile
+package de.tabmates.features.tabgroup.presentation.navigation.settings
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable

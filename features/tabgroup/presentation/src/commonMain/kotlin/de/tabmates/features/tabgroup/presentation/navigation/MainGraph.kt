@@ -24,9 +24,10 @@ import de.tabmates.features.tabgroup.presentation.navigation.profile.ChangeEmail
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ChangePasswordRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.DeleteAccountRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.EditUsernameRoot
-import de.tabmates.features.tabgroup.presentation.navigation.profile.OssLicensesRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ProfileRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.UpgradeAccountRoot
+import de.tabmates.features.tabgroup.presentation.navigation.settings.OssLicensesRoot
+import de.tabmates.features.tabgroup.presentation.navigation.settings.SettingsRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settlementdetail.SettlementDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settleup.SettleUpRoot
 import kotlinx.coroutines.CoroutineScope
@@ -48,6 +49,7 @@ val mainSerializersModule =
             subclass(Home::class)
             subclass(Activity::class)
             subclass(Group::class)
+            subclass(Settings::class)
             subclass(Profile::class)
             subclass(AddEntry::class)
             subclass(EditEntry::class)
@@ -176,14 +178,20 @@ fun EntryProviderScope<NavKey>.mainGraph(
         )
     }
 
-    entry<Profile> {
-        ProfileRoot(
-            snackbarHostState = snackbarHostState,
-            onEditUsername = { backStack.add(EditUsername) },
-            onChangePassword = { backStack.add(ChangePassword) },
-            onChangeEmail = { backStack.add(ChangeEmail) },
+    entry<Settings> {
+        SettingsRoot(
+            onProfileClick = { backStack.add(Profile) },
             onUpgradeAccount = { backStack.add(UpgradeAccount) },
             onOpenOssLicenses = { backStack.add(OssLicenses) },
+        )
+    }
+
+    entry<Profile> {
+        ProfileRoot(
+            onEditUsername = { backStack.add(EditUsername) },
+            onChangeEmail = { backStack.add(ChangeEmail) },
+            onChangePassword = { backStack.add(ChangePassword) },
+            onUpgradeAccount = { backStack.add(UpgradeAccount) },
             onDeleteAccount = { backStack.add(DeleteAccount) },
         )
     }
