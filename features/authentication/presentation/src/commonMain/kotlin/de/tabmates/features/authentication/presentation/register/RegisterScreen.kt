@@ -36,6 +36,7 @@ import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.designsystem.theme.headlineLargeBold
 import de.tabmates.core.presentation.util.ObserveAsEvents
+import de.tabmates.features.authentication.presentation.components.PrivacyNotice
 import de.tabmates.features.authentication.presentation.di.AuthPresentationModule
 import de.tabmates.features.authentication.presentation.navigation.Login
 import de.tabmates.features.authentication.presentation.navigation.Register
@@ -46,6 +47,7 @@ import org.koin.compose.KoinApplicationPreview
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.plugin.module.dsl.modules
 import tabmatesapp.features.authentication.presentation.generated.resources.Res
+import tabmatesapp.features.authentication.presentation.generated.resources.privacy_notice_register_prefix
 import tabmatesapp.features.authentication.presentation.generated.resources.register_already_have_account_prefix
 import tabmatesapp.features.authentication.presentation.generated.resources.register_confirm_password_hint
 import tabmatesapp.features.authentication.presentation.generated.resources.register_email_hint
@@ -200,6 +202,11 @@ private fun RegisterScreen(
             text = stringResource(Res.string.register_title),
             enabled = !state.isRegistering,
             isLoading = state.isRegistering,
+        )
+        VerticalSpacer(12.dp)
+        PrivacyNotice(
+            prefix = stringResource(Res.string.privacy_notice_register_prefix),
+            modifier = Modifier.widthIn(max = 300.dp),
         )
         VerticalSpacer(16.dp)
         TabMatesInlineLinkText(

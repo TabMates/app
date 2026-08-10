@@ -30,9 +30,11 @@ import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.core.presentation.util.UiText
+import de.tabmates.features.authentication.presentation.components.PrivacyNotice
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import tabmatesapp.features.authentication.presentation.generated.resources.Res
+import tabmatesapp.features.authentication.presentation.generated.resources.privacy_notice_guest_prefix
 import tabmatesapp.features.authentication.presentation.generated.resources.register_guest_desc
 import tabmatesapp.features.authentication.presentation.generated.resources.register_username_hint
 import tabmatesapp.features.authentication.presentation.generated.resources.welcome_button_guest
@@ -111,6 +113,11 @@ private fun RegisterGuestScreen(
             text = stringResource(Res.string.welcome_button_guest),
             onClick = onGuestClick,
             isLoading = isRegistering,
+        )
+        VerticalSpacer(12.dp)
+        PrivacyNotice(
+            prefix = stringResource(Res.string.privacy_notice_guest_prefix),
+            modifier = Modifier.widthIn(max = 300.dp),
         )
     }
 }
