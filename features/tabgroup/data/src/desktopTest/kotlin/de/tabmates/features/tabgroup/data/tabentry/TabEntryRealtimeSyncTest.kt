@@ -5,16 +5,25 @@ import de.tabmates.core.domain.util.EmptyResult
 import de.tabmates.core.domain.util.Result
 import de.tabmates.features.tabgroup.data.dto.GroupParticipantDto
 import de.tabmates.features.tabgroup.data.dto.ParticipantTypeDto
+import de.tabmates.features.tabgroup.data.dto.RecurrenceFrequencyDto
+import de.tabmates.features.tabgroup.data.dto.RecurringEndDto
+import de.tabmates.features.tabgroup.data.dto.RecurringEntryTypeDto
+import de.tabmates.features.tabgroup.data.dto.RecurringRuleDto
+import de.tabmates.features.tabgroup.data.dto.RecurringSeriesDto
+import de.tabmates.features.tabgroup.data.dto.RecurringTemplateSplitDto
 import de.tabmates.features.tabgroup.data.dto.TabEntryDto
 import de.tabmates.features.tabgroup.data.mappers.toEntity
 import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
 import de.tabmates.features.tabgroup.data.network.dto.WsMessageType
+import de.tabmates.features.tabgroup.data.network.dto.WsSplitDto
 import de.tabmates.features.tabgroup.data.sync.NoopLogger
+import de.tabmates.features.tabgroup.data.sync.RecurringSeriesLocalWriter
 import de.tabmates.features.tabgroup.data.sync.createInMemoryDatabase
 import de.tabmates.features.tabgroup.data.sync.expense
 import de.tabmates.features.tabgroup.data.sync.group
 import de.tabmates.features.tabgroup.data.sync.insertGroup
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
+import de.tabmates.features.tabgroup.database.entities.RecurringSlotClaimEntity
 import de.tabmates.features.tabgroup.domain.group.GroupRemovalNotifier
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.group.RemovedFromGroup
@@ -26,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -82,6 +92,45 @@ class TabEntryRealtimeSyncTest {
         }
 
     @Test
+    fun `a soft-deleted generated entry keeps its slot claim`() =
+        syncTest { database, channel ->
+            database.insertGroup(group(id = GROUP_ID))
+            database.tabEntryDao.upsertTabEntry(expense(id = ENTRY_ID, groupId = GROUP_ID).toEntity())
+
+            channel.emit(ack(deletedAt = Instant.fromEpochMilliseconds(1), fromSeries = SERIES_ID))
+
+            awaitCondition("the deleted entry should be gone") {
+                database.tabEntryDao.getTabEntryById(ENTRY_ID) == null
+            }
+            // The claim is what stops the projector handing back a placeholder for an occurrence
+            // somebody deleted on purpose, so removing the entry must not take it with it.
+            assertEquals(
+                listOf(RecurringSlotClaimEntity(SERIES_ID, OCCURRENCE_DATE.toString(), GROUP_ID)),
+                database.recurringSlotClaimDao.observeClaimsForGroup(GROUP_ID).first(),
+            )
+        }
+
+    @Test
+    fun `a series-changed frame mirrors the schedule locally`() =
+        syncTest { database, channel ->
+            database.insertGroup(group(id = GROUP_ID))
+
+            channel.emit(
+                WebSocketMessageDto(
+                    type = WsMessageType.RECURRING_SERIES_CHANGED,
+                    payload = json.encodeToString(RecurringSeriesDto.serializer(), seriesDto()),
+                ),
+            )
+
+            awaitCondition("the schedule should have been mirrored") {
+                database.recurringSeriesDao.observeSeriesById(SERIES_ID).first() != null
+            }
+            val stored = database.recurringSeriesDao.observeSeriesById(SERIES_ID).first()
+            assertNotNull(stored)
+            assertEquals("Rent", stored.series.title)
+        }
+
+    @Test
     fun `being removed reports the group by its local name and then deletes it`() =
         syncTest(groupRepository = StubGroupRepository(listOf(group(id = GROUP_ID)))) { database, channel ->
             database.insertGroup(group(id = GROUP_ID))
@@ -121,16 +170,60 @@ class TabEntryRealtimeSyncTest {
 
     // region helpers
 
-    private fun ack(deletedAt: Instant?): WebSocketMessageDto =
+    private fun ack(
+        deletedAt: Instant?,
+        fromSeries: String? = null,
+    ): WebSocketMessageDto =
         WebSocketMessageDto(
             type = WsMessageType.ACK,
-            payload = json.encodeToString(TabEntryDto.serializer(), entryDto(deletedAt)),
+            payload = json.encodeToString(TabEntryDto.serializer(), entryDto(deletedAt, fromSeries)),
             requestId = "req-1",
         )
 
-    private fun entryDto(deletedAt: Instant?): TabEntryDto {
-        val participant =
-            GroupParticipantDto(userId = "u1", username = "u1", userType = ParticipantTypeDto.REGISTERED)
+    private fun seriesDto(): RecurringSeriesDto {
+        val participant = participantDto()
+        return RecurringSeriesDto(
+            id = SERIES_ID,
+            groupId = GROUP_ID,
+            entryType = RecurringEntryTypeDto.EXPENSE,
+            isActive = true,
+            needsAttention = false,
+            createdAt = Instant.fromEpochMilliseconds(0),
+            createdBy = participant,
+            updatedAt = Instant.fromEpochMilliseconds(0),
+            rule =
+                RecurringRuleDto(
+                    id = "rule-1",
+                    title = "Rent",
+                    description = "",
+                    amount = 100.0,
+                    currency = "EUR",
+                    paidBy = participant,
+                    splits =
+                        listOf(
+                            RecurringTemplateSplitDto(
+                                participantId = participant.userId,
+                                participant = participant,
+                                split = WsSplitDto.Equal,
+                                resolvedAmount = 100.0,
+                            ),
+                        ),
+                    frequency = RecurrenceFrequencyDto.MONTHLY,
+                    interval = 1,
+                    startDate = OCCURRENCE_DATE,
+                    end = RecurringEndDto.Never,
+                ),
+        )
+    }
+
+    private fun participantDto() =
+        GroupParticipantDto(userId = "u1", username = "u1", userType = ParticipantTypeDto.REGISTERED)
+
+    private fun entryDto(
+        deletedAt: Instant?,
+        fromSeries: String? = null,
+    ): TabEntryDto {
+        val participant = participantDto()
         return TabEntryDto.Expense(
             id = ENTRY_ID,
             groupId = GROUP_ID,
@@ -148,6 +241,8 @@ class TabEntryRealtimeSyncTest {
             version = 0,
             deletedAt = deletedAt,
             deletedBy = deletedAt?.let { participant },
+            recurringSeriesId = fromSeries,
+            recurringOccurrenceDate = fromSeries?.let { OCCURRENCE_DATE },
         )
     }
 
@@ -176,6 +271,7 @@ class TabEntryRealtimeSyncTest {
                 database = database,
                 groupRepository = groupRepository,
                 groupRemovalNotifier = removalNotifier,
+                recurringSeriesLocalWriter = RecurringSeriesLocalWriter(database),
                 json = json,
                 logger = NoopLogger,
                 applicationScope =
@@ -192,6 +288,8 @@ class TabEntryRealtimeSyncTest {
     private companion object {
         const val GROUP_ID = "g1"
         const val ENTRY_ID = "e1"
+        const val SERIES_ID = "series-1"
+        val OCCURRENCE_DATE = LocalDate(2026, 8, 1)
         const val AWAIT_TIMEOUT_MS = 5_000L
     }
 
