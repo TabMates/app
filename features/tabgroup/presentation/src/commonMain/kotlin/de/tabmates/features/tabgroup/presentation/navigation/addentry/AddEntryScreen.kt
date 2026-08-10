@@ -44,6 +44,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -77,6 +78,8 @@ import de.tabmates.core.presentation.util.UiText
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.SplitType
+import de.tabmates.features.tabgroup.domain.recurring.RecurrenceFrequency
+import de.tabmates.features.tabgroup.domain.recurring.RecurringEnd
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.components.formatRate
 import de.tabmates.features.tabgroup.presentation.components.parseAmount
@@ -85,8 +88,10 @@ import de.tabmates.features.tabgroup.presentation.components.rememberAmountInput
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerBottomSheet
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -100,8 +105,11 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_date_confirm
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_date_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_description_placeholder
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_effective_from_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_effective_from_note
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_kind_expense
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_kind_income
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_kind_settlement
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_sheet_done
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_paid_by_sheet_title
@@ -111,6 +119,10 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_rate_unavailable
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_received_by_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_received_by_sheet_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_repeat_done
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_repeat_editor_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_repeat_label
+import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_repeat_offline_hint
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_save
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_split_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.add_entry_split_summary_equal
@@ -125,6 +137,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_pie_chart
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_done
 import tabmatesapp.features.tabgroup.presentation.generated.resources.split_screen_title
+import kotlin.time.Instant
 
 @Composable
 fun AddEntryRoot(
@@ -134,10 +147,13 @@ fun AddEntryRoot(
     onSaved: () -> Unit,
     modifier: Modifier = Modifier,
     entryId: String = "",
+    seriesId: String = "",
     viewModel: AddEntryViewModel =
         koinViewModel(
-            key = entryId.ifBlank { groupId },
-            parameters = { parametersOf(groupId, entryId) },
+            // Keyed by whatever the screen is bound to, so opening an entry and a schedule in turn
+            // does not hand the second one the first one's loaded form.
+            key = seriesId.ifBlank { entryId.ifBlank { groupId } },
+            parameters = { parametersOf(groupId, entryId, seriesId) },
         ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -165,6 +181,22 @@ fun AddEntryRoot(
                 )
             }
         }
+    } else if (state.isRepeatEditorVisible) {
+        // Same deal for the repeat editor. It edits the form state live, so "Done" only closes it —
+        // there is nothing to commit that backing out would undo.
+        OverrideTopBar(
+            key = navKey,
+            title = UiText.Resource(Res.string.add_entry_repeat_editor_title),
+            navigationAction = TopBarAction.Back,
+            onNavigationClick = viewModel::onRepeatDismiss,
+        ) {
+            TextButton(onClick = viewModel::onRepeatDismiss) {
+                Text(
+                    text = stringResource(Res.string.add_entry_repeat_done),
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
     } else {
         TopBarActions(navKey) {
             TextButton(
@@ -184,6 +216,22 @@ fun AddEntryRoot(
         currencyPickerState = currencyPickerState,
         onKindChange = viewModel::onKindChange,
         onPaidByClick = viewModel::onPaidByClick,
+        onReceivedByClick = viewModel::onReceivedByClick,
+        onReceivedBySelected = viewModel::onReceivedBySelected,
+        onReceivedByPickerDismiss = viewModel::onReceivedByPickerDismiss,
+        onRepeatOpen = viewModel::onRepeatOpen,
+        onRepeatDismiss = viewModel::onRepeatDismiss,
+        onRepeatFrequencyChange = viewModel::onRepeatFrequencyChange,
+        onRepeatIntervalChange = viewModel::onRepeatIntervalChange,
+        onRepeatStartPickerOpen = viewModel::onRepeatStartPickerOpen,
+        onRepeatStartPickerDismiss = viewModel::onRepeatStartPickerDismiss,
+        onRepeatStartDateChange = viewModel::onRepeatStartDateChange,
+        onRepeatEndChange = viewModel::onRepeatEndChange,
+        onRepeatEndPickerOpen = viewModel::onRepeatEndPickerOpen,
+        onRepeatEndPickerDismiss = viewModel::onRepeatEndPickerDismiss,
+        onEffectiveFromClick = viewModel::onEffectiveFromClick,
+        onEffectiveFromSelected = viewModel::onEffectiveFromSelected,
+        onEffectiveFromPickerDismiss = viewModel::onEffectiveFromPickerDismiss,
         onPaidByPickerDismiss = viewModel::onPaidByPickerDismiss,
         onPaidBySelected = viewModel::onPaidBySelected,
         onCurrencyClick = viewModel::onCurrencyClick,
@@ -207,6 +255,22 @@ internal fun AddEntryScreen(
     currencyPickerState: CurrencyPickerUiState,
     onKindChange: (EntryKind) -> Unit,
     onPaidByClick: () -> Unit,
+    onReceivedByClick: () -> Unit,
+    onReceivedBySelected: (String) -> Unit,
+    onReceivedByPickerDismiss: () -> Unit,
+    onRepeatOpen: () -> Unit,
+    onRepeatDismiss: () -> Unit,
+    onRepeatFrequencyChange: (RecurrenceFrequency?) -> Unit,
+    onRepeatIntervalChange: (Int) -> Unit,
+    onRepeatStartPickerOpen: () -> Unit,
+    onRepeatStartPickerDismiss: () -> Unit,
+    onRepeatStartDateChange: (LocalDate) -> Unit,
+    onRepeatEndChange: (RecurringEnd) -> Unit,
+    onRepeatEndPickerOpen: () -> Unit,
+    onRepeatEndPickerDismiss: () -> Unit,
+    onEffectiveFromClick: () -> Unit,
+    onEffectiveFromSelected: (LocalDate) -> Unit,
+    onEffectiveFromPickerDismiss: () -> Unit,
     onPaidByPickerDismiss: () -> Unit,
     onPaidBySelected: (String) -> Unit,
     onCurrencyClick: () -> Unit,
@@ -230,8 +294,8 @@ internal fun AddEntryScreen(
     NavigationEventHandler(
         state = backState,
         isForwardEnabled = false,
-        isBackEnabled = state.isSplitEditorVisible,
-        onBackCompleted = onSplitDismiss,
+        isBackEnabled = state.isSplitEditorVisible || state.isRepeatEditorVisible,
+        onBackCompleted = { if (state.isRepeatEditorVisible) onRepeatDismiss() else onSplitDismiss() },
     )
 
     Column(
@@ -291,18 +355,64 @@ internal fun AddEntryScreen(
                 onClick = onPaidByClick,
                 leadingIcon = null,
             )
-            FieldRow(
-                label = stringResource(Res.string.add_entry_split_label),
-                value = splitSummary(state),
-                onClick = onSplitOpen,
-                leadingIcon = Res.drawable.ic_pie_chart,
-            )
+            // A settlement moves a fixed amount from one person to another, so it takes a second
+            // person instead of a split.
+            if (state.isSettlement) {
+                FieldRow(
+                    label = stringResource(Res.string.add_entry_received_by_label),
+                    value = participantDisplay(state, state.receivedByUserId),
+                    onClick = onReceivedByClick,
+                    leadingIcon = null,
+                )
+            } else {
+                FieldRow(
+                    label = stringResource(Res.string.add_entry_split_label),
+                    value = splitSummary(state),
+                    onClick = onSplitOpen,
+                    leadingIcon = Res.drawable.ic_pie_chart,
+                )
+            }
             FieldRow(
                 label = stringResource(Res.string.add_entry_date_label),
                 value = formatEntryDate(state.entryDate, monthLabels),
                 onClick = onDateClick,
                 leadingIcon = Res.drawable.ic_calendar,
             )
+            if (state.canEditRepeat) {
+                FieldRow(
+                    label = stringResource(Res.string.add_entry_repeat_label),
+                    value = repeatSummary(state),
+                    onClick = onRepeatOpen,
+                    leadingIcon = Res.drawable.ic_calendar,
+                )
+            }
+            // Editing a schedule has to anchor on an occurrence it actually produces; anything else
+            // would silently re-time the series, so the date is picked from a list, not a calendar.
+            if (state.isEditingSeries) {
+                FieldRow(
+                    label = stringResource(Res.string.add_entry_effective_from_label),
+                    value =
+                        state.effectiveFrom
+                            ?.let { formatEntryDate(it, monthLabels) }
+                            .orEmpty(),
+                    onClick = onEffectiveFromClick,
+                    leadingIcon = Res.drawable.ic_calendar,
+                )
+                Text(
+                    text = stringResource(Res.string.add_entry_effective_from_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
+            if (!state.isOnline && !state.isEditing) {
+                Text(
+                    text = stringResource(Res.string.add_entry_repeat_offline_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
         }
         VerticalSpacer(24.dp)
     }
@@ -315,6 +425,29 @@ internal fun AddEntryScreen(
             isIncome = state.entryKind == EntryKind.INCOME,
             onSelect = onPaidBySelected,
             onDismiss = onPaidByPickerDismiss,
+        )
+    }
+
+    if (state.isReceivedByPickerVisible) {
+        PaidByPickerSheet(
+            // The payer is filtered out: the server refuses a settlement whose two sides are the
+            // same person, so it is not offered in the first place.
+            members = state.members.filterNot { it.userId == state.paidByUserId },
+            currentUserId = state.currentUserId,
+            selectedUserId = state.receivedByUserId,
+            isIncome = true,
+            onSelect = onReceivedBySelected,
+            onDismiss = onReceivedByPickerDismiss,
+        )
+    }
+
+    if (state.isEffectiveFromPickerVisible) {
+        EffectiveFromSheet(
+            options = state.effectiveFromOptions,
+            selected = state.effectiveFrom,
+            monthLabels = monthLabels,
+            onSelect = onEffectiveFromSelected,
+            onDismiss = onEffectiveFromPickerDismiss,
         )
     }
 
@@ -332,6 +465,38 @@ internal fun AddEntryScreen(
             state = currencyPickerState,
             onCurrencySelected = onCurrencySelected,
             onDismiss = onCurrencyPickerDismiss,
+        )
+    }
+
+    if (state.isRepeatEditorVisible) {
+        RepeatEditorScreen(
+            state = state,
+            monthLabels = monthLabels,
+            onFrequencyChange = onRepeatFrequencyChange,
+            onIntervalChange = onRepeatIntervalChange,
+            onStartDateClick = onRepeatStartPickerOpen,
+            onEndChange = onRepeatEndChange,
+            onEndDateClick = onRepeatEndPickerOpen,
+        )
+    }
+
+    if (state.isRepeatStartPickerVisible) {
+        DatePickerSheet(
+            initialEpochMillis =
+                state.repeatStartDate.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds(),
+            onDismiss = onRepeatStartPickerDismiss,
+            onConfirm = { millis -> onRepeatStartDateChange(millis.toUtcDate()) },
+        )
+    }
+
+    if (state.isRepeatEndPickerVisible) {
+        DatePickerSheet(
+            initialEpochMillis =
+                ((state.repeatEnd as? RecurringEnd.Until)?.date ?: state.repeatStartDate)
+                    .atStartOfDayIn(TimeZone.UTC)
+                    .toEpochMilliseconds(),
+            onDismiss = onRepeatEndPickerDismiss,
+            onConfirm = { millis -> onRepeatEndChange(RecurringEnd.Until(millis.toUtcDate())) },
         )
     }
 
@@ -403,6 +568,7 @@ private fun EntryKindToggle(
                             when (kind) {
                                 EntryKind.EXPENSE -> stringResource(Res.string.add_entry_kind_expense)
                                 EntryKind.INCOME -> stringResource(Res.string.add_entry_kind_income)
+                                EntryKind.SETTLEMENT -> stringResource(Res.string.add_entry_kind_settlement)
                             },
                     )
                 },
@@ -638,6 +804,24 @@ internal fun FieldRow(
     }
 }
 
+/**
+ * The display name for any participant the form references. Resolved through the wider map rather
+ * than the member list, so someone removed from the group since the entry was written is still
+ * nameable instead of rendering blank.
+ */
+@Composable
+private fun participantDisplay(
+    state: AddEntryState,
+    userId: String,
+): String {
+    val participant = state.participantsById[userId]
+    return when {
+        participant == null -> stringResource(Res.string.expense_detail_removed_member)
+        participant.userId == state.currentUserId -> stringResource(Res.string.add_entry_paid_by_you)
+        else -> participant.username
+    }
+}
+
 @Composable
 private fun paidByDisplay(state: AddEntryState): String {
     // Resolved through the wider map, not the member list: the payer of an edited entry may have
@@ -790,3 +974,58 @@ internal fun DatePickerSheet(
 
 /** Gap between the hero amount and its currency symbol, on whichever side the locale puts it. */
 private val SYMBOL_GAP = 4.dp
+
+/**
+ * Picks which upcoming occurrence a schedule edit takes effect from.
+ *
+ * A list rather than a date picker because the server only accepts a date the current schedule
+ * actually produces — offering a calendar would mostly offer dates it will refuse.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EffectiveFromSheet(
+    options: List<LocalDate>,
+    selected: LocalDate?,
+    monthLabels: List<String>,
+    onSelect: (LocalDate) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
+            Text(
+                text = stringResource(Res.string.add_entry_effective_from_label),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 12.dp),
+            )
+            options.forEach { option ->
+                EffectiveFromRow(
+                    label = formatEntryDate(option, monthLabels),
+                    selected = option == selected,
+                    onClick = { onSelect(option) },
+                )
+            }
+        }
+    }
+}
+
+/** Date pickers hand back epoch millis; the form works in calendar dates. */
+private fun Long.toUtcDate(): LocalDate =
+    Instant
+        .fromEpochMilliseconds(this)
+        .toLocalDateTime(TimeZone.UTC)
+        .date
+
+@Composable
+private fun EffectiveFromRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp),
+    ) {
+        RadioButton(selected = selected, onClick = onClick)
+        Text(text = label, style = MaterialTheme.typography.bodyLarge)
+    }
+}
