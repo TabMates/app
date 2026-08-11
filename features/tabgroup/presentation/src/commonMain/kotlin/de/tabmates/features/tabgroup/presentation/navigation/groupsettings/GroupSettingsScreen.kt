@@ -38,6 +38,7 @@ import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -56,6 +57,8 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.group_sett
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_people
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_save
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_saved
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_settings_schedules
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_calendar
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_logout
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
@@ -64,6 +67,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_
 fun GroupSettingsRoot(
     groupId: String,
     onPeopleClick: () -> Unit,
+    onSchedulesClick: () -> Unit,
     onLeft: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
@@ -94,6 +98,7 @@ fun GroupSettingsRoot(
         state = state,
         onAction = viewModel::onAction,
         onPeopleClick = onPeopleClick,
+        onSchedulesClick = onSchedulesClick,
         modifier = modifier,
     )
 }
@@ -103,6 +108,7 @@ private fun GroupSettingsScreen(
     state: GroupSettingsState,
     onAction: (GroupSettingsAction) -> Unit,
     onPeopleClick: () -> Unit,
+    onSchedulesClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (state.isLoading) {
@@ -153,9 +159,20 @@ private fun GroupSettingsScreen(
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         VerticalSpacer(8.dp)
-        PeopleCard(
-            peopleCount = state.peopleCount,
+        // Members and placeholders are managed together one level down; this row is the way in.
+        NavCard(
+            icon = Res.drawable.ic_person_add,
+            label = stringResource(Res.string.group_settings_people),
+            value = state.peopleCount.toString(),
             onClick = onPeopleClick,
+            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
+        )
+        // The transactions tab surfaces the schedules that are about to produce something. This is
+        // the way to the rest of them — ended ones included, which have nothing upcoming to show.
+        NavCard(
+            icon = Res.drawable.ic_calendar,
+            label = stringResource(Res.string.group_settings_schedules),
+            onClick = onSchedulesClick,
             modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
         )
         VerticalSpacer(8.dp)
@@ -204,12 +221,14 @@ private fun GroupSettingsScreen(
     }
 }
 
-/** Members and placeholders are managed together one level down; this row is the way in. */
+/** One row that opens a screen managing part of the group. */
 @Composable
-private fun PeopleCard(
-    peopleCount: Int,
+private fun NavCard(
+    icon: DrawableResource,
+    label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    value: String? = null,
 ) {
     Card(
         shape = RoundedCornerShape(14.dp),
@@ -226,22 +245,24 @@ private fun PeopleCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = vectorResource(Res.drawable.ic_person_add),
+                imageVector = vectorResource(icon),
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
             )
             HorizontalSpacer(12.dp)
             Text(
-                text = stringResource(Res.string.group_settings_people),
+                text = label,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.weight(1f),
             )
-            Text(
-                text = peopleCount.toString(),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            HorizontalSpacer(8.dp)
+            if (value != null) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                HorizontalSpacer(8.dp)
+            }
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_chevron_right),
                 contentDescription = null,

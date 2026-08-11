@@ -1,22 +1,20 @@
 package de.tabmates.features.tabgroup.presentation.navigation.groupoverview
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -24,10 +22,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryTabRow
@@ -35,6 +32,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
@@ -46,6 +44,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,6 +66,7 @@ import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.text.SectionLabel
 import de.tabmates.core.designsystem.theme.extended
 import de.tabmates.core.presentation.format.AmountSign
+import de.tabmates.core.presentation.format.DEFAULT_CURRENCY_DECIMALS
 import de.tabmates.core.presentation.share.LinkShareResult
 import de.tabmates.core.presentation.share.rememberLinkSharer
 import de.tabmates.features.tabgroup.domain.balance.UserBalanceCalculator
@@ -75,7 +75,6 @@ import de.tabmates.features.tabgroup.domain.models.Currency
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.TabEntry
-import de.tabmates.features.tabgroup.domain.recurring.RecurringOccurrenceCalculator
 import de.tabmates.features.tabgroup.domain.recurring.RecurringSeries
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
 import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
@@ -90,7 +89,6 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -130,6 +128,7 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_mem
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_members_count
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_status_settled
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_arrow_back
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_calendar
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_chevron_right
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_redeem
@@ -137,24 +136,38 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_restaur
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_settings
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_swap_horiz
 import tabmatesapp.features.tabgroup.presentation.generated.resources.member_label_former
-import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_chip_ended
-import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_chip_needs_attention
 import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_chip_scheduled
-import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_empty_hint
 import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_next_on
-import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_section_active
-import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_section_ended
-import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_tab_needs_attention_cd
-import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_tab_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_upcoming_fix_hint
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_upcoming_manage
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_upcoming_row_cd
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_upcoming_section
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_upcoming_show_all
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_upcoming_show_less
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_action
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.time.Clock
 
-private enum class DetailTab { TRANSACTIONS, RECURRING, HISTORY, BALANCES }
+private enum class DetailTab { TRANSACTIONS, BALANCES, HISTORY }
+
+/**
+ * Stores the selected tab by name rather than by identity.
+ *
+ * A stack persisted by a build with a different set of tabs — the retired Repeating tab, say —
+ * would otherwise restore a constant this build no longer has.
+ */
+private val DetailTabSaver: Saver<DetailTab, String> =
+    Saver(
+        save = { it.name },
+        restore = { name -> DetailTab.entries.firstOrNull { it.name == name } ?: DetailTab.TRANSACTIONS },
+    )
 
 /** How far a not-yet-written occurrence is faded relative to a real entry. */
 private const val SCHEDULED_ROW_ALPHA = 0.6f
+
+/** How many schedules the upcoming section shows before it needs to be expanded. */
+private const val UPCOMING_PEEK_LIMIT = 3
 
 /** Bottom space reserved so the last row can scroll clear of the host "Add Entry" FAB. */
 private val FabBottomClearance = 96.dp
@@ -183,6 +196,7 @@ internal fun GroupDetailPane(
     onSettlementClick: (String) -> Unit = {},
     recurringSeries: List<RecurringSeries> = emptyList(),
     onRecurringSeriesClick: (String) -> Unit = {},
+    onManageSchedulesClick: () -> Unit = {},
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
@@ -190,7 +204,8 @@ internal fun GroupDetailPane(
         currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
             WIDTH_DP_MEDIUM_LOWER_BOUND,
         )
-    var selectedTab by rememberSaveable(item.id) { mutableStateOf(DetailTab.TRANSACTIONS) }
+    var selectedTab by
+        rememberSaveable(item.id, stateSaver = DetailTabSaver) { mutableStateOf(DetailTab.TRANSACTIONS) }
     val linkSharer = rememberLinkSharer()
     val scope = rememberCoroutineScope()
     val inviteUrl = remember(item.inviteToken) { buildInviteUrl(item.inviteToken) }
@@ -267,30 +282,11 @@ internal fun GroupDetailPane(
             selectedTabIndex = selectedTab.ordinal,
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
-            val hasParkedSchedule = recurringSeries.any { it.needsAttention }
-            val parkedScheduleLabel = stringResource(Res.string.recurring_tab_needs_attention_cd)
             DetailTab.entries.forEach { tab ->
-                val needsAttention = tab == DetailTab.RECURRING && hasParkedSchedule
                 Tab(
                     selected = selectedTab == tab,
                     onClick = { selectedTab = tab },
-                    text = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(tab.label())
-                            // A parked schedule creates nothing until someone repairs it, and
-                            // nothing else on this screen would say so. The dot is the only carrier
-                            // of that, so it has to be readable rather than merely visible.
-                            if (needsAttention) {
-                                Spacer(Modifier.width(4.dp))
-                                Box(
-                                    Modifier
-                                        .size(6.dp)
-                                        .background(MaterialTheme.colorScheme.error, CircleShape)
-                                        .semantics { contentDescription = parkedScheduleLabel },
-                                )
-                            }
-                        }
-                    },
+                    text = { Text(tab.label()) },
                 )
             }
         }
@@ -301,18 +297,13 @@ internal fun GroupDetailPane(
                     currentUserId = currentUserId,
                     participantsById = participantsById,
                     entries = entries,
+                    recurringSeries = recurringSeries,
                     currencyByCode = currencyByCode,
                     ratesByCurrency = ratesByCurrency,
                     onEntryClick = onEntryClick,
                     onSettlementClick = onSettlementClick,
-                )
-            }
-
-            DetailTab.RECURRING -> {
-                RecurringTab(
-                    series = recurringSeries,
-                    currencyByCode = currencyByCode,
                     onSeriesClick = onRecurringSeriesClick,
+                    onManageSchedulesClick = onManageSchedulesClick,
                 )
             }
 
@@ -473,93 +464,157 @@ private fun HistoryTab(
     }
 }
 
+/**
+ * The group's whole time axis: what is coming, then what has happened.
+ *
+ * Upcoming sits above the ledger rather than beside it in its own tab, because a schedule is only
+ * ever read as "the next rent" — but it stays a section with its own heading and a muted amount
+ * column, because a future occurrence has not moved anybody's balance yet. The ones that *have*
+ * (occurrences already due but not yet written by the server) are ordinary rows down in the ledger,
+ * at their own date, faded and chipped.
+ */
 @Composable
 private fun TransactionsTab(
     item: GroupOverviewItem,
     currentUserId: String,
     participantsById: Map<String, GroupParticipant>,
     entries: List<TabEntry>,
+    recurringSeries: List<RecurringSeries>,
+    currencyByCode: Map<String, Currency>,
+    ratesByCurrency: Map<String, Double>,
+    onEntryClick: (String) -> Unit,
+    onSettlementClick: (String) -> Unit,
+    onSeriesClick: (String) -> Unit,
+    onManageSchedulesClick: () -> Unit,
+) {
+    val removedMemberName = stringResource(Res.string.expense_detail_removed_member)
+    val monthLabels = rememberMonthAbbreviations()
+    // The day the server's sweep measures against, so both agree on what is still upcoming.
+    val today =
+        remember {
+            Clock.System
+                .now()
+                .toLocalDateTime(TimeZone.UTC)
+                .date
+        }
+    val upcoming = rememberUpcomingSchedules(recurringSeries, today)
+    val hasParkedSchedule = upcoming.any { it.series.needsAttention }
+    // A parked schedule creates nothing until someone repairs it, and nothing else on this screen
+    // would say so. Opening the section on its own is the only carrier of that now the tab dot is
+    // gone, so the peek limit does not get to hide it.
+    var isUpcomingExpanded by
+        rememberSaveable(item.id, hasParkedSchedule) { mutableStateOf(hasParkedSchedule) }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(top = 16.dp, bottom = FabBottomClearance),
+    ) {
+        item(key = "stats") {
+            StatCardsRow(item = item, modifier = Modifier.padding(horizontal = 24.dp))
+            VerticalSpacer(12.dp)
+        }
+        upcomingSection(
+            upcoming = upcoming,
+            currencyByCode = currencyByCode,
+            monthLabels = monthLabels,
+            isExpanded = isUpcomingExpanded,
+            onToggleExpanded = { isUpcomingExpanded = !isUpcomingExpanded },
+            onSeriesClick = onSeriesClick,
+            onManageClick = onManageSchedulesClick,
+        )
+        if (entries.isEmpty()) {
+            item(key = "empty") {
+                EmptyTabHint(
+                    text = stringResource(Res.string.groups_detail_empty_expenses),
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                )
+            }
+        } else {
+            items(entries, key = { it.tabEntryId }) { entry ->
+                EntryRow(
+                    entry = entry,
+                    item = item,
+                    currentUserId = currentUserId,
+                    participantsById = participantsById,
+                    removedMemberName = removedMemberName,
+                    currencyByCode = currencyByCode,
+                    ratesByCurrency = ratesByCurrency,
+                    onEntryClick = onEntryClick,
+                    onSettlementClick = onSettlementClick,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EntryRow(
+    entry: TabEntry,
+    item: GroupOverviewItem,
+    currentUserId: String,
+    participantsById: Map<String, GroupParticipant>,
+    removedMemberName: String,
     currencyByCode: Map<String, Currency>,
     ratesByCurrency: Map<String, Double>,
     onEntryClick: (String) -> Unit,
     onSettlementClick: (String) -> Unit,
 ) {
-    val removedMemberName = stringResource(Res.string.expense_detail_removed_member)
-    Column(
+    // A scheduled placeholder is an occurrence the server owes but has not written yet. It counts in
+    // the balances above — that is the point, the numbers must not jump when the sweep lands — but
+    // there is nothing to open: it has no id on the server, and every action lives on its schedule.
+    val isScheduled = entry.isScheduledPlaceholder
+    Box(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = FabBottomClearance),
+            Modifier.graphicsLayer {
+                alpha = if (isScheduled) SCHEDULED_ROW_ALPHA else 1f
+            },
     ) {
-        VerticalSpacer(16.dp)
-        StatCardsRow(item = item, modifier = Modifier.padding(horizontal = 24.dp))
-        VerticalSpacer(12.dp)
-        if (entries.isEmpty()) {
-            EmptyTabHint(
-                text = stringResource(Res.string.groups_detail_empty_expenses),
-                modifier = Modifier.padding(horizontal = 24.dp),
-            )
-        } else {
-            entries.forEach { entry ->
-                // A scheduled placeholder is an occurrence the server owes but has not written yet.
-                // It counts in the balances above — that is the point, the numbers must not jump
-                // when the sweep lands — but there is nothing to open: it has no id on the server,
-                // and every action lives on its schedule instead.
-                val isScheduled = entry.isScheduledPlaceholder
-                Box(
-                    modifier =
-                        Modifier.graphicsLayer {
-                            alpha = if (isScheduled) SCHEDULED_ROW_ALPHA else 1f
-                        },
-                ) {
-                    when (entry) {
-                        is TabEntry.Expense -> {
-                            ExpenseRow(
-                                expense = entry,
-                                currentUserId = currentUserId,
-                                payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
-                                item = item,
-                                currency = currencyByCode[entry.currencyCode],
-                                ratesByCurrency = ratesByCurrency,
-                                onClick = { onEntryClick(entry.tabEntryId) }.takeIf { !isScheduled },
-                            )
-                        }
-
-                        is TabEntry.Settlement -> {
-                            SettlementRow(
-                                settlement = entry,
-                                currentUserId = currentUserId,
-                                payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
-                                recipientName =
-                                    participantsById[entry.receivedByUserId]?.username ?: removedMemberName,
-                                item = item,
-                                currency = currencyByCode[entry.currencyCode],
-                                ratesByCurrency = ratesByCurrency,
-                                onClick = { onSettlementClick(entry.tabEntryId) }.takeIf { !isScheduled },
-                            )
-                        }
-
-                        is TabEntry.Income -> {
-                            IncomeRow(
-                                income = entry,
-                                currentUserId = currentUserId,
-                                payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
-                                item = item,
-                                currency = currencyByCode[entry.currencyCode],
-                                ratesByCurrency = ratesByCurrency,
-                                onClick = { onEntryClick(entry.tabEntryId) }.takeIf { !isScheduled },
-                            )
-                        }
-                    }
-                    // Drawn last so it sits above the row rather than under its amount column.
-                    if (isScheduled) {
-                        ScheduledRowChip(
-                            modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 16.dp),
-                        )
-                    }
-                }
+        when (entry) {
+            is TabEntry.Expense -> {
+                ExpenseRow(
+                    expense = entry,
+                    currentUserId = currentUserId,
+                    payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
+                    item = item,
+                    currency = currencyByCode[entry.currencyCode],
+                    ratesByCurrency = ratesByCurrency,
+                    onClick = { onEntryClick(entry.tabEntryId) }.takeIf { !isScheduled },
+                )
             }
+
+            is TabEntry.Settlement -> {
+                SettlementRow(
+                    settlement = entry,
+                    currentUserId = currentUserId,
+                    payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
+                    recipientName =
+                        participantsById[entry.receivedByUserId]?.username ?: removedMemberName,
+                    item = item,
+                    currency = currencyByCode[entry.currencyCode],
+                    ratesByCurrency = ratesByCurrency,
+                    onClick = { onSettlementClick(entry.tabEntryId) }.takeIf { !isScheduled },
+                )
+            }
+
+            is TabEntry.Income -> {
+                IncomeRow(
+                    income = entry,
+                    currentUserId = currentUserId,
+                    payerName = participantsById[entry.paidByUserId]?.username ?: removedMemberName,
+                    item = item,
+                    currency = currencyByCode[entry.currencyCode],
+                    ratesByCurrency = ratesByCurrency,
+                    onClick = { onEntryClick(entry.tabEntryId) }.takeIf { !isScheduled },
+                )
+            }
+        }
+        // Drawn last so it sits above the row rather than under its amount column. The end inset
+        // matches the row's own 24.dp so the chip lines up with the amount beneath it instead of
+        // overhanging it.
+        if (isScheduled) {
+            ScheduledRowChip(
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 24.dp),
+            )
         }
     }
 }
@@ -961,28 +1016,6 @@ private fun convertEntryAmount(
         )
 
 @Composable
-private fun EntryIcon(
-    icon: DrawableResource,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
-    contentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-) {
-    Box(
-        modifier =
-            Modifier
-                .size(40.dp)
-                .background(containerColor, RoundedCornerShape(10.dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = vectorResource(icon),
-            contentDescription = null,
-            tint = contentColor,
-            modifier = Modifier.size(20.dp),
-        )
-    }
-}
-
-@Composable
 private fun BalancesTab(
     item: GroupOverviewItem,
     members: List<GroupParticipant>,
@@ -1294,9 +1327,8 @@ private fun EmptyTabHint(
 private fun DetailTab.label(): String =
     when (this) {
         DetailTab.TRANSACTIONS -> stringResource(Res.string.groups_detail_tab_transactions)
-        DetailTab.HISTORY -> stringResource(Res.string.groups_detail_tab_history)
-        DetailTab.RECURRING -> stringResource(Res.string.recurring_tab_title)
         DetailTab.BALANCES -> stringResource(Res.string.groups_detail_tab_balances)
+        DetailTab.HISTORY -> stringResource(Res.string.groups_detail_tab_history)
     }
 
 @Composable
@@ -1316,148 +1348,164 @@ private fun expenseCaption(count: Int): String =
     }
 
 /**
- * The group's schedules, read-only — the same shape as the transactions tab.
+ * The active schedules with something still to come, parked ones first.
  *
- * Everything you can do to a schedule lives on its detail screen, so a row is a link and nothing
- * else. Ended schedules stay in the list rather than vanishing: they explain entries that already
- * exist, and hiding them would make those entries look like they came from nowhere.
+ * Computed as one list rather than per row: finding a next date walks the schedule slot by slot from
+ * its start, and sorting the rows would otherwise walk every schedule a second time.
  */
 @Composable
-private fun RecurringTab(
+private fun rememberUpcomingSchedules(
     series: List<RecurringSeries>,
-    currencyByCode: Map<String, Currency>,
-    onSeriesClick: (String) -> Unit,
-) {
-    if (series.isEmpty()) {
-        EmptyTabHint(text = stringResource(Res.string.recurring_empty_hint))
-        return
-    }
-
-    val monthLabels = rememberMonthAbbreviations()
-    val today =
-        remember {
-            Clock.System
-                .now()
-                .toLocalDateTime(TimeZone.UTC)
-                .date
-        }
-    val (active, ended) = series.partition { it.isActive }
-
-    Column(modifier = Modifier.fillMaxWidth().padding(bottom = FabBottomClearance)) {
-        if (active.isNotEmpty()) {
-            SectionLabel(
-                text = stringResource(Res.string.recurring_section_active),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-            active.forEach { candidate ->
-                RecurringRow(
-                    series = candidate,
-                    currency = currencyByCode[candidate.rule.currencyCode],
-                    monthLabels = monthLabels,
-                    today = today,
-                    onClick = { onSeriesClick(candidate.seriesId) },
-                )
-            }
-        }
-        if (ended.isNotEmpty()) {
-            SectionLabel(
-                text = stringResource(Res.string.recurring_section_ended),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-            ended.forEach { candidate ->
-                RecurringRow(
-                    series = candidate,
-                    currency = currencyByCode[candidate.rule.currencyCode],
-                    monthLabels = monthLabels,
-                    today = today,
-                    onClick = { onSeriesClick(candidate.seriesId) },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecurringRow(
-    series: RecurringSeries,
-    currency: Currency?,
-    monthLabels: List<String>,
     today: LocalDate,
-    onClick: () -> Unit,
+): List<UpcomingSchedule> = remember(series, today) { upcomingSchedules(series, today) }
+
+/**
+ * What the group's schedules are about to produce.
+ *
+ * Read-only, like the schedules screen it links to: everything you can do to a schedule lives on
+ * its detail screen, so a row is a link and nothing else.
+ */
+private fun LazyListScope.upcomingSection(
+    upcoming: List<UpcomingSchedule>,
+    currencyByCode: Map<String, Currency>,
+    monthLabels: List<String>,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit,
+    onSeriesClick: (String) -> Unit,
+    onManageClick: () -> Unit,
 ) {
-    // A parked schedule has no next occurrence to promise — the server writes nothing for it until
-    // the template is repaired — so the subtitle falls back to the cadence alone. Remembered because
-    // finding the date walks the schedule slot by slot from its start.
-    val nextOccurrence =
-        remember(series, today) {
-            if (series.isActive && !series.needsAttention) {
-                RecurringOccurrenceCalculator
-                    .upcomingOccurrences(
-                        rule = series.rule,
-                        after = today,
-                        limit = 1,
-                        skippedDates = series.skippedOccurrenceDates,
-                    ).firstOrNull()
-            } else {
-                null
+    if (upcoming.isEmpty()) return
+
+    item(key = "upcoming-header") {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    // A TextButton carries 12.dp of its own horizontal content padding, so the end
+                    // inset is 24 - 12: it is the label that has to land on the tab's 24.dp rail,
+                    // not the button's touch target.
+                    .padding(start = 24.dp, end = 12.dp)
+                    .padding(top = 12.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SectionLabel(
+                text = stringResource(Res.string.recurring_upcoming_section),
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onManageClick) {
+                Text(stringResource(Res.string.recurring_upcoming_manage))
             }
         }
-
-    ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
-        headlineContent = { Text(series.rule.title) },
-        supportingContent = {
-            Text(
-                text =
-                    listOfNotNull(
-                        frequencyLabel(series.rule.frequency, series.rule.interval),
-                        nextOccurrence?.let {
-                            stringResource(Res.string.recurring_next_on, formatEntryDate(it, monthLabels))
-                        },
-                    ).joinToString(" · "),
-                style = MaterialTheme.typography.bodySmall,
-            )
-        },
-        trailingContent = {
-            Column(horizontalAlignment = Alignment.End) {
+    }
+    val visible = if (isExpanded) upcoming else upcoming.take(UPCOMING_PEEK_LIMIT)
+    items(visible, key = { "upcoming-${it.series.seriesId}" }) { schedule ->
+        UpcomingRow(
+            schedule = schedule,
+            currency = currencyByCode[schedule.series.rule.currencyCode],
+            monthLabels = monthLabels,
+            onClick = { onSeriesClick(schedule.series.seriesId) },
+        )
+    }
+    if (upcoming.size > UPCOMING_PEEK_LIMIT) {
+        item(key = "upcoming-toggle") {
+            TextButton(
+                onClick = onToggleExpanded,
+                // 24 - 12 again, so the label starts under the titles rather than the icons.
+                modifier = Modifier.padding(start = 12.dp),
+            ) {
                 Text(
                     text =
-                        formatAmount(
-                            series.rule.amount,
-                            currency?.nativeSymbol ?: series.rule.currencyCode,
-                            currency?.decimalDigits ?: 2,
-                        ),
-                    style = MaterialTheme.typography.bodyLarge,
+                        if (isExpanded) {
+                            stringResource(Res.string.recurring_upcoming_show_less)
+                        } else {
+                            stringResource(Res.string.recurring_upcoming_show_all, upcoming.size)
+                        },
                 )
-                when {
-                    series.needsAttention -> {
-                        RecurringStateChip(
-                            text = stringResource(Res.string.recurring_chip_needs_attention),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-
-                    !series.isActive -> {
-                        RecurringStateChip(
-                            text = stringResource(Res.string.recurring_chip_ended),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
             }
-        },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-    )
+        }
+    }
+    item(key = "upcoming-divider") {
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+    }
 }
 
+/**
+ * Built to the same geometry as [ExpenseRow] rather than on a stock `ListItem`.
+ *
+ * The section sits inside the ledger, so its rows have to hang off the same 24.dp rail, the same
+ * 40.dp icon container and the same type weights — a `ListItem` brings its own 16.dp rail and reads
+ * as a component bolted on from somewhere else. Only the colour says these are different: the
+ * amount is muted because nothing here has been booked or counted into the cards above.
+ */
 @Composable
-private fun RecurringStateChip(
-    text: String,
-    color: Color,
+private fun UpcomingRow(
+    schedule: UpcomingSchedule,
+    currency: Currency?,
+    monthLabels: List<String>,
+    onClick: () -> Unit,
 ) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall,
-        color = color,
-    )
+    val isParked = schedule.series.needsAttention
+    val rule = schedule.series.rule
+    val rowLabel = stringResource(Res.string.recurring_upcoming_row_cd, rule.title)
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                // The calendar icon is decorative and the section heading scrolls away, so the row
+                // has to say for itself that it is a schedule rather than an entry.
+                .semantics { contentDescription = rowLabel }
+                .padding(horizontal = 24.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (isParked) {
+            EntryIcon(
+                icon = Res.drawable.ic_calendar,
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            )
+        } else {
+            EntryIcon(Res.drawable.ic_calendar)
+        }
+        HorizontalSpacer(12.dp)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = rule.title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text =
+                    if (isParked) {
+                        stringResource(Res.string.recurring_upcoming_fix_hint)
+                    } else {
+                        listOfNotNull(
+                            frequencyLabel(rule.frequency, rule.interval),
+                            schedule.nextDate?.let {
+                                stringResource(Res.string.recurring_next_on, formatEntryDate(it, monthLabels))
+                            },
+                        ).joinToString(" · ")
+                    },
+                style = MaterialTheme.typography.bodySmall,
+                color =
+                    if (isParked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        HorizontalSpacer(8.dp)
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text =
+                    formatAmount(
+                        rule.amount,
+                        currency?.nativeSymbol ?: rule.currencyCode,
+                        currency?.decimalDigits ?: DEFAULT_CURRENCY_DECIMALS,
+                    ),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }

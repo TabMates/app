@@ -17,6 +17,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.entrydetail.EntryDe
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.GroupDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.GroupOverviewRoot
 import de.tabmates.features.tabgroup.presentation.navigation.grouppeople.GroupPeopleRoot
+import de.tabmates.features.tabgroup.presentation.navigation.groupschedules.GroupSchedulesRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
@@ -58,6 +59,7 @@ val mainSerializersModule =
             subclass(SettlementDetail::class)
             @Suppress("DEPRECATION")
             subclass(EditSettlement::class)
+            subclass(GroupSchedules::class)
             subclass(RecurringSeriesDetail::class)
             subclass(EditRecurringSeries::class)
             subclass(CreateGroup::class)
@@ -175,6 +177,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
             onRecurringSeriesClick = { seriesId ->
                 backStack.add(RecurringSeriesDetail(groupId = route.groupId, seriesId = seriesId))
             },
+            onManageSchedulesClick = { backStack.add(GroupSchedules(route.groupId)) },
         )
     }
 
@@ -300,10 +303,20 @@ fun EntryProviderScope<NavKey>.mainGraph(
         }
     }
 
+    entry<GroupSchedules> { route ->
+        GroupSchedulesRoot(
+            groupId = route.groupId,
+            onSeriesClick = { seriesId ->
+                backStack.add(RecurringSeriesDetail(groupId = route.groupId, seriesId = seriesId))
+            },
+        )
+    }
+
     entry<RecurringSeriesDetail> { route ->
         RecurringSeriesDetailRoot(
             groupId = route.groupId,
             seriesId = route.seriesId,
+            navKey = route,
             snackbarHostState = snackbarHostState,
             onBack = { backStack.removeLastOrNull() },
             onEdit = { seriesId ->
@@ -345,6 +358,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
         GroupSettingsRoot(
             groupId = route.groupId,
             onPeopleClick = { backStack.add(GroupPeople(route.groupId)) },
+            onSchedulesClick = { backStack.add(GroupSchedules(route.groupId)) },
             onLeft = {
                 backStack.removeGroupScopedEntries(route.groupId)
                 appScope.launch { snackbarHostState.showSnackbar(leftMessage) }

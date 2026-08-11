@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
@@ -22,8 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
 import de.tabmates.core.designsystem.text.SectionLabel
 import de.tabmates.features.tabgroup.domain.recurring.RecurrenceFrequency
@@ -87,85 +91,98 @@ internal fun RepeatEditorScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
                 .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        VerticalSpacer(8.dp)
-        SectionLabel(
-            text = stringResource(Res.string.add_entry_repeat_frequency_label),
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
-        RepeatOptionRow(
-            label = stringResource(Res.string.add_entry_repeat_never),
-            selected = state.repeatFrequency == null,
-            onClick = { onFrequencyChange(null) },
-        )
-        RecurrenceFrequency.entries.forEach { candidate ->
-            RepeatOptionRow(
-                label = candidate.label(),
-                selected = state.repeatFrequency == candidate,
-                onClick = { onFrequencyChange(candidate) },
-            )
-        }
-
-        if (state.repeatFrequency != null) {
-            VerticalSpacer(8.dp)
-            HorizontalDivider()
-            VerticalSpacer(8.dp)
-
-            SectionLabel(
-                text = stringResource(Res.string.add_entry_repeat_interval_label),
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-            IntervalStepper(
-                frequency = state.repeatFrequency,
-                interval = state.repeatInterval,
-                onIntervalChange = onIntervalChange,
-            )
-
-            FieldRow(
-                label = stringResource(Res.string.add_entry_repeat_starts_label),
-                value = formatEntryDate(state.repeatStartDate, monthLabels),
-                onClick = onStartDateClick,
-                leadingIcon = null,
-            )
-
+        // One rail for the whole screen, owned here rather than by each child — the same wrapper
+        // the form that opens this editor uses, so the two read as one flow instead of two screens.
+        // FieldRow below carries no padding of its own by design; without this it drew its outline
+        // hard against both screen edges.
+        Column(
+            modifier =
+                Modifier
+                    .widthIn(max = 600.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+        ) {
             VerticalSpacer(8.dp)
             SectionLabel(
-                text = stringResource(Res.string.add_entry_repeat_ends_label),
-                modifier = Modifier.padding(horizontal = 16.dp),
+                text = stringResource(Res.string.add_entry_repeat_frequency_label),
+                fontWeight = FontWeight.SemiBold,
             )
             RepeatOptionRow(
-                label = stringResource(Res.string.add_entry_repeat_ends_never),
-                selected = state.repeatEnd.kind == RepeatEndKind.NEVER,
-                onClick = { onEndChange(RecurringEnd.Never) },
+                label = stringResource(Res.string.add_entry_repeat_never),
+                selected = state.repeatFrequency == null,
+                onClick = { onFrequencyChange(null) },
             )
-            RepeatOptionRow(
-                label = stringResource(Res.string.add_entry_repeat_ends_on_date),
-                selected = state.repeatEnd.kind == RepeatEndKind.ON_DATE,
-                // Opening the picker is how this option gets a date at all, so selecting it and
-                // picking one are the same gesture rather than two.
-                onClick = onEndDateClick,
-                trailing =
-                    (state.repeatEnd as? RecurringEnd.Until)
-                        ?.let { formatEntryDate(it.date, monthLabels) },
-            )
-            RepeatOptionRow(
-                label = stringResource(Res.string.add_entry_repeat_ends_after_count),
-                selected = state.repeatEnd.kind == RepeatEndKind.AFTER_COUNT,
-                onClick = { onEndChange(RecurringEnd.Count(defaultEndCount(state.repeatEnd))) },
-            )
-            if (state.repeatEnd is RecurringEnd.Count) {
-                CountStepper(
-                    count = state.repeatEnd.count,
-                    onCountChange = { onEndChange(RecurringEnd.Count(it)) },
+            RecurrenceFrequency.entries.forEach { candidate ->
+                RepeatOptionRow(
+                    label = candidate.label(),
+                    selected = state.repeatFrequency == candidate,
+                    onClick = { onFrequencyChange(candidate) },
                 )
             }
 
-            VerticalSpacer(16.dp)
-            HorizontalDivider()
-            VerticalSpacer(8.dp)
-            RepeatPreview(state = state, monthLabels = monthLabels)
+            if (state.repeatFrequency != null) {
+                VerticalSpacer(8.dp)
+                HorizontalDivider()
+                VerticalSpacer(8.dp)
+
+                SectionLabel(
+                    text = stringResource(Res.string.add_entry_repeat_interval_label),
+                    fontWeight = FontWeight.SemiBold,
+                )
+                IntervalStepper(
+                    frequency = state.repeatFrequency,
+                    interval = state.repeatInterval,
+                    onIntervalChange = onIntervalChange,
+                )
+
+                FieldRow(
+                    label = stringResource(Res.string.add_entry_repeat_starts_label),
+                    value = formatEntryDate(state.repeatStartDate, monthLabels),
+                    onClick = onStartDateClick,
+                    leadingIcon = null,
+                )
+
+                VerticalSpacer(8.dp)
+                SectionLabel(
+                    text = stringResource(Res.string.add_entry_repeat_ends_label),
+                    fontWeight = FontWeight.SemiBold,
+                )
+                RepeatOptionRow(
+                    label = stringResource(Res.string.add_entry_repeat_ends_never),
+                    selected = state.repeatEnd.kind == RepeatEndKind.NEVER,
+                    onClick = { onEndChange(RecurringEnd.Never) },
+                )
+                RepeatOptionRow(
+                    label = stringResource(Res.string.add_entry_repeat_ends_on_date),
+                    selected = state.repeatEnd.kind == RepeatEndKind.ON_DATE,
+                    // Opening the picker is how this option gets a date at all, so selecting it and
+                    // picking one are the same gesture rather than two.
+                    onClick = onEndDateClick,
+                    trailing =
+                        (state.repeatEnd as? RecurringEnd.Until)
+                            ?.let { formatEntryDate(it.date, monthLabels) },
+                )
+                RepeatOptionRow(
+                    label = stringResource(Res.string.add_entry_repeat_ends_after_count),
+                    selected = state.repeatEnd.kind == RepeatEndKind.AFTER_COUNT,
+                    onClick = { onEndChange(RecurringEnd.Count(defaultEndCount(state.repeatEnd))) },
+                )
+                if (state.repeatEnd is RecurringEnd.Count) {
+                    CountStepper(
+                        count = state.repeatEnd.count,
+                        onCountChange = { onEndChange(RecurringEnd.Count(it)) },
+                    )
+                }
+
+                VerticalSpacer(16.dp)
+                HorizontalDivider()
+                VerticalSpacer(8.dp)
+                RepeatPreview(state = state, monthLabels = monthLabels)
+            }
+            VerticalSpacer(32.dp)
         }
-        VerticalSpacer(32.dp)
     }
 }
 
@@ -208,20 +225,27 @@ private fun RepeatPreview(
             )
         }
 
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        SectionLabel(text = stringResource(Res.string.add_entry_repeat_preview_label))
-        VerticalSpacer(4.dp)
-        dates.forEach { date ->
-            Text(
-                text = formatEntryDate(date, monthLabels),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+    Column {
+        SectionLabel(
+            text = stringResource(Res.string.add_entry_repeat_preview_label),
+            fontWeight = FontWeight.SemiBold,
+        )
+        VerticalSpacer(8.dp)
+        // Same size and spacing as the occurrence rows on the schedule's detail screen — this is
+        // the same list of dates, one screen earlier, so it should not read as a denser thing.
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            dates.forEach { date ->
+                Text(
+                    text = formatEntryDate(date, monthLabels),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
         }
         if (state.repeatFrequency == RecurrenceFrequency.WEEKLY) {
-            VerticalSpacer(8.dp)
+            VerticalSpacer(16.dp)
             RepeatNote(stringResource(Res.string.add_entry_repeat_weekday_note))
         }
-        VerticalSpacer(8.dp)
+        VerticalSpacer(16.dp)
         RepeatNote(stringResource(Res.string.add_entry_repeat_replaces_entry_note))
     }
 }
@@ -235,15 +259,21 @@ private fun RepeatOptionRow(
 ) {
     // The row is the whole target, and the button inside it is decoration — two separate click
     // handlers would have a screen reader announce the same option twice.
+    //
+    // That is also why the height has to be stated here: Material only applies its 48dp minimum
+    // touch target on RadioButton's *clickable* branch, so passing `onClick = null` drops the floor
+    // and nothing else in this row puts one back. 56dp is Material's one-line list-item height,
+    // which is where the rest of the app's rows sit.
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier =
             Modifier
                 .fillMaxWidth()
-                .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
-                .padding(horizontal = 8.dp),
+                .heightIn(min = 56.dp)
+                .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
     ) {
         RadioButton(selected = selected, onClick = null)
+        HorizontalSpacer(8.dp)
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
@@ -254,7 +284,6 @@ private fun RepeatOptionRow(
                 text = trailing,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(end = 8.dp),
             )
         }
     }
@@ -309,7 +338,7 @@ private fun StepperRow(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(vertical = 8.dp),
     ) {
         Text(
             text = label,
