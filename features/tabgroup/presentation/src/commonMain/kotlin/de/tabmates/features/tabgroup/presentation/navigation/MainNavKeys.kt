@@ -27,7 +27,6 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.change_pas
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.delete_account_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_entry_title
-import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_settlement_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.edit_username_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_title
@@ -38,6 +37,8 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_home_fi
 import tabmatesapp.features.tabgroup.presentation.generated.resources.join_group_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.oss_licenses_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.profile_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_edit_title
+import tabmatesapp.features.tabgroup.presentation.generated.resources.recurring_screen_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settings_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.settle_up_title
 import tabmatesapp.features.tabgroup.presentation.generated.resources.upgrade_account_title
@@ -175,12 +176,55 @@ data class SettlementDetail(
     override val topBarAction: TopBarAction get() = TopBarAction.Back
 }
 
+/**
+ * Retired: settlements are edited through [EditEntry] like every other entry, now that the add form
+ * handles all three kinds.
+ *
+ * Kept registered for one release because a persisted back stack may still hold this key, and a
+ * removed polymorphic subclass fails deserialization rather than degrading. The graph redirects it.
+ */
 @Serializable
+@Deprecated("Use EditEntry; kept only so a persisted back stack still deserializes.")
 data class EditSettlement(
     override val groupId: String,
     val settlementId: String,
 ) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
-    override val topBarTitle: UiText get() = UiText.Resource(Res.string.edit_settlement_title)
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.edit_entry_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Close
+}
+
+/**
+ * Every schedule in the group, active and ended.
+ *
+ * A screen rather than a tab: the group's own tabs answer "what happened" and "who owes what", and
+ * the only schedules that bear on either are the ones about to produce something — those get a
+ * section on the transactions tab. The rest, ended ones included, are settings-shaped and live here.
+ */
+@Serializable
+data class GroupSchedules(
+    override val groupId: String,
+) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.recurring_screen_title)
+    override val topBarAction: TopBarAction get() = TopBarAction.Back
+}
+
+/** Read-only view of one recurring schedule, mirroring how an entry's detail screen works. */
+@Serializable
+data class RecurringSeriesDetail(
+    override val groupId: String,
+    val seriesId: String,
+) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
+    override val topBarTitle: UiText get() = UiText.DynamicString("")
+    override val topBarAction: TopBarAction get() = TopBarAction.Back
+}
+
+/** The add/edit form bound to a schedule instead of an entry. */
+@Serializable
+data class EditRecurringSeries(
+    override val groupId: String,
+    val seriesId: String,
+) : LoggableNavKey(), LoggedIn, ScreenWithTopBar, GroupScoped {
+    override val topBarTitle: UiText get() = UiText.Resource(Res.string.recurring_edit_title)
     override val topBarAction: TopBarAction get() = TopBarAction.Close
 }
 

@@ -14,7 +14,7 @@ import de.tabmates.features.tabgroup.domain.models.ExchangeRate
 import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.TabEntry
-import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.domain.recurring.ScheduledLedger
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.byMostRecentActivity
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.toUiItem
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.withStats
@@ -34,7 +34,7 @@ import kotlin.time.Duration.Companion.seconds
 @KoinViewModel
 class HomeViewModel(
     groupRepository: GroupRepository,
-    tabEntryRepository: TabEntryRepository,
+    scheduledLedger: ScheduledLedger,
     currencyRepository: CurrencyRepository,
     exchangeRateRepository: ExchangeRateRepository,
     currentAccount: CurrentAccount,
@@ -54,8 +54,8 @@ class HomeViewModel(
                 } else {
                     combine(
                         groups.map { group ->
-                            tabEntryRepository
-                                .getTabEntriesForGroup(group.id)
+                            scheduledLedger
+                                .observeEntriesForGroup(group.id)
                                 .map { entries -> group to entries }
                         },
                     ) { groupEntries -> buildState(groupEntries.toList(), currencies, rates) }
