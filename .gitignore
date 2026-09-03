@@ -27,3 +27,7 @@ androidApp/keystore/
 
 # Code-review reports — throwaway artifacts written by the code-review skill
 .claude/reviews/
+
+# Local SwiftPM working area (multi-GB) of the Kotlin/Native SPM integration. That integration is
+# off via kotlin.disableSwiftPMImport, so this only guards against it reappearing.
+.swiftpm-locks/
