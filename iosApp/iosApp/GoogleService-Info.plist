@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- DUMMY config so the app launches out of the box. NOT a real Firebase project —
+	     push notifications will not work until this is replaced with the real
+	     GoogleService-Info.plist from Firebase Console (Project settings -> Your apps ->
+	     iOS, bundle de.tabmates.app.TabMatesApp). This file is not a secret; the FCM
+	     server key / service account stays on the backend. Mirrors the dummy
+	     androidApp/google-services.json. -->
+	<key>API_KEY</key>
+	<string>AIzaSyDUMMYDUMMYDUMMYDUMMYDUMMYDUMMY000</string>
+	<key>GCM_SENDER_ID</key>
+	<string>000000000000</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>de.tabmates.app.TabMatesApp</string>
+	<key>PROJECT_ID</key>
+	<string>tabmates-dummy</string>
+	<key>STORAGE_BUCKET</key>
+	<string>tabmates-dummy.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false/>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false/>
+	<key>IS_APPINVITE_ENABLED</key>
+	<false/>
+	<key>IS_GCM_ENABLED</key>
+	<true/>
+	<key>IS_SIGNIN_ENABLED</key>
+	<false/>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:000000000000:ios:0000000000000000000000</string>
+</dict>
+</plist>
