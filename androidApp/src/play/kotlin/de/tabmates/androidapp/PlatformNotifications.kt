@@ -10,6 +10,7 @@ import android.provider.Settings
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -107,10 +108,12 @@ internal fun NotificationPermissionGate() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 private fun Context.hasNotificationPermission(): Boolean =
     ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
         PackageManager.PERMISSION_GRANTED
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 private fun android.app.Activity.shouldExplainNotifications(): Boolean =
     ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)
 
