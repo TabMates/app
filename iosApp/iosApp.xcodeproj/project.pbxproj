@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F1B0A2C4D5E6F70819A2B3C4 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = F2C1B3D5E6F7081A2B3C4D5E /* FirebaseMessaging */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		D643D6045C11FE74F5CE1290 /* TabMatesApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TabMatesApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -41,6 +45,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F1B0A2C4D5E6F70819A2B3C4 /* FirebaseMessaging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,6 +90,7 @@
 			);
 			name = iosApp;
 			packageProductDependencies = (
+				F2C1B3D5E6F7081A2B3C4D5E /* FirebaseMessaging */,
 			);
 			productName = iosApp;
 			productReference = D643D6045C11FE74F5CE1290 /* TabMatesApp.app */;
@@ -114,6 +120,9 @@
 			);
 			mainGroup = 30782983EBF3997AB1AC52A7;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F3D2C4E6F708192A3B4C5D6E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A812E87C7ABF334E17AF133A /* Products */;
 			projectDirPath = "";
@@ -370,6 +379,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F3D2C4E6F708192A3B4C5D6E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.14.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F2C1B3D5E6F7081A2B3C4D5E /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F3D2C4E6F708192A3B4C5D6E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 806E4ABFAD122295F42EBAF6 /* Project object */;
 }
