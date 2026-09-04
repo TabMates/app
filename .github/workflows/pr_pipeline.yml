@@ -75,8 +75,8 @@ jobs:
           set -o pipefail
           ./gradlew \
             :androidApp:assembleDebug \
-            :androidApp:lintDebug \
-            :androidApp:testDebugUnitTest \
+            :androidApp:lintPlayDebug \
+            :androidApp:testPlayDebugUnitTest \
             :composeApp:desktopJar \
             :composeApp:wasmJsBrowserDevelopmentExecutableDistribution \
             allTests \
@@ -85,8 +85,22 @@ jobs:
       - name: Check compiler warnings against baseline
         run: bash .github/check-compiler-warnings.sh build_log.txt
 
+      # The F-Droid variant compiles a different Android source set with the Google dependencies
+      # removed, so it can break while the Play build stays green. It needs its own Gradle
+      # invocation: the distribution is a property read at configuration time, not a flavor the
+      # KMP modules could switch per task. checkFossClasspath is the guard that no proprietary
+      # dependency crept back in. Kept out of build_log.txt so it does not skew the warning
+      # baseline above.
+      - name: Build FOSS variant (F-Droid)
+        run: |
+          ./gradlew \
+            :androidApp:assembleFossDebug \
+            :androidApp:checkFossClasspath \
+            -Ptabmates.distribution=foss \
+            --no-daemon --stacktrace
+
       - name: Upload Lint SARIF report
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: androidApp/build/reports/lint-results-debug.sarif
+          sarif_file: androidApp/build/reports/lint-results-playDebug.sarif
           category: lint
