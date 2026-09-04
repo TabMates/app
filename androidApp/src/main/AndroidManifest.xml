@@ -2,7 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- POST_NOTIFICATIONS is deliberately not declared here. firebase-messaging and
+         kmpnotifier-core each declare it in their own AAR manifest, so it merges into the Play
+         flavor along with the Firebase dependency (as WAKE_LOCK and c2dm.RECEIVE already do) and
+         is absent from the FOSS flavor, which has no notifications to ask for. Declaring it here
+         would put it in the FOSS manifest too. -->
 
     <application
         android:name=".TabMatesApplication"
@@ -12,16 +17,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Material3.DayNight.NoActionBar">
 
-        <!-- Default FCM channel used when a notification message carries no channel_id. -->
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="general" />
-
-        <!-- Disable Firebase Analytics / telemetry; FCM push still works without it. -->
-        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />
-        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
-        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
-        <meta-data android:name="google_analytics_ssaid_collection_enabled" android:value="false" />
+        <!-- Firebase meta-data lives in src/play/AndroidManifest.xml: its values are app-specific,
+             so unlike the permissions above no AAR can supply them, and they must not appear in
+             the FOSS manifest. -->
 
         <activity
             android:name=".MainActivity"
