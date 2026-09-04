@@ -72,11 +72,18 @@ expect fun AppUpdateHandler(
     onDismiss: () -> Unit,
 )
 
-/** Store-redirect fallback used by every non-Play platform (and by Android when Play is unavailable). */
+/**
+ * Store-redirect fallback used by every non-Play platform (and by Android when Play is unavailable).
+ *
+ * [updateUrlOverride] replaces the URL the backend supplied. The server answers per *platform*,
+ * not per distribution, so `platform=android` always names the Play listing — which is the wrong
+ * destination for a build that was not installed from Play. Only the FOSS Android handler sets it.
+ */
 @Composable
 internal fun DefaultUpdateHandler(
     status: AppUpdateStatus,
     onDismiss: () -> Unit,
+    updateUrlOverride: String? = null,
 ) {
     val uriHandler = LocalUriHandler.current
     when (status) {
@@ -85,7 +92,7 @@ internal fun DefaultUpdateHandler(
             UpdateDialog(
                 forced = false,
                 latestVersion = status.latestVersion,
-                onUpdate = { uriHandler.openUri(status.updateUrl) },
+                onUpdate = { uriHandler.openUri(updateUrlOverride ?: status.updateUrl) },
                 onDismiss = onDismiss,
             )
 
@@ -93,7 +100,7 @@ internal fun DefaultUpdateHandler(
             UpdateDialog(
                 forced = true,
                 latestVersion = status.latestVersion,
-                onUpdate = { uriHandler.openUri(status.updateUrl) },
+                onUpdate = { uriHandler.openUri(updateUrlOverride ?: status.updateUrl) },
                 onDismiss = onDismiss,
             )
     }

@@ -8,8 +8,8 @@ description: Build, install, and drive the TabMates Android app on the local emu
 ## Build + install + launch
 
 ```bash
-./gradlew :androidApp:assembleDebug
-adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
+./gradlew :androidApp:assemblePlayDebug
+adb install -r androidApp/build/outputs/apk/play/debug/androidApp-play-debug.apk
 adb shell monkey -p de.tabmates.androidapp -c android.intent.category.LAUNCHER 1
 ```
 
