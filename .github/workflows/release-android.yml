@@ -82,7 +82,7 @@ jobs:
           encodedString: ${{ secrets.GOOGLE_SERVICES_JSON }}
 
       - name: Build AppBundle
-        run: ./gradlew :androidApp:bundleRelease --no-daemon --no-configuration-cache --no-build-cache -x test
+        run: ./gradlew :androidApp:bundlePlayRelease --no-daemon --no-configuration-cache --no-build-cache -x test
         env:
           ORG_GRADLE_PROJECT_APP_VERSION: ${{ inputs.app_version }}
           CLIENT_BUILD_TOKEN: ${{ steps.build_token.outputs.token }}
@@ -94,17 +94,109 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: appbundle
-          path: androidApp/build/outputs/bundle/release/androidApp-release.aab
+          path: androidApp/build/outputs/bundle/playRelease/androidApp-play-release.aab
+
+  # F-Droid build: same source and same version as the Play release, but with every proprietary
+  # dependency gated out (`-Ptabmates.distribution=foss`). No push notifications, no Play Core
+  # in-app updates, and no google-services.json step: the FOSS build applies no Google Services
+  # plugin and would have nothing to do with the file.
+  #
+  # Unsigned on purpose — the F-Droid distribution uses its own key, applied outside this
+  # pipeline. The APK lands as the `foss-apk` workflow artifact, to be signed before publishing.
+  #
+  # It is an APK, not an AAB: F-Droid and IzzyOnDroid distribute APKs.
+  build-foss-apk:
+    name: Build Unsigned FOSS APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      # Minted here rather than passed from the AppBundle job: a job output is stored in plain
+      # text on the workflow run, and this is a secret-derived value. The message is byte-for-byte
+      # the same as the AppBundle's — the backend gate keys on platform and version, and the FOSS
+      # build is the same `android` platform at the same version — so both artifacts carry the
+      # same valid token. See the AppBundle job for why `printf` and the empty-secret guard matter.
+      - name: Mint client build token
+        id: build_token
+        env:
+          CLIENT_BUILD_SECRET: ${{ secrets.CLIENT_BUILD_SECRET }}
+          VERSION: ${{ inputs.app_version }}
+        run: |
+          if [[ -z "$CLIENT_BUILD_SECRET" ]]; then
+            echo "::error::CLIENT_BUILD_SECRET is not set — the minted token would not verify."
+            exit 1
+          fi
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::app_version input is empty."
+            exit 1
+          fi
+          TOKEN=$(printf 'android|%s' "$VERSION" \
+            | openssl dgst -sha256 -hmac "$CLIENT_BUILD_SECRET" -binary \
+            | basenc --base64url | tr -d '=')
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      # Signing is intentionally left out: the F-Droid build is signed with its own key,
+      # separately from this pipeline. `androidApp/build.gradle.kts` sets signingConfig = null for
+      # the FOSS flavor, so the output is a genuinely unsigned APK — not one quietly signed with
+      # the SDK's public debug key. Uncomment this step and the SIGNING_* env below (pointing at
+      # FOSS-specific secrets, not the Play upload keystore) to sign in CI instead.
+      # - name: Decode Keystore
+      #   uses: timheuer/base64-to-file@v2
+      #   with:
+      #     fileName: 'foss_keystore.jks'
+      #     fileDir: 'androidApp/keystore/'
+      #     encodedString: ${{ secrets.KEYSTORE_FOSS }}
+
+      # checkFossClasspath runs in the same invocation as the build, so a proprietary dependency
+      # that crept back in fails the release rather than shipping to F-Droid.
+      - name: Build FOSS APK
+        run: |
+          ./gradlew \
+            :androidApp:assembleFossRelease \
+            :androidApp:checkFossClasspath \
+            -Ptabmates.distribution=foss \
+            --no-daemon --no-configuration-cache --no-build-cache -x test
+        env:
+          ORG_GRADLE_PROJECT_APP_VERSION: ${{ inputs.app_version }}
+          CLIENT_BUILD_TOKEN: ${{ steps.build_token.outputs.token }}
+          # SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_FOSS_PASSWORD }}
+          # SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_FOSS_ALIAS }}
+          # SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_FOSS_PASSWORD }}
+
+      - name: Upload FOSS APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: foss-apk
+          path: androidApp/build/outputs/apk/foss/release/androidApp-foss-release-unsigned.apk
 
   release:
     name: Release
-    needs: [build-appbundle]
+    needs: [build-appbundle, build-foss-apk]
     runs-on: ubuntu-latest
     steps:
       - name: Download aab from build
         uses: actions/download-artifact@v8
         with:
           name: appbundle
+
+      - name: Download FOSS apk from build
+        uses: actions/download-artifact@v8
+        with:
+          name: foss-apk
 
       - name: Build Changelog
         id: github_release
@@ -144,10 +236,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # The FOSS APK is attached to the release because that is where F-Droid and IzzyOnDroid
+      # fetch builds from. The Play AAB stays off the release: it is not installable, and Play
+      # gets it through the deploy step below.
       - name: Create GitHub Release
         uses: mikepenz/action-gh-release@v3
         with:
           body: ${{ steps.github_release.outputs.changelog }}
+          # Re-enable once the FOSS APK is signed (see build-foss-apk). Attaching the unsigned
+          # artifact would publish a file nobody can install, on the page F-Droid and IzzyOnDroid
+          # fetch from. Until then it is available as the `foss-apk` workflow artifact, to be
+          # signed with the F-Droid key out of band.
+          # files: androidApp-foss-release-unsigned.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -156,5 +256,5 @@ jobs:
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
           packageName: de.tabmates.androidapp
-          releaseFiles: androidApp-release.aab
+          releaseFiles: androidApp-play-release.aab
           track: internal
