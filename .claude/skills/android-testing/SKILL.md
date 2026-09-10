@@ -91,7 +91,7 @@ Only inject a `CoroutineDispatcher` when the class dispatches to a non-main disp
 
 ## Running
 
-- All targets: `./gradlew allTests` (what CI runs). Narrower: `:features:<name>:presentation:desktopTest` or `:androidApp:testDebugUnitTest`.
+- All targets: `./gradlew allTests` (what CI runs). Narrower: `:features:<name>:presentation:desktopTest` or `:androidApp:testPlayDebugUnitTest`.
 - Fast compile check of touched test sources: `./gradlew :features:<name>:<layer>:compileAndroidHostTest` or `compileKotlinJvm`.
 
 ## What to Test

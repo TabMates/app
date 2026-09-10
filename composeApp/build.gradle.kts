@@ -1,10 +1,18 @@
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryExtension
+import de.tabmates.convention.androidDistributionSrcDir
+import de.tabmates.convention.isFossDistribution
 
 plugins {
     alias(libs.plugins.tabmates.convention.cmp.application)
     alias(libs.plugins.tabmates.convention.buildkonfig)
     alias(libs.plugins.tabmates.convention.koin)
 }
+
+// AGP's KMP library plugin has exactly one Android variant and no product flavors, so the
+// Play/FOSS split is a source-directory swap driven by the `tabmates.distribution` property.
+// See build-logic/.../de/tabmates/convention/Distribution.kt.
+val fossDistribution = isFossDistribution
+val distributionSrcDir = androidDistributionSrcDir()
 
 kotlin {
     extensions.configure<KotlinMultiplatformAndroidLibraryExtension> {
@@ -46,11 +54,20 @@ kotlin {
             implementation(libs.ksafe)
             implementation(libs.jetbrains.material3.adaptive)
         }
-        androidMain.dependencies {
-            // Google Play in-app update flow (native, Play-installed devices only).
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.play.app.update)
-            implementation(libs.play.app.update.ktx)
+        androidMain {
+            // Supplies the AppUpdateHandler `actual`: the Play Core flow, or the store-redirect
+            // dialog. The directory and the dependency below move together, so a build never has
+            // one without the other — that mismatch is a compile error, not a silent leak.
+            kotlin.srcDir(distributionSrcDir)
+            dependencies {
+                implementation(libs.androidx.activity.compose)
+                if (!fossDistribution) {
+                    // Google Play in-app update flow (native, Play-installed devices only).
+                    // Proprietary, so F-Droid builds drop it and fall back to DefaultUpdateHandler.
+                    implementation(libs.play.app.update)
+                    implementation(libs.play.app.update.ktx)
+                }
+            }
         }
         iosMain.dependencies {
             // Exposes kmpnotifier iOS extension functions to the Swift AppDelegate bridge
