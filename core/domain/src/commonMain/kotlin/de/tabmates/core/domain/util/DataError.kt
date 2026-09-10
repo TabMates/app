@@ -32,6 +32,16 @@ sealed interface DataError : Error {
         // 403 with body { "code": "CANNOT_REMOVE_GROUP_CREATOR" }: the group's creator can only
         // leave voluntarily. Distinguished from FORBIDDEN, which means the caller is not a member.
         CANNOT_REMOVE_GROUP_CREATOR,
+
+        // 400 with body { "code": "INVALID_RECURRING_RULE" }: the recurring template or schedule
+        // is not something the server will store. Covers both a malformed template and the cap on
+        // how many active schedules one member may own, which the server states under this code.
+        INVALID_RECURRING_RULE,
+
+        // 503 with body { "code": "RECURRING_ENTRIES_DISABLED" }: the feature is switched off in
+        // this environment. Distinguished from SERVICE_UNAVAILABLE, which means the server is
+        // struggling — here the request was fine and only a config change makes it work.
+        RECURRING_ENTRIES_DISABLED,
         UNKNOWN,
     }
 

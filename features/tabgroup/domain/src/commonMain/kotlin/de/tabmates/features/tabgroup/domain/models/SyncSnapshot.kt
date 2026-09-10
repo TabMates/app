@@ -1,5 +1,6 @@
 package de.tabmates.features.tabgroup.domain.models
 
+import de.tabmates.features.tabgroup.domain.recurring.RecurringSeries
 import kotlin.time.Instant
 
 /**
@@ -24,4 +25,10 @@ data class SyncSnapshot(
     val activeGroupIds: List<String>,
     val tabEntries: List<TabEntry>,
     val referencedParticipants: List<GroupParticipant> = emptyList(),
+    /**
+     * Recurring schedules created or changed since the cursor, active and ended alike. A series is
+     * never deleted server-side, only deactivated, so a delta says nothing about the ones it omits
+     * and they must not be pruned.
+     */
+    val recurringSeries: List<RecurringSeries> = emptyList(),
 )

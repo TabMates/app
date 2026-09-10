@@ -34,6 +34,7 @@ class OfflineFirstSyncRepositoryTest {
         tabEntryService: FakeTabEntryService = FakeTabEntryService(),
         pendingBackfillStore: FakePendingTabEntryBackfillStore = FakePendingTabEntryBackfillStore(),
         lastServerContactStore: FakeLastServerContactStore = FakeLastServerContactStore(),
+        recurringSeriesRepository: FakeRecurringSeriesRepository = FakeRecurringSeriesRepository(),
     ): OfflineFirstSyncRepository =
         OfflineFirstSyncRepository(
             syncService = service,
@@ -43,6 +44,8 @@ class OfflineFirstSyncRepositoryTest {
             tabEntryBackfiller =
                 GroupTabEntryBackfiller(tabEntryService, database, pendingBackfillStore, NoopLogger),
             pendingBackfillStore = pendingBackfillStore,
+            recurringSeriesLocalWriter = RecurringSeriesLocalWriter(database),
+            recurringSeriesRepository = recurringSeriesRepository,
         )
 
     private suspend fun localGroupIds() = database.groupDao.getAllGroupIds().toSet()
@@ -399,12 +402,16 @@ class OfflineFirstSyncRepositoryTest {
             val tabEntryService =
                 FakeTabEntryService(Result.Success(history(listOf(expense("e9", "g2")))))
             val pendingStore = FakePendingTabEntryBackfillStore()
+            val recurring = FakeRecurringSeriesRepository()
 
-            repository(service, cursorStore, tabEntryService, pendingStore).sync()
+            repository(service, cursorStore, tabEntryService, pendingStore, recurringSeriesRepository = recurring)
+                .sync()
 
             assertEquals(listOf("g2"), tabEntryService.receivedGroupIds)
             assertEquals(setOf("e9"), localEntryIds())
             assertTrue(pendingStore.getAll().isEmpty())
+            // Schedules have the same cursor gap entries do, so every backfilled group is refreshed.
+            assertEquals(setOf("g2"), recurring.refreshedGroupIds.toSet())
         }
 
     @Test
@@ -440,7 +447,15 @@ class OfflineFirstSyncRepositoryTest {
                 )
             val tabEntryService = FakeTabEntryService()
             val pendingStore = FakePendingTabEntryBackfillStore()
-            val repository = repository(service, cursorStore, tabEntryService, pendingStore)
+            val recurring = FakeRecurringSeriesRepository()
+            val repository =
+                repository(
+                    service,
+                    cursorStore,
+                    tabEntryService,
+                    pendingStore,
+                    recurringSeriesRepository = recurring,
+                )
             repository.sync()
 
             // Simulates a join whose entries fetch failed: group already local, only the marker left.
@@ -453,6 +468,8 @@ class OfflineFirstSyncRepositoryTest {
             assertEquals(listOf("g1"), tabEntryService.receivedGroupIds)
             assertEquals(setOf("e1"), localEntryIds())
             assertTrue(pendingStore.getAll().isEmpty())
+            // A retried group's schedules are refreshed alongside its entries.
+            assertEquals(listOf("g1"), recurring.refreshedGroupIds)
         }
 
     @Test

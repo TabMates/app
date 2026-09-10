@@ -3,7 +3,9 @@ package de.tabmates.features.tabgroup.data.tabentry
 import de.tabmates.core.data.di.APPLICATION_SCOPE
 import de.tabmates.core.domain.logging.TabMatesLogger
 import de.tabmates.core.domain.util.onFailure
+import de.tabmates.features.tabgroup.data.dto.RecurringSeriesDto
 import de.tabmates.features.tabgroup.data.dto.TabEntryDto
+import de.tabmates.features.tabgroup.data.mappers.recurringSlotClaim
 import de.tabmates.features.tabgroup.data.mappers.referencedParticipants
 import de.tabmates.features.tabgroup.data.mappers.toDomain
 import de.tabmates.features.tabgroup.data.mappers.toEntity
@@ -14,6 +16,7 @@ import de.tabmates.features.tabgroup.data.network.dto.TabEntryDeletedWsPayload
 import de.tabmates.features.tabgroup.data.network.dto.WebSocketMessageDto
 import de.tabmates.features.tabgroup.data.network.dto.WsErrorPayload
 import de.tabmates.features.tabgroup.data.network.dto.WsMessageType
+import de.tabmates.features.tabgroup.data.sync.RecurringSeriesLocalWriter
 import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import de.tabmates.features.tabgroup.domain.group.GroupRemovalNotifier
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
@@ -39,6 +42,7 @@ class TabEntryRealtimeSync(
     private val database: TabMatesDatabase,
     private val groupRepository: GroupRepository,
     private val groupRemovalNotifier: GroupRemovalNotifier,
+    private val recurringSeriesLocalWriter: RecurringSeriesLocalWriter,
     private val json: Json,
     private val logger: TabMatesLogger,
     @Named(APPLICATION_SCOPE) private val applicationScope: CoroutineScope,
@@ -69,6 +73,11 @@ class TabEntryRealtimeSync(
 
                 WsMessageType.REMOVED_FROM_GROUP -> handleRemovedFromGroup(message.payload)
 
+                // A schedule someone created, edited, skipped or ended. Schedules are managed over
+                // REST, so this frame is the only thing that keeps an open group screen's projected
+                // occurrences honest between syncs.
+                WsMessageType.RECURRING_SERIES_CHANGED -> handleRecurringSeriesChanged(message.payload)
+
                 // Owned by ActivityRealtimeSync; named here only to keep it out of the unknown-type log.
                 WsMessageType.ACTIVITY_EVENT -> Unit
 
@@ -89,6 +98,10 @@ class TabEntryRealtimeSync(
         val dto = json.decodeFromString(TabEntryDto.serializer(), payload)
         val entry = dto.toDomain()
         logger.debug(TAG, "WS echo received id=${entry.tabEntryId}")
+        // Recorded before the soft-delete branch below, and never removed afterwards. The server
+        // keeps a recurring slot claimed whatever happens to the entry in it, so this is what stops
+        // a deleted occurrence being projected as a placeholder and regenerated on screen forever.
+        dto.recurringSlotClaim()?.let { database.recurringSlotClaimDao.recordClaims(listOf(it)) }
         // A soft-deleted entry is gone as far as this client is concerned, and local queries do not
         // filter on deletedAt — upserting one would put it back on screen. Reached via a replayed
         // ACK: the server answers a retry of a write whose entry has since been deleted with the
@@ -121,6 +134,13 @@ class TabEntryRealtimeSync(
             splits = splits,
             splitDao = database.tabEntrySplitDao,
         )
+    }
+
+    private suspend fun handleRecurringSeriesChanged(payload: String) {
+        val dto = json.decodeFromString(RecurringSeriesDto.serializer(), payload)
+        logger.debug(TAG, "WS recurring series changed id=${dto.id}")
+        // No pruning: this frame describes one series and says nothing about the others.
+        recurringSeriesLocalWriter.persist(listOf(dto))
     }
 
     private suspend fun handleDeleted(payload: String) {
