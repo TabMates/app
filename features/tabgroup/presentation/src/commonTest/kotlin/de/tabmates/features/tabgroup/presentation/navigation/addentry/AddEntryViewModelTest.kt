@@ -7,8 +7,10 @@ import de.tabmates.features.tabgroup.domain.models.SplitType
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCurrencyRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeConnectionStatusRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeCurrentAccount
 import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeRecurringSeriesRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
 import kotlinx.coroutines.Dispatchers
@@ -523,6 +525,7 @@ class AddEntryViewModelTest {
         groupId: String,
         entryId: String = "",
         tabEntryRepository: FakeTabEntryRepository = FakeTabEntryRepository(),
+        recurringSeriesRepository: FakeRecurringSeriesRepository = FakeRecurringSeriesRepository(),
         groupRepository: FakeGroupRepository =
             FakeGroupRepository(initialGroups = listOf(Fixtures.group(id = "g1", currency = "EUR"))),
         currencyRepository: FakeCurrencyRepository = FakeCurrencyRepository(),
@@ -532,7 +535,10 @@ class AddEntryViewModelTest {
         AddEntryViewModel(
             groupId = groupId,
             entryId = entryId,
+            seriesId = "",
             tabEntryRepository = tabEntryRepository,
+            recurringSeriesRepository = recurringSeriesRepository,
+            connectionStatusRepository = FakeConnectionStatusRepository(),
             groupRepository = groupRepository,
             currencyRepository = currencyRepository,
             exchangeRateRepository = exchangeRateRepository,
