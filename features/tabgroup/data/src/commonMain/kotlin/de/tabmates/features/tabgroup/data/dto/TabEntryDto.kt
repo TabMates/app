@@ -34,6 +34,17 @@ sealed class TabEntryDto {
     abstract val deletedAt: Instant?
     abstract val deletedBy: GroupParticipantDto?
 
+    /**
+     * The recurring series that produced this entry, and the slot it filled. Both null for a
+     * hand-created entry, both set for a generated one; defaulted so a server predating the feature
+     * still parses.
+     *
+     * The slot is [recurringOccurrenceDate], not [entryDate] — the latter stays editable once the
+     * entry exists, and the slot must not move with it.
+     */
+    abstract val recurringSeriesId: String?
+    abstract val recurringOccurrenceDate: LocalDate?
+
     @Serializable
     @SerialName("EXPENSE")
     data class Expense(
@@ -54,6 +65,8 @@ sealed class TabEntryDto {
         override val version: Int,
         override val deletedAt: Instant?,
         override val deletedBy: GroupParticipantDto?,
+        override val recurringSeriesId: String? = null,
+        override val recurringOccurrenceDate: LocalDate? = null,
     ) : TabEntryDto()
 
     @Serializable
@@ -76,6 +89,8 @@ sealed class TabEntryDto {
         override val version: Int,
         override val deletedAt: Instant?,
         override val deletedBy: GroupParticipantDto?,
+        override val recurringSeriesId: String? = null,
+        override val recurringOccurrenceDate: LocalDate? = null,
     ) : TabEntryDto()
 
     @Serializable
@@ -98,5 +113,7 @@ sealed class TabEntryDto {
         override val version: Int,
         override val deletedAt: Instant?,
         override val deletedBy: GroupParticipantDto?,
+        override val recurringSeriesId: String? = null,
+        override val recurringOccurrenceDate: LocalDate? = null,
     ) : TabEntryDto()
 }

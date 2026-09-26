@@ -661,10 +661,13 @@ class TabEntryOutbox(
                     DataError.Remote.SERIALIZATION,
                     // Turnstile only gates the auth endpoints, never this delete; classify as
                     // permanent for exhaustiveness (it would never clear on retry anyway). The
-                    // same goes for the two participant-removal refusals.
+                    // same goes for the two participant-removal refusals and the two recurring
+                    // ones, which only the schedule endpoints raise — and those have no outbox.
                     DataError.Remote.TURNSTILE_FAILED,
                     DataError.Remote.CANNOT_REMOVE_SELF,
                     DataError.Remote.CANNOT_REMOVE_GROUP_CREATOR,
+                    DataError.Remote.INVALID_RECURRING_RULE,
+                    DataError.Remote.RECURRING_ENTRIES_DISABLED,
                     -> DispatchResult.Permanent(result.error.name.lowercase())
                 }
             }

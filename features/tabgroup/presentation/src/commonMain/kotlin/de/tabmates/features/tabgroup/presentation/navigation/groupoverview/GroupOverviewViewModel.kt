@@ -12,7 +12,7 @@ import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.ExchangeRate
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.TabEntry
-import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.domain.recurring.ScheduledLedger
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,7 +32,7 @@ import kotlin.time.Duration.Companion.seconds
 @KoinViewModel
 class GroupOverviewViewModel(
     groupRepository: GroupRepository,
-    tabEntryRepository: TabEntryRepository,
+    scheduledLedger: ScheduledLedger,
     currencyRepository: CurrencyRepository,
     exchangeRateRepository: ExchangeRateRepository,
     currentAccount: CurrentAccount,
@@ -57,20 +57,20 @@ class GroupOverviewViewModel(
             if (items.isEmpty()) {
                 flowOf(items)
             } else {
-                enrichWithStats(items, tabEntryRepository, exchangeRateRepository.getExchangeRates())
+                enrichWithStats(items, scheduledLedger, exchangeRateRepository.getExchangeRates())
             }
         }
 
     private fun enrichWithStats(
         baseItems: List<GroupOverviewItem>,
-        tabEntryRepository: TabEntryRepository,
+        scheduledLedger: ScheduledLedger,
         ratesFlow: Flow<List<ExchangeRate>>,
     ): Flow<List<GroupOverviewItem>> {
         val entriesPerItem: Flow<List<Pair<GroupOverviewItem, List<TabEntry>>>> =
             combine(
                 baseItems.map { item ->
-                    tabEntryRepository
-                        .getTabEntriesForGroup(item.id)
+                    scheduledLedger
+                        .observeEntriesForGroup(item.id)
                         .onStart { emit(emptyList()) }
                         .map { entries -> item to entries }
                 },

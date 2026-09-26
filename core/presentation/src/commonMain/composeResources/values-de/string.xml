@@ -17,6 +17,8 @@
     <string name="error_message_send_failed">Nachricht konnte nicht gesendet werden</string>
     <string name="error_turnstile_retry">Verifizierung fehlgeschlagen. Bitte versuche es erneut.</string>
     <string name="error_upgrade_required">Diese TabMates-Version wird nicht mehr unterstützt. Bitte aktualisiere die App.</string>
+    <string name="error_invalid_recurring_rule">Diese Wiederholung kann nicht gespeichert werden. Prüfe Datum und Betrag, oder beende eine andere Wiederholung, wenn du viele hast.</string>
+    <string name="error_recurring_entries_disabled">Wiederholende Einträge sind derzeit deaktiviert. Bitte versuche es später erneut.</string>
     <string name="error_cannot_remove_self">Du kannst dich nicht selbst entfernen. Verlasse die Gruppe stattdessen in den Einstellungen.</string>
     <string name="error_cannot_remove_group_creator">Die Person, die diese Gruppe erstellt hat, kann nicht entfernt werden.</string>
 </resources>

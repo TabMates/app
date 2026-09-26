@@ -100,9 +100,11 @@ suspend inline fun <reified Request, reified Response : Any> HttpClient.patch(
     route: String,
     body: Request,
     queryParams: Map<String, Any> = mapOf(),
+    // See post: per-call error mapper inspected before the generic status handling.
+    noinline mapKnownError: (suspend (HttpResponse) -> DataError.Remote?)? = null,
     crossinline builder: HttpRequestBuilder.() -> Unit = {},
 ): Result<Response, DataError.Remote> {
-    return safeCall {
+    return safeCall(mapKnownError = mapKnownError) {
         patch {
             url(routeForRequest(route))
             queryParams.forEach { (key, value) ->
