@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Play-flavor overlay, merged onto src/main/AndroidManifest.xml.
+
+  Only Firebase meta-data belongs here. POST_NOTIFICATIONS is not declared: firebase-messaging and
+  kmpnotifier-core declare it in their own AAR manifests, so it arrives with the dependency and
+  leaves with it. These meta-data entries carry app-specific values, so no AAR can supply them —
+  which is the whole reason this flavor overlay exists.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!-- Default FCM channel used when a notification message carries no channel_id.
+             Must stay in sync with NotificationChannels.GENERAL. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="general" />
+
+        <!-- Disable Firebase Analytics / telemetry; FCM push still works without it. -->
+        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />
+        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
+        <meta-data android:name="google_analytics_ssaid_collection_enabled" android:value="false" />
+    </application>
+
+</manifest>

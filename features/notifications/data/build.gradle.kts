@@ -1,8 +1,17 @@
+import de.tabmates.convention.androidDistributionSrcDir
+import de.tabmates.convention.isFossDistribution
+
 plugins {
     alias(libs.plugins.tabmates.convention.kmp.library)
     alias(libs.plugins.tabmates.convention.buildkonfig)
     alias(libs.plugins.tabmates.convention.koin)
 }
+
+// AGP's KMP library plugin has exactly one Android variant and no product flavors, so the
+// Play/FOSS split is a source-directory swap driven by the `tabmates.distribution` property.
+// See build-logic/.../de/tabmates/convention/Distribution.kt.
+val fossDistribution = isFossDistribution
+val distributionSrcDir = androidDistributionSrcDir()
 
 kotlin {
     sourceSets {
@@ -28,12 +37,22 @@ kotlin {
         }
 
         androidMain {
+            // Supplies the PlatformNotificationsModule `actual`: FCM push, or the shared no-op
+            // controllers. The directory and the dependencies below move together, so a build
+            // never has one without the other — that mismatch is a compile error, not a leak.
+            kotlin.srcDir(distributionSrcDir)
             dependencies {
                 implementation(libs.ktor.client.okhttp)
-                // Firebase Cloud Messaging via kmpnotifier-push-firebase (also pulls kmpnotifier-local + core).
-                implementation(libs.kmpnotifier.push.firebase)
-                // NotificationManagerCompat for the notification-permission check.
-                implementation(libs.androidx.core.ktx)
+                if (!fossDistribution) {
+                    // Firebase Cloud Messaging via kmpnotifier-push-firebase (also pulls
+                    // kmpnotifier-local + core). Proprietary, so the F-Droid build has no push
+                    // at all; androidFossMain binds NoOpPushNotificationController instead.
+                    implementation(libs.kmpnotifier.push.firebase)
+                    // NotificationManagerCompat for the notification-permission check. Its only
+                    // consumer, AndroidNotificationPermissionController, is Play-only: the FOSS
+                    // build reports UNSUPPORTED because it never declares POST_NOTIFICATIONS.
+                    implementation(libs.androidx.core.ktx)
+                }
             }
         }
 
