@@ -4,6 +4,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeCur
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGroupRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeCurrentAccount
 import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeScheduledLedger
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
 import kotlinx.coroutines.Dispatchers
@@ -124,7 +125,7 @@ class HomeViewModelTest {
     ): HomeViewModel =
         HomeViewModel(
             groupRepository = groupRepository,
-            tabEntryRepository = tabEntryRepository,
+            scheduledLedger = FakeScheduledLedger(tabEntryRepository),
             currencyRepository = currencyRepository,
             exchangeRateRepository = exchangeRateRepository,
             currentAccount = currentAccount,

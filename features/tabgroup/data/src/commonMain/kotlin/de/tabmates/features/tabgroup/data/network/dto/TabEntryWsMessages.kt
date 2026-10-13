@@ -35,6 +35,16 @@ object WsMessageType {
      */
     const val REMOVED_FROM_GROUP = "REMOVED_FROM_GROUP"
     const val ACTIVITY_EVENT = "ACTIVITY_EVENT"
+
+    /**
+     * A recurring schedule was created, edited, skipped or ended. Carries the canonical
+     * `RecurringSeriesDto` and no `requestId` — schedules are managed over REST, so this is a
+     * broadcast to the group rather than an answer to anybody's request.
+     *
+     * It is what keeps an open group screen's projected occurrences honest between syncs; without
+     * it a schedule change would only land on the next reconnect.
+     */
+    const val RECURRING_SERIES_CHANGED = "RECURRING_SERIES_CHANGED"
     const val ERROR = "ERROR"
 }
 

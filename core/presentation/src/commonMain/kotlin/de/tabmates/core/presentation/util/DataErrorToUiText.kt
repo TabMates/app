@@ -8,10 +8,12 @@ import tabmatesapp.core.presentation.generated.resources.error_cannot_remove_sel
 import tabmatesapp.core.presentation.generated.resources.error_conflict
 import tabmatesapp.core.presentation.generated.resources.error_disk_full
 import tabmatesapp.core.presentation.generated.resources.error_forbidden
+import tabmatesapp.core.presentation.generated.resources.error_invalid_recurring_rule
 import tabmatesapp.core.presentation.generated.resources.error_message_send_failed
 import tabmatesapp.core.presentation.generated.resources.error_no_internet
 import tabmatesapp.core.presentation.generated.resources.error_not_found
 import tabmatesapp.core.presentation.generated.resources.error_payload_too_large
+import tabmatesapp.core.presentation.generated.resources.error_recurring_entries_disabled
 import tabmatesapp.core.presentation.generated.resources.error_request_timeout
 import tabmatesapp.core.presentation.generated.resources.error_serialization
 import tabmatesapp.core.presentation.generated.resources.error_server
@@ -44,6 +46,8 @@ fun DataError.toUiText(): UiText {
             DataError.Remote.UPGRADE_REQUIRED -> Res.string.error_upgrade_required
             DataError.Remote.CANNOT_REMOVE_SELF -> Res.string.error_cannot_remove_self
             DataError.Remote.CANNOT_REMOVE_GROUP_CREATOR -> Res.string.error_cannot_remove_group_creator
+            DataError.Remote.INVALID_RECURRING_RULE -> Res.string.error_invalid_recurring_rule
+            DataError.Remote.RECURRING_ENTRIES_DISABLED -> Res.string.error_recurring_entries_disabled
             DataError.Remote.UNKNOWN -> Res.string.error_unknown
             DataError.Connection.NOT_CONNECTED -> Res.string.error_no_internet
             DataError.Connection.MESSAGE_SEND_FAILED -> Res.string.error_message_send_failed

@@ -1,6 +1,5 @@
 package de.tabmates.features.tabgroup.presentation.navigation.entrydetail
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,9 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -40,7 +36,7 @@ import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.domain.currency.CurrencyConverter
 import de.tabmates.features.tabgroup.domain.models.TabEntrySplit
-import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
+import de.tabmates.features.tabgroup.presentation.components.DetailHero
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.components.formatRate
 import de.tabmates.features.tabgroup.presentation.components.rateUpdatedLabel
@@ -48,7 +44,6 @@ import de.tabmates.features.tabgroup.presentation.navigation.addentry.EntryKind
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.formatEntryDate
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.rememberMonthAbbreviations
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.UserAvatar
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -165,7 +160,7 @@ private fun EntryDetailScreen(
             return@Column
         }
         VerticalSpacer(8.dp)
-        HeroSection(
+        DetailHero(
             icon = if (isIncome) Res.drawable.ic_redeem else Res.drawable.ic_restaurant,
             title = entry.title,
             amountFormatted =
@@ -174,7 +169,7 @@ private fun EntryDetailScreen(
                     entry.amount,
                     state.entryCurrencyDecimalDigits,
                 ),
-            dateText = formatEntryDate(entry.entryDate, monthLabels),
+            subtitle = formatEntryDate(entry.entryDate, monthLabels),
             description = entry.description,
             isPendingSync = entry.isPendingSync,
         )
@@ -225,66 +220,6 @@ private fun EntryDetailScreen(
             }
         }
         VerticalSpacer(24.dp)
-    }
-}
-
-@Composable
-private fun HeroSection(
-    icon: DrawableResource,
-    title: String,
-    amountFormatted: String,
-    dateText: String,
-    description: String,
-    isPendingSync: Boolean,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(96.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                        shape = CircleShape,
-                    ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = vectorResource(icon),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier = Modifier.size(40.dp),
-            )
-        }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-        )
-        if (isPendingSync) {
-            SyncStatusChip()
-        }
-        Text(
-            text = amountFormatted,
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = dateText,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (description.isNotBlank()) {
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-            )
-        }
     }
 }
 

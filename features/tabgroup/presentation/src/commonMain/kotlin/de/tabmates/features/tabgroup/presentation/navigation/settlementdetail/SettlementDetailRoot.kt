@@ -1,16 +1,12 @@
 package de.tabmates.features.tabgroup.presentation.navigation.settlementdetail
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,7 +34,7 @@ import de.tabmates.core.designsystem.text.SectionLabel
 import de.tabmates.core.presentation.navigation.TopBarActions
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
-import de.tabmates.features.tabgroup.presentation.components.SyncStatusChip
+import de.tabmates.features.tabgroup.presentation.components.DetailHero
 import de.tabmates.features.tabgroup.presentation.components.formatMoney
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.formatEntryDate
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.rememberMonthAbbreviations
@@ -150,7 +146,8 @@ private fun SettlementDetailScreen(
             return@Column
         }
         VerticalSpacer(8.dp)
-        HeroSection(
+        DetailHero(
+            icon = Res.drawable.ic_swap_horiz,
             title = settlement.title,
             amountFormatted =
                 formatMoney(
@@ -158,7 +155,7 @@ private fun SettlementDetailScreen(
                     settlement.amount,
                     state.groupCurrencyDecimalDigits,
                 ),
-            dateText = formatEntryDate(settlement.entryDate, monthLabels),
+            subtitle = formatEntryDate(settlement.entryDate, monthLabels),
             isPendingSync = settlement.isPendingSync,
         )
         VerticalSpacer(24.dp)
@@ -188,56 +185,6 @@ private fun SettlementDetailScreen(
             )
         }
         VerticalSpacer(24.dp)
-    }
-}
-
-@Composable
-private fun HeroSection(
-    title: String,
-    amountFormatted: String,
-    dateText: String,
-    isPendingSync: Boolean,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(96.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                        shape = CircleShape,
-                    ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_swap_horiz),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier = Modifier.size(40.dp),
-            )
-        }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-        )
-        if (isPendingSync) {
-            SyncStatusChip()
-        }
-        Text(
-            text = amountFormatted,
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = dateText,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
