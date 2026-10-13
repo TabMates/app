@@ -1,0 +1,16 @@
+<!--
+  Play-flavor strings: the notification permission prompt and the FCM notification channels.
+  The FOSS flavor has neither, so these must not live in src/main.
+-->
+<resources>
+    <string name="notification_permission_title">Enable notifications</string>
+    <string name="notification_permission_message">TabMates uses notifications to alert you about new expenses, members joining, and settle-up reminders.</string>
+    <string name="notification_permission_allow">Allow</string>
+    <string name="notification_permission_open_settings">Open settings</string>
+    <string name="notification_permission_dismiss">Not now</string>
+
+    <string name="notification_channel_general">General</string>
+    <string name="notification_channel_expenses">Expenses</string>
+    <string name="notification_channel_members">Group members</string>
+    <string name="notification_channel_settle_ups">Settle-ups</string>
+</resources>
