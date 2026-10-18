@@ -3,6 +3,7 @@ package de.tabmates.features.tabgroup.data.mappers
 import de.tabmates.features.tabgroup.data.dto.GroupParticipantDto
 import de.tabmates.features.tabgroup.data.dto.TabEntryDto
 import de.tabmates.features.tabgroup.database.entities.LastTabEntryWithSplits
+import de.tabmates.features.tabgroup.database.entities.RecurringSlotClaimEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntryEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntrySplitEntity
 import de.tabmates.features.tabgroup.database.entities.TabEntryWithSplits
@@ -32,6 +33,8 @@ fun TabEntryDto.toDomain(): TabEntry =
                 deletedAt = deletedAt,
                 deletedByUserId = deletedBy?.userId,
                 splits = splits.map { it.toDomain(tabEntryId = id) },
+                recurringSeriesId = recurringSeriesId,
+                recurringOccurrenceDate = recurringOccurrenceDate,
             )
         }
 
@@ -54,6 +57,8 @@ fun TabEntryDto.toDomain(): TabEntry =
                 deletedAt = deletedAt,
                 deletedByUserId = deletedBy?.userId,
                 splits = splits.map { it.toDomain(tabEntryId = id) },
+                recurringSeriesId = recurringSeriesId,
+                recurringOccurrenceDate = recurringOccurrenceDate,
             )
         }
 
@@ -76,9 +81,28 @@ fun TabEntryDto.toDomain(): TabEntry =
                 deletedAt = deletedAt,
                 deletedByUserId = deletedBy?.userId,
                 receivedByUserId = receivedBy.userId,
+                recurringSeriesId = recurringSeriesId,
+                recurringOccurrenceDate = recurringOccurrenceDate,
             )
         }
     }
+
+/**
+ * The recurring slot this entry filled, or null for a hand-created one.
+ *
+ * Recorded separately from the entry itself and never removed: a soft-deleted entry is dropped from
+ * the local table outright, but the server keeps its slot claimed forever, so the claim is the only
+ * thing that stops a deliberately deleted occurrence being projected as a placeholder again.
+ */
+fun TabEntryDto.recurringSlotClaim(): RecurringSlotClaimEntity? {
+    val seriesId = recurringSeriesId ?: return null
+    val occurrenceDate = recurringOccurrenceDate ?: return null
+    return RecurringSlotClaimEntity(
+        seriesId = seriesId,
+        occurrenceDate = occurrenceDate.toString(),
+        groupId = groupId,
+    )
+}
 
 /**
  * Every participant this entry references. These may include users who are no longer group
@@ -119,6 +143,8 @@ fun TabEntry.toEntity(pendingSync: Boolean = false): TabEntryEntity =
         deletedAt = deletedAt?.toEpochMilliseconds(),
         deletedByUserId = deletedByUserId,
         pendingSync = pendingSync,
+        recurringSeriesId = recurringSeriesId,
+        recurringOccurrenceDate = recurringOccurrenceDate?.toString(),
     )
 
 fun TabEntry.toSplitEntities(): List<TabEntrySplitEntity> =
@@ -150,6 +176,8 @@ fun TabEntryWithSplits.toDomain(): TabEntry =
                 deletedByUserId = tabEntry.deletedByUserId,
                 splits = splits.map { it.toDomain() },
                 isPendingSync = tabEntry.pendingSync,
+                recurringSeriesId = tabEntry.recurringSeriesId,
+                recurringOccurrenceDate = tabEntry.recurringOccurrenceDate?.let(LocalDate::parse),
             )
         }
 
@@ -173,6 +201,8 @@ fun TabEntryWithSplits.toDomain(): TabEntry =
                 deletedByUserId = tabEntry.deletedByUserId,
                 splits = splits.map { it.toDomain() },
                 isPendingSync = tabEntry.pendingSync,
+                recurringSeriesId = tabEntry.recurringSeriesId,
+                recurringOccurrenceDate = tabEntry.recurringOccurrenceDate?.let(LocalDate::parse),
             )
         }
 
@@ -199,6 +229,8 @@ fun TabEntryWithSplits.toDomain(): TabEntry =
                         "Settlement TabEntry ${tabEntry.tabEntryId} has null receivedByUserId"
                     },
                 isPendingSync = tabEntry.pendingSync,
+                recurringSeriesId = tabEntry.recurringSeriesId,
+                recurringOccurrenceDate = tabEntry.recurringOccurrenceDate?.let(LocalDate::parse),
             )
         }
     }

@@ -7,6 +7,8 @@ import de.tabmates.features.tabgroup.presentation.navigation.creategroup.FakeGro
 import de.tabmates.features.tabgroup.presentation.testing.FakeActivityRepository
 import de.tabmates.features.tabgroup.presentation.testing.FakeCurrentAccount
 import de.tabmates.features.tabgroup.presentation.testing.FakeExchangeRateRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeRecurringSeriesRepository
+import de.tabmates.features.tabgroup.presentation.testing.FakeScheduledLedger
 import de.tabmates.features.tabgroup.presentation.testing.FakeTabEntryRepository
 import de.tabmates.features.tabgroup.presentation.testing.Fixtures
 import kotlinx.coroutines.Dispatchers
@@ -355,11 +357,13 @@ class GroupDetailViewModelTest {
         exchangeRateRepository: FakeExchangeRateRepository = FakeExchangeRateRepository(),
         activityRepository: FakeActivityRepository = FakeActivityRepository(),
         currentAccount: FakeCurrentAccount = FakeCurrentAccount(),
+        recurringSeriesRepository: FakeRecurringSeriesRepository = FakeRecurringSeriesRepository(),
     ): GroupDetailViewModel =
         GroupDetailViewModel(
             groupId = groupId,
             groupRepository = groupRepository,
-            tabEntryRepository = tabEntryRepository,
+            scheduledLedger = FakeScheduledLedger(tabEntryRepository, recurringSeriesRepository),
+            recurringSeriesRepository = recurringSeriesRepository,
             currencyRepository = currencyRepository,
             exchangeRateRepository = exchangeRateRepository,
             activityRepository = activityRepository,

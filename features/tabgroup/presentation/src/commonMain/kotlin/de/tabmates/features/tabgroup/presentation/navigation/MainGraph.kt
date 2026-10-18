@@ -2,6 +2,7 @@ package de.tabmates.features.tabgroup.presentation.navigation
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -12,11 +13,11 @@ import de.tabmates.features.tabgroup.domain.group.GroupRemovalNotifier
 import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivityRoot
 import de.tabmates.features.tabgroup.presentation.navigation.addentry.AddEntryRoot
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CreateGroupRoot
-import de.tabmates.features.tabgroup.presentation.navigation.editsettlement.EditSettlementRoot
 import de.tabmates.features.tabgroup.presentation.navigation.entrydetail.EntryDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.GroupDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.GroupOverviewRoot
 import de.tabmates.features.tabgroup.presentation.navigation.grouppeople.GroupPeopleRoot
+import de.tabmates.features.tabgroup.presentation.navigation.groupschedules.GroupSchedulesRoot
 import de.tabmates.features.tabgroup.presentation.navigation.groupsettings.GroupSettingsRoot
 import de.tabmates.features.tabgroup.presentation.navigation.home.HomeRoot
 import de.tabmates.features.tabgroup.presentation.navigation.joingroup.JoinGroupRoot
@@ -26,6 +27,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.profile.DeleteAccou
 import de.tabmates.features.tabgroup.presentation.navigation.profile.EditUsernameRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.ProfileRoot
 import de.tabmates.features.tabgroup.presentation.navigation.profile.UpgradeAccountRoot
+import de.tabmates.features.tabgroup.presentation.navigation.recurringdetail.RecurringSeriesDetailRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settings.OssLicensesRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settings.SettingsRoot
 import de.tabmates.features.tabgroup.presentation.navigation.settlementdetail.SettlementDetailRoot
@@ -55,7 +57,11 @@ val mainSerializersModule =
             subclass(EditEntry::class)
             subclass(EntryDetail::class)
             subclass(SettlementDetail::class)
+            @Suppress("DEPRECATION")
             subclass(EditSettlement::class)
+            subclass(GroupSchedules::class)
+            subclass(RecurringSeriesDetail::class)
+            subclass(EditRecurringSeries::class)
             subclass(CreateGroup::class)
             subclass(GroupDetail::class)
             subclass(SettleUp::class)
@@ -168,6 +174,10 @@ fun EntryProviderScope<NavKey>.mainGraph(
             onSettlementClick = { settlementId ->
                 backStack.add(SettlementDetail(settlementId = settlementId, groupId = route.groupId))
             },
+            onRecurringSeriesClick = { seriesId ->
+                backStack.add(RecurringSeriesDetail(groupId = route.groupId, seriesId = seriesId))
+            },
+            onManageSchedulesClick = { backStack.add(GroupSchedules(route.groupId)) },
         )
     }
 
@@ -277,18 +287,51 @@ fun EntryProviderScope<NavKey>.mainGraph(
             snackbarHostState = snackbarHostState,
             onBack = { backStack.removeLastOrNull() },
             onEdit = {
-                backStack.add(EditSettlement(groupId = route.groupId, settlementId = route.settlementId))
+                backStack.add(EditEntry(groupId = route.groupId, entryId = route.settlementId))
             },
         )
     }
 
+    // Retired. Only reachable from a back stack persisted by an older build, so it swaps itself
+    // for the entry form rather than rendering — removing the key outright would fail to
+    // deserialize and take the whole restored stack with it.
+    @Suppress("DEPRECATION")
     entry<EditSettlement> { route ->
-        EditSettlementRoot(
+        LaunchedEffect(route) {
+            backStack.removeAll { it is EditSettlement }
+            backStack.add(EditEntry(groupId = route.groupId, entryId = route.settlementId))
+        }
+    }
+
+    entry<GroupSchedules> { route ->
+        GroupSchedulesRoot(
             groupId = route.groupId,
-            settlementId = route.settlementId,
+            onSeriesClick = { seriesId ->
+                backStack.add(RecurringSeriesDetail(groupId = route.groupId, seriesId = seriesId))
+            },
+        )
+    }
+
+    entry<RecurringSeriesDetail> { route ->
+        RecurringSeriesDetailRoot(
+            groupId = route.groupId,
+            seriesId = route.seriesId,
             navKey = route,
             snackbarHostState = snackbarHostState,
-            onSaved = { backStack.removeAll { it is EditSettlement } },
+            onBack = { backStack.removeLastOrNull() },
+            onEdit = { seriesId ->
+                backStack.add(EditRecurringSeries(groupId = route.groupId, seriesId = seriesId))
+            },
+        )
+    }
+
+    entry<EditRecurringSeries> { route ->
+        AddEntryRoot(
+            groupId = route.groupId,
+            navKey = route,
+            seriesId = route.seriesId,
+            snackbarHostState = snackbarHostState,
+            onSaved = { backStack.removeAll { it is EditRecurringSeries } },
         )
     }
 
@@ -315,6 +358,7 @@ fun EntryProviderScope<NavKey>.mainGraph(
         GroupSettingsRoot(
             groupId = route.groupId,
             onPeopleClick = { backStack.add(GroupPeople(route.groupId)) },
+            onSchedulesClick = { backStack.add(GroupSchedules(route.groupId)) },
             onLeft = {
                 backStack.removeGroupScopedEntries(route.groupId)
                 appScope.launch { snackbarHostState.showSnackbar(leftMessage) }

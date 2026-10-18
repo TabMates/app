@@ -46,6 +46,8 @@ fun GroupDetailRoot(
     onSettleUpClick: () -> Unit,
     onEntryClick: (String) -> Unit,
     onSettlementClick: (String) -> Unit,
+    onRecurringSeriesClick: (String) -> Unit,
+    onManageSchedulesClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupDetailViewModel =
         koinViewModel(
@@ -119,6 +121,9 @@ fun GroupDetailRoot(
             onSettleUpClick = onSettleUpClick,
             onEntryClick = onEntryClick,
             onSettlementClick = onSettlementClick,
+            recurringSeries = state.recurringSeries,
+            onRecurringSeriesClick = onRecurringSeriesClick,
+            onManageSchedulesClick = onManageSchedulesClick,
             snackbarHostState = snackbarHostState,
             modifier = modifier.fillMaxSize(),
         )

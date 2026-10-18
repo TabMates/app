@@ -22,7 +22,7 @@ import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.ParticipantType
-import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.domain.recurring.ScheduledLedger
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,7 +48,7 @@ import kotlin.time.Duration.Companion.seconds
 class GroupPeopleViewModel(
     @InjectedParam private val groupId: String,
     private val groupRepository: GroupRepository,
-    private val tabEntryRepository: TabEntryRepository,
+    private val scheduledLedger: ScheduledLedger,
     private val currencyRepository: CurrencyRepository,
     private val exchangeRateRepository: ExchangeRateRepository,
     currentAccount: CurrentAccount,
@@ -145,7 +145,7 @@ class GroupPeopleViewModel(
         viewModelScope.launch {
             val group = groupRepository.getGroups().first().firstOrNull { it.id == groupId } ?: return@launch
             val participant = group.participants.firstOrNull { it.userId == personId } ?: return@launch
-            val entries = tabEntryRepository.getTabEntriesForGroup(groupId).first().filterNot { it.isDeleted }
+            val entries = scheduledLedger.observeEntriesForGroup(groupId).first().filterNot { it.isDeleted }
             val rates = exchangeRateRepository.getExchangeRates().first()
             val net =
                 UserBalanceCalculator.computeNet(

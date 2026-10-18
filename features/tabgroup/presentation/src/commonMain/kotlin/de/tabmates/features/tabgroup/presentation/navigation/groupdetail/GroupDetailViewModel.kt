@@ -17,7 +17,9 @@ import de.tabmates.features.tabgroup.domain.models.GroupBalance
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.TabEntry
 import de.tabmates.features.tabgroup.domain.models.referencedParticipantIds
-import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.domain.recurring.RecurringSeries
+import de.tabmates.features.tabgroup.domain.recurring.RecurringSeriesRepository
+import de.tabmates.features.tabgroup.domain.recurring.ScheduledLedger
 import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivityFeedBuilder
 import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivitySection
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.GroupOverviewItem
@@ -66,6 +68,8 @@ data class GroupDetailState(
     val hasOutstandingDebts: Boolean = false,
     val currencyByCode: Map<String, Currency> = emptyMap(),
     val ratesByCurrency: Map<String, Double> = emptyMap(),
+    /** The group's schedules, active and ended alike; the tab filters them itself. */
+    val recurringSeries: List<RecurringSeries> = emptyList(),
     /** This group's activity log, newest first, for the History tab. */
     val historySections: List<ActivitySection> = emptyList(),
     val canLoadMoreHistory: Boolean = false,
@@ -76,7 +80,8 @@ data class GroupDetailState(
 class GroupDetailViewModel(
     @InjectedParam private val groupId: String,
     private val groupRepository: GroupRepository,
-    private val tabEntryRepository: TabEntryRepository,
+    private val scheduledLedger: ScheduledLedger,
+    private val recurringSeriesRepository: RecurringSeriesRepository,
     currencyRepository: CurrencyRepository,
     exchangeRateRepository: ExchangeRateRepository,
     activityRepository: ActivityRepository,
@@ -99,6 +104,21 @@ class GroupDetailViewModel(
         ) { feed, participants, limit -> HistoryInput(feed, participants, limit) }
             .onStart { emit(HistoryInput()) }
 
+    /**
+     * The schedules themselves, for the recurring tab. Separate from [scheduledLedger], which folds
+     * them into projected entries and does not surface the schedules it used.
+     */
+    private val recurringSeries: Flow<List<RecurringSeries>> =
+        recurringSeriesRepository.getSeriesForGroup(groupId).onStart { emit(emptyList()) }
+
+    private val sideInputs: Flow<SideInput> =
+        combine(history, recurringSeries) { history, series -> SideInput(history, series) }
+
+    private data class SideInput(
+        val history: HistoryInput,
+        val recurringSeries: List<RecurringSeries>,
+    )
+
     val state: StateFlow<GroupDetailState> =
         combine(
             groupRepository
@@ -106,13 +126,16 @@ class GroupDetailViewModel(
                 .map { groups -> GroupLookup(hasLoaded = true, group = groups.firstOrNull { it.id == groupId }) }
                 .onStart { emit(GroupLookup()) },
             currencyRepository.getCurrencies().onStart { emit(emptyList()) },
-            tabEntryRepository
-                .getTabEntriesForGroup(groupId)
+            // Entries plus the occurrences the group's schedules already owe. One reader, so
+            // every screen showing this group's balance shows the same number.
+            scheduledLedger
+                .observeEntriesForGroup(groupId)
                 .onStart { emit(emptyList()) },
             exchangeRateRepository.getExchangeRates().onStart { emit(emptyList()) },
-            history,
-        ) { lookup, currencies, entries, rates, history ->
+            sideInputs,
+        ) { lookup, currencies, entries, rates, sideInputs ->
             val group = lookup.group
+            val history = sideInputs.history
             val visibleEntries = entries.filterNot { it.isDeleted }
             val conversion = group?.let { CurrencyConversion.from(it.defaultCurrencyCode, rates) }
             val activeMembers = group?.participants?.toList().orEmpty()
@@ -160,6 +183,7 @@ class GroupDetailViewModel(
                     memberNetBalances.values.any { GroupBalance.fromNet(it) != GroupBalance.Settled },
                 currencyByCode = currencies.associateBy { it.code },
                 ratesByCurrency = rates.associate { it.currencyCode to it.rateToBase },
+                recurringSeries = sideInputs.recurringSeries,
                 historySections =
                     ActivityFeedBuilder.build(
                         items = history.feed,
