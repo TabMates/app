@@ -23,6 +23,7 @@ import de.tabmates.features.tabgroup.presentation.navigation.activity.ActivitySe
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.GroupOverviewItem
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.toUiItem
 import de.tabmates.features.tabgroup.presentation.navigation.groupoverview.withStats
+import de.tabmates.features.tabgroup.presentation.util.sortedForDisplay
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -143,7 +144,7 @@ class GroupDetailViewModel(
                 hasLoaded = lookup.hasLoaded,
                 item = item,
                 currentUserId = currentUserId,
-                members = activeMembers + formerMembers,
+                members = (activeMembers + formerMembers).sortedForDisplay(currentUserId),
                 formerMemberIds = formerMembers.map { it.userId }.toSet(),
                 // Active members last so the group's own copy of a username wins over the global one.
                 participantsById = (history.participants + activeMembers).associateBy { it.userId },
