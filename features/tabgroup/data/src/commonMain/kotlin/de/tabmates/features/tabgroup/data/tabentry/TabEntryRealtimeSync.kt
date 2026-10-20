@@ -18,8 +18,11 @@ import de.tabmates.features.tabgroup.database.TabMatesDatabase
 import de.tabmates.features.tabgroup.domain.group.GroupRemovalNotifier
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.TabEntry
+import de.tabmates.features.tabgroup.domain.sync.SyncRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -39,15 +42,39 @@ class TabEntryRealtimeSync(
     private val database: TabMatesDatabase,
     private val groupRepository: GroupRepository,
     private val groupRemovalNotifier: GroupRemovalNotifier,
+    private val syncRepository: SyncRepository,
     private val json: Json,
     private val logger: TabMatesLogger,
     @Named(APPLICATION_SCOPE) private val applicationScope: CoroutineScope,
 ) {
+    // Sync requests from metadata frames. Conflated, so frames arriving while a sync runs collapse
+    // into one follow-up run instead of queueing one each.
+    private val syncRequests = Channel<Unit>(Channel.CONFLATED)
+
     init {
         webSocketConnector
             .messages
             .onEach { message -> handle(message) }
             .launchIn(applicationScope)
+
+        // Separate from the message collector: a sync can wait on the repository mutex and run
+        // per-group backfills, and awaiting it there would hold up acks and entry frames.
+        syncRequests
+            .consumeAsFlow()
+            .onEach {
+                // Caught here, not left to end the flow: one failed run must not stop later ones.
+                try {
+                    syncRepository
+                        .sync()
+                        .onFailure { error ->
+                            logger.error(TAG, "Failed to sync after group metadata change: $error")
+                        }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Throwable) {
+                    logger.error(TAG, "Sync after group metadata change threw", e)
+                }
+            }.launchIn(applicationScope)
     }
 
     private suspend fun handle(message: WebSocketMessageDto) {
@@ -133,6 +160,11 @@ class TabEntryRealtimeSync(
 
     private suspend fun handleGroupMetadataChanged(payload: String) {
         val event = json.decodeFromString(GroupMetadataChangedWsPayload.serializer(), payload)
+        // A placeholder claim also rewrites existing entries to the claiming user, and the server
+        // sends no entry frames for that — only this one, after commit. A delta sync picks the
+        // rewritten entries up now; otherwise their splits keep naming the deleted placeholder
+        // until the next reconnect. Requested first, so a refresh that throws cannot skip it.
+        syncRequests.trySend(Unit)
         // Server broadcasts this on participant join/leave and placeholder claims. Re-fetch the
         // group so the local cache (and every Flow observer) reflects the new participant list
         // without waiting for the next cold-start sync.
