@@ -918,17 +918,15 @@ private fun BalancesTab(
         if (!hasOutstandingDebts && otherMembers.isEmpty()) {
             EmptyTabHint(text = stringResource(Res.string.groups_status_settled))
         } else {
-            otherMembers
-                .sortedBy { memberNetBalances[it.userId] ?: 0.0 }
-                .forEach { participant ->
-                    PerPersonRow(
-                        participant = participant,
-                        isFormerMember = participant.userId in formerMemberIds,
-                        balance = GroupBalance.fromNet(memberNetBalances[participant.userId] ?: 0.0),
-                        item = item,
-                        onClick = onSettleUpClick,
-                    )
-                }
+            otherMembers.forEach { participant ->
+                PerPersonRow(
+                    participant = participant,
+                    isFormerMember = participant.userId in formerMemberIds,
+                    balance = GroupBalance.fromNet(memberNetBalances[participant.userId] ?: 0.0),
+                    item = item,
+                    onClick = onSettleUpClick,
+                )
+            }
         }
     }
 }

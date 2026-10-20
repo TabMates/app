@@ -26,6 +26,7 @@ import de.tabmates.features.tabgroup.domain.tabentry.NewTabEntrySplit
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.CurrencyPickerUiState
 import de.tabmates.features.tabgroup.presentation.navigation.creategroup.buildCurrencyPickerState
+import de.tabmates.features.tabgroup.presentation.util.sortedForDisplay
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -146,7 +147,12 @@ class AddEntryViewModel(
             val group = groupRepository.getGroups().first().firstOrNull { it.id == groupId }
             val currencies = currencyRepository.getCurrencies().first()
             val rates = exchangeRateRepository.getExchangeRates().first()
-            val activeMembers = group?.participants.orEmpty().toList()
+            val activeMembers =
+                group
+                    ?.participants
+                    .orEmpty()
+                    .toList()
+                    .sortedForDisplay(currentUserId)
             // Edit mode loads an existing split-carrying entry (expense OR income); its kind is
             // then fixed for the rest of the edit. Create mode starts from the toggle default.
             val existing =
@@ -196,7 +202,8 @@ class AddEntryViewModel(
             // Only former members who actually hold a split get a row; one who merely paid does
             // not become splittable, they just need to stay nameable.
             val splitParticipants =
-                activeMembers + formerParticipants.filter { it.userId in splitsByParticipant }
+                (activeMembers + formerParticipants.filter { it.userId in splitsByParticipant })
+                    .sortedForDisplay(currentUserId)
             _state.update {
                 it.copy(
                     isLoading = false,
