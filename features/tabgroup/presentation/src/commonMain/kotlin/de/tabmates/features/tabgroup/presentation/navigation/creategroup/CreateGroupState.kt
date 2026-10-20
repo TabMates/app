@@ -13,7 +13,7 @@ data class CreateGroupState(
     val supportedCurrencies: List<Currency> = emptyList(),
     val recentCurrencyCodes: List<String> = emptyList(),
     val isCurrencyPickerVisible: Boolean = false,
-    val isPlaceholderDialogVisible: Boolean = false,
+    val isAddPlaceholderRowVisible: Boolean = false,
     val iconKey: String = IconCatalog.defaultIconKey,
     val colorKey: String = IconCatalog.defaultColorKey,
     val iconPicker: IconPickerUiState = IconPickerUiState(),

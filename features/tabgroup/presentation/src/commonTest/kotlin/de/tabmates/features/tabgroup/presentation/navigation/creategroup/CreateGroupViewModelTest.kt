@@ -255,46 +255,87 @@ class CreateGroupViewModelTest {
         }
 
     @Test
-    fun onAddPlaceholderClickShowsDialog() =
+    fun onAddPlaceholderClickShowsRow() =
         runTest(testDispatcher) {
             val viewModel = createViewModel()
 
             viewModel.onAddPlaceholderClick()
 
-            assertTrue(viewModel.state.value.isPlaceholderDialogVisible)
+            assertTrue(viewModel.state.value.isAddPlaceholderRowVisible)
         }
 
     @Test
-    fun onPlaceholderDialogConfirmAddsPlaceholder() =
+    fun onSubmitPlaceholderAddsNameAndKeepsRowOpen() =
         runTest(testDispatcher) {
             val viewModel = createViewModel()
             viewModel.onAddPlaceholderClick()
-            viewModel.state.value.newPlaceholderTextState
-                .edit { replace(0, length, "Ben") }
-            Snapshot.sendApplyNotifications()
+
+            typePlaceholder(viewModel, "Ben")
+            viewModel.onSubmitPlaceholder()
+            typePlaceholder(viewModel, "Carla")
+            viewModel.onSubmitPlaceholder()
+
+            val state = viewModel.state.value
+            assertEquals(listOf("Ben", "Carla"), state.placeholders.map { it.name })
+            assertTrue(state.isAddPlaceholderRowVisible)
+            assertEquals("", state.newPlaceholderTextState.text.toString())
+        }
+
+    @Test
+    fun onCreateClickIncludesNameStillTypedInPlaceholderRow() =
+        runTest(testDispatcher) {
+            val groupRepository = FakeGroupRepository()
+            val viewModel = createViewModel(groupRepository = groupRepository)
+            fillRequiredFields(viewModel)
+            viewModel.onAddPlaceholderClick()
+            typePlaceholder(viewModel, "Ben")
+
+            viewModel.onCreateClick()
             advanceUntilIdle()
 
-            viewModel.onPlaceholderDialogConfirm()
-
-            val placeholders = viewModel.state.value.placeholders
-            assertEquals(1, placeholders.size)
-            assertEquals("Ben", placeholders.single().name)
-            assertFalse(viewModel.state.value.isPlaceholderDialogVisible)
+            assertEquals(listOf("Ben"), groupRepository.addNewParticipantsCalls.single().usernames)
         }
 
     @Test
-    fun onPlaceholderDialogConfirmIgnoresBlankName() =
+    fun onSubmitPlaceholderWithBlankNameClosesRow() =
         runTest(testDispatcher) {
             val viewModel = createViewModel()
             viewModel.onAddPlaceholderClick()
+            typePlaceholder(viewModel, "   ")
 
-            viewModel.onPlaceholderDialogConfirm()
+            viewModel.onSubmitPlaceholder()
 
             assertTrue(
                 viewModel.state.value.placeholders
                     .isEmpty(),
             )
+            assertFalse(viewModel.state.value.isAddPlaceholderRowVisible)
         }
+
+    @Test
+    fun onCancelAddPlaceholderClosesRowAndClearsText() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            viewModel.onAddPlaceholderClick()
+            typePlaceholder(viewModel, "Ben")
+
+            viewModel.onCancelAddPlaceholder()
+
+            val state = viewModel.state.value
+            assertFalse(state.isAddPlaceholderRowVisible)
+            assertEquals("", state.newPlaceholderTextState.text.toString())
+            assertTrue(state.placeholders.isEmpty())
+        }
+
+    private fun TestScope.typePlaceholder(
+        viewModel: CreateGroupViewModel,
+        name: String,
+    ) {
+        viewModel.state.value.newPlaceholderTextState
+            .edit { replace(0, length, name) }
+        Snapshot.sendApplyNotifications()
+        advanceUntilIdle()
+    }
 
     @Test
     fun onPickIconClickOpensPickerWithCurrentValuesAsDraft() =
@@ -415,7 +456,7 @@ class CreateGroupViewModelTest {
                 .edit { replace(0, length, "Ben") }
             Snapshot.sendApplyNotifications()
             advanceUntilIdle()
-            viewModel.onPlaceholderDialogConfirm()
+            viewModel.onSubmitPlaceholder()
             val placeholderId =
                 viewModel.state.value.placeholders
                     .single()

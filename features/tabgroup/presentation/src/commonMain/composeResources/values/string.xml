@@ -76,11 +76,7 @@
     <string name="create_group_placeholders_section">PLACEHOLDERS</string>
     <string name="create_group_placeholders_caption">Add spots for people now — they can claim them later with an invitation link.</string>
     <string name="create_group_add_placeholder">Add placeholder</string>
-    <string name="create_group_placeholder_name_label">Placeholder name</string>
-    <string name="create_group_placeholder_dialog_title">Add placeholder</string>
     <string name="create_group_placeholder_remove_cd">Remove placeholder</string>
-    <string name="create_group_placeholder_dialog_confirm">Add</string>
-    <string name="create_group_placeholder_dialog_cancel">Cancel</string>
     <string name="create_group_submit_action">Create group</string>
     <string name="create_group_currency_picker_title">Default currency</string>
     <string name="create_group_currency_search_placeholder">Search</string>
@@ -208,7 +204,7 @@
     <string name="group_people_add_name_hint">Press enter to add — the field stays open for the next one.</string>
     <string name="group_people_add_confirm_cd">Add this placeholder</string>
     <string name="group_people_error_duplicate_name">Someone with that name is already in this group.</string>
-    <string name="group_people_add_done_cd">Done adding placeholders</string>
+    <string name="group_people_add_done_cd">Stop adding placeholders</string>
     <string name="group_people_remove_cd">Remove %1$s from this group</string>
     <string name="group_people_remove_dialog_title">Remove %1$s?</string>
     <string name="group_people_remove_dialog_message">%1$s loses access to this group. Past expenses stay unchanged.</string>
