@@ -28,6 +28,9 @@ class KSafeSyncCursorStore(
     }
 
     private companion object {
-        private const val KEY_SYNC_CURSOR = "tabSyncCursor"
+        // Bumping the key forces one full sync on the next start, which rebuilds every local entry
+        // from the server. V2: placeholder claims used to leave split-only entries out of delta
+        // sync, so installs still carried splits naming the deleted placeholder.
+        private const val KEY_SYNC_CURSOR = "tabSyncCursorV2"
     }
 }

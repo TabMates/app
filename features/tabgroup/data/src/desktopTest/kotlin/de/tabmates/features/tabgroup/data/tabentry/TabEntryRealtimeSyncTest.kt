@@ -21,6 +21,8 @@ import de.tabmates.features.tabgroup.domain.group.RemovedFromGroup
 import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupInvitePreview
 import de.tabmates.features.tabgroup.domain.models.GroupParticipant
+import de.tabmates.features.tabgroup.domain.sync.SyncRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -107,6 +109,62 @@ class TabEntryRealtimeSyncTest {
         }
 
     @Test
+    fun `a group metadata change refreshes the group and runs a delta sync`() {
+        val groupRepository = StubGroupRepository(fetchResult = Result.Success(Unit))
+        syncTest(groupRepository = groupRepository) { _, channel ->
+            channel.emit(metadataChanged())
+
+            // A placeholder claim rewrites existing entries server-side and announces it with this
+            // frame alone, so only a sync brings those entries' new splits down.
+            awaitCondition("a delta sync should have run") { syncRepository.syncCount == 1 }
+            assertEquals(listOf(GROUP_ID), groupRepository.fetchedGroupIds)
+        }
+    }
+
+    @Test
+    fun `a group metadata change still syncs when the group refresh fails`() =
+        syncTest(
+            groupRepository = StubGroupRepository(fetchResult = Result.Failure(DataError.Remote.NO_INTERNET)),
+        ) { _, channel ->
+            channel.emit(metadataChanged())
+
+            awaitCondition("a delta sync should have run") { syncRepository.syncCount == 1 }
+        }
+
+    @Test
+    fun `a group metadata change still syncs when the group refresh throws`() =
+        // The default stub throws from fetchGroupById, like a failing local upsert would.
+        syncTest { _, channel ->
+            channel.emit(metadataChanged())
+
+            awaitCondition("a delta sync should have run") { syncRepository.syncCount == 1 }
+        }
+
+    @Test
+    fun `a running sync does not block other frames and later metadata changes coalesce into one`() =
+        syncTest(groupRepository = StubGroupRepository(fetchResult = Result.Success(Unit))) { database, channel ->
+            database.insertGroup(group(id = GROUP_ID))
+            val gate = CompletableDeferred<Unit>()
+            syncRepository.gate = gate
+
+            channel.emit(metadataChanged())
+            awaitCondition("the first sync should have started") { syncRepository.syncCount == 1 }
+
+            // The first sync is still running: an ack must apply regardless.
+            channel.emit(ack(deletedAt = null))
+            awaitCondition("an ack must not wait for the sync") {
+                database.tabEntryDao.getTabEntryById(ENTRY_ID) != null
+            }
+
+            repeat(3) { channel.emit(metadataChanged()) }
+            gate.complete(Unit)
+
+            awaitCondition("one follow-up sync should have run") { syncRepository.syncCount == 2 }
+            withContext(Dispatchers.Default) { delay(50) }
+            assertEquals(2, syncRepository.syncCount, "metadata changes during a sync must coalesce")
+        }
+
+    @Test
     fun `an unknown message type changes nothing`() =
         syncTest { database, channel ->
             database.insertGroup(group(id = GROUP_ID))
@@ -120,6 +178,12 @@ class TabEntryRealtimeSyncTest {
         }
 
     // region helpers
+
+    private fun metadataChanged(): WebSocketMessageDto =
+        WebSocketMessageDto(
+            type = WsMessageType.GROUP_METADATA_CHANGED,
+            payload = """{"groupId":"$GROUP_ID"}""",
+        )
 
     private fun ack(deletedAt: Instant?): WebSocketMessageDto =
         WebSocketMessageDto(
@@ -164,6 +228,8 @@ class TabEntryRealtimeSyncTest {
 
     private val removalNotifier = GroupRemovalNotifier()
 
+    private val syncRepository = CountingSyncRepository()
+
     private fun syncTest(
         groupRepository: GroupRepository = StubGroupRepository(),
         body: suspend TestScope.(TabMatesDatabase, FakeWebSocketChannel) -> Unit,
@@ -176,6 +242,7 @@ class TabEntryRealtimeSyncTest {
                 database = database,
                 groupRepository = groupRepository,
                 groupRemovalNotifier = removalNotifier,
+                syncRepository = syncRepository,
                 json = json,
                 logger = NoopLogger,
                 applicationScope =
@@ -198,13 +265,35 @@ class TabEntryRealtimeSyncTest {
     // endregion
 }
 
+/** Counts [sync] calls and always succeeds; the first call waits on [gate] when one is set. */
+private class CountingSyncRepository : SyncRepository {
+    @Volatile
+    var syncCount = 0
+        private set
+
+    var gate: CompletableDeferred<Unit>? = null
+
+    override suspend fun sync(): EmptyResult<DataError.Remote> {
+        syncCount++
+        gate?.let {
+            gate = null
+            it.await()
+        }
+        return Result.Success(Unit)
+    }
+}
+
 /**
  * Answers [getGroups] from [groups] — the removal path reads the title from it before deleting the
- * group — and refuses everything else these tests do not exercise.
+ * group — and [fetchGroupById] with [fetchResult] when one is given; refuses everything else these
+ * tests do not exercise.
  */
 private class StubGroupRepository(
     private val groups: List<Group> = emptyList(),
+    private val fetchResult: EmptyResult<DataError.Remote>? = null,
 ) : GroupRepository {
+    val fetchedGroupIds = mutableListOf<String>()
+
     private fun unused(): Nothing = error("GroupRepository is not exercised by these tests")
 
     override fun getGroups(): Flow<List<Group>> = flowOf(groups)
@@ -213,7 +302,10 @@ private class StubGroupRepository(
 
     override fun getAllParticipants(): Flow<List<GroupParticipant>> = unused()
 
-    override suspend fun fetchGroupById(groupId: String): EmptyResult<DataError.Remote> = unused()
+    override suspend fun fetchGroupById(groupId: String): EmptyResult<DataError.Remote> {
+        fetchedGroupIds += groupId
+        return fetchResult ?: unused()
+    }
 
     override suspend fun createGroup(
         title: String,
