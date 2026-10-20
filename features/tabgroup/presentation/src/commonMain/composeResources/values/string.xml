@@ -76,11 +76,7 @@
     <string name="create_group_placeholders_section">PLACEHOLDERS</string>
     <string name="create_group_placeholders_caption">Add spots for people now — they can claim them later with an invitation link.</string>
     <string name="create_group_add_placeholder">Add placeholder</string>
-    <string name="create_group_placeholder_name_label">Placeholder name</string>
-    <string name="create_group_placeholder_dialog_title">Add placeholder</string>
     <string name="create_group_placeholder_remove_cd">Remove placeholder</string>
-    <string name="create_group_placeholder_dialog_confirm">Add</string>
-    <string name="create_group_placeholder_dialog_cancel">Cancel</string>
     <string name="create_group_submit_action">Create group</string>
     <string name="create_group_currency_picker_title">Default currency</string>
     <string name="create_group_currency_search_placeholder">Search</string>

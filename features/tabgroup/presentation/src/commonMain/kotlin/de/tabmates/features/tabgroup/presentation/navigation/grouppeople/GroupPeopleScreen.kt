@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,21 +32,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.tabmates.core.designsystem.spacer.HorizontalSpacer
 import de.tabmates.core.designsystem.spacer.VerticalSpacer
-import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.presentation.share.LinkShareResult
 import de.tabmates.core.presentation.share.rememberLinkSharer
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.presentation.components.AddPlaceholderButton
+import de.tabmates.features.tabgroup.presentation.components.NewPlaceholderRow
 import de.tabmates.features.tabgroup.presentation.components.PersonRow
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.buildInviteUrl
 import de.tabmates.features.tabgroup.presentation.navigation.groupdetail.shortInviteUrl
@@ -59,10 +53,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
 import tabmatesapp.features.tabgroup.presentation.generated.resources.activity_you
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_add_confirm_cd
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_add_done_cd
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_add_name_hint
-import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_add_name_placeholder
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_add_placeholders
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_placeholders_caption
 import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_remove_cd
@@ -82,7 +72,6 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_det
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_owner_badge
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_badge
 import tabmatesapp.features.tabgroup.presentation.generated.resources.groups_detail_pending_not_claimed
-import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_check
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_close
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_content_copy
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_link
@@ -274,56 +263,6 @@ private fun RemoveDialog(
             }
         },
     )
-}
-
-/**
- * Sits where the next placeholder will appear. Enter commits and leaves the field open, so the row
- * that pops into the list above is the cue that another name can follow.
- */
-@Composable
-private fun NewPlaceholderRow(
-    textState: TextFieldState,
-    onSubmit: () -> Unit,
-    onCancel: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top,
-    ) {
-        TabMatesTextField(
-            state = textState,
-            placeholder = stringResource(Res.string.group_people_add_name_placeholder),
-            supportingText = stringResource(Res.string.group_people_add_name_hint),
-            // Deliberately never disabled while a name is in flight: dropping enabled takes the
-            // focus with it, the keyboard closes, and the run of names is broken. The ViewModel
-            // already rejects a second submit while one is running.
-            singleLine = true,
-            capitalization = KeyboardCapitalization.Words,
-            imeAction = ImeAction.Done,
-            onKeyboardAction = { onSubmit() },
-            trailingIcon = {
-                IconButton(onClick = onCancel) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = stringResource(Res.string.group_people_add_done_cd),
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            },
-            modifier = Modifier.weight(1f).focusRequester(focusRequester),
-        )
-        // Same job as the keyboard's enter key, for anyone not reaching for it.
-        FilledIconButton(onClick = onSubmit) {
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_check),
-                contentDescription = stringResource(Res.string.group_people_add_confirm_cd),
-                modifier = Modifier.size(20.dp),
-            )
-        }
-    }
 }
 
 @Composable

@@ -171,27 +171,27 @@ class CreateGroupViewModel(
     }
 
     fun onAddPlaceholderClick() {
-        _state.update { it.copy(isPlaceholderDialogVisible = true) }
-    }
-
-    fun onPlaceholderDialogDismiss() {
         _state.value.newPlaceholderTextState.clearText()
-        _state.update { it.copy(isPlaceholderDialogVisible = false) }
+        _state.update { it.copy(isAddPlaceholderRowVisible = true) }
     }
 
-    fun onPlaceholderDialogConfirm() {
+    fun onCancelAddPlaceholder() {
+        _state.value.newPlaceholderTextState.clearText()
+        _state.update { it.copy(isAddPlaceholderRowVisible = false) }
+    }
+
+    /** Adds the typed name and keeps the row open for the next one; an empty submit closes it. */
+    fun onSubmitPlaceholder() {
         val name =
             _state.value.newPlaceholderTextState.text
                 .toString()
                 .trim()
-        if (name.isEmpty()) return
-        val id = "placeholder-${placeholderCounter++}"
-        _state.update {
-            it.copy(
-                placeholders = it.placeholders + CreateGroupPlaceholder(id = id, name = name),
-                isPlaceholderDialogVisible = false,
-            )
+        if (name.isEmpty()) {
+            onCancelAddPlaceholder()
+            return
         }
+        val id = "placeholder-${placeholderCounter++}"
+        _state.update { it.copy(placeholders = it.placeholders + CreateGroupPlaceholder(id = id, name = name)) }
         _state.value.newPlaceholderTextState.clearText()
     }
 
