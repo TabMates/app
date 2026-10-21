@@ -61,6 +61,39 @@ class AddEntryViewModelTest {
         }
 
     @Test
+    fun payerAndSplitListsAreSortedWithCurrentUserFirstThenByName() =
+        runTest(testDispatcher) {
+            val groupRepo =
+                FakeGroupRepository(
+                    initialGroups =
+                        listOf(
+                            Fixtures.group(
+                                id = "g1",
+                                participants =
+                                    setOf(
+                                        Fixtures.participant(id = "c", name = "carl"),
+                                        Fixtures.participant(id = "me", name = "Zoe"),
+                                        Fixtures.participant(id = "a", name = "Ärger"),
+                                        Fixtures.participant(id = "b", name = "Ben"),
+                                    ),
+                            ),
+                        ),
+                )
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    groupRepository = groupRepo,
+                    currentAccount = FakeCurrentAccount(id = "me"),
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            assertEquals(listOf("me", "a", "b", "c"), state.members.map { it.userId })
+            assertEquals(listOf("me", "a", "b", "c"), state.splitInputs.map { it.participantId })
+        }
+
+    @Test
     fun validCreateAddsExpenseAndEmitsSavedEvent() =
         runTest(testDispatcher) {
             val tabEntryRepo = FakeTabEntryRepository()

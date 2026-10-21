@@ -76,11 +76,7 @@
     <string name="create_group_placeholders_section">PLATZHALTER</string>
     <string name="create_group_placeholders_caption">Reserviere jetzt Plätze für Personen — sie können diese später über einen Einladungslink beanspruchen.</string>
     <string name="create_group_add_placeholder">Platzhalter hinzufügen</string>
-    <string name="create_group_placeholder_name_label">Platzhaltername</string>
-    <string name="create_group_placeholder_dialog_title">Platzhalter hinzufügen</string>
     <string name="create_group_placeholder_remove_cd">Platzhalter entfernen</string>
-    <string name="create_group_placeholder_dialog_confirm">Hinzufügen</string>
-    <string name="create_group_placeholder_dialog_cancel">Abbrechen</string>
     <string name="create_group_submit_action">Gruppe erstellen</string>
     <string name="create_group_currency_picker_title">Standardwährung</string>
     <string name="create_group_currency_search_placeholder">Suchen</string>

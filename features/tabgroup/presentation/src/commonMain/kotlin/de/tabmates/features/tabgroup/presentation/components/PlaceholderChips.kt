@@ -2,29 +2,39 @@ package de.tabmates.features.tabgroup.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.unit.dp
 import de.tabmates.core.designsystem.textfields.TabMatesTextField
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import tabmatesapp.features.tabgroup.presentation.generated.resources.Res
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_add_confirm_cd
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_add_done_cd
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_add_name_hint
+import tabmatesapp.features.tabgroup.presentation.generated.resources.group_people_add_name_placeholder
+import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_check
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_close
 import tabmatesapp.features.tabgroup.presentation.generated.resources.ic_person_add
 
@@ -94,46 +104,52 @@ fun AddPlaceholderButton(
     )
 }
 
+/**
+ * Sits where the next placeholder will appear. Enter commits and leaves the field open, so the item
+ * that pops up above is the cue that another name can follow.
+ */
 @Composable
-fun AddPlaceholderDialog(
+fun NewPlaceholderRow(
     textState: TextFieldState,
-    title: String,
-    nameLabel: String,
-    confirmLabel: String,
-    cancelLabel: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    confirmEnabled: Boolean = true,
+    onSubmit: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val focusManager = LocalFocusManager.current
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            TabMatesTextField(
-                state = textState,
-                title = nameLabel,
-                singleLine = true,
-                capitalization = KeyboardCapitalization.Words,
-                imeAction = ImeAction.Done,
-                onKeyboardAction = {
-                    if (confirmEnabled) {
-                        focusManager.clearFocus()
-                        onConfirm()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top,
+    ) {
+        TabMatesTextField(
+            state = textState,
+            placeholder = stringResource(Res.string.group_people_add_name_placeholder),
+            supportingText = stringResource(Res.string.group_people_add_name_hint),
+            // Deliberately never disabled while a name is in flight: dropping enabled takes the
+            // focus with it, the keyboard closes, and the run of names is broken. The ViewModel
+            // already rejects a second submit while one is running.
+            singleLine = true,
+            capitalization = KeyboardCapitalization.Words,
+            imeAction = ImeAction.Done,
+            onKeyboardAction = { onSubmit() },
+            trailingIcon = {
+                IconButton(onClick = onCancel) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = stringResource(Res.string.group_people_add_done_cd),
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            },
+            modifier = Modifier.weight(1f).focusRequester(focusRequester),
+        )
+        // Same job as the keyboard's enter key, for anyone not reaching for it.
+        FilledIconButton(onClick = onSubmit) {
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_check),
+                contentDescription = stringResource(Res.string.group_people_add_confirm_cd),
+                modifier = Modifier.size(20.dp),
             )
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm, enabled = confirmEnabled) {
-                Text(text = confirmLabel, fontWeight = FontWeight.SemiBold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(cancelLabel)
-            }
-        },
-    )
+        }
+    }
 }

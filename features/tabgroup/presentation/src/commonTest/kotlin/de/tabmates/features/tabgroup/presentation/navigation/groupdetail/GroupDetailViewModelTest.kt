@@ -248,6 +248,41 @@ class GroupDetailViewModelTest {
         }
 
     @Test
+    fun membersAreSortedWithCurrentUserFirstThenByName() =
+        runTest(testDispatcher) {
+            val groupRepo =
+                FakeGroupRepository(
+                    initialGroups =
+                        listOf(
+                            Fixtures.group(
+                                id = "g1",
+                                participants =
+                                    setOf(
+                                        Fixtures.participant(id = "c", name = "carl"),
+                                        Fixtures.participant(id = "me", name = "Zoe"),
+                                        Fixtures.participant(id = "a", name = "Ärger"),
+                                        Fixtures.participant(id = "b", name = "Ben"),
+                                    ),
+                            ),
+                        ),
+                )
+            val viewModel =
+                createViewModel(
+                    groupId = "g1",
+                    groupRepository = groupRepo,
+                    currentAccount = FakeCurrentAccount(id = "me"),
+                )
+            activateState(viewModel)
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf("me", "a", "b", "c"),
+                viewModel.state.value.members
+                    .map { it.userId },
+            )
+        }
+
+    @Test
     fun formerMemberWithAnUnsettledBalanceKeepsARow() =
         runTest(testDispatcher) {
             val viewModel =

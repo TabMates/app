@@ -26,6 +26,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,8 +48,8 @@ import de.tabmates.core.designsystem.textfields.TabMatesTextField
 import de.tabmates.core.designsystem.theme.TabMatesTheme
 import de.tabmates.core.presentation.util.ObserveAsEvents
 import de.tabmates.features.tabgroup.presentation.components.AddPlaceholderButton
-import de.tabmates.features.tabgroup.presentation.components.AddPlaceholderDialog
 import de.tabmates.features.tabgroup.presentation.components.GroupAvatar
+import de.tabmates.features.tabgroup.presentation.components.NewPlaceholderRow
 import de.tabmates.features.tabgroup.presentation.components.PlaceholderChip
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -60,10 +61,6 @@ import tabmatesapp.features.tabgroup.presentation.generated.resources.create_gro
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_description_placeholder
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_edit_icon_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_name_label
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholder_dialog_cancel
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholder_dialog_confirm
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholder_dialog_title
-import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholder_name_label
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholder_remove_cd
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholders_caption
 import tabmatesapp.features.tabgroup.presentation.generated.resources.create_group_placeholders_section
@@ -99,8 +96,8 @@ fun CreateGroupRoot(
         onIconCategorySelected = viewModel::onIconCategorySelected,
         onCurrencyClick = viewModel::onCurrencyClick,
         onAddPlaceholderClick = viewModel::onAddPlaceholderClick,
-        onPlaceholderDialogConfirm = viewModel::onPlaceholderDialogConfirm,
-        onPlaceholderDialogDismiss = viewModel::onPlaceholderDialogDismiss,
+        onSubmitPlaceholder = viewModel::onSubmitPlaceholder,
+        onCancelAddPlaceholder = viewModel::onCancelAddPlaceholder,
         onRemovePlaceholder = viewModel::onRemovePlaceholder,
         onCreateClick = viewModel::onCreateClick,
         onCurrencySelected = viewModel::onCurrencySelected,
@@ -121,8 +118,8 @@ private fun CreateGroupScreen(
     onIconCategorySelected: (IconCategory) -> Unit,
     onCurrencyClick: () -> Unit,
     onAddPlaceholderClick: () -> Unit,
-    onPlaceholderDialogConfirm: () -> Unit,
-    onPlaceholderDialogDismiss: () -> Unit,
+    onSubmitPlaceholder: () -> Unit,
+    onCancelAddPlaceholder: () -> Unit,
     onRemovePlaceholder: (String) -> Unit,
     onCreateClick: () -> Unit,
     onCurrencySelected: (String) -> Unit,
@@ -148,22 +145,18 @@ private fun CreateGroupScreen(
             onCancel = onIconPickerDismiss,
         )
     }
-    if (state.isPlaceholderDialogVisible) {
-        AddPlaceholderDialog(
-            textState = state.newPlaceholderTextState,
-            title = stringResource(Res.string.create_group_placeholder_dialog_title),
-            nameLabel = stringResource(Res.string.create_group_placeholder_name_label),
-            confirmLabel = stringResource(Res.string.create_group_placeholder_dialog_confirm),
-            cancelLabel = stringResource(Res.string.create_group_placeholder_dialog_cancel),
-            onConfirm = onPlaceholderDialogConfirm,
-            onDismiss = onPlaceholderDialogDismiss,
-        )
+    val scrollState = rememberScrollState()
+    // Keeps the name field and its hint clear of the keyboard, same as the People screen: maxValue
+    // is a key because the viewport shrinks a frame after the keyboard opens, and every added chip
+    // grows the content again.
+    LaunchedEffect(state.isAddPlaceholderRowVisible, state.placeholders.size, scrollState.maxValue) {
+        if (state.isAddPlaceholderRowVisible) scrollState.animateScrollTo(scrollState.maxValue)
     }
     Column(
         modifier =
             modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -232,9 +225,18 @@ private fun CreateGroupScreen(
             VerticalSpacer(12.dp)
             PlaceholderChipsRow(
                 placeholders = state.placeholders,
+                isAddRowVisible = state.isAddPlaceholderRowVisible,
                 onRemove = onRemovePlaceholder,
                 onAddClick = onAddPlaceholderClick,
             )
+            if (state.isAddPlaceholderRowVisible) {
+                VerticalSpacer(8.dp)
+                NewPlaceholderRow(
+                    textState = state.newPlaceholderTextState,
+                    onSubmit = onSubmitPlaceholder,
+                    onCancel = onCancelAddPlaceholder,
+                )
+            }
         }
         VerticalSpacer(32.dp)
         TabMatesButton(
@@ -333,6 +335,7 @@ private fun CurrencyRow(
 @Composable
 private fun PlaceholderChipsRow(
     placeholders: List<CreateGroupPlaceholder>,
+    isAddRowVisible: Boolean,
     onRemove: (String) -> Unit,
     onAddClick: () -> Unit,
 ) {
@@ -350,10 +353,12 @@ private fun PlaceholderChipsRow(
                 removeContentDescription = removeContentDescription,
             )
         }
-        AddPlaceholderButton(
-            label = stringResource(Res.string.create_group_add_placeholder),
-            onClick = onAddClick,
-        )
+        if (!isAddRowVisible) {
+            AddPlaceholderButton(
+                label = stringResource(Res.string.create_group_add_placeholder),
+                onClick = onAddClick,
+            )
+        }
     }
 }
 
@@ -385,8 +390,8 @@ private fun CreateGroupScreenThemesPreview() {
                 onIconCategorySelected = {},
                 onCurrencyClick = {},
                 onAddPlaceholderClick = {},
-                onPlaceholderDialogConfirm = {},
-                onPlaceholderDialogDismiss = {},
+                onSubmitPlaceholder = {},
+                onCancelAddPlaceholder = {},
                 onRemovePlaceholder = {},
                 onCreateClick = {},
                 onCurrencySelected = {},
@@ -412,8 +417,8 @@ private fun CreateGroupScreenSizesPreview() {
                 onIconCategorySelected = {},
                 onCurrencyClick = {},
                 onAddPlaceholderClick = {},
-                onPlaceholderDialogConfirm = {},
-                onPlaceholderDialogDismiss = {},
+                onSubmitPlaceholder = {},
+                onCancelAddPlaceholder = {},
                 onRemovePlaceholder = {},
                 onCreateClick = {},
                 onCurrencySelected = {},
