@@ -31,7 +31,7 @@ jobs:
         uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '25'
 
       # Unified Gradle caching: handles ~/.gradle/caches, ~/.gradle/wrapper,
       # the local build cache, and the configuration cache in one step.
@@ -61,7 +61,7 @@ jobs:
         uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '25'
 
       # Unified Gradle caching — reads the cache written by the formatting job
       # on PRs; pushes an updated cache on main.
