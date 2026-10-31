@@ -20,9 +20,9 @@ import de.tabmates.features.tabgroup.domain.currency.ExchangeRateRepository
 import de.tabmates.features.tabgroup.domain.group.GroupRepository
 import de.tabmates.features.tabgroup.domain.models.Group
 import de.tabmates.features.tabgroup.domain.models.GroupBalance
-import de.tabmates.features.tabgroup.domain.models.GroupParticipant
 import de.tabmates.features.tabgroup.domain.models.ParticipantType
 import de.tabmates.features.tabgroup.domain.tabentry.TabEntryRepository
+import de.tabmates.features.tabgroup.presentation.util.sortedForDisplay
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -274,9 +274,8 @@ class GroupPeopleViewModel(
     private fun Group.members(): List<GroupPerson> =
         participants
             .filter { it.participantType != ParticipantType.PLACEHOLDER }
-            .sortedWith(
-                compareByDescending<GroupParticipant> { it.userId == currentUserId }.thenBy { it.username },
-            ).map { participant ->
+            .sortedForDisplay(currentUserId)
+            .map { participant ->
                 GroupPerson(
                     id = participant.userId,
                     name = participant.username,
@@ -290,7 +289,7 @@ class GroupPeopleViewModel(
     private fun Group.placeholders(): List<GroupPerson> =
         participants
             .filter { it.participantType == ParticipantType.PLACEHOLDER }
-            .sortedBy { it.username }
+            .sortedForDisplay(currentUserId = null)
             .map {
                 GroupPerson(
                     id = it.userId,

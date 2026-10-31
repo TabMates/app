@@ -171,27 +171,29 @@ class CreateGroupViewModel(
     }
 
     fun onAddPlaceholderClick() {
-        _state.update { it.copy(isPlaceholderDialogVisible = true) }
-    }
-
-    fun onPlaceholderDialogDismiss() {
         _state.value.newPlaceholderTextState.clearText()
-        _state.update { it.copy(isPlaceholderDialogVisible = false) }
+        _state.update { it.copy(isAddPlaceholderRowVisible = true) }
     }
 
-    fun onPlaceholderDialogConfirm() {
+    fun onCancelAddPlaceholder() {
+        _state.value.newPlaceholderTextState.clearText()
+        _state.update { it.copy(isAddPlaceholderRowVisible = false) }
+    }
+
+    /** Adds the typed name and keeps the row open for the next one; an empty submit closes it. */
+    fun onSubmitPlaceholder() {
+        // The create request already took its snapshot of the placeholders; a later name would be lost.
+        if (_state.value.isSubmitting) return
         val name =
             _state.value.newPlaceholderTextState.text
                 .toString()
                 .trim()
-        if (name.isEmpty()) return
-        val id = "placeholder-${placeholderCounter++}"
-        _state.update {
-            it.copy(
-                placeholders = it.placeholders + CreateGroupPlaceholder(id = id, name = name),
-                isPlaceholderDialogVisible = false,
-            )
+        if (name.isEmpty()) {
+            onCancelAddPlaceholder()
+            return
         }
+        val id = "placeholder-${placeholderCounter++}"
+        _state.update { it.copy(placeholders = it.placeholders + CreateGroupPlaceholder(id = id, name = name)) }
         _state.value.newPlaceholderTextState.clearText()
     }
 
@@ -203,6 +205,8 @@ class CreateGroupViewModel(
 
     fun onCreateClick() {
         if (state.value.isSubmitting) return
+        // A name still sitting in the open row counts, as if it had been submitted first.
+        if (_state.value.isAddPlaceholderRowVisible) onSubmitPlaceholder()
         val current = _state.value
         val validationError = validate(current)
         if (validationError != null) {
