@@ -109,7 +109,10 @@ Push notifications additionally need Firebase config — see [`features/notifica
 
 ```bash
 # Android — install on a device/emulator (or just run :androidApp from the IDE)
-./gradlew :androidApp:installDebug
+./gradlew :androidApp:installPlayDebug
+
+# Android, F-Droid variant — no Firebase, no Play Core, no push notifications
+./gradlew :androidApp:installFossDebug -Ptabmates.distribution=foss
 
 # Desktop (JVM), hot-reload enabled
 ./gradlew :composeApp:hotRunDesktop

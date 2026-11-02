@@ -178,9 +178,10 @@ common
 ## 11. Critical Workflows
 - **Format:** `./gradlew ktlintFormat`. CI runs `ktlintCheck :build-logic:convention:ktlintCheck`.
 - **Fast verify:** compile only touched modules, e.g. `./gradlew :features:tabgroup:domain:compileKotlinJvm`. Full Android build: `./gradlew :androidApp:assembleDebug`.
-- **Tests:** `./gradlew allTests` (all targets) or narrower, e.g. `:androidApp:testDebugUnitTest`.
+- **Tests:** `./gradlew allTests` (all targets) or narrower, e.g. `:androidApp:testPlayDebugUnitTest`.
 - **Compiler warnings:** CI checks build log against `.github/compiler-warnings-baseline.txt` via `.github/check-compiler-warnings.sh` — new warnings fail the PR pipeline. Don't introduce any.
-- **CI parity:** `.github/workflows/pr_pipeline.yml` = ktlint + `:androidApp:assembleDebug lintDebug testDebugUnitTest` + `:composeApp:desktopJar` + wasm distribution + `allTests`.
+- **CI parity:** `.github/workflows/pr_pipeline.yml` = ktlint + `:androidApp:assembleDebug lintPlayDebug testPlayDebugUnitTest` + `:composeApp:desktopJar` + wasm distribution + `allTests`, then the F-Droid variant (`:androidApp:assembleFossDebug :androidApp:checkFossClasspath -Ptabmates.distribution=foss`).
+- **Distributions:** `:androidApp` has one product flavor per invocation, derived from the `tabmates.distribution` Gradle property (`play` by default, `foss` for F-Droid), so Android task names carry it: `assemblePlayDebug`, `lintPlayDebug`, `installPlayDebug`. `assembleDebug` still works as the aggregate. `foss` drops Firebase and Play Core entirely — no push, no in-app updates. See `build-logic/.../Distribution.kt`.
 - **Local Config:** `local.properties` must have `API_KEY`. `CLIENT_BUILD_TOKEN` is optional (see README) — once the backend enables its version gate, native builds without a matching one get `426`.
 - **Sync:** `./gradlew help` (triggers sync).
 
@@ -192,7 +193,8 @@ common
 | Lint (CI parity) | `./gradlew ktlintCheck :build-logic:convention:ktlintCheck` |
 | Compile one module | `./gradlew :features:tabgroup:domain:compileKotlinJvm` |
 | Android debug build | `./gradlew :androidApp:assembleDebug` |
-| Android unit tests | `./gradlew :androidApp:testDebugUnitTest` |
+| Android unit tests | `./gradlew :androidApp:testPlayDebugUnitTest` |
+| F-Droid (FOSS) build | `./gradlew :androidApp:assembleFossDebug :androidApp:checkFossClasspath -Ptabmates.distribution=foss` |
 | All tests, all targets | `./gradlew allTests` |
 | Desktop jar | `./gradlew :composeApp:desktopJar` |
 | Gradle sync | `./gradlew help` |

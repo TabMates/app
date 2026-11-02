@@ -6,10 +6,32 @@ Android + iOS:
 
 | Platform | Mechanism |
 |----------|-----------|
-| Android  | FCM push via [kmpnotifier](https://github.com/mirzemehdi/KMPNotifier) |
+| Android (Play)   | FCM push via [kmpnotifier](https://github.com/mirzemehdi/KMPNotifier) |
+| Android (F-Droid)| **None.** Firebase is proprietary, so the FOSS distribution has no push at all |
 | iOS      | FCM push via kmpnotifier (Swift AppDelegate bridges APNs into Firebase) |
 | Desktop  | No FCM client exists → backend WebSocket stream rendered as local notifications (kmpnotifier local notifier) |
 | Web      | Firebase **JS SDK** push (service worker + VAPID), not kmpnotifier |
+
+### The F-Droid (FOSS) Android build
+
+F-Droid refuses proprietary dependencies, so `-Ptabmates.distribution=foss` drops
+`kmpnotifier-push-firebase` (and with it firebase-messaging and play-services) from
+`androidMain`, swapping `src/androidPlayMain` for `src/androidFossMain`. That build binds
+`NoOpPushNotificationController` and `UnsupportedNotificationPermissionController` — both already
+in `commonMain` — so nothing else in the feature changes.
+
+`POST_NOTIFICATIONS` is not declared in `androidApp/src/main/AndroidManifest.xml` on purpose: the
+`firebase-messaging` and `kmpnotifier-core` AAR manifests each declare it, so it merges into the
+Play build with the dependency and is simply absent from the FOSS one. The permission prompt lives
+in `androidApp/src/play/` for the same reason — requesting an undeclared permission is denied
+instantly, which would trap a FOSS user in the "open settings" dialog on every launch.
+
+Desktop already delivers notifications over the backend WebSocket stream
+(`DesktopPushNotificationController`). If FOSS Android should get notifications later, reusing that
+controller is the cheapest option (no backend change, but delivery only while the app runs);
+UnifiedPush is the proper one, and needs the backend to POST to per-device endpoint URLs.
+
+See `build-logic/convention/src/main/kotlin/de/tabmates/convention/Distribution.kt`.
 
 ## Layout
 
