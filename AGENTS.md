@@ -11,6 +11,7 @@ Doc: TabMates architecture, patterns, guidelines for AI agents.
 - **Database:** Room (KMP).
 - **Targets:** Android, iOS, Desktop (JVM), Web (WasmJS).
 - **Package Root:** `de.tabmates`.
+- **JDK:** Build on JDK 25. JVM target 25 (desktop, build-logic), 21 (Android).
 
 ---
 

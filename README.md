@@ -62,7 +62,7 @@ TabMates is a Kotlin Multiplatform (KMP) + Compose Multiplatform (CMP) app for t
 
 ### Prerequisites
 
-- JDK 17+
+- JDK 25
 - Android Studio (latest stable) / IntelliJ IDEA
 - Xcode (for iOS), on macOS
 
